@@ -1,0 +1,1142 @@
+/* ============================= */
+/* FullCalendar Custom Styling   */
+/* ============================= */
+
+/* FullCalendar Toolbar Buttons */
+
+.fc .fc-toolbar-chunk .fc-button {
+  background-color: #ffffff !important;
+  color: #6c757d !important;
+  border: none !important;
+  font-weight: 500;
+  border-radius: 6px !important;
+}
+
+/* Hover state */
+.fc .fc-toolbar-chunk .fc-button:hover {
+  background-color: #f8f9fa !important;
+  color: #495057 !important;
+  border: none !important;
+}
+
+/* Active/Pressed state */
+.fc .fc-toolbar-chunk .fc-button.fc-button-active {
+  background-color: #4272b1ff !important;
+  color: #ffffffff !important;
+  border: none !important;
+}
+
+.fc .fc-today-button {
+  text-transform: capitalize !important;
+}
+
+/* FullCalendar focus/active states */
+.fc .fc-toolbar-chunk .fc-button:focus,
+.fc .fc-toolbar-chunk .fc-button:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Optional: Additional FullCalendar customizations */
+.fc .fc-toolbar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.fc .fc-col-header-cell {
+  background-color: #f8f9fa;
+  font-weight: 500;
+}
+
+/* FullCalendar Date Number Styling */
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number {
+  color: #495057 !important; /* Dark gray instead of neon blue */
+  text-decoration: none !important; /* Remove underline */
+  font-weight: 500 !important;
+}
+
+/* Hover states for date numbers */
+.fc .fc-col-header-cell-cushion:hover,
+.fc .fc-daygrid-day-number:hover {
+  color: #000 !important;
+  text-decoration: none !important;
+}
+
+/* Today's date styling */
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  background-color: #4272b1ff !important;
+  color: white !important;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2px;
+}
+
+/* Remove the default background color for today */
+.fc .fc-daygrid-day.fc-day-today {
+  background-color: transparent !important;
+}
+
+/* Month/year title color */
+.fc .fc-toolbar-title {
+  color: #495057 !important;
+  font-weight: 600 !important;
+}
+
+
+/* Day of week header styling - abbreviated */
+.fc .fc-col-header-cell {
+  background-color: #f8f9fa !important;
+  padding: 8px 0 !important;
+}
+
+/* Reduce cell borders to single lines */
+.fc .fc-scrollgrid {
+  border-color: #dee2e6 !important;
+}
+
+/* Force abbreviated day names */
+.fc .fc-col-header-cell-cushion {
+  font-size: 0.85rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.fc .fc-daygrid-day-number {
+  font-weight: 500;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+  background-color: rgba(66, 114, 177, 0.1);
+}
+
+.fc .fc-event {
+  border: none;
+  border-radius: 4px;
+}
+
+.fc .fc-event:hover {
+  filter: brightness(95%);
+}
+
+/* FullCalendar Toolbar Buttons */
+.fc .fc-toolbar-chunk .fc-button {
+  background-color: #ffffff !important;
+  color: #6c757d !important;
+  border: none !important;
+  font-weight: 500;
+  border-radius: 6px !important;
+}
+
+/* Hover state */
+.fc .fc-toolbar-chunk .fc-button:hover {
+  background-color: #f8f9fa !important;
+  color: #495057 !important;
+  border: none !important;
+}
+
+/* Active/Pressed state */
+.fc .fc-toolbar-chunk .fc-button.fc-button-active {
+  background-color: #4272b1ff !important;
+  color: #ffffffff !important;
+  border: none !important;
+}
+
+.fc .fc-today-button {
+  text-transform: capitalize !important;
+}
+
+/* FullCalendar focus/active states */
+.fc .fc-toolbar-chunk .fc-button:focus,
+.fc .fc-toolbar-chunk .fc-button:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* Event Filter Checkboxes */
+.event-filter-checkbox:checked {
+  border-color: transparent !important;
+}
+
+/* Color dots for status labels */
+.status-color-dot {
+  transition: transform 0.2s ease;
+}
+
+.status-color-dot:hover {
+  transform: scale(1.2);
+}
+
+/* Dynamic status checkbox colors */
+.scheduled-checkbox:checked {
+  background-color: #1e7941ff;
+  border-color: #1e7941ff;
+}
+
+.ongoing-checkbox:focus {
+  box-shadow: 0 0 0 0.2rem #1461314d
+}
+
+.ongoing-checkbox:checked {
+  background-color: #ac7a0fff;
+  border-color: #ac7a0fff;
+}
+
+.ongoing-checkbox:focus {
+  box-shadow: 0 0 0 0.2rem #75530941;
+}
+
+/* Late = red */
+.late-checkbox:checked {
+  background-color: #8f2a2aff;
+  border-color: #8f2a2aff;
+}
+
+.late-checkbox:focus {
+  box-shadow: 0 0 0 0.2rem #701a1a59;
+}
+
+/* Facility Filter List */
+#facilityFilterList .facility-item {
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+#facilityFilterList .facility-item:last-child {
+  border-bottom: none;
+}
+
+#facilityFilterList .facility-item .form-check-label {
+  font-size: 0.85rem;
+  cursor: pointer;
+  width: 100%;
+  padding: 2px 0;
+}
+
+#facilityFilterList .facility-item .form-check-input:checked + .form-check-label {
+  font-weight: bold;
+  color: #004183;
+}
+
+#facilityFilterList .facility-badge {
+  font-size: 0.7rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* Facility filter scrollbar */
+#facilityFilterList::-webkit-scrollbar {
+  width: 6px;
+}
+
+#facilityFilterList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+#facilityFilterList::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+#facilityFilterList::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Remove blue background from accordion buttons */
+#eventFiltersAccordion .accordion-button:not(.collapsed) {
+  background-color: #00428318;
+  color: inherit;
+  box-shadow: none;
+}
+
+#eventFiltersAccordion .accordion-button:focus {
+  box-shadow: none;
+  border-color: rgba(0,0,0,.125);
+}
+
+#eventFiltersAccordion .accordion-button:hover {
+  background-color: #f8f9fa;
+}
+/* Mini Calendar Grid */
+.mini-calendar .calendar-days {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.mini-calendar .calendar-day {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.mini-calendar .calendar-day:hover {
+  background-color: #d3dbe4ff;
+  cursor: pointer;
+}
+
+.mini-calendar .day-header {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-calendar .calendar-day.has-events {
+  font-weight: bold;
+  color: #004183;
+  position: relative;
+}
+
+.mini-calendar .calendar-day.has-events::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background-color: #004183;
+  border-radius: 50%;
+}
+
+.mini-calendar .calendar-day.today {
+  background-color: #366eaaff;
+  color: white;
+}
+
+.mini-calendar .calendar-day.today.has-events::after {
+  background-color: white;
+}
+
+/* Mini Calendar Grid Layout */
+#miniCalendarDays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+/* Each day cell */
+#miniCalendarDays .day {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* Optional hover/active styling */
+#miniCalendarDays .day:hover {
+  background-color: #f0f0f0;
+}
+
+/* Example for active day */
+#miniCalendarDays .day.active {
+  background-color: #007bff;
+  color: white;
+}
+/* Custom Styles for Modern Look */
+.modal-xl {
+  max-width: 1000px;
+}
+
+.modal-content {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #224d9c 0%, #3e6fca 100%);
+}
+
+.card-border {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.steps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.steps::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 50px;
+  right: 50px;
+  height: 2px;
+  background: #e0e0e0;
+  z-index: 1;
+}
+
+.step {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  flex: 1;
+}
+
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f8f9fa;
+  border: 2px solid #dee2e6;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin: 0 auto 0.5rem;
+}
+
+.step.active .step-circle {
+  background: #224d9c;
+  border-color: #224d9c;
+  color: white;
+}
+
+.step-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.step.active .step-label {
+  color: #224d9c;
+  font-weight: 600;
+}
+
+.facilities-grid,
+.equipment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.form-check-input:checked {
+  background-color: #224d9c;
+  border-color: #224d9c;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+}
+
+.alert-info {
+  background-color: #e7f1ff;
+  border-color: #d0e2ff;
+  color: #084298;
+}
+
+.font-monospace {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+
+/* Event Modal Edit Mode Styles */
+#modalCalendarTitle:not([readonly]),
+#modalCalendarDescription:not([readonly]) {
+  color: #000 !important;
+  background-color: #fff !important;
+  border-color: #4272b1ff !important;
+  box-shadow: 0 0 0 0.2rem rgba(66, 114, 177, 0.25) !important;
+}
+
+/* Make sure the readonly state is properly styled */
+#modalCalendarTitle[readonly],
+#modalCalendarDescription[readonly] {
+  color: #6c757d !important;
+  background-color: #f8f9fa !important;
+  cursor: default;
+}
+
+/* Focus state for better UX */
+#modalCalendarTitle:focus,
+#modalCalendarDescription:focus {
+  color: #000 !important;
+  border-color: #4272b1ff !important;
+  box-shadow: 0 0 0 0.2rem rgba(66, 114, 177, 0.25) !important;
+  outline: 0;
+}
+/* Loading Skeleton Styles */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-text {
+  height: 12px;
+  margin-bottom: 8px;
+}
+
+.skeleton-title {
+  height: 20px;
+  margin-bottom: 16px;
+}
+
+.skeleton-button {
+  height: 32px;
+  width: 32px;
+  border-radius: 4px;
+}
+
+.skeleton-day {
+  height: 32px;
+  border-radius: 4px;
+}
+
+.skeleton-checkbox {
+  height: 16px;
+  width: 16px;
+  border-radius: 3px;
+  margin-right: 8px;
+}
+
+.skeleton-badge {
+  height: 12px;
+  width: 12px;
+  border-radius: 2px;
+  margin-right: 8px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Loading spinner for admin reservations */
+.loading-spinner {
+  display: none;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.loading-spinner.active {
+  display: block;
+}
+
+.spinner-border {
+  width: 2rem;
+  height: 2rem;
+  vertical-align: text-bottom;
+  border: 0.25em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner-border .75s linear infinite;
+}
+
+@keyframes spinner-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================= */
+/* Single Facility Availability Modal */
+/* ============================= */
+
+/* Facility Availability Modal Specific Styles */
+#singleFacilityAvailabilityModal .modal-content {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#singleFacilityAvailabilityModal .modal-header {
+  background: linear-gradient(135deg, #224d9c 0%, #3e6fca 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-bottom: none;
+}
+
+#singleFacilityAvailabilityModal .modal-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+/* Facility Info Card */
+#singleFacilityAvailabilityModal .facility-availability-info {
+  padding: 0.5rem;
+}
+
+#singleFacilityAvailabilityModal .facility-availability-info img {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+#singleFacilityAvailabilityModal .facility-availability-info img:hover {
+  transform: scale(1.02);
+}
+
+#singleFacilityAvailabilityModal #facilityAvailabilityTitle {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+#singleFacilityAvailabilityModal .facility-meta {
+  color: #6c757d;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+#singleFacilityAvailabilityModal .facility-meta div {
+  margin-bottom: 0.25rem;
+}
+
+#singleFacilityAvailabilityModal .facility-meta i {
+  width: 16px;
+  text-align: center;
+}
+
+#singleFacilityAvailabilityModal #facilityStatusBadge {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.75rem;
+  font-weight: 500;
+}
+
+#singleFacilityAvailabilityModal .btn-outline-primary {
+  border: none;
+  border-radius: 0;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.9rem;
+  color: #5d666f;
+  background-color: white;
+}
+
+#singleFacilityAvailabilityModal .btn-outline-primary:hover {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+#singleFacilityAvailabilityModal .btn-outline-primary.active {
+  background-color: #4272b1ff;
+  color: white;
+  border-color: #4272b1ff;
+}
+
+/* Form Switch */
+#singleFacilityAvailabilityModal .form-switch .form-check-input {
+  width: 2.5em;
+  height: 1.25em;
+  cursor: pointer;
+}
+
+#singleFacilityAvailabilityModal .form-switch .form-check-input:checked {
+  background-color: #4272b1ff;
+  border-color: #4272b1ff;
+}
+
+#singleFacilityAvailabilityModal .form-switch .form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(66, 114, 177, 0.25);
+}
+
+
+/* Period Title */
+#singleFacilityAvailabilityModal #availabilityPeriodTitle {
+  color: #495057;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Legend Card */
+#singleFacilityAvailabilityModal .color-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#singleFacilityAvailabilityModal .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#singleFacilityAvailabilityModal .legend-item small {
+  color: #495057;
+  font-size: 0.85rem;
+}
+
+/* Modal Footer */
+#singleFacilityAvailabilityModal .modal-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  padding: 1rem 1.5rem;
+}
+
+#singleFacilityAvailabilityModal #bookNowBtn {
+  background-color: #4272b1ff;
+  border-color: #4272b1ff;
+  color: white;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 0.5rem 1.25rem;
+  transition: all 0.2s ease;
+}
+
+#singleFacilityAvailabilityModal #bookNowBtn:hover {
+  background-color: #366eaaff;
+  border-color: #366eaaff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(66, 114, 177, 0.2);
+}
+
+/* ============================= */
+/* Availability Calendar (FullCalendar) */
+/* ============================= */
+
+/* Apply existing FullCalendar styles to the availability calendar */
+#facilityAvailabilityCalendar.fc {
+  font-family: inherit;
+}
+
+/* Toolbar */
+#facilityAvailabilityCalendar .fc-toolbar-chunk .fc-button {
+  background-color: #ffffff !important;
+  color: #6c757d !important;
+  border: none !important;
+  font-weight: 500;
+  border-radius: 6px !important;
+}
+
+#facilityAvailabilityCalendar .fc-toolbar-chunk .fc-button:hover {
+  background-color: #f8f9fa !important;
+  color: #495057 !important;
+  border: none !important;
+}
+
+#facilityAvailabilityCalendar .fc-toolbar-chunk .fc-button.fc-button-active {
+  background-color: #4272b1ff !important;
+  color: #ffffffff !important;
+  border: none !important;
+}
+
+#facilityAvailabilityCalendar .fc-today-button {
+  text-transform: capitalize !important;
+}
+
+#facilityAvailabilityCalendar .fc-toolbar-chunk .fc-button:focus,
+#facilityAvailabilityCalendar .fc-toolbar-chunk .fc-button:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Calendar Header */
+#facilityAvailabilityCalendar .fc-toolbar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057 !important;
+}
+
+/* Column Headers */
+#facilityAvailabilityCalendar .fc-col-header-cell {
+  background-color: #f8f9fa !important;
+  padding: 8px 0 !important;
+}
+
+#facilityAvailabilityCalendar .fc-col-header-cell-cushion {
+  color: #495057 !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  font-size: 0.85rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Day Numbers */
+#facilityAvailabilityCalendar .fc-daygrid-day-number {
+  color: #495057 !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+}
+
+#facilityAvailabilityCalendar .fc-daygrid-day-number:hover {
+  color: #000 !important;
+}
+
+/* Today's Date */
+#facilityAvailabilityCalendar .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  background-color: #4272b1ff !important;
+  color: white !important;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2px;
+}
+
+#facilityAvailabilityCalendar .fc-daygrid-day.fc-day-today {
+  background-color: rgba(66, 114, 177, 0.1) !important;
+}
+
+/* Grid Lines */
+#facilityAvailabilityCalendar .fc-scrollgrid {
+  border-color: #dee2e6 !important;
+  border-width: 1px !important;
+}
+
+#facilityAvailabilityCalendar .fc-scrollgrid-section > td {
+  border-bottom: 1px solid #dee2e6 !important;
+}
+
+/* Remove inner borders */
+#facilityAvailabilityCalendar .fc-daygrid-day-frame {
+  border-bottom: none !important;
+  border-right: none !important;
+}
+
+#facilityAvailabilityCalendar .fc-daygrid-day {
+  border-bottom: none !important;
+}
+
+/* Events */
+#facilityAvailabilityCalendar .fc-event {
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 2px 4px !important;
+  font-size: 0.85rem !important;
+  cursor: pointer;
+}
+
+#facilityAvailabilityCalendar .fc-event:hover {
+  filter: brightness(95%) !important;
+}
+
+/* Week View Specific */
+#facilityAvailabilityCalendar .fc-timegrid-slot {
+  height: 2.5em !important;
+}
+
+#facilityAvailabilityCalendar .fc-timegrid-axis-cushion {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+/* Month View Specific */
+#facilityAvailabilityCalendar.fc .fc-daygrid-day-frame {
+  min-height: 100px;
+}
+
+/* Time Grid View */
+#facilityAvailabilityCalendar .fc-timegrid-col.fc-day-today {
+  background-color: rgba(66, 114, 177, 0.05) !important;
+}
+
+
+
+/* ============================= */
+/* Mini Calendar in Availability Modal */
+/* ============================= */
+
+#availabilityMiniCalendarDays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+#availabilityMiniCalendarDays .day {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: #495057;
+}
+
+#availabilityMiniCalendarDays .day:hover {
+  background-color: #f0f0f0;
+}
+
+#availabilityMiniCalendarDays .day.other-month {
+  color: #adb5bd;
+}
+
+#availabilityMiniCalendarDays .day.today {
+  background-color: #366eaaff;
+  color: white;
+  font-weight: bold;
+}
+
+#availabilityMiniCalendarDays .day.selected {
+  background-color: #4272b1ff;
+  color: white;
+  font-weight: bold;
+}
+
+#availabilityMiniCalendarDays .day.has-events {
+  position: relative;
+  font-weight: 500;
+}
+
+#availabilityMiniCalendarDays .day.has-events::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background-color: #004183;
+  border-radius: 50%;
+}
+
+#availabilityMiniCalendarDays .day.today.has-events::after {
+  background-color: white;
+}
+
+/* Mini Calendar Navigation */
+#singleFacilityAvailabilityModal .mini-calendar .prev-month,
+#singleFacilityAvailabilityModal .mini-calendar .next-month {
+  background-color: white !important;
+  border: 1px solid #dee2e6 !important;
+  color: #495057 !important;
+  border-radius: 4px !important;
+  padding: 0.25rem 0.5rem !important;
+  transition: all 0.2s ease !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#singleFacilityAvailabilityModal .mini-calendar .prev-month:hover,
+#singleFacilityAvailabilityModal .mini-calendar .next-month:hover {
+  background-color: #f8f9fa !important;
+  border-color: #adb5bd !important;
+  color: #212529 !important;
+}
+
+#singleFacilityAvailabilityModal .mini-calendar .prev-month:active,
+#singleFacilityAvailabilityModal .mini-calendar .next-month:active {
+  background-color: #e9ecef !important;
+  transform: translateY(1px);
+}
+
+#singleFacilityAvailabilityModal .mini-calendar .prev-month i,
+#singleFacilityAvailabilityModal .mini-calendar .next-month i {
+  font-size: 0.9rem !important;
+  line-height: 1 !important;
+}
+
+#singleFacilityAvailabilityModal .mini-calendar .month-year {
+  color: #495057;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Day Headers */
+#singleFacilityAvailabilityModal .mini-calendar .calendar-header {
+  margin-bottom: 8px;
+}
+
+#singleFacilityAvailabilityModal .mini-calendar .day-header {
+  color: #6c757d;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+/* ============================= */
+/* Responsive Styles */
+/* ============================= */
+
+@media (max-width: 991.98px) {
+  #singleFacilityAvailabilityModal .modal-dialog {
+    max-width: 98% !important;
+    margin: 0.5rem;
+  }
+  
+  #singleFacilityAvailabilityModal .modal-content {
+    min-height: 90vh;
+  }
+  
+  #singleFacilityAvailabilityModal .row {
+    flex-direction: column;
+  }
+  
+  #singleFacilityAvailabilityModal .col-lg-3,
+  #singleFacilityAvailabilityModal .col-lg-9 {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  #singleFacilityAvailabilityModal .scrollable-left-column {
+    max-height: 40vh;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+  }
+  
+  #facilityAvailabilityCalendar {
+    min-height: 50vh !important;
+  }
+  
+  #singleFacilityAvailabilityModal .modal-header,
+  #singleFacilityAvailabilityModal .modal-footer {
+    padding: 0.75rem 1rem;
+  }
+  
+  #singleFacilityAvailabilityModal #bookNowBtn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  #singleFacilityAvailabilityModal .btn-group {
+    flex-direction: column;
+  }
+  
+  #singleFacilityAvailabilityModal .btn-outline-primary {
+    width: 100%;
+    border-radius: 4px !important;
+    margin: 1px 0;
+  }
+}
+
+@media (min-width: 992px) {
+  #singleFacilityAvailabilityModal .scrollable-left-column {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding-right: 5px;
+  }
+}
+
+/* Touch-friendly adjustments */
+@media (max-width: 576px) {
+  #singleFacilityAvailabilityModal .modal-body {
+    padding: 0.75rem;
+  }
+  
+  #singleFacilityAvailabilityModal .fc-toolbar {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  #singleFacilityAvailabilityModal .fc-toolbar-title {
+    font-size: 1rem;
+    order: -1;
+  }
+  
+  #facilityAvailabilityCalendar .fc-event {
+    font-size: 0.75rem !important;
+    padding: 1px 2px !important;
+  }
+  
+  #singleFacilityAvailabilityModal .legend-item {
+    flex: 0 0 50%;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Loading State */
+#facilityAvailabilityCalendar.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Custom Scrollbar for Availability Modal */
+#singleFacilityAvailabilityModal .scrollable-left-column::-webkit-scrollbar {
+  width: 6px;
+}
+
+#singleFacilityAvailabilityModal .scrollable-left-column::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+#singleFacilityAvailabilityModal .scrollable-left-column::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+#singleFacilityAvailabilityModal .scrollable-left-column::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Highlight available time slots */
+#facilityAvailabilityCalendar .fc-timegrid-slot.fc-timegrid-slot-lane.fc-timegrid-slot-minor {
+  background-color: rgba(40, 167, 69, 0.05);
+}
+
+/* Highlight booked time slots */
+#facilityAvailabilityCalendar .fc-timegrid-slot.fc-timegrid-slot-lane.fc-timegrid-slot-label.fc-scrollgrid-shrink {
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+
+.facility-img-wrapper {
+  width: 100%;
+  height: 120px;        /* fixed visual size */
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.facility-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;    /* crops instead of squishing */
+  display: block;
+}
+
+.fc-more-link-custom {
+    text-decoration: none !important;
+    color: #4a4a4a !important;
+    background-color: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.fc-more-link-custom:hover {
+    background-color: #e0e0e0;
+    color: #2d2d2d !important;
+}
+
+.fc-more-link-custom a {
+    text-decoration: none !important;
+    color: inherit !important;
+}
+
+/* Remove any focus outline if needed */
+.fc-more-link-custom:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+

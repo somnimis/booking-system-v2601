@@ -1,0 +1,474 @@
+/* public/css/public/responsive-styles.css */
+
+/* ============================================
+   RESPONSIVE DESIGN SYSTEM
+   For all user-facing pages
+   Mobile-first approach
+============================================ */
+
+/* === 1. ROOT VARIABLES FOR CONSISTENCY === */
+:root {
+    /* Typography */
+    --font-size-xs: 0.75rem;    /* 12px */
+    --font-size-sm: 0.875rem;   /* 14px */
+    --font-size-base: 1rem;     /* 16px */
+    --font-size-md: 1.125rem;   /* 18px */
+    --font-size-lg: 1.25rem;    /* 20px */
+    --font-size-xl: 1.5rem;     /* 24px */
+    --font-size-2xl: 1.75rem;   /* 28px */
+    --font-size-3xl: 2rem;      /* 32px */
+    
+    /* Spacing */
+    --spacing-xs: 0.25rem;      /* 4px */
+    --spacing-sm: 0.5rem;       /* 8px */
+    --spacing-md: 1rem;         /* 16px */
+    --spacing-lg: 1.5rem;       /* 24px */
+    --spacing-xl: 2rem;         /* 32px */
+    --spacing-2xl: 3rem;        /* 48px */
+    
+    /* Breakpoints */
+    --breakpoint-xs: 320px;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+    --breakpoint-2xl: 1400px;
+    
+    /* Z-index layers */
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+}
+
+/* === 2. BASE RESPONSIVE RESETS === */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px; /* Base for rem units */
+    -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape */
+}
+
+body {
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* === 3. MOBILE-FIRST UTILITY CLASSES === */
+
+/* Responsive containers */
+.container-responsive {
+    width: 100%;
+    padding-right: var(--spacing-md);
+    padding-left: var(--spacing-md);
+    margin-right: auto;
+    margin-left: auto;
+}
+
+/* Responsive text utilities */
+.text-responsive-xs { font-size: var(--font-size-xs); }
+.text-responsive-sm { font-size: var(--font-size-sm); }
+.text-responsive-base { font-size: var(--font-size-base); }
+.text-responsive-md { font-size: var(--font-size-md); }
+.text-responsive-lg { font-size: var(--font-size-lg); }
+.text-responsive-xl { font-size: var(--font-size-xl); }
+
+/* Responsive spacing utilities */
+.mt-responsive { margin-top: var(--spacing-md); }
+.mb-responsive { margin-bottom: var(--spacing-md); }
+.p-responsive { padding: var(--spacing-md); }
+.py-responsive { padding-top: var(--spacing-md); padding-bottom: var(--spacing-md); }
+.px-responsive { padding-left: var(--spacing-md); padding-right: var(--spacing-md); }
+
+/* === 4. RESPONSIVE CARD SYSTEM === */
+.card-responsive {
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-bottom: var(--spacing-md);
+}
+
+.card-responsive-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    padding: var(--spacing-md);
+    gap: var(--spacing-sm);
+}
+
+.card-responsive-body {
+    padding: var(--spacing-md);
+}
+
+.card-responsive-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    background-color: #f8f9fa;
+    /* Reduce vertical padding, keep horizontal padding */
+    padding: 0.5rem var(--spacing-md); /* 0.5rem top/bottom, var(--spacing-md) left/right */
+}
+/* Card responsive columns */
+.card-columns-responsive {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.card-column-responsive {
+    flex: 1;
+    min-width: 300px; /* Base minimum width */
+}
+
+/* === 5. RESPONSIVE FORM CONTROLS === */
+.form-control-responsive {
+    width: 100%;
+    height: 2.75rem;
+    padding: 0.5rem 1rem;
+    font-size: var(--font-size-base);
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control-responsive:focus {
+    border-color: #041A4B;
+    box-shadow: 0 0 0 0.25rem rgba(4, 26, 75, 0.25);
+    outline: none;
+}
+
+.btn-responsive {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.5rem 1.5rem;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    line-height: 1.5;
+    border-radius: 0.25rem;
+    transition: all 0.15s ease-in-out;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid transparent;
+}
+
+.btn-responsive-primary {
+    background-color: #041A4B;
+    border-color: #041A4B;
+    color: white;
+}
+
+.btn-responsive-primary:hover {
+    background-color: #002c6b;
+    border-color: #002c6b;
+}
+
+/* === 6. RESPONSIVE STATUS BADGES === */
+.status-badge-responsive {
+    padding: 0.2em 0.8em;
+    border-radius: 0.5rem;
+    font-weight: bold;
+    font-size: var(--font-size-sm);
+    min-width: 80px;
+    text-align: center;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    letter-spacing: 0.5px;
+    /* REMOVE: color: #ffffff; - let dynamic styles handle this */
+    display: inline-block;
+    /* Add these for better rendering */
+    line-height: 1.2;
+    vertical-align: middle;
+}
+/* === 7. RESPONSIVE MEDIA QUERIES === */
+
+/* Extra small devices (phones, less than 576px) */
+@media (max-width: 575.98px) {
+    html {
+        font-size: 15px;
+    }
+    
+    .container-responsive {
+        padding-right: var(--spacing-sm);
+        padding-left: var(--spacing-sm);
+    }
+    
+    .card-responsive-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .card-columns-responsive {
+        flex-direction: column;
+    }
+    
+    .card-column-responsive {
+        min-width: 100%;
+    }
+    
+    .card-responsive-footer {
+        flex-direction: column;
+    }
+    
+    .card-responsive-footer .btn-responsive {
+        width: 100%;
+    }
+    
+    /* Touch-friendly sizes */
+    .btn-responsive,
+    .form-control-responsive {
+        min-height: 44px; /* Minimum touch target */
+    }
+    
+    .status-badge-responsive {
+        font-size: var(--font-size-xs);
+        min-width: 70px;
+        min-height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Prevent iOS zoom on input focus */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="search"],
+    input[type="password"] {
+        font-size: 16px !important;
+    }
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .container-responsive {
+        max-width: 540px;
+    }
+    
+    .card-responsive-header {
+        flex-wrap: nowrap;
+    }
+    
+    .card-column-responsive {
+        min-width: 250px;
+    }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    html {
+        font-size: 16px;
+    }
+    
+    .container-responsive {
+        max-width: 720px;
+    }
+    
+    .card-column-responsive {
+        min-width: 280px;
+    }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .container-responsive {
+        max-width: 960px;
+    }
+    
+    .card-column-responsive {
+        min-width: 300px;
+    }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    .container-responsive {
+        max-width: 1140px;
+    }
+    
+    .card-column-responsive {
+        min-width: 320px;
+    }
+}
+
+/* === 8. TOUCH DEVICE OPTIMIZATIONS === */
+@media (hover: none) and (pointer: coarse) {
+    .touch-target {
+        min-height: 44px;
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-responsive:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+    
+    .card-responsive {
+        cursor: pointer;
+    }
+    
+    .card-responsive:active {
+        transform: translateY(2px);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+}
+
+/* === 9. PRINT STYLES === */
+@media print {
+    .container-responsive {
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+    
+    .card-responsive {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    .btn-responsive,
+    .card-responsive-footer {
+        display: none !important;
+    }
+}
+
+/* === 10. DARK MODE SUPPORT === 
+@media (prefers-color-scheme: dark) {
+    .card-responsive {
+        background-color: #2d2d2d;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+    
+    .card-responsive-header,
+    .card-responsive-footer {
+        background-color: #252525;
+        border-color: #404040;
+    }
+    
+    .form-control-responsive {
+        background-color: #2d2d2d;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+    
+    .form-control-responsive::placeholder {
+        color: #888;
+    }
+    
+    .form-control-responsive:focus {
+        border-color: #4dabf7;
+        box-shadow: 0 0 0 0.25rem rgba(77, 171, 247, 0.25);
+    }
+
+    .status-badge-responsive {
+        /* Let your dynamic JavaScript colors handle the background */
+        /* Only ensure text is readable */
+      /* font-weight: 600;
+  /* }
+ }
+
+*/
+
+
+
+/* === 11. ACCESSIBILITY ENHANCEMENTS === */
+
+/* Focus styles for keyboard navigation */
+*:focus-visible {
+    outline: 2px solid #041A4B;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .card-responsive {
+        border: 2px solid #000;
+    }
+    
+    .status-badge-responsive {
+        border: 2px solid #000;
+    }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    .card-responsive,
+    .btn-responsive {
+        transition: none !important;
+    }
+}
+
+/* === 12. UTILITY CLASSES FOR SPECIFIC BREAKPOINTS === */
+
+/* Hide/show utilities */
+.hidden-xs { display: none; }
+.visible-xs { display: block; }
+
+@media (min-width: 576px) {
+    .hidden-sm { display: none; }
+    .visible-sm { display: block; }
+}
+
+@media (min-width: 768px) {
+    .hidden-md { display: none; }
+    .visible-md { display: block; }
+}
+
+@media (min-width: 992px) {
+    .hidden-lg { display: none; }
+    .visible-lg { display: block; }
+}
+
+@media (min-width: 1200px) {
+    .hidden-xl { display: none; }
+    .visible-xl { display: block; }
+}
+
+/* Spacing utilities for different screens */
+@media (max-width: 767.98px) {
+    .mt-mobile { margin-top: var(--spacing-md); }
+    .mb-mobile { margin-bottom: var(--spacing-md); }
+    .p-mobile { padding: var(--spacing-md); }
+}
+
+@media (min-width: 768px) {
+    .mt-tablet { margin-top: var(--spacing-lg); }
+    .mb-tablet { margin-bottom: var(--spacing-lg); }
+    .p-tablet { padding: var(--spacing-lg); }
+}
+
+@media (min-width: 992px) {
+    .mt-desktop { margin-top: var(--spacing-xl); }
+    .mb-desktop { margin-bottom: var(--spacing-xl); }
+    .p-desktop { padding: var(--spacing-xl); }
+}
