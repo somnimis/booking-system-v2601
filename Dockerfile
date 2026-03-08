@@ -29,8 +29,10 @@ COPY . .
 RUN mkdir -p /opt/render/project/src/ssl
 COPY ssl/ca.pem /opt/render/project/src/ssl/ca.pem
 
-# Optimized Apache configuration
-RUN sed -i '/<\/VirtualHost>/i \
+RUN sed -i 's#/var/www/html#/var/www/html/public#g' /etc/apache2/sites-available/000-default.conf
+
+# Optimized Apache configuration - FIXED
+RUN sed -i '/:80>/a \
 <Directory /var/www/html/public>\
     Options -Indexes +FollowSymLinks\
     AllowOverride None\
