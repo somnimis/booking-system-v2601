@@ -20,317 +20,323 @@
     rel="stylesheet" />
   <style>
     /* Mobile Responsive Styles */
-@media (max-width: 768px) {
-  /* Stack columns vertically */
-  .row {
-    flex-direction: column;
-  }
-  
-  .col-md-6 {
-    flex: 0 0 100%;
-    max-width: 100%;
-    width: 100%;
-  }
-  
-  /* Adjust form-section-card heights for mobile */
-  .form-section-card {
-    height: auto !important;
-    min-height: 300px;
-    margin-bottom: 15px;
-    padding: 15px;
-  }
-  
-  /* Make the requested items container stack properly */
-  #step1 .col-md-6 {
-    margin-bottom: 15px;
-  }
-  
-  /* Ensure the booking schedule section doesn't have fixed height */
-  #step1 .col-md-6 .form-section-card {
-    height: auto !important;
-    min-height: auto;
-  }
-  
-  /* Adjust form inputs for better mobile experience */
-  .form-control,
-  .form-select {
-    font-size: 16px; /* Prevents zoom on iOS */
-    padding: 10px;
-  }
-  
-  /* Stack form elements vertically */
-  .row .col-md-3,
-  .row .col-md-4,
-  .row .col-md-6,
-  .row .col-md-12 {
-    width: 100%;
-    margin-bottom: 10px;
-  }
-  
-  /* Adjust the checkboxes container */
-  .border.rounded.p-3 .row {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-  
-  .border.rounded.p-3 .col-md-6 {
-    flex: 0 0 50%;
-    max-width: 50%;
-  }
-  
-  /* Navigation buttons */
-  .navigation-buttons {
-    padding: 10px;
-    margin-top: 10px;
-  }
-  
-  .navigation-buttons .btn {
-    padding: 8px 16px;
-    font-size: 14px;
-  }
-  
-  /* Conflict modal adjustments */
-  #conflictModal .modal-dialog {
-    margin: 10px;
-  }
-  
-  /* Terms modal adjustments */
-  #termsModal .modal-dialog {
-    margin: 10px;
-  }
-  
-  .terms-content {
-    max-height: 60vh !important;
-    padding: 0 10px;
-  }
-  
-  /* Success modal */
-  #successModal .modal-dialog {
-    margin: 10px;
-  }
-  
-  /* Header adjustments */
-  .top-header-bar .container {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .cpu-brand {
-    margin-bottom: 10px;
-    justify-content: center;
-  }
-  
-  .admin-login {
-    margin-bottom: 10px;
-  }
-  
-  /* Navbar adjustments */
-  .navbar-nav {
-    margin-top: 10px;
-  }
-  
-  .navbar .d-flex {
-    margin-top: 10px;
-    justify-content: center;
-  }
-  
-  /* File upload button */
-  .position-relative {
-    margin-bottom: 15px;
-  }
-  
-  /* Summary section adjustments */
-  #step3 .col-md-6 {
-    margin-bottom: 20px;
-  }
-  
-  /* Footer adjustments */
-  .footer-container {
-    padding: 15px 0;
-  }
-  
-  /* Tooltip adjustments */
-  .custom-tooltip .tooltip-inner {
-    max-width: 250px;
-    font-size: 12px;
-    padding: 8px;
-  }
-  
-  /* Calendar and availability section */
-  .d-flex.justify-content-start.gap-2 {
-    flex-wrap: wrap;
-  }
-  
-  .d-flex.justify-content-start.gap-2 .btn {
-    width: 100%;
-    margin-bottom: 5px;
-  }
-  
-  /* Selected items container */
-  .selected-item-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .selected-item-image {
-    width: 100%;
-    height: auto;
-    max-height: 150px;
-    margin-bottom: 10px;
-  }
-  
-  .selected-item-image img {
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-  }
-  
-  .delete-item-btn {
-    align-self: flex-end;
-    margin-top: 10px;
-  }
-  
-  /* Extra services checkboxes */
-  .form-check {
-    padding-left: 1.8rem;
-  }
-  
-  .form-check-input {
-    width: 1.2em;
-    height: 1.2em;
-    margin-top: 0.2em;
-  }
-  
-  /* Adjust text sizes for mobile */
-  h5 {
-    font-size: 1.1rem;
-  }
-  
-  .text-muted {
-    font-size: 0.85rem;
-  }
-  
-  /* Make buttons more tappable */
-  .btn {
-    padding: 10px 16px;
-    min-height: 44px; /* Apple's recommended minimum touch target size */
-  }
-  
-  .btn-sm {
-    min-height: 38px;
-  }
-  
-  /* Improve spacing */
-  .main-content {
-    padding-top: 10px;
-    padding-bottom: 10px;
-  }
-  
-  .mb-2, .my-2 {
-    margin-bottom: 12px !important;
-  }
-  
-  .gap-2 {
-    gap: 10px !important;
-  }
-  
-  /* Make sure the How to book? section doesn't overflow */
-  .how-to-book {
-    white-space: normal;
-    text-align: center;
-    margin-right: 0 !important;
-    margin-bottom: 5px;
-  }
-  
-  /* Adjust the navbar toggler position */
-  .navbar-toggler {
-    margin: 0 auto;
-  }
-}
+    @media (max-width: 768px) {
 
-/* Extra small devices (phones, 480px and down) */
-@media (max-width: 480px) {
-  /* Further adjustments for very small screens */
-  .form-section-card {
-    padding: 12px;
-  }
-  
-  .border.rounded.p-3 .col-md-6 {
-    flex: 0 0 100%;
-    max-width: 100%;
-  }
-  
-  .summary-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .summary-item strong {
-    margin-bottom: 3px;
-  }
-  
-  .modal-header {
-    padding: 10px;
-  }
-  
-  .modal-title {
-    font-size: 1rem;
-  }
-  
-  .modal-body {
-    padding: 15px;
-  }
-  
-  /* Adjust font sizes */
-  body {
-    font-size: 14px;
-  }
-  
-  h5 {
-    font-size: 1rem;
-  }
-  
-  .form-label {
-    font-size: 0.9rem;
-    margin-bottom: 4px;
-  }
-  
-  /* Stack date and time inputs */
-  .row .col-md-6 {
-    width: 100%;
-  }
-  
-  /* Improve touch targets */
-  .form-check-label {
-    padding-left: 5px;
-  }
-  
-  /* Make the toggle button more accessible */
-  #toggleReservationBtn {
-    padding: 8px 12px;
-  }
-  
-  /* Adjust the navigation buttons */
-  .navigation-buttons {
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .navigation-buttons .btn {
-    width: 100%;
-  }
-}
+      /* Stack columns vertically */
+      .row {
+        flex-direction: column;
+      }
 
-/* Ensure proper stacking for all cards */
-@media (max-width: 992px) {
-  .form-section-card {
-    margin-bottom: 20px;
-  }
-  
-  #step2 .col-md-6 {
-    margin-bottom: 20px;
-  }
-}
+      .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        width: 100%;
+      }
+
+      /* Adjust form-section-card heights for mobile */
+      .form-section-card {
+        height: auto !important;
+        min-height: 300px;
+        margin-bottom: 15px;
+        padding: 15px;
+      }
+
+      /* Make the requested items container stack properly */
+      #step1 .col-md-6 {
+        margin-bottom: 15px;
+      }
+
+      /* Ensure the booking schedule section doesn't have fixed height */
+      #step1 .col-md-6 .form-section-card {
+        height: auto !important;
+        min-height: auto;
+      }
+
+      /* Adjust form inputs for better mobile experience */
+      .form-control,
+      .form-select {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+        padding: 10px;
+      }
+
+      /* Stack form elements vertically */
+      .row .col-md-3,
+      .row .col-md-4,
+      .row .col-md-6,
+      .row .col-md-12 {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+
+      /* Adjust the checkboxes container */
+      .border.rounded.p-3 .row {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .border.rounded.p-3 .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+      }
+
+      /* Navigation buttons */
+      .navigation-buttons {
+        padding: 10px;
+        margin-top: 10px;
+      }
+
+      .navigation-buttons .btn {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+
+      /* Conflict modal adjustments */
+      #conflictModal .modal-dialog {
+        margin: 10px;
+      }
+
+      /* Terms modal adjustments */
+      #termsModal .modal-dialog {
+        margin: 10px;
+      }
+
+      .terms-content {
+        max-height: 60vh !important;
+        padding: 0 10px;
+      }
+
+      /* Success modal */
+      #successModal .modal-dialog {
+        margin: 10px;
+      }
+
+      /* Header adjustments */
+      .top-header-bar .container {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .cpu-brand {
+        margin-bottom: 10px;
+        justify-content: center;
+      }
+
+      .admin-login {
+        margin-bottom: 10px;
+      }
+
+      /* Navbar adjustments */
+      .navbar-nav {
+        margin-top: 10px;
+      }
+
+      .navbar .d-flex {
+        margin-top: 10px;
+        justify-content: center;
+      }
+
+      /* File upload button */
+      .position-relative {
+        margin-bottom: 15px;
+      }
+
+      /* Summary section adjustments */
+      #step3 .col-md-6 {
+        margin-bottom: 20px;
+      }
+
+      /* Footer adjustments */
+      .footer-container {
+        padding: 15px 0;
+      }
+
+      /* Tooltip adjustments */
+      .custom-tooltip .tooltip-inner {
+        max-width: 250px;
+        font-size: 12px;
+        padding: 8px;
+      }
+
+      /* Calendar and availability section */
+      .d-flex.justify-content-start.gap-2 {
+        flex-wrap: wrap;
+      }
+
+      .d-flex.justify-content-start.gap-2 .btn {
+        width: 100%;
+        margin-bottom: 5px;
+      }
+
+      /* Selected items container */
+      .selected-item-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .selected-item-image {
+        width: 100%;
+        height: auto;
+        max-height: 150px;
+        margin-bottom: 10px;
+      }
+
+      .selected-item-image img {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+      }
+
+      .delete-item-btn {
+        align-self: flex-end;
+        margin-top: 10px;
+      }
+
+      /* Extra services checkboxes */
+      .form-check {
+        padding-left: 1.8rem;
+      }
+
+      .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        margin-top: 0.2em;
+      }
+
+      /* Adjust text sizes for mobile */
+      h5 {
+        font-size: 1.1rem;
+      }
+
+      .text-muted {
+        font-size: 0.85rem;
+      }
+
+      /* Make buttons more tappable */
+      .btn {
+        padding: 10px 16px;
+        min-height: 44px;
+        /* Apple's recommended minimum touch target size */
+      }
+
+      .btn-sm {
+        min-height: 38px;
+      }
+
+      /* Improve spacing */
+      .main-content {
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      .mb-2,
+      .my-2 {
+        margin-bottom: 12px !important;
+      }
+
+      .gap-2 {
+        gap: 10px !important;
+      }
+
+      /* Make sure the How to book? section doesn't overflow */
+      .how-to-book {
+        white-space: normal;
+        text-align: center;
+        margin-right: 0 !important;
+        margin-bottom: 5px;
+      }
+
+      /* Adjust the navbar toggler position */
+      .navbar-toggler {
+        margin: 0 auto;
+      }
+    }
+
+    /* Extra small devices (phones, 480px and down) */
+    @media (max-width: 480px) {
+
+      /* Further adjustments for very small screens */
+      .form-section-card {
+        padding: 12px;
+      }
+
+      .border.rounded.p-3 .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+
+      .summary-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .summary-item strong {
+        margin-bottom: 3px;
+      }
+
+      .modal-header {
+        padding: 10px;
+      }
+
+      .modal-title {
+        font-size: 1rem;
+      }
+
+      .modal-body {
+        padding: 15px;
+      }
+
+      /* Adjust font sizes */
+      body {
+        font-size: 14px;
+      }
+
+      h5 {
+        font-size: 1rem;
+      }
+
+      .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+      }
+
+      /* Stack date and time inputs */
+      .row .col-md-6 {
+        width: 100%;
+      }
+
+      /* Improve touch targets */
+      .form-check-label {
+        padding-left: 5px;
+      }
+
+      /* Make the toggle button more accessible */
+      #toggleReservationBtn {
+        padding: 8px 12px;
+      }
+
+      /* Adjust the navigation buttons */
+      .navigation-buttons {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .navigation-buttons .btn {
+        width: 100%;
+      }
+    }
+
+    /* Ensure proper stacking for all cards */
+    @media (max-width: 992px) {
+      .form-section-card {
+        margin-bottom: 20px;
+      }
+
+      #step2 .col-md-6 {
+        margin-bottom: 20px;
+      }
+    }
+
     /* Extra Services Checkboxes */
     .form-check {
       margin-bottom: 0.5rem;
@@ -1024,26 +1030,9 @@
             <a class="nav-link {{ Request::is('home') ? 'active' : '' }}" href="{{ url('home') }}">Home</a>
           </li>
 
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {{ Request::is('facility-catalog*') ? 'active' : '' }}" href="#"
-              role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Booking Catalog
-            </a>
-            <ul class="dropdown-menu">
-              <li>
-                <a class="dropdown-item {{ Request::is('facility-catalog') ? 'active' : '' }}"
-                  href="{{ asset('facility-catalog') }}">
-                  Facility Catalog
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item {{ Request::is('equipment-catalog') ? 'active' : '' }}"
-                  href="{{ asset('equipment-catalog') }}">
-                  Equipment Catalog
-                </a>
-              </li>
-            </ul>
-
+          <li class="nav-item">
+            <a class="nav-link {{ Request::is('booking-catalog') ? 'active' : '' }}"
+              href="{{ url('booking-catalog') }}">Booking Catalog</a>
           </li>
 
           <li class="nav-item">
@@ -1169,30 +1158,27 @@
         <div class="row">
           <div class="col-md-6">
             <div class="form-section-card" style="height: 400px; overflow-y: auto;">
-
-              <!-- Requested Facilities -->
               <!-- Requested Facilities -->
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h5 class="mb-0">Requested Facilities</h5>
-                <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" type="button"
-                  onclick="navigateToCatalog('facility')">
+                <a href="{{ url('/booking-catalog') }}"
+                  class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
                   <i class="bi bi-plus"></i>
                   <span>Add item</span>
-                </button>
+                </a>
               </div>
               <div id="facilityList" class="selected-items-container mb-3">
-                <!-- Facility items will be dynamically added here -->
                 <div class="text-muted empty-message">No facilities added yet.</div>
               </div>
 
               <!-- Requested Equipment -->
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h5 class="mb-0">Requested Equipment</h5>
-                <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" type="button"
-                  onclick="navigateToCatalog('equipment')">
+                <a href="{{ url('/booking-catalog') }}"
+                  class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
                   <i class="bi bi-plus"></i>
                   <span>Add item</span>
-                </button>
+                </a>
               </div>
               <div id="equipmentList" class="selected-items-container">
                 <!-- Equipment items will be dynamically added here -->
@@ -2350,63 +2336,63 @@
     }
 
     // Add this function to your JavaScript code, preferably near other helper functions
-function adjustEndTime() {
-    const startTimeSelect = document.getElementById('startTimeField');
-    const endTimeSelect = document.getElementById('endTimeField');
-    
-    if (!startTimeSelect || !endTimeSelect) return;
-    
-    const startTime = startTimeSelect.value;
-    const endTime = endTimeSelect.value;
-    
-    // If no start time selected, do nothing
-    if (!startTime) return;
-    
-    // Get all options from end time select
-    const options = Array.from(endTimeSelect.options);
-    
-    // Find index of current start time
-    const startIndex = options.findIndex(opt => opt.value === startTime);
-    
-    // If end time is before or equal to start time, update it
-    const endIndex = options.findIndex(opt => opt.value === endTime);
-    
-    if (endIndex <= startIndex) {
+    function adjustEndTime() {
+      const startTimeSelect = document.getElementById('startTimeField');
+      const endTimeSelect = document.getElementById('endTimeField');
+
+      if (!startTimeSelect || !endTimeSelect) return;
+
+      const startTime = startTimeSelect.value;
+      const endTime = endTimeSelect.value;
+
+      // If no start time selected, do nothing
+      if (!startTime) return;
+
+      // Get all options from end time select
+      const options = Array.from(endTimeSelect.options);
+
+      // Find index of current start time
+      const startIndex = options.findIndex(opt => opt.value === startTime);
+
+      // If end time is before or equal to start time, update it
+      const endIndex = options.findIndex(opt => opt.value === endTime);
+
+      if (endIndex <= startIndex) {
         // Set end time to next available option after start time
         if (startIndex + 1 < options.length) {
-            endTimeSelect.value = options[startIndex + 1].value;
+          endTimeSelect.value = options[startIndex + 1].value;
         } else {
-            // If start time is the last option, set to the same (will be validated later)
-            endTimeSelect.value = startTime;
+          // If start time is the last option, set to the same (will be validated later)
+          endTimeSelect.value = startTime;
         }
+      }
     }
-}
 
-function updateEndTimeOptions() {
-    const startTimeSelect = document.getElementById('startTimeField');
-    const endTimeSelect = document.getElementById('endTimeField');
-    
-    if (!startTimeSelect || !endTimeSelect) return;
-    
-    const startTime = startTimeSelect.value;
-    if (!startTime) return;
-    
-    const options = Array.from(endTimeSelect.options);
-    const startIndex = options.findIndex(opt => opt.value === startTime);
-    
-    // Enable/disable options based on start time
-    options.forEach((option, index) => {
+    function updateEndTimeOptions() {
+      const startTimeSelect = document.getElementById('startTimeField');
+      const endTimeSelect = document.getElementById('endTimeField');
+
+      if (!startTimeSelect || !endTimeSelect) return;
+
+      const startTime = startTimeSelect.value;
+      if (!startTime) return;
+
+      const options = Array.from(endTimeSelect.options);
+      const startIndex = options.findIndex(opt => opt.value === startTime);
+
+      // Enable/disable options based on start time
+      options.forEach((option, index) => {
         option.disabled = index <= startIndex;
-    });
-    
-    // If current end time is now disabled, update it
-    if (endTimeSelect.selectedOptions[0]?.disabled) {
+      });
+
+      // If current end time is now disabled, update it
+      if (endTimeSelect.selectedOptions[0]?.disabled) {
         const firstValidOption = options.find(opt => !opt.disabled);
         if (firstValidOption) {
-            endTimeSelect.value = firstValidOption.value;
+          endTimeSelect.value = firstValidOption.value;
         }
+      }
     }
-}
 
 
     window.convertTo24Hour = function (time12h) {
@@ -2431,9 +2417,9 @@ function updateEndTimeOptions() {
       return time12h;
     };
 
-    
 
-    
+
+
 
     // ========== FORM SUMMARY FUNCTIONS ==========
     function populateFormSummary() {
@@ -2475,75 +2461,75 @@ function updateEndTimeOptions() {
         document.getElementById('summary-services').textContent = 'None';
       }
 
-// Reservation Details
-const purposeSelect = document.getElementById('activityPurposeField');
-const purposeText = purposeSelect.options[purposeSelect.selectedIndex]?.text || 'Not specified';
-const startDate = document.getElementById('startDateField').value;
-const endDate = document.getElementById('endDateField').value;
-const startTime = document.getElementById('startTimeField').value;
-const endTime = document.getElementById('endTimeField').value;
-const allDayCheckbox = document.getElementById('allDayField');
-const isAllDay = allDayCheckbox ? allDayCheckbox.checked : false;
-const numParticipants = document.querySelector('input[name="num_participants"]');
-const numChairs = document.querySelector('input[name="num_chairs"]');
-const numTables = document.querySelector('input[name="num_tables"]');
-const numMicrophones = document.querySelector('input[name="num_microphones"]');
-const endorser = document.querySelector('input[name="endorser"]');
-const dateEndorsed = document.querySelector('input[name="date_endorsed"]');
-const additionalRequests = document.querySelector('textarea[name="additional_requests"]');
+      // Reservation Details
+      const purposeSelect = document.getElementById('activityPurposeField');
+      const purposeText = purposeSelect.options[purposeSelect.selectedIndex]?.text || 'Not specified';
+      const startDate = document.getElementById('startDateField').value;
+      const endDate = document.getElementById('endDateField').value;
+      const startTime = document.getElementById('startTimeField').value;
+      const endTime = document.getElementById('endTimeField').value;
+      const allDayCheckbox = document.getElementById('allDayField');
+      const isAllDay = allDayCheckbox ? allDayCheckbox.checked : false;
+      const numParticipants = document.querySelector('input[name="num_participants"]');
+      const numChairs = document.querySelector('input[name="num_chairs"]');
+      const numTables = document.querySelector('input[name="num_tables"]');
+      const numMicrophones = document.querySelector('input[name="num_microphones"]');
+      const endorser = document.querySelector('input[name="endorser"]');
+      const dateEndorsed = document.querySelector('input[name="date_endorsed"]');
+      const additionalRequests = document.querySelector('textarea[name="additional_requests"]');
 
-document.getElementById('summary-purpose').textContent = purposeText;
+      document.getElementById('summary-purpose').textContent = purposeText;
 
-// Helper function to format date
-const formatDate = (dateString) => {
-    if (!dateString) return 'Not specified';
-    return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-};
+      // Helper function to format date
+      const formatDate = (dateString) => {
+        if (!dateString) return 'Not specified';
+        return new Date(dateString).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      };
 
-// Helper function to format time from 24h to 12h format
-const formatTime = (time24) => {
-    if (!time24) return '';
-    const [hours, minutes] = time24.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'pm' : 'am';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes}${ampm}`;
-};
+      // Helper function to format time from 24h to 12h format
+      const formatTime = (time24) => {
+        if (!time24) return '';
+        const [hours, minutes] = time24.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'pm' : 'am';
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${minutes}${ampm}`;
+      };
 
-// Format schedule based on all_day flag
-if (startDate) {
-    const formattedStartDate = formatDate(startDate);
-    const formattedEndDate = formatDate(endDate);
-    
-    if (isAllDay) {
-        if (startDate === endDate) {
+      // Format schedule based on all_day flag
+      if (startDate) {
+        const formattedStartDate = formatDate(startDate);
+        const formattedEndDate = formatDate(endDate);
+
+        if (isAllDay) {
+          if (startDate === endDate) {
             document.getElementById('summary-start').textContent = `${formattedStartDate} (All Day)`;
             document.getElementById('summary-end').textContent = `${formattedEndDate} (All Day)`;
+          } else {
+            document.getElementById('summary-start').textContent = `${formattedStartDate} (All Day)`;
+            document.getElementById('summary-end').textContent = `${formattedEndDate} (All Day)`;
+          }
         } else {
-            document.getElementById('summary-start').textContent = `${formattedStartDate} (All Day)`;
-            document.getElementById('summary-end').textContent = `${formattedEndDate} (All Day)`;
-        }
-    } else {
-        if (startDate === endDate) {
+          if (startDate === endDate) {
             const formattedStartTime = formatTime(convertTo24Hour(startTime));
             const formattedEndTime = formatTime(convertTo24Hour(endTime));
             document.getElementById('summary-start').textContent = `${formattedStartDate}, ${formattedStartTime}`;
             document.getElementById('summary-end').textContent = `${formattedEndDate}, ${formattedEndTime}`;
-        } else {
+          } else {
             const formattedStartTime = formatTime(convertTo24Hour(startTime));
             const formattedEndTime = formatTime(convertTo24Hour(endTime));
             document.getElementById('summary-start').textContent = `${formattedStartDate}, ${formattedStartTime}`;
             document.getElementById('summary-end').textContent = `${formattedEndDate}, ${formattedEndTime}`;
+          }
         }
-    }
-} else {
-    document.getElementById('summary-start').textContent = 'Not specified';
-    document.getElementById('summary-end').textContent = 'Not specified';
-}
+      } else {
+        document.getElementById('summary-start').textContent = 'Not specified';
+        document.getElementById('summary-end').textContent = 'Not specified';
+      }
 
 
       document.getElementById('summary-participants').textContent = numParticipants.value || '0';
@@ -2709,17 +2695,17 @@ if (startDate) {
       });
 
       console.log('Form validation initialized successfully');
-      
 
-            // Add this to initialize form items
+
+      // Add this to initialize form items
       initForm();
 
-              const startTimeSelect = document.getElementById('startTimeField');
-    if (startTimeSelect) {
+      const startTimeSelect = document.getElementById('startTimeField');
+      if (startTimeSelect) {
         startTimeSelect.addEventListener('change', updateEndTimeOptions);
         // Initial call
         setTimeout(updateEndTimeOptions, 100);
-    }
+      }
 
 
       // Set up schedule field change listeners for fee calculation
@@ -2738,18 +2724,6 @@ if (startDate) {
 
 
     });
-    // ========== CATALOG NAVIGATION ==========
-    function navigateToCatalog(type) {
-      const formData = new FormData(document.getElementById('reservationForm'));
-      const formObject = Object.fromEntries(formData.entries());
-      sessionStorage.setItem('reservationFormData', JSON.stringify(formObject));
-
-      if (type === 'facility') {
-        window.location.href = '{{ asset("facility-catalog") }}';
-      } else {
-        window.location.href = '{{ asset("equipment-catalog") }}';
-      }
-    }
 
     // ========== AVAILABILITY CHECK ==========
     window.checkAvailability = async function () {
@@ -3964,53 +3938,53 @@ if (startDate) {
           termsModalInstance.hide();
         }
 
-// Format dates in a readable way
-const startDateObj = new Date(formData.start_date + 'T12:00:00'); // Add T to avoid timezone issues
-const endDateObj = new Date(formData.end_date + 'T12:00:00');
+        // Format dates in a readable way
+        const startDateObj = new Date(formData.start_date + 'T12:00:00'); // Add T to avoid timezone issues
+        const endDateObj = new Date(formData.end_date + 'T12:00:00');
 
-const formattedStartDate = startDateObj.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-});
+        const formattedStartDate = startDateObj.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
 
-const formattedEndDate = endDateObj.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-});
+        const formattedEndDate = endDateObj.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
 
-let scheduleText = '';
+        let scheduleText = '';
 
-if (isAllDay) {
-    if (formData.start_date === formData.end_date) {
-        scheduleText = `${formattedStartDate} (All Day)`;
-    } else {
-        scheduleText = `${formattedStartDate} - ${formattedEndDate} (All Day)`;
-    }
-} else {
-    // Format times from 24h to 12h format
-    const formatTimeForDisplay = (time24) => {
-        if (!time24) return '';
-        const [hours, minutes] = time24.split(':');
-        const hour = parseInt(hours);
-        const ampm = hour >= 12 ? 'pm' : 'am';
-        const hour12 = hour % 12 || 12;
-        return `${hour12}:${minutes}${ampm}`;
-    };
-    
-    const startTimeFormatted = formatTimeForDisplay(formData.start_time);
-    const endTimeFormatted = formatTimeForDisplay(formData.end_time);
-    
-    if (formData.start_date === formData.end_date) {
-        scheduleText = `${formattedStartDate}, ${startTimeFormatted} - ${endTimeFormatted}`;
-    } else {
-        scheduleText = `${formattedStartDate}, ${startTimeFormatted} - ${formattedEndDate}, ${endTimeFormatted}`;
-    }
-}
+        if (isAllDay) {
+          if (formData.start_date === formData.end_date) {
+            scheduleText = `${formattedStartDate} (All Day)`;
+          } else {
+            scheduleText = `${formattedStartDate} - ${formattedEndDate} (All Day)`;
+          }
+        } else {
+          // Format times from 24h to 12h format
+          const formatTimeForDisplay = (time24) => {
+            if (!time24) return '';
+            const [hours, minutes] = time24.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'pm' : 'am';
+            const hour12 = hour % 12 || 12;
+            return `${hour12}:${minutes}${ampm}`;
+          };
 
-// Show success details with formatted schedule
-document.getElementById('successDetails').innerHTML = `
+          const startTimeFormatted = formatTimeForDisplay(formData.start_time);
+          const endTimeFormatted = formatTimeForDisplay(formData.end_time);
+
+          if (formData.start_date === formData.end_date) {
+            scheduleText = `${formattedStartDate}, ${startTimeFormatted} - ${endTimeFormatted}`;
+          } else {
+            scheduleText = `${formattedStartDate}, ${startTimeFormatted} - ${formattedEndDate}, ${endTimeFormatted}`;
+          }
+        }
+
+        // Show success details with formatted schedule
+        document.getElementById('successDetails').innerHTML = `
     <div class="text-start mt-2">
         <p class="mb-1"><strong>Request ID:</strong> ${result.data.request_id}</p>
         <p class="mb-1"><strong>Access Code:</strong> <span class="badge bg-primary">${result.data.access_code}</span></p>
