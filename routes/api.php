@@ -29,6 +29,7 @@ use App\Http\Controllers\Dropdowns\RequisitionPurposeController;
 use App\Http\Controllers\CalendarEventsController;
 use App\Http\Controllers\ExtraServicesController;
 use App\Http\Controllers\ReservationListingsController;
+use App\Http\Controllers\EquipmentTransactionController;
 use Illuminate\Support\Facades\Log;
 
 // ==================== PUBLIC ROUTES ==================== //
@@ -62,6 +63,8 @@ Route::post('/login', function (Request $request) {
 });
 
 Route::get('/admins/departments', [AdminController::class, 'getAdminDepartments']);
+Route::get('/facilities/dropdown', [FacilityController::class, 'getFacilitiesForDropdown']);
+
 
 // ---------------- Booking Listings ---------------- //
 Route::get('/equipment', [EquipmentController::class, 'publicIndex']);
@@ -104,7 +107,6 @@ Route::get('/facility-categories', [FacilityCategoryController::class, 'index'])
 Route::get('/facility-categories/index', [FacilityCategoryController::class, 'indexWithSubcategories']);
 Route::get('/facility-subcategories/{category}', [FacilitySubcategoryController::class, 'index']);
 Route::get('/requisition-purposes', [RequisitionPurposeController::class, 'index']);
-
 // ---------------- Extra Services ---------------- //
 Route::get('/extra-services', [ExtraServicesController::class, 'index']);
 Route::post('/extra-services', [ExtraServicesController::class, 'store']);
@@ -137,6 +139,12 @@ Route::post('/feedback', [FeedbackController::class, 'store'])->middleware(['web
 Route::post('/requester/requisition/{requestId}/cancel', [UserRequisitionController::class, 'cancelRequestPublic'])->middleware(['web']);
 Route::post('/requester/requisition/{requestId}/upload-receipt', [UserRequisitionController::class, 'uploadPaymentReceipt'])->middleware(['web']);
 
+// Equipment Tracking Routes //
+
+Route::prefix('admin')->group(function () {
+    Route::post('/equipment-transactions', [EquipmentTransactionController::class, 'store']);
+    Route::get('/equipment-transactions/ongoing', [EquipmentTransactionController::class, 'getOngoingTransactions']);
+});
 
 // ---------------- Scanner Routes ---------------- //
 Route::prefix('scanner')->group(function () {
@@ -245,6 +253,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/admin/requisition-forms', [ReservationListingsController::class, 'pendingRequests']); // not used
 
+    Route::get('/admin/active-requests', [ReservationListingsController::class, 'getAvailableForTransaction']);
     Route::get('/admin/pending-requests', [ReservationListingsController::class, 'paginatedPendingRequests']);
     Route::get('/admin/ongoing-requests', [ReservationListingsController::class, 'paginatedOngoingRequests']);
     Route::get('/admin/pending-requests-count', [ReservationListingsController::class, 'getPendingCount']);

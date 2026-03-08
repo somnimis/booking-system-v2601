@@ -11,6 +11,8 @@ class AdminRoleSeeder extends Seeder
 // Dashboard, Inventories, and Transactions Section are always visible for all roles. 
 // For the Management section, filter navlinks based on role based on this seeder:
 
+// admin_table (Eloquent model with relations: Admin) (Primary key: admin_id)
+
     public function run(): void
     {
         DB::table('admin_roles')->insert([

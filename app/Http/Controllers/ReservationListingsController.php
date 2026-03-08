@@ -461,6 +461,60 @@ public function paginatedPendingRequests(Request $request)
     }
 }
 
+public function getAvailableForTransaction()
+{
+    // Status IDs that are eligible for equipment release
+    // Adjust these based on your actual status IDs
+    $eligibleStatusIds = [
+        3, // Scheduled/Awaiting Payment? 
+        4, // Approved/Scheduled
+        5, // Ongoing
+    ];
+
+    $requisitions = RequisitionForm::whereIn('status_id', $eligibleStatusIds)
+        ->where('start_date', '>=', now()->subDays(7)) // Only recent and upcoming
+        ->with([
+            'purpose',
+            'requestedEquipment.equipment'
+        ])
+        ->select([
+            'request_id',
+            'first_name',
+            'last_name',
+            'organization_name',
+            'start_date',
+            'end_date',
+            'status_id'
+        ])
+        ->orderBy('start_date', 'asc')
+        ->limit(50) // Limit to prevent huge dropdowns
+        ->get();
+
+    $formatted = $requisitions->map(function ($req) {
+        $requester = $req->organization_name 
+            ? $req->organization_name 
+            : trim($req->first_name . ' ' . $req->last_name);
+        
+        // Get equipment count for display
+        $equipmentCount = $req->requestedEquipment->count();
+        
+        return [
+            'request_id' => $req->request_id,
+            'label' => "R-{$req->request_id} - {$requester} (" . 
+                      date('M d', strtotime($req->start_date)) . " - " . 
+                      date('M d', strtotime($req->end_date)) . ")" .
+                      ($equipmentCount ? " [{$equipmentCount} items]" : ""),
+            'start_date' => $req->start_date,
+            'end_date' => $req->end_date
+        ];
+    });
+
+    return response()->json([
+        'success' => true,
+        'data' => $formatted
+    ]);
+}
+
     public function getRequisitionFormById($requestId)
     {
         try {

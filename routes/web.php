@@ -58,9 +58,9 @@ Route::middleware('web')->group(function () {
     | Authentication Routes
     |--------------------------------------------------------------------------
     */
-Route::get('/login', function () {
-    return view('admin.admin-login');  // Point to your actual admin login file
-})->name('login');
+    Route::get('/login', function () {
+        return view('admin.admin-login');  // Point to your actual admin login file
+    })->name('login');
 
     /*
     |--------------------------------------------------------------------------
@@ -98,12 +98,15 @@ Route::get('/login', function () {
     Route::get('/admin-roles', [AdminController::class, 'adminRoles'])->name('admin.roles');
 
     // Calendar
-     Route::view('/admin/reservations', 'admin.reservations');
+    Route::view('/admin/reservations', 'admin.reservations');
     Route::view('/admin/calendar', 'admin.calendar');
-        Route::view('/admin/reservations', 'admin.reservations');
+    Route::view('/admin/reservations', 'admin.reservations');
 
     // Pending Requests
     Route::view('/admin/pending-requests', 'admin.pending-requests');
+
+    // Asset Tracking
+    Route::view('/admin/asset-tracking', 'admin.asset-tracking');
 
     // Test calendar event new version
     Route::view('/admin/calendarv2', 'admin.admin-calendar');
@@ -143,7 +146,7 @@ Route::get('/test-email', function () {
 
     Mail::raw('This is a test email from Laravel SMTP.', function ($message) {
         $message->to('yourtestemail@gmail.com')
-                ->subject('Laravel SMTP Test');
+            ->subject('Laravel SMTP Test');
     });
 
     return 'Email sent (check inbox or spam).';
