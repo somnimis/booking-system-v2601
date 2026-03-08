@@ -30,4 +30,3 @@ Thumbs.db
 /storage/framework/views/*
 /bootstrap/cache/*.php
 *.log
-/storage
