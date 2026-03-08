@@ -29,8 +29,16 @@ use App\Http\Controllers\Dropdowns\RequisitionPurposeController;
 use App\Http\Controllers\CalendarEventsController;
 use App\Http\Controllers\ExtraServicesController;
 use App\Http\Controllers\ReservationListingsController;
+use Illuminate\Support\Facades\Log;
 
 // ==================== PUBLIC ROUTES ==================== //
+
+Route::post('/log-client-error', function (Request $request) {
+    // Log the JSON payload into laravel.log
+    Log::error('Client error:', $request->all());
+
+    return response()->json(['status' => 'logged']);
+});
 
 // ---------------- Authentication ---------------- //
 Route::post('/admin/login', [AdminAuthController::class, 'login'])->middleware('throttle:5,1');
@@ -104,31 +112,30 @@ Route::post('/extra-services/assign', [ExtraServicesController::class, 'assignSe
     ->middleware('auth:sanctum');
 Route::get('/admin-services/{adminId?}', [ExtraServicesController::class, 'getAdminServices']);
 Route::delete('/admin-services/{adminServiceId}', [ExtraServicesController::class, 'unassignService']);
-
-// ---------------- Requisition Forms ---------------- //
-Route::prefix('requisition')->middleware('web')->group(function () {
+// ---------------- Requisition Forms (public) ---------------- //
+Route::prefix('requisition')->middleware(['web'])->group(function () {
     Route::post('/save-request-info', [RequisitionFormController::class, 'saveRequestInfo']);
     Route::post('/add-item', [RequisitionFormController::class, 'addToForm']);
     Route::post('/remove-item', [RequisitionFormController::class, 'removeFromForm']);
     Route::get('/get-items', [RequisitionFormController::class, 'getItems']);
-    Route::get('/calculate-fees', [RequisitionFormController::class, 'calculateFees']); // Note: method name may need update
+    Route::get('/calculate-fees', [RequisitionFormController::class, 'calculateFees']);
     Route::post('/check-availability', [RequisitionFormController::class, 'checkAvailability']);
     Route::post('/temp-upload', [RequisitionFormController::class, 'tempUpload']);
     Route::post('/submit', [RequisitionFormController::class, 'submitForm']);
     Route::post('/clear-session', [RequisitionFormController::class, 'clearSession']);
 });
 
-// ---------------- Requester Routes ---------------- //
-Route::prefix('requester')->group(function () {
-    // UPDATED: Use UserRequisitionController
+// ---------------- Requester Routes (public) ---------------- //
+Route::prefix('requester')->middleware(['web'])->group(function () {
     Route::get('/form/{accessCode}', [UserRequisitionController::class, 'getFormByAccessCode']);
     Route::get('/{requestId}/receipt', [AdminApprovalController::class, 'getOfficialReceipt']);
 });
 
-// ---------------- User Actions ---------------- //
-Route::post('/feedback', [FeedbackController::class, 'store']);
-Route::post('/requester/requisition/{requestId}/cancel', [UserRequisitionController::class, 'cancelRequestPublic']);
-Route::post('/requester/requisition/{requestId}/upload-receipt', [UserRequisitionController::class, 'uploadPaymentReceipt']);
+// ---------------- User Actions (public) ---------------- //
+Route::post('/feedback', [FeedbackController::class, 'store'])->middleware(['web']);
+Route::post('/requester/requisition/{requestId}/cancel', [UserRequisitionController::class, 'cancelRequestPublic'])->middleware(['web']);
+Route::post('/requester/requisition/{requestId}/upload-receipt', [UserRequisitionController::class, 'uploadPaymentReceipt'])->middleware(['web']);
+
 
 // ---------------- Scanner Routes ---------------- //
 Route::prefix('scanner')->group(function () {

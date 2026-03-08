@@ -198,3 +198,17 @@ Did you mean this?
 #5 C:/Users/ASUS/Documents/GitHub/booking-system-v2601/artisan(16): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
 #6 {main}
 "} 
+[2026-03-08 05:48:55] production.ERROR: Client error: {"error":"HTTP error! status: 422","stack":"fetchData@http://localhost:8000/booking-catalog:2057:31
+async*addToForm@http://localhost:8000/booking-catalog:2994:40
+setupEventListeners/<@http://localhost:8000/booking-catalog:3219:31
+EventListener.handleEvent*setupEventListeners@http://localhost:8000/booking-catalog:3202:35
+init@http://localhost:8000/booking-catalog:3912:13
+EventListener.handleEvent*@http://localhost:8000/booking-catalog:3933:18","context":{"action":"addToForm","id":"5","type":"facility","quantity":1,"url":"http://localhost:8000/booking-catalog"},"timestamp":"2026-03-08T05:48:55.099Z"} 
+[2026-03-08 05:50:45] local.ERROR: Client error: {"error":"HTTP error! status: 422","stack":"fetchData@http://localhost:8000/booking-catalog:2057:31
+async*addToForm@http://localhost:8000/booking-catalog:2994:40
+setupEventListeners/<@http://localhost:8000/booking-catalog:3219:31
+EventListener.handleEvent*setupEventListeners@http://localhost:8000/booking-catalog:3202:35
+init@http://localhost:8000/booking-catalog:3912:13
+EventListener.handleEvent*@http://localhost:8000/booking-catalog:3933:18","context":{"action":"addToForm","id":"5","type":"facility","quantity":1,"url":"http://localhost:8000/booking-catalog"},"timestamp":"2026-03-08T05:50:44.909Z"} 
+[2026-03-08 05:53:22] local.WARNING: ⚠ TEST MODE: Skipped 7 admin(s). In production, these would also receive notifications.  
+[2026-03-08 06:03:33] local.WARNING: ⚠ TEST MODE: Skipped 8 admin(s). In production, these would also receive notifications.  

@@ -15,30 +15,35 @@ class VerifyCsrfToken extends Middleware
     // Add your API routes here to bypass CSRF for local testing
     // Example: 'api/requisition/add-item',
     protected $except = [
+        'requisition/*',
+        'requester/*',
+        'feedback',
+        'requester/requisition/*/cancel',
+        'requester/requisition/*/upload-receipt',
 
-            // Requisition form
-            'requisition/add-item',
-            'requisition/remove-item',
-            'requisition/temp-upload',
-            'requisition/submit',
-        
-            // Admin image uploads
-            'admin/facilities/*/images',
-            'admin/facilities/*/images/bulk',
-            'admin/facilities/*/images/reorder',
-            'admin/facilities/*/images/*', // DELETE still uses POST via JS sometimes
-            'admin/equipment/*/images/upload',
-            'admin/equipment/*/images/bulk-upload',
-            'admin/equipment/*/images/reorder',
-            'admin/equipment/*/images/*',
-        
-            // Misc image uploads
-            'equipment/*/upload-image',
-            'equipment/*/upload-images',
-        
-            // Authentication
-            'admin/login',
-            'login',
-            'admin/logout',
-        ];
+        // Requisition form
+        'requisition/add-item',
+        'requisition/remove-item',
+        'requisition/temp-upload',
+        'requisition/submit',
+
+        // Admin image uploads
+        'admin/facilities/*/images',
+        'admin/facilities/*/images/bulk',
+        'admin/facilities/*/images/reorder',
+        'admin/facilities/*/images/*', // DELETE still uses POST via JS sometimes
+        'admin/equipment/*/images/upload',
+        'admin/equipment/*/images/bulk-upload',
+        'admin/equipment/*/images/reorder',
+        'admin/equipment/*/images/*',
+
+        // Misc image uploads
+        'equipment/*/upload-image',
+        'equipment/*/upload-images',
+
+        // Authentication
+        'admin/login',
+        'login',
+        'admin/logout',
+    ];
 }
