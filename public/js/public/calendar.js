@@ -770,6 +770,9 @@ displaySearchResults(results, query) {
     // Update initialize method to ensure search is set up after calendar loads
 async initialize() {
     try {
+          // Reset the first event mounted flag
+        this._firstEventMounted = false;
+    
         this.updateLoadingState(true);
 
         // Track multiple loading states
@@ -1533,778 +1536,164 @@ transformCalendarEvents(eventsData) {
     }
 
     // Initialize main calendar
-    initializeFullCalendar() {
-        const calendarEl = document.getElementById(this.config.containerId);
-        if (!calendarEl) return;
+initializeFullCalendar() {
+    const calendarEl = document.getElementById(this.config.containerId);
+    if (!calendarEl) return;
 
-        // Make sure container has proper height
-        calendarEl.style.height = "450px";
-        calendarEl.style.minHeight = "450px";
-        calendarEl.style.width = "100%";
+    // Make sure container has proper height
+    calendarEl.style.height = "450px";
+    calendarEl.style.minHeight = "450px";
+    calendarEl.style.width = "100%";
 
-        this.calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: "timeGridWeek",
-            headerToolbar: {
-                left: "prev,next today",
-                center: "title",
-                right: "dayGridMonth,timeGridWeek,timeGridDay",
-            },
-            buttonText: {
-                today: "Today",
-                month: "Month",
-                week: "Week",
-                day: "Day",
-            },
-            titleFormat: {
-                year: "numeric",
-                month: "short",
-            },
-            height: 450,
-            contentHeight: 450,
-            aspectRatio: 1.5,
-            handleWindowResize: true,
-            windowResizeDelay: 200,
-            expandRows: true,
-            events: this.filteredEvents,
+    this.calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "timeGridWeek",
+        headerToolbar: {
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay",
+        },
+        buttonText: {
+            today: "Today",
+            month: "Month",
+            week: "Week",
+            day: "Day",
+        },
+        titleFormat: {
+            year: "numeric",
+            month: "short",
+        },
+        height: 450,
+        contentHeight: 450,
+        aspectRatio: 1.5,
+        handleWindowResize: true,
+        windowResizeDelay: 200,
+        expandRows: true,
+        events: this.filteredEvents,
 
-            // Important: Enable all-day slot in week/day views
-            allDaySlot: true,
-            allDayText: "All Day",
+        // Important: Enable all-day slot in week/day views
+        allDaySlot: true,
+        allDayText: "All Day",
 
-            // Time format settings
-            eventTimeFormat: {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-                meridiem: true,
-            },
-            slotLabelFormat: {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-            },
-            dayHeaderFormat: {
-                weekday: "long",
-                month: "short",
-                day: "numeric",
-                omitCommas: false,
-            },
-            displayEventEnd: true,
+        // Time format settings
+        eventTimeFormat: {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+            meridiem: true,
+        },
+        slotLabelFormat: {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+        },
+        dayHeaderFormat: {
+            weekday: "long",
+            month: "short",
+            day: "numeric",
+            omitCommas: false,
+        },
+        displayEventEnd: true,
 
-            // Add loading callback
-            loading: (isLoading) => {
-                console.log("FullCalendar loading:", isLoading);
-                if (!isLoading) {
-                    setTimeout(() => {
-                        const hasEvents =
-                            calendarEl.querySelector(".fc-event") !== null;
-                        const hasDays =
-                            calendarEl.querySelector(".fc-daygrid-day") !==
-                            null;
+        // Add loading callback
+        loading: (isLoading) => {
+            console.log("FullCalendar loading:", isLoading);
+            if (!isLoading) {
+                // Add a small delay to ensure rendering is complete
+                setTimeout(() => {
+                    const hasEvents = calendarEl.querySelector(".fc-event") !== null;
+                    const hasDays = calendarEl.querySelector(".fc-daygrid-day") !== null;
 
-                        if (hasDays) {
-                            this.loadingStates.fullCalendarRendered = true;
-                            this.checkAllLoaded();
-                        }
-                    }, 300);
-                }
-            },
-
-            // === UPDATED: Custom event rendering ===
-            eventContent: (arg) => {
-                const arrayOfDomNodes = [];
-                const event = arg.event;
-                const eventType =
-                    event.extendedProps?.eventType || "requisition";
-                const isAllDay = event.allDay || false;
-
-                // Create container div
-                const container = document.createElement("div");
-                container.style.display = "flex";
-                container.style.flexDirection = "column";
-                container.style.gap = "2px";
-                container.style.width = "100%";
-                container.style.padding = "2px";
-
-                // Format time display based on view and event type
-                if (!isAllDay) {
-                    // For timed events - show start and end time
-                    const timeContainer = document.createElement("div");
-                    timeContainer.style.display = "flex";
-                    timeContainer.style.flexDirection = "column";
-                    timeContainer.style.gap = "1px";
-                    timeContainer.style.fontSize = "0.75em";
-                    timeContainer.style.opacity = "0.9";
-                    timeContainer.style.fontWeight = "500";
-
-                    if (event.start && event.end) {
-                        const startTime = event.start.toLocaleTimeString([], {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true,
-                        });
-
-                        const endTime = event.end.toLocaleTimeString([], {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true,
-                        });
-
-                        const timeText = document.createElement("div");
-                        timeText.innerText = `${startTime} - ${endTime}`;
-                        timeContainer.appendChild(timeText);
+                    if (hasDays) {
+                        this.loadingStates.fullCalendarRendered = true;
+                        this.checkAllLoaded();
                     }
-                    container.appendChild(timeContainer);
-                } else if (arg.view.type !== "dayGridMonth" && isAllDay) {
-                    // For all-day events in week/day views - show just the time range (7am - 8am format)
-                    const timeContainer = document.createElement("div");
-                    timeContainer.style.display = "flex";
-                    timeContainer.style.flexDirection = "column";
-                    timeContainer.style.gap = "1px";
-                    timeContainer.style.fontSize = "0.75em";
-                    timeContainer.style.opacity = "0.9";
-                    timeContainer.style.fontWeight = "500";
-
-                    // Get times from extendedProps
-                    const startTime =
-                        event.extendedProps?.start_time || "00:00:00";
-                    const endTime = event.extendedProps?.end_time || "00:00:00";
-
-                    // Format times (remove seconds)
-                    const formattedStartTime = startTime
-                        .split(":")
-                        .slice(0, 2)
-                        .join(":");
-                    const formattedEndTime = endTime
-                        .split(":")
-                        .slice(0, 2)
-                        .join(":");
-
-                    // Convert to 12-hour format
-                    const startTimeObj = new Date(
-                        `2000-01-01T${formattedStartTime}`,
-                    );
-                    const endTimeObj = new Date(
-                        `2000-01-01T${formattedEndTime}`,
-                    );
-
-                    const startTimeStr = startTimeObj.toLocaleTimeString([], {
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                    });
-
-                    const endTimeStr = endTimeObj.toLocaleTimeString([], {
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                    });
-
-                    const timeText = document.createElement("div");
-                    timeText.innerText = `${startTimeStr} - ${endTimeStr}`;
-                    timeContainer.appendChild(timeText);
-                    container.appendChild(timeContainer);
-                }
-
-                // Title container
-                const titleContainer = document.createElement("div");
-                titleContainer.style.fontSize = "0.85em";
-                titleContainer.style.fontWeight = "bold";
-                titleContainer.style.whiteSpace = "normal";
-                titleContainer.style.wordWrap = "break-word";
-                titleContainer.style.lineHeight = "1.2";
-                titleContainer.style.marginBottom = "2px";
-
-                if (event.title) {
-                    titleContainer.innerText = event.title;
-                    container.appendChild(titleContainer);
-                }
-
-                // Add requested facilities (for requisition events only)
-                if (
-                    eventType === "requisition" &&
-                    event.extendedProps?.facilities &&
-                    event.extendedProps.facilities.length > 0
-                ) {
-                    const facilities = event.extendedProps.facilities;
-                    const facilityNames = facilities.map((f) => f.name);
-
-                    const facilityContainer = document.createElement("div");
-                    facilityContainer.style.fontSize = "0.7em";
-                    facilityContainer.style.opacity = "0.8";
-                    facilityContainer.style.whiteSpace = "normal";
-                    facilityContainer.style.wordWrap = "break-word";
-                    facilityContainer.style.lineHeight = "1.2";
-
-                    // Show first facility, then add ', ...' if there are more
-                    if (facilityNames.length === 1) {
-                        facilityContainer.innerText = facilityNames[0];
-                    } else {
-                        facilityContainer.innerText = `${facilityNames[0]}, ...`;
-                    }
-
-                    container.appendChild(facilityContainer);
-                }
-
-                arrayOfDomNodes.push(container);
-                return { domNodes: arrayOfDomNodes };
-            },
-
-            // View configurations
-            views: {
-                dayGridMonth: {
-                    dayHeaderFormat: { weekday: "short" },
-                    moreLinkClick: (arg) => {
-                        const date = arg.date;
-                        this.calendar.changeView("timeGridDay", date);
-                        return false;
-                    },
-                    dayMaxEvents: 2,
-                    moreLinkText: (num) => `+${num} more`,
-                    moreLinkClassNames: ["fc-more-link-custom"],
-                    eventContent: (arg) => {
-                        const arrayOfDomNodes = [];
-                        const event = arg.event;
-                        const eventType =
-                            event.extendedProps?.eventType || "requisition";
-                        const isAllDay = event.allDay || false;
-
-                        const container = document.createElement("div");
-                        container.style.display = "flex";
-                        container.style.flexDirection = "column";
-                        container.style.gap = "1px";
-                        container.style.width = "100%";
-                        container.style.padding = "2px";
-
-                        // Show time in month view
-                        if (!isAllDay && event.start && event.end) {
-                            const timeContainer = document.createElement("div");
-                            timeContainer.style.fontSize = "0.7em";
-                            timeContainer.style.opacity = "0.8";
-                            timeContainer.style.fontWeight = "500";
-
-                            const startTime = event.start.toLocaleTimeString(
-                                [],
-                                {
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                },
-                            );
-
-                            const endTime = event.end.toLocaleTimeString([], {
-                                hour: "numeric",
-                                minute: "2-digit",
-                                hour12: true,
-                            });
-
-                            timeContainer.innerText = `${startTime} - ${endTime}`;
-                            container.appendChild(timeContainer);
-                        } else if (isAllDay) {
-                            // For all-day events in month view, show times from extendedProps
-                            const startTime =
-                                event.extendedProps?.start_time || "00:00:00";
-                            const endTime =
-                                event.extendedProps?.end_time || "00:00:00";
-
-                            if (
-                                startTime !== "00:00:00" ||
-                                endTime !== "00:00:00"
-                            ) {
-                                const timeContainer =
-                                    document.createElement("div");
-                                timeContainer.style.fontSize = "0.7em";
-                                timeContainer.style.opacity = "0.8";
-                                timeContainer.style.fontWeight = "500";
-
-                                // Format times
-                                const formattedStartTime = startTime
-                                    .split(":")
-                                    .slice(0, 2)
-                                    .join(":");
-                                const formattedEndTime = endTime
-                                    .split(":")
-                                    .slice(0, 2)
-                                    .join(":");
-
-                                const startTimeObj = new Date(
-                                    `2000-01-01T${formattedStartTime}`,
-                                );
-                                const endTimeObj = new Date(
-                                    `2000-01-01T${formattedEndTime}`,
-                                );
-
-                                const startTimeStr =
-                                    startTimeObj.toLocaleTimeString([], {
-                                        hour: "numeric",
-                                        minute: "2-digit",
-                                        hour12: true,
-                                    });
-
-                                const endTimeStr =
-                                    endTimeObj.toLocaleTimeString([], {
-                                        hour: "numeric",
-                                        minute: "2-digit",
-                                        hour12: true,
-                                    });
-
-                                timeContainer.innerText = `${startTimeStr} - ${endTimeStr}`;
-                                container.appendChild(timeContainer);
-                            }
-                        }
-
-                        // Title
-                        const titleEl = document.createElement("div");
-                        titleEl.classList.add("fc-event-title");
-                        titleEl.style.whiteSpace = "normal";
-                        titleEl.style.wordWrap = "break-word";
-                        titleEl.style.fontSize = "0.85em";
-                        titleEl.style.lineHeight = "1.2";
-                        titleEl.style.fontWeight = "600";
-
-                        if (event.title) {
-                            titleEl.innerText = event.title;
-                        }
-                        container.appendChild(titleEl);
-
-                        // Add requested facilities (for requisition events only)
-                        if (
-                            eventType === "requisition" &&
-                            event.extendedProps?.facilities &&
-                            event.extendedProps.facilities.length > 0
-                        ) {
-                            const facilities = event.extendedProps.facilities;
-                            const facilityNames = facilities.map((f) => f.name);
-
-                            const facilityContainer =
-                                document.createElement("div");
-                            facilityContainer.style.fontSize = "0.65em";
-                            facilityContainer.style.opacity = "0.7";
-                            facilityContainer.style.whiteSpace = "normal";
-                            facilityContainer.style.wordWrap = "break-word";
-                            facilityContainer.style.lineHeight = "1.2";
-                            facilityContainer.style.marginTop = "1px";
-
-                            // Show first facility, then add ', ...' if there are more
-                            if (facilityNames.length === 1) {
-                                facilityContainer.innerText = facilityNames[0];
-                            } else {
-                                facilityContainer.innerText = `${facilityNames[0]}, ...`;
-                            }
-
-                            container.appendChild(facilityContainer);
-                        }
-
-                        arrayOfDomNodes.push(container);
-                        return { domNodes: arrayOfDomNodes };
-                    },
-                },
-
-                timeGridWeek: {
-                    titleFormat: { year: "numeric", month: "short" },
-                    dayHeaderFormat: {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        omitCommas: false,
-                    },
-                    dayMaxEvents: 3,
-                    moreLinkText: (num) => `+${num}`,
-                    allDaySlot: true,
-
-                    eventContent: (arg) => {
-                        const arrayOfDomNodes = [];
-                        const event = arg.event;
-                        const eventType =
-                            event.extendedProps?.eventType || "requisition";
-                        const isAllDay = event.allDay || false;
-
-                        const container = document.createElement("div");
-                        container.style.display = "flex";
-                        container.style.flexDirection = "column";
-                        container.style.gap = "2px";
-                        container.style.width = "100%";
-                        container.style.height = "100%";
-                        container.style.padding = "2px 4px";
-                        container.style.overflow = "hidden"; // Prevent overflow
-                        container.style.textOverflow = "ellipsis";
-                        container.style.boxSizing = "border-box";
-
-                        // Show time
-                        if (!isAllDay && event.start && event.end) {
-                            const timeEl = document.createElement("div");
-                            timeEl.style.fontSize = "0.7em";
-                            timeEl.style.opacity = "0.9";
-                            timeEl.style.marginBottom = "1px";
-                            timeEl.style.fontWeight = "500";
-                            timeEl.style.whiteSpace = "nowrap";
-                            timeEl.style.overflow = "hidden";
-                            timeEl.style.textOverflow = "ellipsis";
-
-                            const startTime = event.start.toLocaleTimeString(
-                                [],
-                                {
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                },
-                            );
-
-                            const endTime = event.end.toLocaleTimeString([], {
-                                hour: "numeric",
-                                minute: "2-digit",
-                                hour12: true,
-                            });
-
-                            timeEl.innerText = `${startTime} - ${endTime}`;
-                            container.appendChild(timeEl);
-                        } else if (isAllDay) {
-                            // Show times for all-day events
-                            const startTime =
-                                event.extendedProps?.start_time || "00:00:00";
-                            const endTime =
-                                event.extendedProps?.end_time || "00:00:00";
-
-                            if (
-                                startTime !== "00:00:00" ||
-                                endTime !== "00:00:00"
-                            ) {
-                                const timeEl = document.createElement("div");
-                                timeEl.style.fontSize = "0.7em";
-                                timeEl.style.opacity = "0.9";
-                                timeEl.style.marginBottom = "1px";
-                                timeEl.style.fontWeight = "500";
-                                timeEl.style.whiteSpace = "nowrap";
-                                timeEl.style.overflow = "hidden";
-                                timeEl.style.textOverflow = "ellipsis";
-
-                                // Format times
-                                const formattedStartTime = startTime
-                                    .split(":")
-                                    .slice(0, 2)
-                                    .join(":");
-                                const formattedEndTime = endTime
-                                    .split(":")
-                                    .slice(0, 2)
-                                    .join(":");
-
-                                const startTimeObj = new Date(
-                                    `2000-01-01T${formattedStartTime}`,
-                                );
-                                const endTimeObj = new Date(
-                                    `2000-01-01T${formattedEndTime}`,
-                                );
-
-                                const startTimeStr =
-                                    startTimeObj.toLocaleTimeString([], {
-                                        hour: "numeric",
-                                        minute: "2-digit",
-                                        hour12: true,
-                                    });
-
-                                const endTimeStr =
-                                    endTimeObj.toLocaleTimeString([], {
-                                        hour: "numeric",
-                                        minute: "2-digit",
-                                        hour12: true,
-                                    });
-
-                                timeEl.innerText = `${startTimeStr} - ${endTimeStr}`;
-                                container.appendChild(timeEl);
-                            }
-                        }
-
-                        // Title
-                        const titleEl = document.createElement("div");
-                        titleEl.style.fontSize = "0.85em";
-                        titleEl.style.fontWeight = "bold";
-                        titleEl.style.whiteSpace = "nowrap"; // Prevent wrapping
-                        titleEl.style.overflow = "hidden";
-                        titleEl.style.textOverflow = "ellipsis";
-                        titleEl.style.lineHeight = "1.2";
-                        titleEl.style.flexGrow = "1";
-                        titleEl.style.width = "100%";
-
-                        if (event.title) {
-                            titleEl.innerText = event.title;
-                        }
-                        container.appendChild(titleEl);
-
-                        // Add requested facilities (for requisition events only)
-                        if (
-                            eventType === "requisition" &&
-                            event.extendedProps?.facilities &&
-                            event.extendedProps.facilities.length > 0
-                        ) {
-                            const facilities = event.extendedProps.facilities;
-                            const facilityNames = facilities.map((f) => f.name);
-
-                            const facilityContainer =
-                                document.createElement("div");
-                            facilityContainer.style.fontSize = "0.65em";
-                            facilityContainer.style.opacity = "0.7";
-                            facilityContainer.style.whiteSpace = "nowrap";
-                            facilityContainer.style.overflow = "hidden";
-                            facilityContainer.style.textOverflow = "ellipsis";
-                            facilityContainer.style.lineHeight = "1.2";
-                            facilityContainer.style.marginTop = "1px";
-                            facilityContainer.style.width = "100%";
-
-                            // Show first facility, then add ', ...' if there are more
-                            if (facilityNames.length === 1) {
-                                facilityContainer.innerText = facilityNames[0];
-                            } else {
-                                facilityContainer.innerText = `${facilityNames[0]}, ...`;
-                            }
-
-                            container.appendChild(facilityContainer);
-                        }
-
-                        arrayOfDomNodes.push(container);
-                        return { domNodes: arrayOfDomNodes };
-                    },
-                },
-
-                timeGridDay: {
-                    allDaySlot: true,
-                    eventContent: (arg) => {
-                        const arrayOfDomNodes = [];
-                        const event = arg.event;
-                        const eventType =
-                            event.extendedProps?.eventType || "requisition";
-                        const isAllDay = event.allDay || false;
-
-                        // Create container div
-                        const container = document.createElement("div");
-                        container.style.display = "flex";
-                        container.style.flexDirection = "column";
-                        container.style.gap = "2px";
-                        container.style.width = "100%";
-                        container.style.padding = "2px";
-                        container.style.overflow = "hidden"; // Prevent overflow
-                        container.style.textOverflow = "ellipsis";
-                        container.style.boxSizing = "border-box";
-
-                        // Format time display based on view and event type
-                        if (!isAllDay) {
-                            // For timed events - show start and end time
-                            const timeContainer = document.createElement("div");
-                            timeContainer.style.display = "flex";
-                            timeContainer.style.flexDirection = "column";
-                            timeContainer.style.gap = "1px";
-                            timeContainer.style.fontSize = "0.75em";
-                            timeContainer.style.opacity = "0.9";
-                            timeContainer.style.fontWeight = "500";
-                            timeContainer.style.whiteSpace = "nowrap";
-                            timeContainer.style.overflow = "hidden";
-                            timeContainer.style.textOverflow = "ellipsis";
-
-                            if (event.start && event.end) {
-                                const startTime =
-                                    event.start.toLocaleTimeString([], {
-                                        hour: "numeric",
-                                        minute: "2-digit",
-                                        hour12: true,
-                                    });
-
-                                const endTime = event.end.toLocaleTimeString(
-                                    [],
-                                    {
-                                        hour: "numeric",
-                                        minute: "2-digit",
-                                        hour12: true,
-                                    },
-                                );
-
-                                const timeText = document.createElement("div");
-                                timeText.innerText = `${startTime} - ${endTime}`;
-                                timeContainer.appendChild(timeText);
-                            }
-                            container.appendChild(timeContainer);
-                        } else if (
-                            arg.view.type !== "dayGridMonth" &&
-                            isAllDay
-                        ) {
-                            // For all-day events in week/day views - show just the time range
-                            const timeContainer = document.createElement("div");
-                            timeContainer.style.display = "flex";
-                            timeContainer.style.flexDirection = "column";
-                            timeContainer.style.gap = "1px";
-                            timeContainer.style.fontSize = "0.75em";
-                            timeContainer.style.opacity = "0.9";
-                            timeContainer.style.fontWeight = "500";
-                            timeContainer.style.whiteSpace = "nowrap";
-                            timeContainer.style.overflow = "hidden";
-                            timeContainer.style.textOverflow = "ellipsis";
-
-                            // Get times from extendedProps
-                            const startTime =
-                                event.extendedProps?.start_time || "00:00:00";
-                            const endTime =
-                                event.extendedProps?.end_time || "00:00:00";
-
-                            // Format times (remove seconds)
-                            const formattedStartTime = startTime
-                                .split(":")
-                                .slice(0, 2)
-                                .join(":");
-                            const formattedEndTime = endTime
-                                .split(":")
-                                .slice(0, 2)
-                                .join(":");
-
-                            // Convert to 12-hour format
-                            const startTimeObj = new Date(
-                                `2000-01-01T${formattedStartTime}`,
-                            );
-                            const endTimeObj = new Date(
-                                `2000-01-01T${formattedEndTime}`,
-                            );
-
-                            const startTimeStr =
-                                startTimeObj.toLocaleTimeString([], {
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                });
-
-                            const endTimeStr = endTimeObj.toLocaleTimeString(
-                                [],
-                                {
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                },
-                            );
-
-                            const timeText = document.createElement("div");
-                            timeText.innerText = `${startTimeStr} - ${endTimeStr}`;
-                            timeContainer.appendChild(timeText);
-                            container.appendChild(timeContainer);
-                        }
-
-                        // Title container
-                        const titleContainer = document.createElement("div");
-                        titleContainer.style.fontSize = "0.85em";
-                        titleContainer.style.fontWeight = "bold";
-                        titleContainer.style.whiteSpace = "nowrap";
-                        titleContainer.style.overflow = "hidden";
-                        titleContainer.style.textOverflow = "ellipsis";
-                        titleContainer.style.lineHeight = "1.2";
-                        titleContainer.style.marginBottom = "2px";
-                        titleContainer.style.width = "100%";
-
-                        if (event.title) {
-                            titleContainer.innerText = event.title;
-                            container.appendChild(titleContainer);
-                        }
-
-                        // Add requested facilities (for requisition events only)
-                        if (
-                            eventType === "requisition" &&
-                            event.extendedProps?.facilities &&
-                            event.extendedProps.facilities.length > 0
-                        ) {
-                            const facilities = event.extendedProps.facilities;
-                            const facilityNames = facilities.map((f) => f.name);
-
-                            const facilityContainer =
-                                document.createElement("div");
-                            facilityContainer.style.fontSize = "0.7em";
-                            facilityContainer.style.opacity = "0.8";
-                            facilityContainer.style.whiteSpace = "nowrap";
-                            facilityContainer.style.overflow = "hidden";
-                            facilityContainer.style.textOverflow = "ellipsis";
-                            facilityContainer.style.lineHeight = "1.2";
-                            facilityContainer.style.width = "100%";
-
-                            // Show first facility, then add ', ...' if there are more
-                            if (facilityNames.length === 1) {
-                                facilityContainer.innerText = facilityNames[0];
-                            } else {
-                                facilityContainer.innerText = `${facilityNames[0]}, ...`;
-                            }
-
-                            container.appendChild(facilityContainer);
-                        }
-
-                        arrayOfDomNodes.push(container);
-                        return { domNodes: arrayOfDomNodes };
-                    },
-                },
-            },
-
-            eventClick: (info) => {
-                this.showEventModal(info.event);
-            },
-
-            eventDidMount: (info) => {
-                const event = info.event;
-                const eventType =
-                    event.extendedProps?.eventType || "requisition";
-
-                if (eventType === "requisition" && event.extendedProps.color) {
-                    info.el.style.backgroundColor = event.extendedProps.color;
-                    info.el.style.borderColor = event.extendedProps.color;
-                    info.el.style.color = "#fff";
-                    info.el.style.fontWeight = "bold";
-                } else if (eventType === "calendar_event") {
-                    info.el.style.backgroundColor = "#28a745";
-                    info.el.style.borderColor = "#218838";
-                    info.el.style.color = "#fff";
-                    info.el.style.fontWeight = "bold";
-
-                    // Add back the subtle stripe pattern for calendar events
-                    info.el.style.backgroundImage =
-                        "linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)";
-                    info.el.style.backgroundSize = "10px 10px";
-                }
-            },
-
-            datesSet: (info) => {
+                }, 300);
+            }
+        },
+
+        // Add eventDidMount to detect when events are actually rendered
+        eventDidMount: (info) => {
+            const event = info.event;
+            const eventType = event.extendedProps?.eventType || "requisition";
+
+            if (eventType === "requisition" && event.extendedProps.color) {
+                info.el.style.backgroundColor = event.extendedProps.color;
+                info.el.style.borderColor = event.extendedProps.color;
+                info.el.style.color = "#fff";
+                info.el.style.fontWeight = "bold";
+            } else if (eventType === "calendar_event") {
+                info.el.style.backgroundColor = "#28a745";
+                info.el.style.borderColor = "#218838";
+                info.el.style.color = "#fff";
+                info.el.style.fontWeight = "bold";
+
+                // Add back the subtle stripe pattern for calendar events
+                info.el.style.backgroundImage = "linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)";
+                info.el.style.backgroundSize = "10px 10px";
+            }
+            
+            // If this is the first event being mounted, ensure loading is hidden
+            if (!this._firstEventMounted) {
+                this._firstEventMounted = true;
+                setTimeout(() => {
+                    this.loadingStates.fullCalendarRendered = true;
+                    this.checkAllLoaded();
+                }, 100);
+            }
+        },
+
+        datesSet: (info) => {
+            if (this.calendar) {
+                this.calendar.updateSize();
+            }
+            setTimeout(() => {
                 if (this.calendar) {
                     this.calendar.updateSize();
                 }
-                setTimeout(() => {
-                    if (this.calendar) {
-                        this.calendar.updateSize();
-                    }
-                }, 50);
+            }, 50);
 
-                const currentDate = this.calendar.getDate();
-                const calendarMonth = currentDate.getMonth();
-                const calendarYear = currentDate.getFullYear();
+            const currentDate = this.calendar.getDate();
+            const calendarMonth = currentDate.getMonth();
+            const calendarYear = currentDate.getFullYear();
 
-                const currentMiniMonth = this.currentDate.getMonth();
-                const currentMiniYear = this.currentDate.getFullYear();
+            const currentMiniMonth = this.currentDate.getMonth();
+            const currentMiniYear = this.currentDate.getFullYear();
 
-                if (
-                    calendarMonth !== currentMiniMonth ||
-                    calendarYear !== currentMiniYear
-                ) {
-                    this.currentDate = new Date(calendarYear, calendarMonth, 1);
-                    this.updateMiniCalendar();
+            if (
+                calendarMonth !== currentMiniMonth ||
+                calendarYear !== currentMiniYear
+            ) {
+                this.currentDate = new Date(calendarYear, calendarMonth, 1);
+                this.updateMiniCalendar();
+            }
+        },
+
+        viewDidMount: (info) => {
+            setTimeout(() => {
+                if (this.calendar) {
+                    this.calendar.updateSize();
+                    console.log("Calendar size updated after view mount");
                 }
-            },
+            }, 100);
+        },
 
-            viewDidMount: (info) => {
-                setTimeout(() => {
-                    if (this.calendar) {
-                        this.calendar.updateSize();
-                        console.log("Calendar size updated after view mount");
-                    }
-                }, 100);
-            },
+        slotMinTime: "00:00:00",
+        slotMaxTime: "24:00:00",
+        nowIndicator: true,
+        navLinks: true,
+    });
 
-            slotMinTime: "00:00:00",
-            slotMaxTime: "24:00:00",
-            nowIndicator: true,
-            navLinks: true,
-        });
-
-        this.calendar.render();
-        console.log("Calendar rendered");
-    }
+    this.calendar.render();
+    console.log("Calendar rendered");
+    
+    // Add a safety timeout to ensure loading hides even if eventDidMount doesn't fire
+    setTimeout(() => {
+        if (!this.loadingStates.fullCalendarRendered) {
+            this.loadingStates.fullCalendarRendered = true;
+            this.checkAllLoaded();
+        }
+    }, 3000);
+}
 
     initializeMiniCalendar() {
         // Prevent multiple initializations

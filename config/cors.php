@@ -4,7 +4,7 @@
 return [
     'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'admin/login'],
     'allowed_methods' => ['*'],
-    'allowed_origins' => ['https://vpa-booking-system-r0df.onrender.com'],
+    'allowed_origins' => [env('CORS_ALLOWED_ORIGINS', 'https://booking-system-v2601.onrender.com')],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
     'max_age' => 0,
