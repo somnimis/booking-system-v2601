@@ -585,8 +585,8 @@
             </li>
             <!-- Pending Approval Nav Item -->
             <li class="nav-item mb-1" id="pending-nav-item" style="display: none;">
-                <a class="nav-link py-1 px-2 rounded-2 {{ Request::is('admin/pending*') ? 'active' : '' }}"
-                    href="{{ url('/admin/pending') }}">
+                <a class="nav-link py-1 px-2 rounded-2 {{ Request::is('admin/pending-requests*') ? 'active' : '' }}"
+                    href="{{ url('/admin/pending-requests') }}">
                     <div class="d-flex align-items-center">
                         <div class="nav-icon p-1 rounded me-2">
                             <i class="fa-solid fa-clock me-1"></i>
