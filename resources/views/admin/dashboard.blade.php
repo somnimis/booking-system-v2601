@@ -144,7 +144,7 @@
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-center">
                 <div>
-                  <span class="text-muted small">All Events</span>
+                  <span class="text-muted small">Active Events</span>
                   <h2 class="mt-2 mb-0 fw-bold" id="ongoingEvents">0</h2>
                 </div>
                 <a href="{{ asset('admin/calendar') }}" class="text-primary text-decoration-none">
@@ -167,7 +167,7 @@
                   <span class="text-muted small">Pending Forms</span>
                   <h2 class="mt-2 mb-0 fw-bold" id="pendingRequests">0</h2>
                 </div>
-                <a href="{{ asset('admin/calendar') }}" class="text-primary text-decoration-none">
+                <a href="{{ asset('admin/pending-requests') }}" class="text-primary text-decoration-none">
                   <div
                     class="bg-primary bg-opacity-10 p-3 rounded-circle d-flex align-items-center justify-content-center"
                     style="width: 45px; height: 45px; border-color: #5d759917 !important;">

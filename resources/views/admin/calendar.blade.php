@@ -22,35 +22,6 @@
       background-color: rgba(0, 0, 0, 0.05);
     }
 
-
-    /* Fix FullCalendar initialization */
-    #calendar {
-      height: 550px !important;
-      min-height: 550px !important;
-      width: 100% !important;
-    }
-
-    .fc {
-      height: 100% !important;
-    }
-
-    .fc-view-harness {
-      height: 100% !important;
-    }
-
-    .fc .fc-toolbar.fc-header-toolbar {
-      margin-bottom: 1em;
-    }
-
-    /* Ensure calendar container has proper sizing */
-    .card.flex-grow-1 {
-      min-height: 600px;
-    }
-
-    .card-body.p-3.d-flex.flex-column {
-      min-height: 550px;
-    }
-
     #deleteCalendarEventModal .modal-content {
       border-radius: 12px;
       overflow: hidden;
@@ -191,8 +162,7 @@
       color: white !important;
     }
 
-    #adminDashboardTabs #pendingRequestsCount {
-      background-color: var(--bs-danger) !important;
+    #adminDashboardTabs {
       color: #ffffff !important;
     }
 
@@ -204,13 +174,13 @@
 
     /* Change refresh button icon color */
     #refreshAllReservationsBtn i,
-    #refreshPendingRequestsBtn i {
-      color: #6c757d !important;
+    {
+    color: #6c757d !important;
     }
 
     #refreshAllReservationsBtn:hover i,
-    #refreshPendingRequestsBtn:hover i {
-      color: #135ba3 !important;
+    {
+    color: #135ba3 !important;
     }
 
     /* Spinner animation for refresh buttons */
@@ -230,20 +200,20 @@
 
     /* Ensure loading spinner is properly positioned */
     #allReservationsLoadingSpinner,
-    #pendingRequestsLoadingSpinner {
-      position: relative;
-      min-height: 200px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.3s ease;
+    {
+    position: relative;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
     }
 
     /* Make sure spinner is visible when active */
     #allReservationsLoadingSpinner.active,
-    #pendingRequestsLoadingSpinner.active {
-      display: flex !important;
+    {
+    display: flex !important;
     }
 
     .filter-select {
@@ -276,44 +246,6 @@
     .card {
       border: 1px #3333331a solid !important;
       border-radius: 0.75rem;
-    }
-
-    .fc .fc-toolbar-chunk .fc-button:focus,
-    .fc .fc-toolbar-chunk .fc-button:active {
-      outline: none !important;
-      box-shadow: none !important;
-    }
-
-    /* FullCalendar Toolbar Buttons */
-    .fc .fc-toolbar-chunk .fc-button {
-      background-color: #ffffff !important;
-      /* White background */
-      color: #6c757d !important;
-      /* Gray text */
-      border: none !important;
-      /* No border */
-      font-weight: 500;
-      border-radius: 6px !important;
-    }
-
-    /* Hover state */
-    .fc .fc-toolbar-chunk .fc-button:hover {
-      background-color: #f8f9fa !important;
-      /* Slightly off-white hover */
-      color: #495057 !important;
-      /* Darker gray text on hover */
-      border: none !important;
-    }
-
-    /* Active/Pressed state */
-    .fc .fc-toolbar-chunk .fc-button.fc-button-active {
-      background-color: #4272b1ff !important;
-      color: #ffffffff !important;
-      border: none !important;
-    }
-
-    .fc .fc-today-button {
-      text-transform: capitalize !important;
     }
 
     /* Base checkbox style */
@@ -428,98 +360,6 @@
       flex-grow: 1;
     }
 
-    /* Ensure calendar matches height */
-    #calendar {
-      height: 450px !important;
-    }
-
-    .mini-calendar .calendar-days {
-      display: flex;
-      flex-wrap: wrap;
-    }
-
-    .mini-calendar .calendar-day {
-      min-height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      border-radius: 4px;
-    }
-
-    .mini-calendar .calendar-day:hover {
-      background-color: #d3dbe4ff;
-      cursor: pointer;
-    }
-
-    .mini-calendar .day-header {
-      min-height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mini-calendar .calendar-day.has-events {
-      font-weight: bold;
-      color: #004183;
-      position: relative;
-    }
-
-    .mini-calendar .calendar-day.has-events::after {
-      content: '';
-      position: absolute;
-      bottom: 2px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 4px;
-      height: 4px;
-      background-color: #004183;
-      border-radius: 50%;
-    }
-
-    .mini-calendar .calendar-day.today {
-      background-color: #366eaaff;
-      color: white;
-    }
-
-    .mini-calendar .calendar-day.today.has-events::after {
-      background-color: white;
-    }
-
-    /* Mini Calendar Grid */
-    #miniCalendarDays {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      /* 7 days per week */
-      gap: 4px;
-    }
-
-    /* Each day cell */
-    #miniCalendarDays .day {
-      aspect-ratio: 1 / 1;
-      /* Make them perfect squares */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: monospace;
-      /* Equal number width */
-      font-size: 0.9rem;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    /* Optional hover/active styling */
-    #miniCalendarDays .day:hover {
-      background-color: #f0f0f0;
-    }
-
-    /* Example for active day */
-    #miniCalendarDays .day.active {
-      background-color: #007bff;
-      color: white;
-    }
-
     /* Loading Skeleton Styles */
     .skeleton {
       background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -583,61 +423,6 @@
 
     .loading .calendar-content {
       display: none;
-    }
-
-    /* Event Modal Edit Mode Styles */
-    #modalCalendarTitle:not([readonly]),
-    #modalCalendarDescription:not([readonly]) {
-      color: #000 !important;
-      background-color: #fff !important;
-      border-color: #4272b1ff !important;
-      box-shadow: 0 0 0 0.2rem rgba(66, 114, 177, 0.25) !important;
-    }
-
-    /* Make sure the readonly state is properly styled */
-    #modalCalendarTitle[readonly],
-    #modalCalendarDescription[readonly] {
-      color: #6c757d !important;
-      background-color: #f8f9fa !important;
-      cursor: default;
-    }
-
-    /* Focus state for better UX */
-    #modalCalendarTitle:focus,
-    #modalCalendarDescription:focus {
-      color: #000 !important;
-      border-color: #4272b1ff !important;
-      box-shadow: 0 0 0 0.2rem rgba(66, 114, 177, 0.25) !important;
-      outline: 0;
-    }
-
-
-    .facility-item .form-check-label {
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-
-    .facility-item .form-check-input:checked+.form-check-label {
-      font-weight: bold;
-      color: #004183;
-    }
-
-    #facilityFilterList::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    #facilityFilterList::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 3px;
-    }
-
-    #facilityFilterList::-webkit-scrollbar-thumb {
-      background: #c1c1c1;
-      border-radius: 3px;
-    }
-
-    #facilityFilterList::-webkit-scrollbar-thumb:hover {
-      background: #a8a8a8;
     }
 
     /* Custom Styles for Modern Look */
@@ -983,56 +768,226 @@
       /* Preserve card-body's rounded corners */
     }
 
-    /* Facility Filter List */
-    #facilityFilterList .facility-item {
-      padding: 4px 0;
-      border-bottom: 1px solid #f0f0f0;
+    /* Event display styles from public-calendar.css */
+    .fc .fc-event {
+      border: none;
+      border-radius: 4px;
+      padding: 2px 4px !important;
+      font-size: 0.85rem !important;
+      cursor: pointer;
     }
 
-    #facilityFilterList .facility-item:last-child {
-      border-bottom: none;
+    .fc .fc-event:hover {
+      filter: brightness(95%);
     }
 
-    #facilityFilterList .facility-item .form-check-label {
+    /* Ensure proper event colors */
+    .fc-event.requisition-event {
+      background-color: #4272b1ff;
+      border-color: #4272b1ff;
+      color: white;
+      font-weight: 500;
+    }
+
+    .fc-event.calendar-event {
+      background-color: #28a745;
+      border-color: #28a745;
+      color: white;
+      font-weight: 500;
+      background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+      background-size: 10px 10px;
+    }
+
+    /* Month view event styling */
+    .fc-daygrid-event {
+      border: none !important;
+      border-radius: 4px !important;
+      margin: 1px 2px !important;
+      padding: 2px 4px !important;
+      font-size: 0.8rem !important;
+    }
+
+    .fc-daygrid-event .fc-event-title {
+      font-weight: 500;
+      color: white;
+      padding: 0 2px;
+    }
+
+    /* Week/day view event styling */
+    .fc-timegrid-event {
+      border: none !important;
+      border-radius: 4px !important;
+      padding: 2px 4px !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .fc-timegrid-event .fc-event-title {
+      font-weight: 500;
+      font-size: 0.8rem;
+      white-space: normal;
+      line-height: 1.2;
+    }
+
+    .fc-timegrid-event .fc-event-time {
+      font-weight: 400;
+      font-size: 0.7rem;
+      opacity: 0.9;
+    }
+
+    /* Event background colors by type */
+    .fc-event[style*="background-color"] {
+      color: white !important;
+    }
+
+    /* Hover effect */
+    .fc-event:hover {
+      filter: brightness(90%);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      transition: all 0.2s ease;
+    }
+
+    /* Compact event styling for month view */
+    .fc-daygrid-day-events {
+      min-height: 20px !important;
+    }
+
+    .fc-daygrid-event-harness {
+      margin-bottom: 1px !important;
+    }
+
+    /* Ensure text is readable */
+    .fc-event-title {
+      color: white !important;
+      font-weight: 500;
+    }
+
+    /* "More" link styling */
+    .fc-daygrid-more-link {
+      border-radius: 12px;
+      background-color: #f0f0f0;
+      color: #4a4a4a !important;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-decoration: none !important;
+      transition: all 0.2s ease;
+    }
+
+    .fc-daygrid-more-link:hover {
+      background-color: #e0e0e0;
+      color: #2d2d2d !important;
+      text-decoration: none !important;
+    }
+
+    /* Event dot indicator for mini calendar */
+    .calendar-day.has-events {
+      font-weight: bold;
+      color: #004183;
+      position: relative;
+    }
+
+    .calendar-day.has-events::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      background-color: #004183;
+      border-radius: 50%;
+    }
+
+    .calendar-day.today.has-events::after {
+      background-color: white;
+    }
+
+    /* Mini Calendar Grid */
+    #miniCalendarDays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+
+    #miniCalendarDays .calendar-day {
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: monospace;
+      font-size: 0.75rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      min-height: 24px;
+      max-height: 24px;
+      height: 24px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #miniCalendarDays .calendar-day:hover {
+      background-color: #f0f0f0;
+    }
+
+    #miniCalendarDays .calendar-day.today {
+      background-color: #366eaaff;
+      color: white;
+      font-weight: bold;
+    }
+
+    /* Facility filter list styling */
+    #facilityFilterList {
+      max-height: 350px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    #facilityFilterList .category-group {
+      margin-bottom: 0.75rem;
+    }
+
+    #facilityFilterList .category-header {
+      margin-bottom: 0.25rem;
+    }
+
+    #facilityFilterList .subcategory-group {
+      margin-left: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    #facilityFilterList .facility-checkbox {
+      margin-left: 1rem;
+    }
+
+    #facilityFilterList .form-check-label {
       font-size: 0.85rem;
       cursor: pointer;
-      width: 100%;
-      padding: 2px 0;
     }
 
-    #facilityFilterList .facility-item .form-check-input:checked+.form-check-label {
-      font-weight: bold;
+    #facilityFilterList .facility-checkbox:checked+.form-check-label {
+      font-weight: 500;
       color: #004183;
     }
 
-    #facilityFilterList .facility-badge {
-      font-size: 0.7rem;
-      padding: 1px 4px;
-      border-radius: 3px;
+    /* Scrollbar styling for facility list */
+    #facilityFilterList::-webkit-scrollbar {
+      width: 4px;
     }
 
-    /* Ensure the accordion takes full available height */
-    .accordion.flex-grow-1 {
-      flex: 1;
-      min-height: 0;
+    #facilityFilterList::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 2px;
     }
 
-    /* Remove blue background from accordion buttons */
-    #eventFiltersAccordion .accordion-button:not(.collapsed) {
-      background-color: #00428318;
-      ;
-      color: inherit;
-      box-shadow: none;
+    #facilityFilterList::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 2px;
     }
 
-    #eventFiltersAccordion .accordion-button:focus {
-      box-shadow: none;
-      border-color: rgba(0, 0, 0, .125);
-    }
-
-    /* Optional: Add a subtle hover effect instead */
-    #eventFiltersAccordion .accordion-button:hover {
-      background-color: #f8f9fa;
+    #facilityFilterList::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
     }
   </style>
 
@@ -1250,465 +1205,323 @@
 
               <!-- Actual Content -->
               <div class="calendar-content">
-                <!-- Tabs Navigation -->
-                <ul class="nav nav-tabs mb-4" id="adminDashboardTabs" role="tablist">
-                  <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="all-reservations-tab" data-bs-toggle="tab"
-                      data-bs-target="#all-reservations" type="button" role="tab" aria-controls="all-reservations"
-                      aria-selected="true">
-                      <i class="bi bi-calendar-week me-1"></i>
-                      Scheduled
-                      <span class="badge bg-secondary ms-1" id="allReservationsCount">0</span>
-                    </button>
-                  </li>
-                  <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="pending-requests-tab" data-bs-toggle="tab"
-                      data-bs-target="#pending-requests" type="button" role="tab" aria-controls="pending-requests"
-                      aria-selected="false">
-                      <i class="bi bi-clock-history me-1"></i>
-                      Pending
-                      <span class="badge bg-danger ms-1" id="pendingRequestsCount">0</span>
-                    </button>
-                  </li>
-                  <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="calendar-events-tab" data-bs-toggle="tab"
-                      data-bs-target="#calendar-events" type="button" role="tab" aria-controls="calendar-events"
-                      aria-selected="false">
-                      <i class="bi bi-calendar-event me-1"></i>
-                      Events
-                    </button>
-                  </li>
-                </ul>
+                <div class="calendar-content">
+                  <!-- Tabs Navigation -->
+                  <ul class="nav nav-tabs mb-4" id="adminDashboardTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                      <button class="nav-link active" id="all-reservations-tab" data-bs-toggle="tab"
+                        data-bs-target="#all-reservations" type="button" role="tab" aria-controls="all-reservations"
+                        aria-selected="true">
+                        <i class="bi bi-calendar-week me-1"></i>
+                        Scheduled
+                        <span class="badge bg-secondary ms-1" id="allReservationsCount">0</span>
+                      </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                      <button class="nav-link" id="calendar-events-tab" data-bs-toggle="tab"
+                        data-bs-target="#calendar-events" type="button" role="tab" aria-controls="calendar-events"
+                        aria-selected="false">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        Events
+                      </button>
+                    </li>
+                  </ul>
 
-                <!-- Tab Content -->
-                <div class="tab-content" id="adminDashboardContent">
-                  <!-- Tab 1: Ongoing Events -->
-                  <div class="tab-pane fade show active" id="all-reservations" role="tabpanel"
-                    aria-labelledby="all-reservations-tab">
-                    <div id="ongoingEventsApp">
-                      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                        <div class="d-flex align-items-center gap-2 me-3 mb-2">
-                          <select class="form-select form-select-sm filter-select" v-model="filters.status">
-                            <option value="">All Statuses</option>
-                            <option value="ongoing">Ongoing</option>
-                            <option value="scheduled">Scheduled</option>
-                          </select>
-                          <select class="form-select form-select-sm filter-select" v-model="filters.sort">
-                            <option value="newest">Newest First</option>
-                            <option value="oldest">Oldest First</option>
-                          </select>
-                          <div class="input-group input-group-sm" style="width: 200px;">
-                            <input type="search" class="form-control" v-model="filters.search"
-                              placeholder="Find an ongoing event..." @keyup.enter="loadOngoingEvents(1)">
-                            <button class="btn btn-outline-secondary" type="button" @click="loadOngoingEvents(1)">
-                              <i class="bi bi-search"></i>
-                            </button>
-                          </div>
-                        </div>
+                  <!-- Tab Content -->
+                  <div class="tab-content" id="adminDashboardContent">
+                    <!-- Tab 1: Ongoing Events -->
+                    <div class="tab-pane fade show active" id="all-reservations" role="tabpanel"
+                      aria-labelledby="all-reservations-tab">
+                      <div id="ongoingEventsApp">
+                        <div class="d-flex align-items-center mb-3 flex-wrap">
 
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                          <div class="d-none d-lg-flex align-items-center gap-2">
-                            <select class="form-select form-select-sm w-auto" v-model="perPage"
-                              @change="loadOngoingEvents(1)">
-                              <option value="5">5 per page</option>
-                              <option value="10">10 per page</option>
-                              <option value="20">20 per page</option>
-                              <option value="50">50 per page</option>
-                            </select>
-                            <button type="button"
-                              class="btn btn-link btn-sm text-secondary text-decoration-none me-2 refresh-btn"
-                              @click="refreshOngoingEvents" :disabled="loading">
-                              <i class="bi"
-                                :class="loading ? 'bi-arrow-clockwise animate-spin' : 'bi-arrow-clockwise'"></i> Refresh
-                            </button>
-                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-                              data-bs-target="#addReservationModal">
-                              <i class="bi bi-plus-circle me-1"></i> Add new
-                            </button>
-                          </div>
-
-                          <div class="dropdown d-lg-none">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                              data-bs-toggle="dropdown" aria-expanded="false">
-                              <i class="bi bi-funnel"></i> Controls
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                              <li>
-                                <div class="px-3 py-2">
-                                  <label class="form-label small mb-1">Items per page:</label>
-                                  <select class="form-select form-select-sm" v-model="perPage"
-                                    @change="loadOngoingEvents(1)">
-                                    <option value="5">5 per page</option>
-                                    <option value="10">10 per page</option>
-                                    <option value="20">20 per page</option>
-                                    <option value="50">50 per page</option>
-                                  </select>
-                                </div>
-                              </li>
-                              <li>
-                                <hr class="dropdown-divider">
-                              </li>
-                              <li>
-                                <button type="button" class="dropdown-item" @click="refreshOngoingEvents">
-                                  <i class="bi bi-arrow-clockwise me-2"></i> Refresh list
-                                </button>
-                              </li>
-                              <li>
-                                <button type="button" class="dropdown-item" data-bs-toggle="modal"
-                                  data-bs-target="#addReservationModal">
-                                  <i class="bi bi-plus-circle me-2"></i> Add new reservation
-                                </button>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Loading Spinner -->
-                      <div class="loading-spinner d-flex flex-column justify-content-center align-items-center py-5"
-                        v-if="loading" style="min-height: 200px;">
-                        <div class="spinner-border text-primary" role="status">
-                          <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="text-muted mt-2 small">Loading ongoing events...</p>
-                      </div>
-
-                      <!-- Events List -->
-                      <div id="ongoingEventsList" v-else>
-                        <div v-if="ongoingEvents.length === 0" class="text-center py-5">
-                          <i class="bi bi-calendar-x display-4 text-muted mb-3"></i>
-                          <p class="text-muted mb-0">No ongoing events found.</p>
-                        </div>
-
-                        <div v-for="event in ongoingEvents" :key="event.request_id"
-                          class="card border mb-2 reservation-card" @click="goToEvent(event.request_id)">
-                          <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-start">
-                              <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                  <h6 class="fw-bold mb-0">
-                                    @{{ event . requester . name }}
-                                    <span class="text-muted"> • @{{ event . purpose || 'No purpose' }}</span>
-                                    <span class="text-muted" v-if="event.requester.organization"> •
-                                      @{{ event . requester . organization }}</span>
-                                  </h6>
-                                  <span class="badge" :style="{ backgroundColor: event.status.color }">
-                                    @{{ event . status . name }}
-                                  </span>
-                                </div>
-
-                                <p class="text-muted small mb-2">
-                                  @{{ event . schedule . display }} • Duration: @{{ formatDuration(event) }}
-                                </p>
-
-                                <p class="mb-0 small" v-if="event.requested_items && event.requested_items.length > 0">
-                                  <span v-for="(item, index) in displayItems(event.requested_items)" :key="index">
-                                    @{{ item . name }}<span v-if="item.quantity > 1"> (×@{{ item . quantity }})</span>
-                                  </span>
-                                  <span class="text-muted" v-if="event.requested_items.length > 2"> •
-                                    @{{ event . requested_items . length - 2 }} more...</span>
-                                </p>
-                                <p class="mb-0 small" v-else-if="event.participants">
-                                  Participants: @{{ event . participants }}
-                                </p>
-                              </div>
+                          <div class="d-flex align-items-center gap-2 mb-2 ms-auto">
+                            <div class="d-none d-lg-flex align-items-center gap-2">
+                              <select class="form-select form-select-sm w-auto" v-model="perPage"
+                                @change="loadOngoingEvents(1)">
+                                <option value="5">5 per page</option>
+                                <option value="10">10 per page</option>
+                                <option value="20">20 per page</option>
+                                <option value="50">50 per page</option>
+                              </select>
+                              <button type="button"
+                                class="btn btn-link btn-sm text-secondary text-decoration-none me-2 refresh-btn"
+                                @click="refreshOngoingEvents" :disabled="loading">
+                                <i class="bi"
+                                  :class="loading ? 'bi-arrow-clockwise animate-spin' : 'bi-arrow-clockwise'"></i> Refresh
+                              </button>
+                              <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#addReservationModal">
+                                <i class="bi bi-plus-circle me-1"></i> Add new
+                              </button>
                             </div>
-                          </div>
-                        </div>
 
-                        <!-- Pagination -->
-                        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top"
-                          v-if="totalPages > 1">
-                          <div class="text-muted small">
-                            Showing page @{{ currentPage }} of @{{ totalPages }}
-                            <span class="mx-2">•</span>
-                            Total: @{{ totalItems }} events
-                          </div>
-                          <nav aria-label="Events pagination">
-                            <ul class="pagination pagination-sm mb-0">
-                              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                                <button class="page-link" @click="changePage(currentPage - 1)"
-                                  :disabled="currentPage === 1">
-                                  <i class="bi bi-chevron-left"></i>
-                                </button>
-                              </li>
-                              <li class="page-item" v-for="page in displayedPages" :key="page"
-                                :class="{ active: page === currentPage }">
-                                <button class="page-link" @click="changePage(page)">@{{ page }}</button>
-                              </li>
-                              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                                <button class="page-link" @click="changePage(currentPage + 1)"
-                                  :disabled="currentPage === totalPages">
-                                  <i class="bi bi-chevron-right"></i>
-                                </button>
-                              </li>
-                            </ul>
-                          </nav>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Tab 2: Pending Requests -->
-                  <div class="tab-pane fade" id="pending-requests" role="tabpanel" aria-labelledby="pending-requests-tab">
-                    <div id="pendingRequestsApp">
-                      <div class="d-flex justify-content-end align-items-center mb-3">
-                        <div>
-                          <button type="button"
-                            class="btn btn-link btn-sm text-secondary text-decoration-none me-2 refresh-btn"
-                            @click="refreshPendingRequests" :disabled="loading">
-                            <i class="bi" :class="loading ? 'bi-arrow-clockwise animate-spin' : 'bi-arrow-clockwise'"></i>
-                            Refresh
-                          </button>
-                        </div>
-                      </div>
-
-                      <!-- Loading Spinner -->
-                      <div class="loading-spinner d-flex flex-column justify-content-center align-items-center py-5"
-                        v-if="loading" style="min-height: 200px;">
-                        <div class="spinner-border text-primary" role="status">
-                          <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="text-muted mt-2 small">Loading pending requests...</p>
-                      </div>
-
-                      <!-- Pending Requests List -->
-                      <div id="pendingRequestsList" v-else>
-                        <div v-if="pendingRequests.length === 0" class="text-center py-5">
-                          <i class="bi bi-inbox display-4 text-muted mb-3"></i>
-                          <p class="text-muted mb-0">No pending requests found.</p>
-                          <p class="text-muted small">Statuses: Pending Approval or Awaiting Payment</p>
-                        </div>
-
-                        <div v-for="request in pendingRequests" :key="request.request_id"
-                          class="card border mb-2 reservation-card" @click="goToEvent(request.request_id)">
-                          <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-start">
-                              <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                  <h6 class="fw-bold mb-0">
-                                    @{{ request . requester . name }}
-                                    <span class="text-muted" v-if="request.requester.organization"> •
-                                      @{{ request . requester . organization }}</span>
-                                  </h6>
-                                  <span class="badge" :style="{ backgroundColor: request.status.color }">
-                                    @{{ request . status . name }}
-                                  </span>
-                                </div>
-
-                                <p class="text-muted small mb-2">
-                                  @{{ request.schedule.display }} • Duration: @{{ formatDuration(request) }}
-                                </p>
-
-                                <p class="mb-0 small">
-                                  <span v-for="(item, index) in displayItems(request.requested_items)" :key="index">
-                                    <span v-if="index > 0" class="text-muted"> • </span>
-                                    @{{ item . name }}<span v-if="item.quantity > 1"> (×@{{ item . quantity }})</span>
-                                  </span>
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Pagination -->
-                        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top"
-                          v-if="totalPages > 1">
-                          <div class="text-muted small">
-                            Showing page @{{ currentPage }} of @{{ totalPages }}
-                            <span class="mx-2">•</span>
-                            Total: @{{ totalItems }} requests
-                          </div>
-                          <nav aria-label="Requests pagination">
-                            <ul class="pagination pagination-sm mb-0">
-                              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                                <button class="page-link" @click="changePage(currentPage - 1)"
-                                  :disabled="currentPage === 1">
-                                  <i class="bi bi-chevron-left"></i>
-                                </button>
-                              </li>
-                              <li class="page-item" v-for="page in displayedPages" :key="page"
-                                :class="{ active: page === currentPage }">
-                                <button class="page-link" @click="changePage(page)">@{{ page }}</button>
-                              </li>
-                              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                                <button class="page-link" @click="changePage(currentPage + 1)"
-                                  :disabled="currentPage === totalPages">
-                                  <i class="bi bi-chevron-right"></i>
-                                </button>
-                              </li>
-                            </ul>
-                          </nav>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Tab 3: Calendar Events -->
-                  <div class="tab-pane fade" id="calendar-events" role="tabpanel" aria-labelledby="calendar-events-tab">
-                    <div id="calendarEventsApp">
-                      <!-- Events Header with Controls -->
-                      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                        <div class="d-flex align-items-center gap-2 me-3 mb-2">
-                          <select class="form-select form-select-sm filter-select" v-model="filters.eventType"
-                            @change="loadCalendarEvents(1)">
-                            <option value="">All Event Types</option>
-                            <option value="hall_booking">Hall Booking</option>
-                            <option value="school_event">School Event</option>
-                            <option value="holiday">Holiday</option>
-                          </select>
-                          <select class="form-select form-select-sm filter-select" v-model="filters.sort"
-                            @change="loadCalendarEvents(1)">
-                            <option value="newest">Newest First</option>
-                            <option value="oldest">Oldest First</option>
-                          </select>
-                          <div class="input-group input-group-sm" style="width: 200px;">
-                            <input type="search" class="form-control" v-model="filters.search"
-                              placeholder="Find an event..." @keyup.enter="loadCalendarEvents(1)">
-                            <button class="btn btn-outline-secondary" type="button" @click="loadCalendarEvents(1)">
-                              <i class="bi bi-search"></i>
-                            </button>
-                          </div>
-                        </div>
-
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                          <div class="d-none d-lg-flex align-items-center gap-2">
-                            <select class="form-select form-select-sm w-auto" v-model="perPage"
-                              @change="loadCalendarEvents(1)">
-                              <option value="10">10 per page</option>
-                              <option value="25">25 per page</option>
-                              <option value="50">50 per page</option>
-                              <option value="100">100 per page</option>
-                            </select>
-                            <button type="button"
-                              class="btn btn-link btn-sm text-secondary text-decoration-none me-2 refresh-btn"
-                              @click="refreshCalendarEvents" :disabled="loading">
-                              <i class="bi"
-                                :class="loading ? 'bi-arrow-clockwise animate-spin' : 'bi-arrow-clockwise'"></i> Refresh
-                            </button>
-                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-                              data-bs-target="#addCalendarEventModal">
-                              <i class="bi bi-plus-circle me-1"></i> Add Event
-                            </button>
-                          </div>
-
-                          <div class="dropdown d-lg-none">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                              data-bs-toggle="dropdown" aria-expanded="false">
-                              <i class="bi bi-funnel"></i> Controls
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                              <li>
-                                <div class="px-3 py-2">
-                                  <label class="form-label small mb-1">Items per page:</label>
-                                  <select class="form-select form-select-sm" v-model="perPage"
-                                    @change="loadCalendarEvents(1)">
-                                    <option value="10">10 per page</option>
-                                    <option value="25">25 per page</option>
-                                    <option value="50">50 per page</option>
-                                    <option value="100">100 per page</option>
-                                  </select>
-                                </div>
-                              </li>
-                              <li>
-                                <hr class="dropdown-divider">
-                              </li>
-                              <li>
-                                <button type="button" class="dropdown-item" @click="refreshCalendarEvents">
-                                  <i class="bi bi-arrow-clockwise me-2"></i> Refresh list
-                                </button>
-                              </li>
-                              <li>
-                                <button type="button" class="dropdown-item" data-bs-toggle="modal"
-                                  data-bs-target="#addCalendarEventModal">
-                                  <i class="bi bi-plus-circle me-2"></i> Add Event
-                                </button>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Loading Spinner -->
-                      <div class="loading-spinner d-flex flex-column justify-content-center align-items-center py-5"
-                        v-if="loading" style="min-height: 200px;">
-                        <div class="spinner-border text-primary" role="status">
-                          <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="text-muted mt-2 small">Loading calendar events...</p>
-                      </div>
-
-                      <!-- Calendar Events List -->
-                      <div id="calendarEventsList" v-else>
-                        <div v-if="calendarEvents.length === 0" class="text-center py-5">
-                          <i class="bi bi-calendar-x display-4 text-muted mb-3"></i>
-                          <p class="text-muted mb-2">No calendar events found.</p>
-                          <p class="text-muted small">Click "Add Event" to create your first calendar event.</p>
-                        </div>
-
-                        <div v-for="event in calendarEvents" :key="event.event_id"
-                          class="card border mb-2 calendar-event-card">
-                          <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-start">
-                              <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                  <div>
-                                    <h6 class="fw-bold mb-0">
-                                      @{{ event.event_name }}
-                                      <span class="badge ms-2" :style="{ backgroundColor: event.color }">
-                                        @{{ event.display_name }}
-                                      </span>
-                                      <span v-if="event.schedule.all_day" class="badge bg-info ms-2">All Day</span>
-                                    </h6>
+                            <div class="dropdown d-lg-none">
+                              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-funnel"></i> Controls
+                              </button>
+                              <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                  <div class="px-3 py-2">
+                                    <label class="form-label small mb-1">Items per page:</label>
+                                    <select class="form-select form-select-sm" v-model="perPage"
+                                      @change="loadOngoingEvents(1)">
+                                      <option value="5">5 per page</option>
+                                      <option value="10">10 per page</option>
+                                      <option value="20">20 per page</option>
+                                      <option value="50">50 per page</option>
+                                    </select>
                                   </div>
-                                  <button class="btn btn-sm btn-outline-danger delete-calendar-event-btn"
-                                    @click.stop="confirmDeleteEvent(event)" :data-id="event.event_id"
-                                    :data-name="event.event_name" title="Delete Event">
-                                    <i class="bi bi-trash"></i>
+                                </li>
+                                <li>
+                                  <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                  <button type="button" class="dropdown-item" @click="refreshOngoingEvents">
+                                    <i class="bi bi-arrow-clockwise me-2"></i> Refresh list
                                   </button>
-                                </div>
-
-                                <p v-if="event.description" class="text-muted small mb-2">
-                                  @{{ event.description }}
-                                </p>
-
-                                <p class="text-muted small mb-0">
-                                  <i class="bi bi-clock me-1"></i>
-                                  @{{ event.schedule.display }} • Duration: @{{ formatDuration(event) }}
-                                </p>
-                              </div>
+                                </li>
+                                <li>
+                                  <button type="button" class="dropdown-item" data-bs-toggle="modal"
+                                    data-bs-target="#addReservationModal">
+                                    <i class="bi bi-plus-circle me-2"></i> Add new reservation
+                                  </button>
+                                </li>
+                              </ul>
                             </div>
                           </div>
                         </div>
 
-                        <!-- Pagination -->
-                        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top"
-                          v-if="totalPages > 1">
-                          <div class="text-muted small">
-                            Showing page @{{ currentPage }} of @{{ totalPages }}
-                            <span class="mx-2">•</span>
-                            Total: @{{ totalItems }} events
+                        <!-- Loading Spinner -->
+                        <div class="loading-spinner d-flex flex-column justify-content-center align-items-center py-5"
+                          v-if="loading" style="min-height: 200px;">
+                          <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
                           </div>
-                          <nav aria-label="Events pagination">
-                            <ul class="pagination pagination-sm mb-0">
-                              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                                <button class="page-link" @click="changePage(currentPage - 1)"
-                                  :disabled="currentPage === 1">
-                                  <i class="bi bi-chevron-left"></i>
-                                </button>
-                              </li>
-                              <li class="page-item" v-for="page in displayedPages" :key="page"
-                                :class="{ active: page === currentPage }">
-                                <button class="page-link" @click="changePage(page)">@{{ page }}</button>
-                              </li>
-                              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                                <button class="page-link" @click="changePage(currentPage + 1)"
-                                  :disabled="currentPage === totalPages">
-                                  <i class="bi bi-chevron-right"></i>
-                                </button>
-                              </li>
-                            </ul>
-                          </nav>
+                          <p class="text-muted mt-2 small">Loading ongoing events...</p>
+                        </div>
+
+                        <!-- Events List -->
+                        <div id="ongoingEventsList" v-else>
+                          <div v-if="ongoingEvents.length === 0" class="text-center py-5">
+                            <i class="bi bi-calendar-x display-4 text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No ongoing events found.</p>
+                          </div>
+
+                          <div v-for="event in ongoingEvents" :key="event.request_id"
+                            class="card border mb-2 reservation-card" @click="goToEvent(event.request_id)">
+                            <div class="card-body p-3">
+                              <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                  <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold mb-0">
+                                      @{{ event . requester . name }}
+                                      <span class="text-muted"> • @{{ event . purpose || 'No purpose' }}</span>
+                                      <span class="text-muted" v-if="event.requester.organization"> •
+                                        @{{ event . requester . organization }}</span>
+                                    </h6>
+                                    <span class="badge" :style="{ backgroundColor: event.status.color }">
+                                      @{{ event . status . name }}
+                                    </span>
+                                  </div>
+
+                                  <p class="text-muted small mb-2">
+                                    @{{ event . schedule . display }} • Duration: @{{ formatDuration(event) }}
+                                  </p>
+
+                                  <p class="mb-0 small" v-if="event.requested_items && event.requested_items.length > 0">
+                                    <span v-for="(item, index) in displayItems(event.requested_items)" :key="index">
+                                      @{{ item . name }}<span v-if="item.quantity > 1"> (×@{{ item . quantity }})</span>
+                                    </span>
+                                    <span class="text-muted" v-if="event.requested_items.length > 2"> •
+                                      @{{ event . requested_items . length - 2 }} more...</span>
+                                  </p>
+                                  <p class="mb-0 small" v-else-if="event.participants">
+                                    Participants: @{{ event . participants }}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Pagination -->
+                          <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top"
+                            v-if="totalPages > 1">
+                            <div class="text-muted small">
+                              Showing page @{{ currentPage }} of @{{ totalPages }}
+                              <span class="mx-2">•</span>
+                              Total: @{{ totalItems }} events
+                            </div>
+                            <nav aria-label="Events pagination">
+                              <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                                  <button class="page-link" @click="changePage(currentPage - 1)"
+                                    :disabled="currentPage === 1">
+                                    <i class="bi bi-chevron-left"></i>
+                                  </button>
+                                </li>
+                                <li class="page-item" v-for="page in displayedPages" :key="page"
+                                  :class="{ active: page === currentPage }">
+                                  <button class="page-link" @click="changePage(page)">@{{ page }}</button>
+                                </li>
+                                <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                                  <button class="page-link" @click="changePage(currentPage + 1)"
+                                    :disabled="currentPage === totalPages">
+                                    <i class="bi bi-chevron-right"></i>
+                                  </button>
+                                </li>
+                              </ul>
+                            </nav>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Tab 2: Calendar Events -->
+                    <div class="tab-pane fade" id="calendar-events" role="tabpanel" aria-labelledby="calendar-events-tab">
+                      <div id="calendarEventsApp">
+                        <!-- Events Header with Controls -->
+                        <div class="d-flex align-items-center mb-3 flex-wrap">
+                          <div class="d-flex align-items-center gap-2 mb-2 ms-auto">
+                            <div class="d-none d-lg-flex align-items-center gap-2">
+                              <select class="form-select form-select-sm w-auto" v-model="perPage"
+                                @change="loadCalendarEvents(1)">
+                                <option value="10">10 per page</option>
+                                <option value="25">25 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                              </select>
+                              <button type="button"
+                                class="btn btn-link btn-sm text-secondary text-decoration-none me-2 refresh-btn"
+                                @click="refreshCalendarEvents" :disabled="loading">
+                                <i class="bi"
+                                  :class="loading ? 'bi-arrow-clockwise animate-spin' : 'bi-arrow-clockwise'"></i> Refresh
+                              </button>
+                              <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#addCalendarEventModal">
+                                <i class="bi bi-plus-circle me-1"></i> Add Event
+                              </button>
+                            </div>
+
+                            <div class="dropdown d-lg-none">
+                              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-funnel"></i> Controls
+                              </button>
+                              <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                  <div class="px-3 py-2">
+                                    <label class="form-label small mb-1">Items per page:</label>
+                                    <select class="form-select form-select-sm" v-model="perPage"
+                                      @change="loadCalendarEvents(1)">
+                                      <option value="10">10 per page</option>
+                                      <option value="25">25 per page</option>
+                                      <option value="50">50 per page</option>
+                                      <option value="100">100 per page</option>
+                                    </select>
+                                  </div>
+                                </li>
+                                <li>
+                                  <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                  <button type="button" class="dropdown-item" @click="refreshCalendarEvents">
+                                    <i class="bi bi-arrow-clockwise me-2"></i> Refresh list
+                                  </button>
+                                </li>
+                                <li>
+                                  <button type="button" class="dropdown-item" data-bs-toggle="modal"
+                                    data-bs-target="#addCalendarEventModal">
+                                    <i class="bi bi-plus-circle me-2"></i> Add Event
+                                  </button>
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Loading Spinner -->
+                        <div class="loading-spinner d-flex flex-column justify-content-center align-items-center py-5"
+                          v-if="loading" style="min-height: 200px;">
+                          <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                          </div>
+                          <p class="text-muted mt-2 small">Loading calendar events...</p>
+                        </div>
+
+                        <!-- Calendar Events List -->
+                        <div id="calendarEventsList" v-else>
+                          <div v-if="calendarEvents.length === 0" class="text-center py-5">
+                            <i class="bi bi-calendar-x display-4 text-muted mb-3"></i>
+                            <p class="text-muted mb-2">No calendar events found.</p>
+                            <p class="text-muted small">Click "Add Event" to create your first calendar event.</p>
+                          </div>
+
+                          <div v-for="event in calendarEvents" :key="event.event_id"
+                            class="card border mb-2 calendar-event-card">
+                            <div class="card-body p-3">
+                              <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                  <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                      <h6 class="fw-bold mb-0">
+                                        @{{ event.event_name }}
+                                        <span class="badge ms-2" :style="{ backgroundColor: event.color }">
+                                          @{{ event.display_name }}
+                                        </span>
+                                        <span v-if="event.schedule.all_day" class="badge bg-info ms-2">All Day</span>
+                                      </h6>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger delete-calendar-event-btn"
+                                      @click.stop="confirmDeleteEvent(event)" :data-id="event.event_id"
+                                      :data-name="event.event_name" title="Delete Event">
+                                      <i class="bi bi-trash"></i>
+                                    </button>
+                                  </div>
+
+                                  <p v-if="event.description" class="text-muted small mb-2">
+                                    @{{ event.description }}
+                                  </p>
+
+                                  <p class="text-muted small mb-0">
+                                    <i class="bi bi-clock me-1"></i>
+                                    @{{ event.schedule.display }} • Duration: @{{ formatDuration(event) }}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Pagination -->
+                          <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top"
+                            v-if="totalPages > 1">
+                            <div class="text-muted small">
+                              Showing page @{{ currentPage }} of @{{ totalPages }}
+                              <span class="mx-2">•</span>
+                              Total: @{{ totalItems }} events
+                            </div>
+                            <nav aria-label="Events pagination">
+                              <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                                  <button class="page-link" @click="changePage(currentPage - 1)"
+                                    :disabled="currentPage === 1">
+                                    <i class="bi bi-chevron-left"></i>
+                                  </button>
+                                </li>
+                                <li class="page-item" v-for="page in displayedPages" :key="page"
+                                  :class="{ active: page === currentPage }">
+                                  <button class="page-link" @click="changePage(page)">@{{ page }}</button>
+                                </li>
+                                <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                                  <button class="page-link" @click="changePage(currentPage + 1)"
+                                    :disabled="currentPage === totalPages">
+                                    <i class="bi bi-chevron-right"></i>
+                                  </button>
+                                </li>
+                              </ul>
+                            </nav>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1717,10 +1530,9 @@
               </div>
             </div>
           </div>
-        </div>
 
-      </div> <!-- Close row.g-3 -->
-    </div> <!-- Close container-fluid -->
+        </div> <!-- Close row.g-3 -->
+      </div> <!-- Close container-fluid -->
   </main>
 
 
@@ -1869,18 +1681,18 @@
       toast.style.borderRadius = '0.3rem';
 
       toast.innerHTML = `
-                                                                        <div class="d-flex align-items-center px-3 py-1"> 
-                                                                            <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                                                                            <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                                                                            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                                                                        </div>
-                                                                        <div class="loading-bar" style="
-                                                                            height: 3px;
-                                                                            background: rgba(255,255,255,0.7);
-                                                                            width: 100%;
-                                                                            transition: width ${duration}ms linear;
-                                                                        "></div>
-                                                                    `;
+                                                                                                <div class="d-flex align-items-center px-3 py-1"> 
+                                                                                                    <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                                                                                                    <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
+                                                                                                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                                                                </div>
+                                                                                                <div class="loading-bar" style="
+                                                                                                    height: 3px;
+                                                                                                    background: rgba(255,255,255,0.7);
+                                                                                                    width: 100%;
+                                                                                                    transition: width ${duration}ms linear;
+                                                                                                "></div>
+                                                                                            `;
 
       document.body.appendChild(toast);
 
@@ -1983,28 +1795,6 @@
       setTimeout(updateCalendarFacilityFilters, 1000);
     }
 
-    async function fetchPendingCountOnly() {
-      try {
-        const response = await fetch('/api/admin/pending-requests-count', {
-          headers: {
-            'Authorization': `Bearer ${adminToken}`,
-            'Accept': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            const pendingCountBadge = document.getElementById('pendingRequestsCount');
-            if (pendingCountBadge) {
-              pendingCountBadge.textContent = result.count;
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching pending count:', error);
-      }
-    }
 
     async function fetchStatusOptionsForFilter() {
       try {
@@ -2125,13 +1915,13 @@
           const selectAllDiv = document.createElement('div');
           selectAllDiv.className = 'col-12 mt-2';
           selectAllDiv.innerHTML = `
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="selectAllServices">
-                            <label class="form-check-label fw-medium" for="selectAllServices">
-                              Select All Services
-                            </label>
-                          </div>
-                        `;
+                                                  <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="selectAllServices">
+                                                    <label class="form-check-label fw-medium" for="selectAllServices">
+                                                      Select All Services
+                                                    </label>
+                                                  </div>
+                                                `;
           container.appendChild(selectAllDiv);
 
           // Add event listener for Select All
@@ -2202,11 +1992,11 @@
 
         // Show loading state
         facilityFilterList.innerHTML = `
-                                                          <div class="text-center py-3 text-muted">
-                                                              <div class="spinner-border spinner-border-sm me-2"></div>
-                                                              Loading facilities...
-                                                          </div>
-                                                      `;
+                                                                                  <div class="text-center py-3 text-muted">
+                                                                                      <div class="spinner-border spinner-border-sm me-2"></div>
+                                                                                      Loading facilities...
+                                                                                  </div>
+                                                                              `;
 
         const response = await fetch('/api/facilities', {
           headers: {
@@ -2221,11 +2011,11 @@
 
           if (facilities.length === 0) {
             facilityFilterList.innerHTML = `
-                                                                  <div class="text-center py-3 text-muted">
-                                                                      <i class="bi bi-building-slash"></i>
-                                                                      <div class="small mt-1">No facilities found</div>
-                                                                  </div>
-                                                              `;
+                                                                                          <div class="text-center py-3 text-muted">
+                                                                                              <i class="bi bi-building-slash"></i>
+                                                                                              <div class="small mt-1">No facilities found</div>
+                                                                                          </div>
+                                                                                      `;
             return;
           }
 
@@ -2234,19 +2024,19 @@
 
           // Add "All facilities" checkbox as first option
           html += `
-                                                              <div class="facility-item">
-                                                                  <div class="form-check">
-                                                                      <input class="form-check-input facility-filter-checkbox select-all-facilities" 
-                                                                             type="checkbox" 
-                                                                             id="filterAllFacilities"
-                                                                             checked>
-                                                                      <label class="form-check-label fw-medium" for="filterAllFacilities">
-                                                                          All facilities
-                                                                      </label>
-                                                                  </div>
-                                                              </div>
-                                                              <hr class="my-2">
-                                                          `;
+                                                                                      <div class="facility-item">
+                                                                                          <div class="form-check">
+                                                                                              <input class="form-check-input facility-filter-checkbox select-all-facilities" 
+                                                                                                     type="checkbox" 
+                                                                                                     id="filterAllFacilities"
+                                                                                                     checked>
+                                                                                              <label class="form-check-label fw-medium" for="filterAllFacilities">
+                                                                                                  All facilities
+                                                                                              </label>
+                                                                                          </div>
+                                                                                      </div>
+                                                                                      <hr class="my-2">
+                                                                                  `;
 
           facilities.forEach(facility => {
             const isAvailable = facility.status_id === 1 || facility.status?.status_id === 1;
@@ -2254,24 +2044,24 @@
             const badgeText = isAvailable ? 'Available' : 'Unavailable';
 
             html += `
-                                                                  <div class="facility-item">
-                                                                      <div class="form-check">
-                                                                          <input class="form-check-input facility-filter-checkbox individual-facility" 
-                                                                                 type="checkbox" 
-                                                                                 value="${facility.facility_id}" 
-                                                                                 id="filterFacility_${facility.facility_id}"
-                                                                                 data-name="${facility.facility_name}"
-                                                                                 ${isAvailable ? 'checked' : 'disabled'}>
-                                                                          <label class="form-check-label d-flex justify-content-between align-items-center" 
-                                                                                 for="filterFacility_${facility.facility_id}">
-                                                                              <span class="${!isAvailable ? 'text-muted' : ''}">
-                                                                                  ${facility.facility_name}
-                                                                              </span>
-                                                                              <span class="facility-badge ${badgeColor} text-white">${badgeText}</span>
-                                                                          </label>
-                                                                      </div>
-                                                                  </div>
-                                                              `;
+                                                                                          <div class="facility-item">
+                                                                                              <div class="form-check">
+                                                                                                  <input class="form-check-input facility-filter-checkbox individual-facility" 
+                                                                                                         type="checkbox" 
+                                                                                                         value="${facility.facility_id}" 
+                                                                                                         id="filterFacility_${facility.facility_id}"
+                                                                                                         data-name="${facility.facility_name}"
+                                                                                                         ${isAvailable ? 'checked' : 'disabled'}>
+                                                                                                  <label class="form-check-label d-flex justify-content-between align-items-center" 
+                                                                                                         for="filterFacility_${facility.facility_id}">
+                                                                                                      <span class="${!isAvailable ? 'text-muted' : ''}">
+                                                                                                          ${facility.facility_name}
+                                                                                                      </span>
+                                                                                                      <span class="facility-badge ${badgeColor} text-white">${badgeText}</span>
+                                                                                                  </label>
+                                                                                              </div>
+                                                                                          </div>
+                                                                                      `;
           });
 
           facilityFilterList.innerHTML = html;
@@ -2334,11 +2124,11 @@
         const facilityFilterList = document.getElementById('facilityFilterList');
         if (facilityFilterList) {
           facilityFilterList.innerHTML = `
-                                                              <div class="text-center py-3 text-danger">
-                                                                  <i class="bi bi-exclamation-triangle"></i>
-                                                                  <div class="small mt-1">Failed to load facilities</div>
-                                                              </div>
-                                                          `;
+                                                                                      <div class="text-center py-3 text-danger">
+                                                                                          <i class="bi bi-exclamation-triangle"></i>
+                                                                                          <div class="small mt-1">Failed to load facilities</div>
+                                                                                      </div>
+                                                                                  `;
         }
       }
     }
@@ -2455,10 +2245,13 @@
           eventModalId: 'calendarEventModal'
         });
 
+
         // Store globally for access
         window.calendarModule = calendarModule;
 
-        // Override the loadCalendarEvents method to include both event sources
+        // Add a flag to track if calendar is ready
+        let isCalendarReady = false;
+
         calendarModule.loadCalendarEvents = async function () {
           try {
             const calendarContainer = document.getElementById(this.config.containerId);
@@ -2493,9 +2286,17 @@
                   const statusName = event.extendedProps?.status;
                   const statusColor = this.statusColors[statusName] ||
                     event.extendedProps?.color || "#007bff";
+
                   return {
-                    ...event,
+                    id: `req_${event.extendedProps?.request_id || Date.now()}`,
+                    title: event.title || event.extendedProps?.calendar_title || 'Untitled Event',
+                    start: event.start,
+                    end: event.end,
+                    allDay: event.allDay || false,
                     color: statusColor,
+                    backgroundColor: statusColor,
+                    borderColor: statusColor,
+                    textColor: '#ffffff',
                     extendedProps: {
                       ...event.extendedProps,
                       color: statusColor,
@@ -2508,74 +2309,34 @@
 
             let calendarEvents = [];
             if (calendarResult) {
-              const eventsArray = Array.isArray(calendarResult) ? calendarResult :
-                (calendarResult.data || []);
-
-              calendarEvents = eventsArray
-                .filter(event => event != null)
-                .map((event) => {
-                  const isAllDay = event.all_day ||
-                    (event.extendedProps && event.extendedProps.all_day) ||
-                    false;
-
-                  let start, end;
-
-                  if (isAllDay) {
-                    const startDate = event.start_date ||
-                      (event.extendedProps && event.extendedProps.start_date);
-                    const endDate = event.end_date ||
-                      (event.extendedProps && event.extendedProps.end_date);
-
-                    if (startDate && endDate) {
-                      const endDateObj = new Date(endDate + 'T12:00:00');
-                      endDateObj.setDate(endDateObj.getDate() + 1);
-                      start = startDate;
-                      end = endDateObj.toISOString().split('T')[0];
-                    }
-                  } else {
-                    start = event.start ||
-                      (event.start_date && event.start_time ?
-                        `${event.start_date}T${event.start_time}` : null);
-                    end = event.end ||
-                      (event.end_date && event.end_time ?
-                        `${event.end_date}T${event.end_time}` : null);
-                  }
-
-                  return {
-                    ...event,
-                    id: event.id || `calendar_${event.event_id || event.extendedProps?.event_id || Date.now()}`,
-                    title: event.title || event.event_name || event.extendedProps?.event_name || 'Calendar Event',
-                    start: start || event.start,
-                    end: end || event.end,
-                    allDay: isAllDay,
-                    color: event.color || '#28a745',
-                    textColor: event.textColor || '#ffffff',
-                    extendedProps: {
-                      ...event.extendedProps,
-                      eventType: 'calendar_event',
-                      all_day: isAllDay,
-                      event_id: event.event_id || (event.extendedProps && event.extendedProps.event_id),
-                      event_name: event.event_name || (event.extendedProps && event.extendedProps.event_name),
-                      description: event.description || (event.extendedProps && event.extendedProps.description),
-                      start_date: event.start_date || (event.extendedProps && event.extendedProps.start_date),
-                      start_time: isAllDay ? 'All Day' : (event.start_time || (event.extendedProps && event.extendedProps.start_time)),
-                      end_date: event.end_date || (event.extendedProps && event.extendedProps.end_date),
-                      end_time: isAllDay ? 'All Day' : (event.end_time || (event.extendedProps && event.extendedProps.end_time)),
-                    },
-                  };
-                });
+              const eventsData = calendarResult.data || calendarResult;
+              calendarEvents = this.transformCalendarEvents(eventsData);
+              this.calendarEvents = calendarEvents;
             }
 
+            this.requisitionEvents = requisitionEvents;
             this.allEvents = [...requisitionEvents, ...calendarEvents];
-            this.debugEventStructure();
-            this.applyFilters();
+
+            console.log('Events loaded:', {
+              requisition: requisitionEvents.length,
+              calendar: calendarEvents.length,
+              total: this.allEvents.length
+            });
+
+            // Only apply filters if calendar is ready, otherwise store events for later
+            if (this.calendar) {
+              this.applyFilters();
+            }
 
             if (calendarContainer) {
               calendarContainer.classList.remove("loading");
             }
+
           } catch (error) {
             console.error("Error loading calendar events:", error);
             this.allEvents = [];
+            this.calendarEvents = [];
+            this.requisitionEvents = [];
             const calendarContainer = document.getElementById(this.config.containerId);
             if (calendarContainer) {
               calendarContainer.classList.remove("loading");
@@ -2583,13 +2344,65 @@
           }
         };
 
+        // Override applyFilters to check if calendar exists
+        const originalApplyFilters = calendarModule.applyFilters;
         calendarModule.applyFilters = function () {
-          if (!this.allEvents || !Array.isArray(this.allEvents)) return;
+          if (!this.calendar) {
+            console.log("Calendar not ready yet, skipping filter application");
+            return;
+          }
+          return originalApplyFilters.call(this);
+        };
+
+        // Override updateCalendarDisplay to handle initial load
+        const originalUpdateCalendarDisplay = calendarModule.updateCalendarDisplay;
+        calendarModule.updateCalendarDisplay = function () {
+          if (!this.calendar) {
+            console.log("Calendar not ready yet, skipping display update");
+            return;
+          }
+          return originalUpdateCalendarDisplay.call(this);
+        };
+
+        // Initialize calendar
+        await calendarModule.initialize();
+
+
+        // Now that calendar is initialized, apply filters once
+        if (calendarModule.calendar) {
+          console.log("Calendar initialized, applying filters...");
+          calendarModule.applyFilters();
+
+          // Force a refresh of the calendar display
+          setTimeout(() => {
+            if (calendarModule.calendar) {
+              calendarModule.calendar.updateSize();
+              calendarModule.calendar.render();
+            }
+          }, 100);
+        }
+
+        // Add this debug version of applyFilters right after your calendarModule definition
+        calendarModule.applyFilters = function () {
+          console.log("=== APPLYING FILTERS ===");
+          console.log("allEvents length:", this.allEvents?.length);
+          console.log("calendarEvents length:", this.calendarEvents?.length);
+          console.log("requisitionEvents length:", this.requisitionEvents?.length);
+
+          if (!this.allEvents || !Array.isArray(this.allEvents)) {
+            console.error("allEvents is not an array!");
+            return;
+          }
 
           let allFacilitiesCheckbox = document.getElementById('filterAllFacilities') || document.getElementById('allFacilities');
           const individualCheckboxes = document.querySelectorAll('.individual-facility:not(:disabled), .facility-filter:not([id*="All"]):not(:disabled)');
 
           const validEvents = this.allEvents.filter(event => event != null);
+          console.log("Valid events to filter:", validEvents.length);
+
+          // Get selected statuses from checkboxes
+          const selectedStatuses = this.getSelectedStatuses();
+          console.log("Selected statuses:", selectedStatuses);
 
           this.filteredEvents = validEvents.filter((event) => {
             if (!event) return false;
@@ -2605,7 +2418,6 @@
 
             // For requisition events, apply filters
             if (eventType === 'requisition') {
-              const selectedStatuses = this.getSelectedStatuses();
               if (selectedStatuses.length > 0 && !selectedStatuses.includes(eventStatus)) {
                 return false;
               }
@@ -2627,7 +2439,51 @@
             return true;
           });
 
+          console.log("Filtered events:", this.filteredEvents.length);
+          console.log("Filtered calendar events:", this.filteredEvents.filter(e => e.extendedProps?.eventType === 'calendar_event').length);
+          console.log("Filtered requisition events:", this.filteredEvents.filter(e => e.extendedProps?.eventType === 'requisition').length);
+
           this.updateCalendarDisplay();
+        };
+
+        // Add this debug version of updateCalendarDisplay
+        calendarModule.updateCalendarDisplay = function () {
+          console.log("=== UPDATING CALENDAR DISPLAY ===");
+          console.log("Filtered events to display:", this.filteredEvents?.length);
+
+          // Update calendar with filtered events
+          if (this.calendar) {
+            console.log("Removing all events from calendar");
+            this.calendar.removeAllEvents();
+
+            if (this.filteredEvents && this.filteredEvents.length > 0) {
+              console.log("Adding event source with", this.filteredEvents.length, "events");
+              console.log("Sample event:", this.filteredEvents[0]);
+              this.calendar.addEventSource(this.filteredEvents);
+            } else {
+              console.log("No events to add to calendar");
+            }
+
+            console.log("Rendering calendar");
+            this.calendar.render();
+
+            setTimeout(() => {
+              this.calendar.updateSize();
+              console.log("Calendar size updated");
+
+              // After update, check what events are actually in the calendar
+              const calendarEvents = this.calendar.getEvents();
+              console.log("Calendar now has", calendarEvents.length, "events");
+              if (calendarEvents.length > 0) {
+                console.log("First calendar event:", calendarEvents[0]);
+              }
+            }, 100);
+          } else {
+            console.error("Calendar instance not found!");
+          }
+
+          // Update mini calendar to reflect event dots
+          this.updateMiniCalendar();
         };
 
         calendarModule.showEventModal = function (event) {
@@ -2648,189 +2504,189 @@
         calendarModule.getModalHtml = function (eventData, isAdmin, eventType) {
           if (eventType === 'calendar') {
             return `
-                          <div class="modal-dialog" style="max-width: 600px;">
-                              <div class="modal-content">
-                                  <div class="modal-header ${eventData.all_day ? 'bg-info' : 'bg-success'} text-white">
-                                      <h5 class="modal-title" id="eventModalTitle">
-                                          <i class="bi bi-calendar-event me-2"></i>${eventData.all_day ? 'All-Day ' : ''}School Calendar Event
-                                      </h5>
-                                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                  </div>
-                                  <div class="modal-body" id="eventModalBody">
-                                      <div class="card border-0 shadow-none mb-0 py-1 px-3">
-                                          <div class="row">
-                                              <div class="col-12">
-                                                  <div class="mb-3">
-                                                      <label class="form-label fw-bold d-flex align-items-center mb-2">
-                                                          <i class="bi bi-tag me-2"></i>Event Title
-                                                      </label>
-                                                      <input type="text" class="form-control bg-light" id="modalCalendarTitle" readonly value="${eventData.event_name || eventData.title || 'Untitled Event'}">
-                                                      ${eventData.all_day ? '<span class="badge bg-info mt-2">All Day Event</span>' : ''}
-                                                  </div>
+                                                  <div class="modal-dialog" style="max-width: 600px;">
+                                                      <div class="modal-content">
+                                                          <div class="modal-header ${eventData.all_day ? 'bg-info' : 'bg-success'} text-white">
+                                                              <h5 class="modal-title" id="eventModalTitle">
+                                                                  <i class="bi bi-calendar-event me-2"></i>${eventData.all_day ? 'All-Day ' : ''}School Calendar Event
+                                                              </h5>
+                                                              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                          </div>
+                                                          <div class="modal-body" id="eventModalBody">
+                                                              <div class="card border-0 shadow-none mb-0 py-1 px-3">
+                                                                  <div class="row">
+                                                                      <div class="col-12">
+                                                                          <div class="mb-3">
+                                                                              <label class="form-label fw-bold d-flex align-items-center mb-2">
+                                                                                  <i class="bi bi-tag me-2"></i>Event Title
+                                                                              </label>
+                                                                              <input type="text" class="form-control bg-light" id="modalCalendarTitle" readonly value="${eventData.event_name || eventData.title || 'Untitled Event'}">
+                                                                              ${eventData.all_day ? '<span class="badge bg-info mt-2">All Day Event</span>' : ''}
+                                                                          </div>
 
-                                                  <div class="mb-3">
-                                                      <label class="form-label fw-bold d-flex align-items-center mb-2">
-                                                          <i class="bi bi-file-text me-2"></i>Description
-                                                      </label>
-                                                      <textarea class="form-control bg-light" id="modalCalendarDescription" rows="4" readonly>${eventData.description || 'No description provided'}</textarea>
-                                                  </div>
+                                                                          <div class="mb-3">
+                                                                              <label class="form-label fw-bold d-flex align-items-center mb-2">
+                                                                                  <i class="bi bi-file-text me-2"></i>Description
+                                                                              </label>
+                                                                              <textarea class="form-control bg-light" id="modalCalendarDescription" rows="4" readonly>${eventData.description || 'No description provided'}</textarea>
+                                                                          </div>
 
-                                                  <div class="mb-3">
-                                                      <label class="form-label fw-bold d-flex align-items-center mb-2">
-                                                          <i class="bi bi-clock me-2"></i>Schedule
-                                                      </label>
-                                                      <div class="card bg-light">
-                                                          <div class="card-body py-3">
-                                                              <div class="d-flex align-items-center mb-2">
-                                                                  <i class="bi bi-calendar-check me-2 ${eventData.all_day ? 'text-info' : 'text-success'}"></i>
-                                                                  <span id="modalEventSchedule" class="fw-medium"></span>
-                                                              </div>
-                                                              <div class="d-flex align-items-center">
-                                                                  <i class="bi bi-hourglass-split me-2 ${eventData.all_day ? 'text-info' : 'text-success'}"></i>
-                                                                  <span id="modalEventDuration" class="fw-medium"></span>
+                                                                          <div class="mb-3">
+                                                                              <label class="form-label fw-bold d-flex align-items-center mb-2">
+                                                                                  <i class="bi bi-clock me-2"></i>Schedule
+                                                                              </label>
+                                                                              <div class="card bg-light">
+                                                                                  <div class="card-body py-3">
+                                                                                      <div class="d-flex align-items-center mb-2">
+                                                                                          <i class="bi bi-calendar-check me-2 ${eventData.all_day ? 'text-info' : 'text-success'}"></i>
+                                                                                          <span id="modalEventSchedule" class="fw-medium"></span>
+                                                                                      </div>
+                                                                                      <div class="d-flex align-items-center">
+                                                                                          <i class="bi bi-hourglass-split me-2 ${eventData.all_day ? 'text-info' : 'text-success'}"></i>
+                                                                                          <span id="modalEventDuration" class="fw-medium"></span>
+                                                                                      </div>
+                                                                                  </div>
+                                                                              </div>
+                                                                          </div>
+                                                                      </div>
+                                                                  </div>
                                                               </div>
                                                           </div>
-                                                      </div>
-                                                  </div>
-                                              </div>
-                                          </div>
-                                      </div>
-                                  </div>
 
-                                  <div class="modal-footer">
-                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                          <i class="bi bi-x-circle me-1"></i> Close
-                                      </button>
-                                  </div>
-                              </div>
-                          </div>`;
+                                                          <div class="modal-footer">
+                                                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                                  <i class="bi bi-x-circle me-1"></i> Close
+                                                              </button>
+                                                          </div>
+                                                      </div>
+                                                  </div>`;
           } else {
             return `
-                                  <div class="modal-dialog" style="max-width: 800px;">
-                                      <div class="modal-content">
-                                          <div class="modal-header bg-gradient-primary text-white">
-                                              <h5 class="modal-title" id="eventModalTitle">
-                                                  <i class="bi bi-file-text me-2"></i>Event Details
-                                              </h5>
-                                              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                          </div>
-                                          <div class="modal-body" id="eventModalBody">
-                                              <div class="card border-0 shadow-none mb-0 py-1 px-3">
-                                                  <div class="row">
-                                                      <div class="col-12">
-                                                          <div class="mb-2">
-                                                              <label class="form-label fw-bold d-flex align-items-center mb-2">
-                                                                  Calendar Title
-                                                                  ${isAdmin ? `
-                                                                  <i class="bi bi-pencil text-secondary ms-2" id="editCalendarTitleBtn" style="cursor: pointer;"></i>
-                                                                  <div class="edit-actions ms-2 d-none" id="calendarTitleActions">
-                                                                      <button type="button" class="btn btn-sm btn-success me-1" id="saveCalendarTitleBtn">
-                                                                          <i class="bi bi-check"></i>
-                                                                      </button>
-                                                                      <button type="button" class="btn btn-sm btn-danger" id="cancelCalendarTitleBtn">
-                                                                          <i class="bi bi-x"></i>
-                                                                      </button>
+                                                          <div class="modal-dialog" style="max-width: 800px;">
+                                                              <div class="modal-content">
+                                                                  <div class="modal-header bg-gradient-primary text-white">
+                                                                      <h5 class="modal-title" id="eventModalTitle">
+                                                                          <i class="bi bi-file-text me-2"></i>Event Details
+                                                                      </h5>
+                                                                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                                                   </div>
-                                                                  ` : ""}
-                                                              </label>
-                                                              <input type="text" class="form-control" id="modalCalendarTitle" ${isAdmin ? "" : "readonly"}>
-                                                          </div>
+                                                                  <div class="modal-body" id="eventModalBody">
+                                                                      <div class="card border-0 shadow-none mb-0 py-1 px-3">
+                                                                          <div class="row">
+                                                                              <div class="col-12">
+                                                                                  <div class="mb-2">
+                                                                                      <label class="form-label fw-bold d-flex align-items-center mb-2">
+                                                                                          Calendar Title
+                                                                                          ${isAdmin ? `
+                                                                                          <i class="bi bi-pencil text-secondary ms-2" id="editCalendarTitleBtn" style="cursor: pointer;"></i>
+                                                                                          <div class="edit-actions ms-2 d-none" id="calendarTitleActions">
+                                                                                              <button type="button" class="btn btn-sm btn-success me-1" id="saveCalendarTitleBtn">
+                                                                                                  <i class="bi bi-check"></i>
+                                                                                              </button>
+                                                                                              <button type="button" class="btn btn-sm btn-danger" id="cancelCalendarTitleBtn">
+                                                                                                  <i class="bi bi-x"></i>
+                                                                                              </button>
+                                                                                          </div>
+                                                                                          ` : ""}
+                                                                                      </label>
+                                                                                      <input type="text" class="form-control" id="modalCalendarTitle" ${isAdmin ? "" : "readonly"}>
+                                                                                  </div>
 
-                                                          <div class="mb-0">
-                                                              <label class="form-label fw-bold d-flex align-items-center mb-2">
-                                                                  Calendar Description
-                                                                  ${isAdmin ? `
-                                                                  <i class="bi bi-pencil text-secondary ms-2" id="editCalendarDescriptionBtn"
-                                                                      style="cursor: pointer;"></i>
-                                                                  <div class="edit-actions ms-2 d-none" id="calendarDescriptionActions">
-                                                                      <button type="button" class="btn btn-sm btn-success me-1" id="saveCalendarDescriptionBtn">
-                                                                          <i class="bi bi-check"></i>
-                                                                      </button>
-                                                                      <button type="button" class="btn btn-sm btn-danger" id="cancelCalendarDescriptionBtn">
-                                                                          <i class="bi bi-x"></i>
-                                                                      </button>
+                                                                                  <div class="mb-0">
+                                                                                      <label class="form-label fw-bold d-flex align-items-center mb-2">
+                                                                                          Calendar Description
+                                                                                          ${isAdmin ? `
+                                                                                          <i class="bi bi-pencil text-secondary ms-2" id="editCalendarDescriptionBtn"
+                                                                                              style="cursor: pointer;"></i>
+                                                                                          <div class="edit-actions ms-2 d-none" id="calendarDescriptionActions">
+                                                                                              <button type="button" class="btn btn-sm btn-success me-1" id="saveCalendarDescriptionBtn">
+                                                                                                  <i class="bi bi-check"></i>
+                                                                                              </button>
+                                                                                              <button type="button" class="btn btn-sm btn-danger" id="cancelCalendarDescriptionBtn">
+                                                                                                  <i class="bi bi-x"></i>
+                                                                                              </button>
+                                                                                          </div>
+                                                                                          ` : ""}
+                                                                                      </label>
+                                                                                      <textarea class="form-control" id="modalCalendarDescription" rows="2"
+                                                                                          ${isAdmin ? "" : "readonly"}></textarea>
+                                                                                  </div>
+                                                                              </div>
+                                                                          </div>
+                                                                      </div>
+
+                                                                      <div class="card border-0 shadow-none mb-3 p-3">
+                                                                          <table class="table table-bordered mb-0 w-100" style="table-layout: fixed; border: 1px solid #dee2e6;">
+                                                                              <thead>
+                                                                                  <tr>
+                                                                                      <th class="bg-light p-2" style="width: 50%; border: 1px solid #dee2e6;">
+                                                                                          Event Information
+                                                                                      </th>
+                                                                                      <th class="bg-light p-2" style="width: 50%; border: 1px solid #dee2e6;">
+                                                                                          Requested Items
+                                                                                      </th>
+                                                                                  </tr>
+                                                                              </thead>
+                                                                              <tbody>
+                                                                                  <tr>
+                                                                                      <td style="border: 1px solid #dee2e6; padding: 0;">
+                                                                                          <table class="table mb-0 w-100" style="border-collapse: collapse;">
+                                                                                              <tbody>
+                                                                                                  <tr>
+                                                                                                      <th class="bg-light text-nowrap p-2"
+                                                                                                          style="width: 40%; border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                                                                                          Requester
+                                                                                                      </th>
+                                                                                                      <td id="modalRequester" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
+                                                                                                  </tr>
+                                                                                                  <tr>
+                                                                                                      <th class="bg-light text-nowrap p-2"
+                                                                                                          style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                                                                                          Purpose
+                                                                                                      </th>
+                                                                                                      <td id="modalPurpose" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
+                                                                                                  </tr>
+                                                                                                  <tr>
+                                                                                                      <th class="bg-light text-nowrap p-2"
+                                                                                                          style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                                                                                          Participants
+                                                                                                      </th>
+                                                                                                      <td id="modalParticipants" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
+                                                                                                  </tr>
+                                                                                                  <tr>
+                                                                                                      <th class="bg-light text-nowrap p-2"
+                                                                                                          style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                                                                                          Status
+                                                                                                      </th>
+                                                                                                      <td id="modalStatus" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
+                                                                                                  </tr>
+                                                                                                  ${isAdmin ? `
+                                                                                                  <tr>
+                                                                                                      <th class="bg-light text-nowrap p-2"
+                                                                                                          style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                                                                                          Approved Fee
+                                                                                                      </th>
+                                                                                                      <td id="modalFee" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
+                                                                                                  </tr>
+                                                                                                  ` : ""}
+                                                                                              </tbody>
+                                                                                          </table>
+                                                                                      </td>
+                                                                                      <td style="border: 1px solid #dee2e6; vertical-align: top; padding: 0;">
+                                                                                          <div id="modalItems" class="p-3" style="min-height: 100%;"></div>
+                                                                                      </td>
+                                                                                  </tr>
+                                                                              </tbody>
+                                                                          </table>
+                                                                      </div>
                                                                   </div>
-                                                                  ` : ""}
-                                                              </label>
-                                                              <textarea class="form-control" id="modalCalendarDescription" rows="2"
-                                                                  ${isAdmin ? "" : "readonly"}></textarea>
-                                                          </div>
-                                                      </div>
-                                                  </div>
-                                              </div>
 
-                                              <div class="card border-0 shadow-none mb-3 p-3">
-                                                  <table class="table table-bordered mb-0 w-100" style="table-layout: fixed; border: 1px solid #dee2e6;">
-                                                      <thead>
-                                                          <tr>
-                                                              <th class="bg-light p-2" style="width: 50%; border: 1px solid #dee2e6;">
-                                                                  Event Information
-                                                              </th>
-                                                              <th class="bg-light p-2" style="width: 50%; border: 1px solid #dee2e6;">
-                                                                  Requested Items
-                                                              </th>
-                                                          </tr>
-                                                      </thead>
-                                                      <tbody>
-                                                          <tr>
-                                                              <td style="border: 1px solid #dee2e6; padding: 0;">
-                                                                  <table class="table mb-0 w-100" style="border-collapse: collapse;">
-                                                                      <tbody>
-                                                                          <tr>
-                                                                              <th class="bg-light text-nowrap p-2"
-                                                                                  style="width: 40%; border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
-                                                                                  Requester
-                                                                              </th>
-                                                                              <td id="modalRequester" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
-                                                                          </tr>
-                                                                          <tr>
-                                                                              <th class="bg-light text-nowrap p-2"
-                                                                                  style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
-                                                                                  Purpose
-                                                                              </th>
-                                                                              <td id="modalPurpose" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
-                                                                          </tr>
-                                                                          <tr>
-                                                                              <th class="bg-light text-nowrap p-2"
-                                                                                  style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
-                                                                                  Participants
-                                                                              </th>
-                                                                              <td id="modalParticipants" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
-                                                                          </tr>
-                                                                          <tr>
-                                                                              <th class="bg-light text-nowrap p-2"
-                                                                                  style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
-                                                                                  Status
-                                                                              </th>
-                                                                              <td id="modalStatus" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
-                                                                          </tr>
-                                                                          ${isAdmin ? `
-                                                                          <tr>
-                                                                              <th class="bg-light text-nowrap p-2"
-                                                                                  style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
-                                                                                  Approved Fee
-                                                                              </th>
-                                                                              <td id="modalFee" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
-                                                                          </tr>
-                                                                          ` : ""}
-                                                                      </tbody>
-                                                                  </table>
-                                                              </td>
-                                                              <td style="border: 1px solid #dee2e6; vertical-align: top; padding: 0;">
-                                                                  <div id="modalItems" class="p-3" style="min-height: 100%;"></div>
-                                                              </td>
-                                                          </tr>
-                                                      </tbody>
-                                                  </table>
-                                              </div>
-                                          </div>
-
-                                          <div class="modal-footer">
-                                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                              ${isAdmin ? '<button type="button" class="btn btn-primary" id="modalViewDetails">View Full Details</button>' : ""}
-                                          </div>
-                                      </div>
-                                  </div>`;
+                                                                  <div class="modal-footer">
+                                                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                                      ${isAdmin ? '<button type="button" class="btn btn-primary" id="modalViewDetails">View Full Details</button>' : ""}
+                                                                  </div>
+                                                              </div>
+                                                          </div>`;
           }
         };
 
@@ -2959,6 +2815,43 @@
         // Initialize calendar (CRITICAL: this loads first)
         await calendarModule.initialize();
 
+        // Add a debug function to check events by month
+        calendarModule.debugEventsByMonth = function () {
+          if (!this.allEvents) return;
+
+          const eventsByMonth = {};
+          this.allEvents.forEach(event => {
+            if (event.start) {
+              const date = new Date(event.start);
+              const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+              if (!eventsByMonth[monthYear]) {
+                eventsByMonth[monthYear] = [];
+              }
+              eventsByMonth[monthYear].push({
+                id: event.id,
+                title: event.title,
+                date: event.start,
+                type: event.extendedProps?.eventType
+              });
+            }
+          });
+
+          console.log('=== EVENTS BY MONTH ===');
+          Object.keys(eventsByMonth).sort().forEach(month => {
+            console.log(`${month}: ${eventsByMonth[month].length} events`);
+            eventsByMonth[month].forEach(e => {
+              console.log(`  - ${e.date}: ${e.title} (${e.type})`);
+            });
+          });
+        };
+
+        // Call it after events are loaded
+        setTimeout(() => {
+          if (calendarModule) {
+            calendarModule.debugEventsByMonth();
+          }
+        }, 2000);
+
         // Force calendar to render properly after skeleton is hidden
         setTimeout(() => {
           if (calendarModule && calendarModule.calendar) {
@@ -2992,14 +2885,6 @@
             loadFacilitiesForFilter().catch(console.error)
           ]);
         }, 50);
-
-        // Load pending count immediately (non-blocking) 
-        setTimeout(() => {
-          fetchPendingCountOnly().catch(console.error);
-        }, 50);
-
-        // Setup refresh button listeners
-        document.getElementById('refreshPendingRequestsBtn')?.addEventListener('click', refreshPendingRequests);
 
         // Initialize the reservation modal
         const modalElement = document.getElementById('addReservationModal');
@@ -3100,6 +2985,10 @@
 
             const now = new Date();
             const tomorrow = new Date(now);
+
+            populateTimeDropdowns(); // Add this line
+            calculateDuration(); // Add this line
+
             tomorrow.setDate(tomorrow.getDate() + 1);
 
             document.getElementById('startDate').value = now.toISOString().split('T')[0];
@@ -3478,122 +3367,6 @@
           }
         });
 
-        // Vue initialization for pending requests tab
-        const pendingRequestsApp = new Vue({
-          el: '#pendingRequestsApp',
-          data: {
-            pendingRequests: [],
-            loading: false,
-            currentPage: 1,
-            totalPages: 1,
-            totalItems: 0,
-            perPage: 10
-          },
-          computed: {
-            displayedPages() {
-              const delta = 2;
-              const range = [];
-              const rangeWithDots = [];
-              let l;
-
-              for (let i = 1; i <= this.totalPages; i++) {
-                if (i === 1 || i === this.totalPages || (i >= this.currentPage - delta && i <= this.currentPage + delta)) {
-                  range.push(i);
-                }
-              }
-
-              range.forEach((i) => {
-                if (l) {
-                  if (i - l === 2) {
-                    rangeWithDots.push(l + 1);
-                  } else if (i - l !== 1) {
-                    rangeWithDots.push('...');
-                  }
-                }
-                rangeWithDots.push(i);
-                l = i;
-              });
-
-              return rangeWithDots;
-            }
-          },
-          methods: {
-            async loadPendingRequests(page = 1) {
-              this.loading = true;
-              this.currentPage = page;
-
-              try {
-                const params = new URLSearchParams({
-                  page: page,
-                  per_page: this.perPage
-                });
-
-                const response = await fetch(`/api/admin/pending-requests?${params}`, {
-                  headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
-                    'Accept': 'application/json'
-                  }
-                });
-
-                if (response.ok) {
-                  const result = await response.json();
-                  this.pendingRequests = result.data || [];
-                  this.totalPages = result.meta?.last_page || 1;
-                  this.totalItems = result.meta?.total || 0;
-
-                  // Update the pending count badge
-                  const pendingCountBadge = document.getElementById('pendingRequestsCount');
-                  if (pendingCountBadge) {
-                    pendingCountBadge.textContent = result.meta?.total || 0;
-                  }
-                }
-              } catch (error) {
-                console.error('Error loading pending requests:', error);
-                this.pendingRequests = [];
-                showToast('Failed to load pending requests', 'error');
-              } finally {
-                this.loading = false;
-              }
-            },
-
-            async refreshPendingRequests() {
-              await this.loadPendingRequests(this.currentPage);
-            },
-
-            // Add the formatDuration method here
-            formatDuration(request) {
-              // Simply return the pre-formatted duration from the API
-              return request.schedule?.duration || 'N/A';
-            },
-
-            displayItems(items) {
-              if (!items || items.length === 0) return [];
-              return items;
-            },
-
-            changePage(page) {
-              if (page >= 1 && page <= this.totalPages) {
-                this.loadPendingRequests(page);
-              }
-            },
-
-            goToEvent(requestId) {
-              window.location.href = `/admin/requisition/${requestId}`;
-            }
-          },
-          mounted() {
-            // Lazy load - only load when tab is shown
-            const pendingTab = document.getElementById('pending-requests-tab');
-            if (pendingTab) {
-              pendingTab.addEventListener('shown.bs.tab', () => {
-                if (this.pendingRequests.length === 0 && !this.loading) {
-                  this.loadPendingRequests(1);
-                }
-              });
-            }
-          }
-        });
-
       } catch (error) {
         console.error('Initialization error:', error);
         showToast('Failed to initialize page. Please refresh.', 'error');
@@ -3822,6 +3595,9 @@
           }
         }
       });
+
+      window.ongoingEventsApp = ongoingEventsApp;
+      window.calendarEventsApp = calendarEventsApp;
     });
 
 
@@ -4220,23 +3996,23 @@
             const div = document.createElement('div');
             div.className = 'form-check mb-2';
             div.innerHTML = `
-                                                                    <input class="form-check-input facility-checkbox" type="checkbox" 
-                                                                           id="facility_${facility.facility_id}" 
-                                                                           value="${facility.facility_id}"
-                                                                           data-name="${facility.facility_name}"
-                                                                           data-fee="${facility.external_fee}"
-                                                                           data-rate-type="${facility.rate_type}"
-                                                                           data-capacity="${facility.capacity}"
-                                                                           ${!isAvailable ? 'disabled' : ''}>
-                                                                    <label class="form-check-label ${!isAvailable ? 'text-muted' : ''}" 
-                                                                           for="facility_${facility.facility_id}">
-                                                                        ${facility.facility_name} 
-                                                                        (₱${facility.external_fee}${facility.rate_type === 'Per Hour' ? '/hour' : '/event'})
-                                                                        <br>
-                                                                        <small class="text-muted">Capacity: ${facility.capacity} people</small>
-                                                                        ${!isAvailable ? '<span class="badge bg-warning ms-2">Unavailable</span>' : ''}
-                                                                    </label>
-                                                                `;
+                                                                                            <input class="form-check-input facility-checkbox" type="checkbox" 
+                                                                                                   id="facility_${facility.facility_id}" 
+                                                                                                   value="${facility.facility_id}"
+                                                                                                   data-name="${facility.facility_name}"
+                                                                                                   data-fee="${facility.external_fee}"
+                                                                                                   data-rate-type="${facility.rate_type}"
+                                                                                                   data-capacity="${facility.capacity}"
+                                                                                                   ${!isAvailable ? 'disabled' : ''}>
+                                                                                            <label class="form-check-label ${!isAvailable ? 'text-muted' : ''}" 
+                                                                                                   for="facility_${facility.facility_id}">
+                                                                                                ${facility.facility_name} 
+                                                                                                (₱${facility.external_fee}${facility.rate_type === 'Per Hour' ? '/hour' : '/event'})
+                                                                                                <br>
+                                                                                                <small class="text-muted">Capacity: ${facility.capacity} people</small>
+                                                                                                ${!isAvailable ? '<span class="badge bg-warning ms-2">Unavailable</span>' : ''}
+                                                                                            </label>
+                                                                                        `;
             facilitiesList.appendChild(div);
           });
 
@@ -4283,20 +4059,20 @@
             const div = document.createElement('div');
             div.className = 'form-check mb-2';
             div.innerHTML = `
-                                                                    <input class="form-check-input equipment-checkbox" type="checkbox" 
-                                                                           id="equipment_${equipment.equipment_id}" 
-                                                                           value="${equipment.equipment_id}"
-                                                                           data-name="${equipment.equipment_name}"
-                                                                           data-fee="${equipment.external_fee}"
-                                                                           data-rate-type="${equipment.rate_type}"
-                                                                           ${!isAvailable ? 'disabled' : ''}>
-                                                                    <label class="form-check-label ${!isAvailable ? 'text-muted' : ''}" 
-                                                                           for="equipment_${equipment.equipment_id}">
-                                                                        ${equipment.equipment_name} 
-                                                                        (₱${equipment.external_fee}${equipment.rate_type === 'Per Hour' ? '/hour' : '/event'})
-                                                                        ${!isAvailable ? '<span class="badge bg-warning ms-2">Unavailable</span>' : ''}
-                                                                    </label>
-                                                                `;
+                                                                                            <input class="form-check-input equipment-checkbox" type="checkbox" 
+                                                                                                   id="equipment_${equipment.equipment_id}" 
+                                                                                                   value="${equipment.equipment_id}"
+                                                                                                   data-name="${equipment.equipment_name}"
+                                                                                                   data-fee="${equipment.external_fee}"
+                                                                                                   data-rate-type="${equipment.rate_type}"
+                                                                                                   ${!isAvailable ? 'disabled' : ''}>
+                                                                                            <label class="form-check-label ${!isAvailable ? 'text-muted' : ''}" 
+                                                                                                   for="equipment_${equipment.equipment_id}">
+                                                                                                ${equipment.equipment_name} 
+                                                                                                (₱${equipment.external_fee}${equipment.rate_type === 'Per Hour' ? '/hour' : '/event'})
+                                                                                                ${!isAvailable ? '<span class="badge bg-warning ms-2">Unavailable</span>' : ''}
+                                                                                            </label>
+                                                                                        `;
             equipmentList.appendChild(div);
           });
         } else {
@@ -4705,6 +4481,7 @@
           if (window.calendarModule) {
             console.log('Refreshing calendar after reservation creation...');
 
+
             // Force reload events
             await window.calendarModule.loadCalendarEvents();
 
@@ -4730,36 +4507,6 @@
 
           // Refresh admin reservations list
           await loadAdminReservations(currentReservationPage || 1);
-
-          // 🔥 NEW: If the status is pending, refresh the pending tab and update its count
-          if (isPendingStatus) {
-            console.log('Pending status detected, refreshing pending tab...');
-
-            // Refresh pending requests list
-            await loadPendingRequests();
-
-            // Also fetch the pending count to update the badge
-            await fetchPendingCountOnly();
-
-            // If the pending tab is not loaded yet, mark it as loaded
-            if (!window.pendingLoaded) {
-              window.pendingLoaded = true;
-            }
-
-            // Optional: If the user is currently on the pending tab, show a visual indicator
-            const pendingTab = document.getElementById('pending-requests-tab');
-            if (pendingTab && pendingTab.classList.contains('active')) {
-              // Add a subtle animation to the refresh button
-              const refreshBtn = document.getElementById('refreshPendingRequestsBtn');
-              if (refreshBtn) {
-                const icon = refreshBtn.querySelector('i');
-                icon.classList.add('animate-spin');
-                setTimeout(() => {
-                  icon.classList.remove('animate-spin');
-                }, 500);
-              }
-            }
-          }
 
           // Also refresh the mini calendar if it exists
           if (window.calendarModule && typeof window.calendarModule.loadMiniCalendar === 'function') {
@@ -4935,13 +4682,6 @@
 
             isValid = purposeValid && participantsValid && tablesValid && chairsValid && microphonesValid;
 
-            // Auto-generate access code if everything is valid
-            if (isValid) {
-              const accessCodeInput = document.getElementById('accessCodeInput');
-              if (!accessCodeInput.value) {
-                generateAccessCode();
-              }
-            }
             break;
 
           case 3:
@@ -5356,22 +5096,22 @@
 
       // Set loading state
       document.getElementById('approvalsHistoryContent').innerHTML = `
-                                                <div class="text-center text-muted py-4">
-                                                  <div class="spinner-border text-primary" role="status">
-                                                    <span class="visually-hidden">Loading...</span>
-                                                  </div>
-                                                  <p class="mt-2">Loading approvals...</p>
-                                                </div>
-                                              `;
+                                                                        <div class="text-center text-muted py-4">
+                                                                          <div class="spinner-border text-primary" role="status">
+                                                                            <span class="visually-hidden">Loading...</span>
+                                                                          </div>
+                                                                          <p class="mt-2">Loading approvals...</p>
+                                                                        </div>
+                                                                      `;
 
       document.getElementById('rejectionsHistoryContent').innerHTML = `
-                                                <div class="text-center text-muted py-4">
-                                                  <div class="spinner-border text-primary" role="status">
-                                                    <span class="visually-hidden">Loading...</span>
-                                                  </div>
-                                                  <p class="mt-2">Loading rejections...</p>
-                                                </div>
-                                              `;
+                                                                        <div class="text-center text-muted py-4">
+                                                                          <div class="spinner-border text-primary" role="status">
+                                                                            <span class="visually-hidden">Loading...</span>
+                                                                          </div>
+                                                                          <p class="mt-2">Loading rejections...</p>
+                                                                        </div>
+                                                                      `;
 
       // Reset tab counts
       document.getElementById('approvalsTabCount').textContent = '0';
@@ -5382,6 +5122,92 @@
 
       // Then load the data
       loadApprovalHistory(requestId);
+    }
+
+    // Function to populate time dropdowns
+    function populateTimeDropdowns() {
+      const startTimeSelect = document.getElementById('startTime');
+      const endTimeSelect = document.getElementById('endTime');
+
+      if (!startTimeSelect || !endTimeSelect) return;
+
+      // Clear existing options
+      startTimeSelect.innerHTML = '';
+      endTimeSelect.innerHTML = '';
+
+      // Generate time options from 00:00 to 23:45 in 15-minute intervals
+      for (let hour = 0; hour < 24; hour++) {
+        for (let minute = 0; minute < 60; minute += 15) {
+          const hourStr = hour.toString().padStart(2, '0');
+          const minuteStr = minute.toString().padStart(2, '0');
+          const timeValue = `${hourStr}:${minuteStr}`;
+
+          // Format for display (12-hour format)
+          const displayHour = hour % 12 || 12;
+          const ampm = hour < 12 ? 'AM' : 'PM';
+          const displayTime = `${displayHour}:${minuteStr} ${ampm}`;
+
+          const option = new Option(displayTime, timeValue);
+          startTimeSelect.appendChild(option.cloneNode(true));
+          endTimeSelect.appendChild(option);
+        }
+      }
+
+      // Set default values
+      startTimeSelect.value = '09:00';
+      endTimeSelect.value = '17:00';
+    }
+
+    // Function to calculate duration (called by populateTimeDropdowns)
+    function calculateDuration() {
+      const startDate = document.getElementById('startDate')?.value;
+      const endDate = document.getElementById('endDate')?.value;
+      const startTime = document.getElementById('startTime')?.value;
+      const endTime = document.getElementById('endTime')?.value;
+
+      if (startDate && endDate && startTime && endTime) {
+        const start = new Date(`${startDate}T${startTime}`);
+        const end = new Date(`${endDate}T${endTime}`);
+
+        if (end > start) {
+          const diffMs = end - start;
+          const hours = Math.floor(diffMs / (1000 * 60 * 60));
+          const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+          let durationText = '';
+          if (hours > 0) durationText += `${hours} hour${hours > 1 ? 's' : ''}`;
+          if (minutes > 0) {
+            if (hours > 0) durationText += ' ';
+            durationText += `${minutes} minute${minutes > 1 ? 's' : ''}`;
+          }
+
+          const durationElement = document.getElementById('durationDisplay');
+          if (durationElement) {
+            durationElement.textContent = durationText || '0 minutes';
+          }
+        }
+      }
+    }
+
+    // Function to load calendar events (called after adding a new event)
+    async function loadCalendarEvents() {
+      try {
+        if (window.calendarEventsApp && typeof window.calendarEventsApp.loadCalendarEvents === 'function') {
+          await window.calendarEventsApp.loadCalendarEvents(1);
+        }
+      } catch (error) {
+        console.error('Error loading calendar events:', error);
+      }
+    }
+    // Function to load admin reservations
+    async function loadAdminReservations(page = 1) {
+      try {
+        if (window.ongoingEventsApp && typeof window.ongoingEventsApp.loadOngoingEvents === 'function') {
+          await window.ongoingEventsApp.loadOngoingEvents(page);
+        }
+      } catch (error) {
+        console.error('Error loading admin reservations:', error);
+      }
     }
 
     // Function to load approval history
@@ -5430,9 +5256,9 @@
       } catch (error) {
         console.error('Error loading approval history:', error);
         const errorHtml = `<div class="text-center text-danger py-4">
-                                                  <i class="bi bi-exclamation-triangle me-2"></i>
-                                                  Failed to load history: ${error.message}
-                                                </div>`;
+                                                                          <i class="bi bi-exclamation-triangle me-2"></i>
+                                                                          Failed to load history: ${error.message}
+                                                                        </div>`;
         document.getElementById('approvalsHistoryContent').innerHTML = errorHtml;
         document.getElementById('rejectionsHistoryContent').innerHTML = errorHtml;
       }
@@ -5451,86 +5277,86 @@
         Math.round((currentApprovals / requiredApprovals) * 100) : 0;
 
       return `
-                                                <!-- Approval Progress Summary -->
-                                                ${requiredApprovals > 0 ? `
-                                                <div class="card mb-4 border-0 shadow-sm">
-                                                  <div class="card-body">
-                                                    <h6 class="card-title mb-3">Approval Progress</h6>
+                                                                        <!-- Approval Progress Summary -->
+                                                                        ${requiredApprovals > 0 ? `
+                                                                        <div class="card mb-4 border-0 shadow-sm">
+                                                                          <div class="card-body">
+                                                                            <h6 class="card-title mb-3">Approval Progress</h6>
 
-                                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                                      <div class="d-flex align-items-center">
-                                                        <i class="fa-solid fa-user-tie text-muted me-2"></i>
-                                                        <span class="fw-medium ${isFullyApproved ? 'text-success' : 'text-warning'}">
-                                                          ${currentApprovals}/${requiredApprovals} heads approved
-                                                        </span>
-                                                        ${isFullyApproved ?
+                                                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                              <div class="d-flex align-items-center">
+                                                                                <i class="fa-solid fa-user-tie text-muted me-2"></i>
+                                                                                <span class="fw-medium ${isFullyApproved ? 'text-success' : 'text-warning'}">
+                                                                                  ${currentApprovals}/${requiredApprovals} heads approved
+                                                                                </span>
+                                                                                ${isFullyApproved ?
             '<span class="badge bg-success ms-2"><i class="bi bi-check-circle"></i> Fully Approved</span>' :
             `<span class="badge bg-warning ms-2"><i class="bi bi-clock"></i> Pending</span>`}
-                                                      </div>
-                                                      <span class="text-muted">${approvalPercentage}%</span>
-                                                    </div>
+                                                                              </div>
+                                                                              <span class="text-muted">${approvalPercentage}%</span>
+                                                                            </div>
 
-                                                    <div class="progress mb-3" style="height: 8px;">
-                                                      <div class="progress-bar ${isFullyApproved ? 'bg-success' : 'bg-primary'}" 
-                                                           role="progressbar" 
-                                                           style="width: ${approvalPercentage}%"
-                                                           aria-valuenow="${approvalPercentage}" 
-                                                           aria-valuemin="0" 
-                                                           aria-valuemax="100">
-                                                      </div>
-                                                    </div>
+                                                                            <div class="progress mb-3" style="height: 8px;">
+                                                                              <div class="progress-bar ${isFullyApproved ? 'bg-success' : 'bg-primary'}" 
+                                                                                   role="progressbar" 
+                                                                                   style="width: ${approvalPercentage}%"
+                                                                                   aria-valuenow="${approvalPercentage}" 
+                                                                                   aria-valuemin="0" 
+                                                                                   aria-valuemax="100">
+                                                                              </div>
+                                                                            </div>
 
-                                                    ${requiredAdmins.length > 0 ? `
-                                                    <div class="mt-3">
-                                                      <h6 class="card-subtitle mb-2 text-muted">Required Approvers:</h6>
-                                                      <div class="d-flex flex-wrap gap-2">
-                                                        ${requiredAdmins.map(admin => `
-                                                          <div class="d-flex align-items-center border rounded p-2 ${admin.has_approved ? 'border-success bg-success-light' : 'border-secondary'}">
-                                                            <div class="me-2">
-                                                              ${admin.has_approved ?
+                                                                            ${requiredAdmins.length > 0 ? `
+                                                                            <div class="mt-3">
+                                                                              <h6 class="card-subtitle mb-2 text-muted">Required Approvers:</h6>
+                                                                              <div class="d-flex flex-wrap gap-2">
+                                                                                ${requiredAdmins.map(admin => `
+                                                                                  <div class="d-flex align-items-center border rounded p-2 ${admin.has_approved ? 'border-success bg-success-light' : 'border-secondary'}">
+                                                                                    <div class="me-2">
+                                                                                      ${admin.has_approved ?
                 '<i class="bi bi-check-circle-fill text-success"></i>' :
                 '<i class="bi bi-clock text-warning"></i>'}
-                                                            </div>
-                                                            <div>
-                                                              <div class="fw-medium">${admin.name}</div>
-                                                              ${admin.title ? `<small class="text-muted">${admin.title}</small>` : ''}
-                                                            </div>
-                                                          </div>
-                                                        `).join('')}
-                                                      </div>
-                                                    </div>
-                                                    ` : ''}
-                                                  </div>
-                                                </div>
-                                                ` : ''}
+                                                                                    </div>
+                                                                                    <div>
+                                                                                      <div class="fw-medium">${admin.name}</div>
+                                                                                      ${admin.title ? `<small class="text-muted">${admin.title}</small>` : ''}
+                                                                                    </div>
+                                                                                  </div>
+                                                                                `).join('')}
+                                                                              </div>
+                                                                            </div>
+                                                                            ` : ''}
+                                                                          </div>
+                                                                        </div>
+                                                                        ` : ''}
 
-                                                <!-- Approval History List -->
-                                                <h6 class="mb-3">Approval History</h6>
-                                                ${history.map(item => `
-                                                  <div class="d-flex align-items-center mb-3 p-3 border rounded">
-                                                    <div class="me-3 flex-shrink-0">
-                                                      ${item.admin_photo ?
+                                                                        <!-- Approval History List -->
+                                                                        <h6 class="mb-3">Approval History</h6>
+                                                                        ${history.map(item => `
+                                                                          <div class="d-flex align-items-center mb-3 p-3 border rounded">
+                                                                            <div class="me-3 flex-shrink-0">
+                                                                              ${item.admin_photo ?
                     `<img src="${item.admin_photo}" class="rounded-circle" width="45" height="45" alt="${item.admin_name}" style="object-fit: cover;">` :
                     `<div class="rounded-circle d-flex align-items-center justify-content-center ${item.action === 'approved' ? 'bg-success' : 'bg-danger'} text-white" style="width: 45px; height: 45px;">
-                                                          ${item.admin_name.split(' ').map(n => n.charAt(0)).join('')}
-                                                        </div>`}
-                                                    </div>
-                                                    <div class="flex-grow-1">
-                                                      <div class="d-flex justify-content-between align-items-start">
-                                                        <div>
-                                                          <strong class="d-block">${item.admin_name}</strong>
-                                                          <small class="text-muted">
-                                                            <i class="bi ${item.action === 'approved' ? 'bi-hand-thumbs-up text-success' : 'bi-hand-thumbs-down text-danger'} me-1"></i>
-                                                            ${item.action === 'approved' ? 'Approved' : 'Rejected'} this request
-                                                          </small>
-                                                          ${item.remarks ? `<div class="mt-2 small p-2 bg-light rounded">"${item.remarks}"</div>` : ''}
-                                                        </div>
-                                                        <small class="text-muted text-end">${item.formatted_date}</small>
-                                                      </div>
-                                                    </div>
-                                                  </div>
-                                                `).join('')}
-                                              `;
+                                                                                  ${item.admin_name.split(' ').map(n => n.charAt(0)).join('')}
+                                                                                </div>`}
+                                                                            </div>
+                                                                            <div class="flex-grow-1">
+                                                                              <div class="d-flex justify-content-between align-items-start">
+                                                                                <div>
+                                                                                  <strong class="d-block">${item.admin_name}</strong>
+                                                                                  <small class="text-muted">
+                                                                                    <i class="bi ${item.action === 'approved' ? 'bi-hand-thumbs-up text-success' : 'bi-hand-thumbs-down text-danger'} me-1"></i>
+                                                                                    ${item.action === 'approved' ? 'Approved' : 'Rejected'} this request
+                                                                                  </small>
+                                                                                  ${item.remarks ? `<div class="mt-2 small p-2 bg-light rounded">"${item.remarks}"</div>` : ''}
+                                                                                </div>
+                                                                                <small class="text-muted text-end">${item.formatted_date}</small>
+                                                                              </div>
+                                                                            </div>
+                                                                          </div>
+                                                                        `).join('')}
+                                                                      `;
     }
 
     async function addCalendarEvent(eventData) {
@@ -5542,8 +5368,35 @@
         submitBtn.disabled = true;
         spinner.classList.remove('d-none');
 
+        // Get form values directly to ensure correct field names
+        const form = document.getElementById('addCalendarEventForm');
+        const formData = new FormData(form);
+
+        const isAllDay = document.getElementById('calendarAllDayField')?.checked || false;
+
+        // Build payload with correct field names expected by backend
+        const payload = {
+          event_name: formData.get('event_name'),
+          event_type: formData.get('event_type'),
+          description: formData.get('description') || '',
+          start_date: formData.get('start_date'),
+          end_date: formData.get('end_date'),
+          all_day: isAllDay
+        };
+
+        // Handle times based on all_day flag
+        if (isAllDay) {
+          // For all-day events, backend will set to 00:00 and 23:59
+          payload.start_time = '00:00';
+          payload.end_time = '23:59';
+        } else {
+          // For timed events, get the time values
+          payload.start_time = formData.get('start_time');
+          payload.end_time = formData.get('end_time');
+        }
+
         // Log the data being sent for debugging
-        console.log('Submitting calendar event:', eventData);
+        console.log('Submitting calendar event payload:', payload);
 
         const response = await fetch('/api/calendar-events', {
           method: 'POST',
@@ -5553,21 +5406,42 @@
             'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
           },
-          body: JSON.stringify(eventData)
+          body: JSON.stringify(payload)
         });
 
-        const result = await response.json();
+        // Log raw response for debugging
+        console.log('Response status:', response.status);
+
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
+
+        // Parse response
+        let result;
+        try {
+          result = JSON.parse(responseText);
+        } catch (e) {
+          console.error('Failed to parse response as JSON:', responseText);
+          throw new Error('Server returned invalid JSON response');
+        }
 
         if (!response.ok) {
           if (response.status === 422 && result.errors) {
             const errorMessages = Object.values(result.errors).flat().join(', ');
             throw new Error(errorMessages || 'Validation failed');
           }
-          throw new Error(result.message || 'Failed to add event');
+          throw new Error(result.message || `HTTP Error ${response.status}: Failed to add event`);
         }
 
+        // Check if the response indicates success
+        if (!result.success) {
+          throw new Error(result.message || 'Server returned error response');
+        }
+
+        // Log the created event data
+        console.log('Event created successfully:', result.data);
+
         // Success message
-        const successMessage = eventData.all_day
+        const successMessage = isAllDay
           ? 'All-day calendar event added successfully!'
           : 'Calendar event added successfully!';
         showToast(successMessage, 'success');
@@ -5578,7 +5452,6 @@
         if (modal) modal.hide();
 
         // Reset form
-        const form = document.getElementById('addCalendarEventForm');
         if (form) {
           form.reset();
 
@@ -5611,10 +5484,28 @@
         // Wait for modal to finish hiding
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        // Refresh calendar events
-        console.log('Refreshing calendar events...');
-        await loadCalendarEvents();
+        // Force refresh of calendar events by making a direct API call first to verify
+        try {
+          console.log('Verifying event was saved by fetching latest events...');
+          const verifyResponse = await fetch('/api/calendar-events', {
+            headers: {
+              'Authorization': `Bearer ${adminToken}`,
+              'Accept': 'application/json'
+            }
+          });
+          const verifyData = await verifyResponse.json();
+          console.log('Latest events from API:', verifyData);
+        } catch (verifyError) {
+          console.error('Error verifying saved event:', verifyError);
+        }
 
+        // Refresh calendar events in Vue app (Events tab)
+        if (window.calendarEventsApp && typeof window.calendarEventsApp.loadCalendarEvents === 'function') {
+          console.log('Refreshing calendar events Vue app...');
+          await window.calendarEventsApp.loadCalendarEvents(1);
+        }
+
+        // Refresh main calendar (FullCalendar)
         if (window.calendarModule) {
           console.log('Reloading calendar module events...');
           await window.calendarModule.loadCalendarEvents();
@@ -5624,6 +5515,7 @@
               window.calendarModule.calendar.refetchEvents();
               window.calendarModule.calendar.render();
               window.calendarModule.calendar.updateSize();
+              console.log('Calendar refreshed successfully');
             } catch (error) {
               console.warn('Error refreshing calendar layout:', error);
             }

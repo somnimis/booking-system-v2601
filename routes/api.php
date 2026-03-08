@@ -84,6 +84,7 @@ Route::prefix('facility-categories')->group(function () {
 Route::get('/requisition-forms/calendar-events', [CalendarEventsController::class, 'getCalendarEvents']);
 Route::get('/admin/requisition-forms/calendar-events', [CalendarEventsController::class, 'getCalendarEvents'])
     ->middleware('auth:admin');
+Route::get('/calendar-events/all', [CalendarEventsController::class, 'getAllForCalendar']);
 Route::get('/calendar-events', [CalendarEventsController::class, 'index']);
 Route::post('/calendar-events', [CalendarEventsController::class, 'store']);
 Route::delete('/calendar-events/{id}', [CalendarEventsController::class, 'destroy']);
