@@ -41,5 +41,5 @@ RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache \
 # Expose port 8000
 EXPOSE 80
 
-# Run composer install and artisan migrate when container starts
-CMD ["bash", "-c", "composer install --no-dev --optimize-autoloader && php artisan migrate --force && apache2-foreground"]
+# Check if vendor exists, if not run install (should only happen first time)
+CMD ["bash", "-c", "if [ ! -d \"vendor\" ]; then composer install --no-dev --optimize-autoloader; fi && php artisan migrate --force && apache2-foreground"]
