@@ -28,8 +28,11 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by($request->ip()); // 5 attempts per minute per IP
         });
-        // Force HTTPS in production
-        if (env('APP_ENV') === 'production') {
+        // Only force HTTPS if the app is running on Render/production with HTTPS
+        if (
+            isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+            $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https'
+        ) {
             URL::forceScheme('https');
         }
     }
