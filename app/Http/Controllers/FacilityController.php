@@ -13,6 +13,19 @@ use Illuminate\Http\JsonResponse;
 class FacilityController extends Controller
 {
 // ----- Index - Show all facilities ----- //
+
+public function getFacilitiesForDropdown()
+{
+    $facilities = Facility::select('facility_id', 'facility_name')
+        ->orderBy('facility_name')
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $facilities
+    ]);
+}
+
     public function publicIndex(): JsonResponse
     {
         try {

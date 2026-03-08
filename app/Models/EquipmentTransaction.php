@@ -42,6 +42,7 @@ class EquipmentTransaction extends Model
     ];
 
     // === RELATIONSHIPS ===
+// In EquipmentTransaction.php - verify these exist
 
     /**
      * Get the requisition form this transaction belongs to.

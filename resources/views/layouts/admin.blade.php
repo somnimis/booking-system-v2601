@@ -596,9 +596,9 @@
                 </a>
             </li>
             <!-- Equipment Tracking Nav Item -->
-            <li class="nav-item mb-1" id="equipment-tracking-nav-item" style="display: none;">
-                <a class="nav-link py-1 px-2 rounded-2 {{ Request::is('admin/equipment-tracking*') ? 'active' : '' }}"
-                    href="{{ url('/admin/equipment-tracking') }}">
+            <li class="nav-item mb-1" id="asset-tracking-nav-item" style="display: none;">
+                <a class="nav-link py-1 px-2 rounded-2 {{ Request::is('admin/asset-tracking*') ? 'active' : '' }}"
+                    href="{{ url('/admin/asset-tracking') }}">
                     <div class="d-flex align-items-center">
                         <div class="nav-icon p-1 rounded me-2">
                             <i class="fa-solid fa-chart-line me-1"></i>
@@ -1040,7 +1040,7 @@ function hideSidebarItemsBasedOnRole(roleId) {
     const dashboardNavItem = document.getElementById('dashboard-nav-item');
     const calendarNavItem = document.getElementById('calendar-nav-item');           // Active Bookings
     const pendingNavItem = document.getElementById('pending-nav-item');             // Pending Approval
-    const equipmentTrackingNavItem = document.getElementById('equipment-tracking-nav-item');
+    const equipmentTrackingNavItem = document.getElementById('asset-tracking-nav-item');
     const administratorsNavItem = document.getElementById('administrators-nav-item');
     const facilitiesNavItem = document.getElementById('facilities-nav-item');
     const equipmentNavItem = document.getElementById('equipment-nav-item');
@@ -1062,30 +1062,22 @@ function hideSidebarItemsBasedOnRole(roleId) {
         if (item) item.style.display = 'block';
     });
 
-    // Apply role-based visibility rules
+    // Apply role-based visibility rules based on role_id from seeder
     switch (Number(roleId)) {
-        case 1: // Head Admin
+        case 1: // Head Admin (role_id = 1)
             // SHOW ALL - no items to hide
             break;
 
-        case 2: // Vice President of Administration
-            // SHOW ALL - can view and approve requisition forms only
-            // (all items remain visible as per business rule)
-            break;
-
-        case 3: // Approving Officer
+        case 2: // Approving Officer (role_id = 2)
             // Hide only Administrators
             if (administratorsNavItem) administratorsNavItem.style.display = 'none';
             break;
 
-        case 4: // Inventory Manager
+        case 3: // Inventory Manager (role_id = 3)
             // Hide Administrators, Active Bookings, Pending Approval
             if (administratorsNavItem) administratorsNavItem.style.display = 'none';
             if (calendarNavItem) calendarNavItem.style.display = 'none';           // Active Bookings
             if (pendingNavItem) pendingNavItem.style.display = 'none';             // Pending Approval
-            // Equipment Tracking visibility? Keeping visible since Inventory Manager manages equipment
-            // If Equipment Tracking should also be hidden, uncomment the line below:
-            // if (equipmentTrackingNavItem) equipmentTrackingNavItem.style.display = 'none';
             break;
 
         default:
@@ -1093,7 +1085,7 @@ function hideSidebarItemsBasedOnRole(roleId) {
             break;
     }
 
-    // Optional: Hide entire Management section if all its items are hidden
+    // Hide entire Management section if all its items are hidden
     const managementItems = [calendarNavItem, pendingNavItem, equipmentTrackingNavItem, administratorsNavItem];
     const anyManagementVisible = managementItems.some(item => item && item.style.display !== 'none');
     const managementSection = document.getElementById('management-section');
@@ -1138,7 +1130,7 @@ function hideSidebarItemsBasedOnRole(roleId) {
                 'dashboard-nav-item',
                 'calendar-nav-item',
                 'pending-nav-item',
-                'equipment-tracking-nav-item',
+                'asset-tracking-nav-item',
                 'administrators-nav-item',
                 'facilities-nav-item',
                 'equipment-nav-item',
