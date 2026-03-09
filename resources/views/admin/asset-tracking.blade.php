@@ -5,6 +5,24 @@
 
 @section('content')
     <main id="main">
+                {{-- UNDER CONSTRUCTION DISCLAIMER --}}
+        <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert" style="border-left: 4px solid #856404;">
+            <div class="d-flex align-items-center">
+                <i class="fa-solid fa-triangle-exclamation fa-xl me-3"></i>
+                <div>
+                    <strong class="fw-semibold">🚧 Under Construction</strong>
+                    <p class="mb-1">This page is still being developed and is for viewing purposes only. Some features may not work as expected.</p>
+                    <p class="mb-0 small">
+                        <i class="fa-regular fa-lightbulb me-1"></i>
+                        For any suggestions or feedback,
+                        <a href="https://booking-system-v2601.onrender.com/user-feedback" target="_blank" class="alert-link fw-semibold">
+                            please submit your ideas here <i class="fa-solid fa-arrow-up-right-from-s ms-1" style="font-size: 0.75rem;"></i>
+                        </a>
+                    </p>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
         <div class="container-fluid mb-2" id="assetTrackingApp">
             {{-- Quick Stats Row --}}
             <div class="row g-4 mb-4" id="statsContainer">
