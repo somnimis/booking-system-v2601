@@ -7,6 +7,227 @@
     <link rel="stylesheet" href="{{ asset('css/admin/request-view.css') }}">
 
     <style>
+        /* Sticky Activity Timeline Button - Always visible */
+        .sticky-timeline-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #004080;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+            transition: all 0.3s ease;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .sticky-timeline-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            background-color: #355a8f;
+        }
+
+        .sticky-timeline-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            background-color: #355a8f;
+        }
+
+        /* Activity Timeline Modal */
+        .timeline-modal {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 380px;
+            max-height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: none;
+            /* Hide by default */
+            border: 1px solid #e0e0e0;
+            flex-direction: column;
+        }
+
+        .timeline-modal.show {
+            display: flex;
+            /* Show when .show class is added */
+        }
+
+        .timeline-modal .modal-header {
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+        }
+
+        .timeline-modal .modal-header h6 {
+            margin: 0;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .timeline-modal .modal-header .close-timeline {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0 4px;
+        }
+
+        .timeline-modal .modal-header .close-timeline:hover {
+            color: #dc3545;
+        }
+
+        .timeline-modal .modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+            /* Important for flex child scrolling */
+        }
+
+        .timeline-modal .modal-footer {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .timeline-modal .input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .timeline-modal textarea {
+            flex: 1;
+            border-radius: 20px !important;
+            resize: none;
+            font-size: 0.85rem;
+        }
+
+        /* Back to Top Button - Center when appearing */
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background-color: #004080;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 998;
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            background-color: #5a6268;
+            transform: translateX(-50%) translateY(-3px);
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .timeline-modal {
+                width: 300px;
+                right: 10px;
+                bottom: 130px;
+            }
+
+            .sticky-timeline-btn {
+                bottom: 70px;
+                right: 10px;
+            }
+        }
+
+        /* Vertical documents stack */
+        .documents-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .documents-vertical .document-mini-item {
+            margin-bottom: 0 !important;
+        }
+
+        /* Custom button for documents with no data */
+        .btn-document-null {
+            background-color: #f0f0f0 !important;
+            color: #999999 !important;
+            border: 1px solid #e0e0e0 !important;
+            cursor: not-allowed !important;
+            opacity: 0.7;
+        }
+
+        .btn-document-null:hover {
+            background-color: #f0f0f0 !important;
+            color: #999999 !important;
+        }
+
+        /* Equal height cards with scrolling */
+        .status-summary-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-summary-card .card-body {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 300px;
+            /* Adjust based on your needs */
+        }
+
+        .action-panel-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .action-panel-card .card-body {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 300px;
+            /* Same as status summary card */
+        }
+
+        /* Ensure the row children have equal height */
+        .row.g-2.mb-2>[class*="col-"] {
+            display: flex;
+        }
+
+        .row.g-2.mb-2>[class*="col-"]>.card {
+            width: 100%;
+        }
+
         /* Ensure consistent card styling */
         .card {
             border-radius: 0.5rem;
@@ -496,7 +717,7 @@
     </style>
 
     <!-- Main Content -->
-    <main id="main" style="padding-top: 50px;">
+    <main id="main">
 
         <div class="card bg-transparent shadow-none pt-0"
             style="border: none !important; background-color: transparent !important">
@@ -581,48 +802,76 @@
                                     <span id="statusBadge" class="badge ms-1"></span>
                                 </div>
 
-                                <!-- Documents and Status Pills Container -->
+                                <!-- Two-column layout: Contact Info (left) and Documents (right) -->
                                 <div class="card-body">
-                                    <!-- Documents Section (Moved here) -->
-                                    <div class="documents-mini-grid mb-3">
-                                        <!-- Formal Letter -->
-                                        <div class="document-mini-item d-flex align-items-center p-2 border rounded mb-2">
-                                            <i id="formalLetterIcon" class="fas fa-file-alt fa-lg text-muted me-3"
-                                                style="width: 24px;"></i>
-                                            <div class="flex-grow-1">
-                                                <div class="small fw-bold">Formal Letter</div>
-                                                <div id="formalLetterDocument" class="small"></div>
+                                    <div class="row">
+                                        <!-- Contact Information Column (left side) -->
+                                        <div class="col-md-6">
+                                            <div class="text-muted small fw-semibold mb-2"
+                                                style="letter-spacing: 0.3px; font-size: 0.75rem;">CONTACT INFORMATION</div>
+                                            <div id="formDetails" class="bg-light p-2 rounded" style="font-size: 0.85rem;">
+                                                <!-- Content will be populated by JS -->
                                             </div>
                                         </div>
 
-                                        <!-- Facility Layout -->
-                                        <div class="document-mini-item d-flex align-items-center p-2 border rounded mb-2">
-                                            <i id="facilityLayoutIcon" class="fas fa-map-marked-alt fa-lg text-muted me-3"
-                                                style="width: 24px;"></i>
-                                            <div class="flex-grow-1">
-                                                <div class="small fw-bold">Facility Layout</div>
-                                                <div id="facilityLayoutDocument" class="small"></div>
-                                            </div>
-                                        </div>
+                                        <!-- Documents Column (right side) - Vertical stack -->
+                                        <div class="col-md-6">
+                                            <div class="text-muted small fw-semibold mb-2"
+                                                style="letter-spacing: 0.3px; font-size: 0.75rem;">DOCUMENTS</div>
+                                            <div class="documents-vertical">
+                                                <!-- Formal Letter -->
+                                                <div
+                                                    class="document-mini-item d-flex align-items-center p-2 border rounded mb-2">
+                                                    <i id="formalLetterIcon" class="fas fa-file-alt fa-lg text-muted me-3"
+                                                        style="width: 24px;"></i>
+                                                    <div class="flex-grow-1">
+                                                        <div class="small fw-bold">Formal Letter</div>
+                                                    </div>
+                                                    <button type="button" id="formalLetterBtn"
+                                                        class="btn btn-sm btn-document-null ms-2 document-view-btn"
+                                                        style="min-width: 60px;">View</button>
+                                                </div>
 
-                                        <!-- Proof of Payment -->
-                                        <div class="document-mini-item d-flex align-items-center p-2 border rounded mb-2">
-                                            <i id="proofOfPaymentIcon" class="fas fa-receipt fa-lg text-muted me-3"
-                                                style="width: 24px;"></i>
-                                            <div class="flex-grow-1">
-                                                <div class="small fw-bold">Payment Confirmation</div>
-                                                <div id="proofOfPaymentDocument" class="small"></div>
-                                            </div>
-                                        </div>
+                                                <!-- Facility Layout -->
+                                                <div
+                                                    class="document-mini-item d-flex align-items-center p-2 border rounded mb-2">
+                                                    <i id="facilityLayoutIcon"
+                                                        class="fas fa-map-marked-alt fa-lg text-muted me-3"
+                                                        style="width: 24px;"></i>
+                                                    <div class="flex-grow-1">
+                                                        <div class="small fw-bold">Facility Layout</div>
+                                                    </div>
+                                                    <button type="button" id="facilityLayoutBtn"
+                                                        class="btn btn-sm btn-document-null ms-2 document-view-btn"
+                                                        style="min-width: 60px;">View</button>
+                                                </div>
 
-                                        <!-- Official Receipt -->
-                                        <div class="document-mini-item d-flex align-items-center p-2 border rounded mb-2">
-                                            <i id="officialReceiptIcon"
-                                                class="fas fa-file-invoice-dollar fa-lg text-muted me-3"
-                                                style="width: 24px;"></i>
-                                            <div class="flex-grow-1">
-                                                <div class="small fw-bold">Transaction Record</div>
-                                                <div id="officialReceiptDocument" class="small"></div>
+                                                <!-- Proof of Payment -->
+                                                <div
+                                                    class="document-mini-item d-flex align-items-center p-2 border rounded mb-2">
+                                                    <i id="proofOfPaymentIcon" class="fas fa-receipt fa-lg text-muted me-3"
+                                                        style="width: 24px;"></i>
+                                                    <div class="flex-grow-1">
+                                                        <div class="small fw-bold">Payment Confirmation</div>
+                                                    </div>
+                                                    <button type="button" id="proofOfPaymentBtn"
+                                                        class="btn btn-sm btn-document-null ms-2 document-view-btn"
+                                                        style="min-width: 60px;">View</button>
+                                                </div>
+
+                                                <!-- Official Receipt -->
+                                                <div
+                                                    class="document-mini-item d-flex align-items-center p-2 border rounded mb-2">
+                                                    <i id="officialReceiptIcon"
+                                                        class="fas fa-file-invoice-dollar fa-lg text-muted me-3"
+                                                        style="width: 24px;"></i>
+                                                    <div class="flex-grow-1">
+                                                        <div class="small fw-bold">Transaction Record</div>
+                                                    </div>
+                                                    <button type="button" id="officialReceiptBtn"
+                                                        class="btn btn-sm btn-document-null ms-2 document-view-btn"
+                                                        style="min-width: 60px;">View</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -630,19 +879,18 @@
                             </div>
                         </div>
 
-                        <!-- Action Panel with Approvals -->
+                        <!-- Action Panel with Approvals (unchanged) -->
                         <div class="col-md-3">
                             <div class="card h-100">
-                                <div class="card-header bg-white text-dark">
+                                <div
+                                    class="card-header bg-white text-dark d-flex justify-content-between align-items-center">
                                     <h5 class="card-title mb-0">Actions & Approvals</h5>
                                 </div>
                                 <div class="card-body">
                                     <!-- Actions Section -->
                                     <div class="mb-4">
                                         <h6 class="text-muted mb-2"
-                                            style="font-size: 0.8rem; letter-spacing: 0.5px; font-weight: 600;">
-                                            ACTIONS
-                                        </h6>
+                                            style="font-size: 0.8rem; letter-spacing: 0.5px; font-weight: 600;">ACTIONS</h6>
                                         <button class="btn btn-success w-100 mb-2" id="approveBtn"
                                             style="padding: 0.5rem 1rem;">
                                             <i class="bi bi-hand-thumbs-up me-2"></i> Approve
@@ -699,8 +947,7 @@
                                     <!-- Approvals Section -->
                                     <div>
                                         <h6 class="text-muted mb-2"
-                                            style="font-size: 0.8rem; letter-spacing: 0.5px; font-weight: 600;">
-                                            APPROVALS
+                                            style="font-size: 0.8rem; letter-spacing: 0.5px; font-weight: 600;">APPROVALS
                                         </h6>
                                         <div class="row g-2">
                                             <!-- Approvals Pill -->
@@ -736,22 +983,12 @@
 
                     <!-- Contact Information and Booking Details Side by Side -->
                     <div class="row g-2">
-                        <!-- Contact Information -->
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-header bg-white text-dark">
-                                    <h5 class="card-title mb-0">Contact Information</h5>
-                                </div>
-                                <div class="card-body p-3">
-                                    <div id="formDetails" class="contact-info-grid"></div>
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- Booking Details -->
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <div class="card h-100">
-                                <div class="card-header bg-white text-dark">
+                                <div
+                                    class="card-header bg-white text-dark d-flex justify-content-between align-items-center">
                                     <h5 class="card-title mb-0">Booking Details</h5>
                                 </div>
                                 <div class="card-body">
@@ -859,52 +1096,8 @@
                     </div>
 
                     <div class="row g-2 mt-1 align-items-stretch">
-                        <!-- Left Column: Activity Timeline -->
-                        <div class="col-lg-5 d-flex">
-                            <div class="card flex-fill d-flex flex-column" style="height: 100%;">
-
-                                <div
-                                    class="card-header bg-white text-dark d-flex justify-content-between align-items-center">
-                                    <h5 class="card-title mb-0">Activity Timeline</h5>
-                                    <select id="activityFilter" class="form-select form-select-sm w-auto">
-                                        <option value="all">Show All</option>
-                                        <option value="comment">Comments</option>
-                                        <option value="fee">Added Fees</option>
-                                    </select>
-                                </div>
-
-                                <!-- Scrollable Body -->
-                                <div class="card-body flex-grow-1 overflow-auto p-3" style="max-height: 400px;">
-                                    <div id="formRemarks">
-                                        <div class="comment-loading">
-                                            <div class="spinner-border text-primary" role="status">
-                                                <span class="visually-hidden">Loading activity...</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div id="additionalFees" style="display: none;"></div>
-                                </div>
-
-                                <!-- Footer -->
-                                <div class="card-footer bg-white border-top mt-auto d-flex align-items-center justify-content-between"
-                                    style="height: 70px; flex-shrink: 0; padding: 0 1rem;">
-                                    <div class="input-group align-items-center w-100" style="gap: 0.5rem;">
-                                        <textarea class="form-control" rows="1" placeholder="Leave a comment..."
-                                            id="commentTextarea"
-                                            style="resize: none; border-radius: 20px; height: 36px;"></textarea>
-                                        <button class="btn btn-primary rounded-circle" type="button" id="sendCommentBtn"
-                                            style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="bi bi-send"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-
-
                         <!-- Right Column: Fee Breakdown -->
-                        <div class="col-lg-7 d-flex">
+                        <div class="col-lg-12 d-flex">
                             <div class="card flex-fill d-flex flex-column">
                                 <div
                                     class="card-header bg-white text-dark d-flex justify-content-between align-items-center">
@@ -937,7 +1130,7 @@
                                 <div
                                     class="card-footer bg-white d-flex justify-content-between align-items-center fw-bold p-3 border-top">
                                     <span>Total Approved Fee:</span>
-                                    <span id="feeBreakdownTotal">0.00</span>
+                                    <span id="feeBreakdownTotal">0.00</span> <!-- This is the correct ID -->
                                 </div>
                             </div>
                         </div>
@@ -1372,10 +1565,58 @@
                     </div>
                 </div>
 
+                <!-- Sticky Activity Timeline Button -->
+                <button class="sticky-timeline-btn" id="stickyTimelineBtn" title="Activity Timeline">
+                    <i class="fas fa-comment"></i>
+                </button>
+
+                <!-- Activity Timeline Modal -->
+                <div class="timeline-modal" id="timelineModal">
+                    <div class="modal-header" id="timelineModalHeader">
+                        <h6><i class="fas fa-history me-2"></i>Activity Timeline</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-sm btn-outline-secondary p-1" id="refreshTimelineBtn" title="Refresh">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <select id="timelineFilter" class="form-select form-select-sm"
+                                style="width: auto; font-size: 0.8rem;">
+                                <option value="all">All</option>
+                                <option value="comment">Comments</option>
+                                <option value="fee">Fees</option>
+                            </select>
+                            <button class="close-timeline" id="closeTimelineBtn">&times;</button>
+                        </div>
+                    </div>
+                    <div class="modal-body" id="timelineModalBody">
+                        <div id="timelineContent" class="activity-timeline-content">
+                            <!-- Content will be loaded here -->
+                            <div class="text-center text-muted py-4">
+                                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="small mb-0">Loading activity...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="d-flex flex-column w-100 gap-2">
+                            <div class="input-group">
+                                <textarea class="form-control" rows="1" placeholder="Add a comment..." id="timelineComment"
+                                    style="height: 36px;"></textarea>
+                                <button class="btn btn-primary rounded-circle" id="timelineSendBtn"
+                                    style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Back to Top Button -->
                 <button class="back-to-top" id="backToTop" title="Back to Top">
                     <i class="bi bi-arrow-up"></i>
                 </button>
+
 
                 <div class="modal fade" id="approvalsModal" tabindex="-1" aria-labelledby="approvalsModalLabel"
                     aria-hidden="true">
@@ -1450,8 +1691,6 @@
             const markScheduledModal = new bootstrap.Modal(document.getElementById('markScheduledModal'));
             const closeFormModal = new bootstrap.Modal(document.getElementById('closeFormModal'));
             const commentsContainer = document.getElementById('formRemarks');
-            const commentTextarea = document.querySelector('.card-footer textarea');
-            const commentSendBtn = document.querySelector('.card-footer button');
             const requestId = window.location.pathname.split('/').pop();
             const adminToken = localStorage.getItem('adminToken');
             let allRequests = [];
@@ -1544,11 +1783,6 @@
             const statusUpdateModal = new bootstrap.Modal(document.getElementById('statusUpdateModal'));
             let selectedStatus = '';
 
-
-
-
-
-
             // Function to check admin role and update UI accordingly
             async function checkAdminRoleAndUpdateUI() {
                 try {
@@ -1572,339 +1806,165 @@
                         departments: adminData.departments?.map(d => d.department_name)
                     });
 
-                    // Define role checks based on admin data
-                    const isHeadAdmin = adminData.role?.role_title === 'Head Admin';
-                    const isApprovingOfficer = adminData.role?.role_title === 'Approving Officer';
-                    const isVPA = adminData.role?.role_title === 'Vice President of Administration';
+                    // Get role title
+                    const roleTitle = adminData.role?.role_title;
+                    const isHeadAdmin = roleTitle === 'Head Admin';
+                    const isApprovingOfficer = roleTitle === 'Approving Officer' || roleTitle === 'Chief Approving Officer';
 
-                    const approveBtn = document.getElementById('approveBtn');
-                    const rejectBtn = document.getElementById('rejectBtn');
-                    const finalizeBtn = document.getElementById('finalizeBtn');
-                    const moreActionsDropdown = document.getElementById('moreActionsDropdown');
-                    const moreActionsBtn = document.getElementById('moreActionsBtn');
-                    const actionPanel = document.querySelector('.col-md-3 .card');
-
-                    // First, check if this admin has already taken action on this request
-                    const hasTakenAction = await checkIfAdminHasTakenAction(adminData.admin_id);
-
-                    console.log('UI Update Decision:', {
-                        adminId: adminData.admin_id,
-                        hasTakenAction: hasTakenAction,
-                        isHeadAdmin: isHeadAdmin,
-                        isApprovingOfficer: isApprovingOfficer,
-                        isVPA: isVPA
-                    });
-
-                    // Remove any existing action taken message or dynamic buttons
-                    const existingMessage = actionPanel?.querySelector('.action-taken-message');
-                    if (existingMessage) {
-                        existingMessage.remove();
-                    }
-
-                    // Get current request status for Head Admin logic
+                    // Get current request status
                     const currentRequest = allRequests.find(req => req.request_id == requestId);
-                    const currentStatusId = currentRequest ? currentRequest.form_details.status.id : null;
-                    const currentStatusName = currentRequest ? currentRequest.form_details.status.name : 'Unknown';
+                    if (!currentRequest) return;
 
-                    // Reset all elements to default state first
-                    if (moreActionsDropdown) moreActionsDropdown.style.display = 'block';
-                    if (moreActionsBtn) moreActionsBtn.style.display = 'block';
-                    if (approveBtn) {
-                        approveBtn.style.display = 'block';
-                        approveBtn.disabled = false;
-                        approveBtn.classList.remove('disabled');
+                    const currentStatusId = currentRequest.form_details.status.id;
+
+                    // Get the ACTIONS section container (the div with class "mb-4" that contains the ACTIONS label)
+                    const actionsSection = document.querySelector('.col-md-3 .card-body .mb-4');
+                    if (!actionsSection) return;
+
+                    // Clear any existing dynamic content in the actions section (keep the ACTIONS label)
+                    const existingButtons = actionsSection.querySelectorAll('.dynamic-action-btn, .action-taken-message');
+                    existingButtons.forEach(btn => btn.remove());
+
+                    // Hide default buttons first
+                    document.getElementById('approveBtn').style.display = 'none';
+                    document.getElementById('rejectBtn').style.display = 'none';
+                    document.getElementById('finalizeBtn').style.display = 'none';
+                    document.getElementById('moreActionsDropdown').style.display = 'none';
+
+                    // HEAD ADMIN - Show all actions based on status rules
+                    if (isHeadAdmin) {
+                        // Check if this is a terminal status (no actions)
+                        const terminalStatuses = [7, 8, 9]; // Completed, Rejected, Cancelled
+                        if (terminalStatuses.includes(currentStatusId)) {
+                            const message = document.createElement('div');
+                            message.className = 'action-taken-message text-center p-3 dynamic-action-btn';
+                            message.innerHTML = `
+                                                                                                <i class="bi bi-info-circle-fill text-secondary fs-4 d-block mb-2"></i>
+                                                                                                <p class="mb-0 small text-muted">No actions available for this status.</p>
+                                                                                            `;
+                            actionsSection.appendChild(message);
+                            return;
+                        }
+
+                        // Status 1 or 2 (Pencil Booked, Pending Approval) - Show Finalize button
+                        if ([1, 2].includes(currentStatusId)) {
+                            document.getElementById('finalizeBtn').style.display = 'block';
+                        }
+
+                        // Status 3 (Awaiting Payment) - Show Mark Scheduled button
+                        else if (currentStatusId === 3) {
+                            const markScheduledBtn = document.createElement('button');
+                            markScheduledBtn.id = 'markScheduledBtn';
+                            markScheduledBtn.className = 'btn btn-primary w-100 mb-2 dynamic-action-btn';
+                            markScheduledBtn.innerHTML = '<i class="bi bi-calendar-event me-1"></i> Mark Scheduled';
+                            markScheduledBtn.addEventListener('click', function () {
+                                handleMarkScheduled();
+                            });
+                            actionsSection.appendChild(markScheduledBtn);
+                        }
+
+                        // Status 4 (Scheduled) - Show Mark Ongoing button
+                        else if (currentStatusId === 4) {
+                            const markOngoingBtn = document.createElement('button');
+                            markOngoingBtn.id = 'markOngoingBtn';
+                            markOngoingBtn.className = 'btn btn-primary w-100 mb-2 dynamic-action-btn';
+                            markOngoingBtn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Mark Ongoing';
+                            markOngoingBtn.addEventListener('click', function () {
+                                handleStatusAction('Ongoing');
+                            });
+                            actionsSection.appendChild(markOngoingBtn);
+                        }
+
+                        // Status 5 (Ongoing) - Show Mark Overdue button
+                        else if (currentStatusId === 5) {
+                            const markOverdueBtn = document.createElement('button');
+                            markOverdueBtn.id = 'markOverdueBtn';
+                            markOverdueBtn.className = 'btn btn-warning w-100 mb-2 dynamic-action-btn';
+                            markOverdueBtn.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i> Mark Overdue';
+                            markOverdueBtn.addEventListener('click', function () {
+                                handleStatusAction('Late');
+                            });
+                            actionsSection.appendChild(markOverdueBtn);
+                        }
+
+                        // Status 6 (Overdue) - Show Add Penalty button
+                        else if (currentStatusId === 6) {
+                            const penaltyBtn = document.createElement('button');
+                            penaltyBtn.id = 'penaltyBtn';
+                            penaltyBtn.className = 'btn btn-danger w-100 mb-2 dynamic-action-btn';
+                            penaltyBtn.innerHTML = '<i class="bi bi-cash-stack me-1"></i> Add Penalty Fee';
+                            penaltyBtn.addEventListener('click', function () {
+                                const amount = prompt('Enter late penalty amount:');
+                                if (amount !== null && amount !== '') {
+                                    const num = parseFloat(amount);
+                                    if (!isNaN(num) && num >= 0) {
+                                        addLatePenalty(num);
+                                    } else {
+                                        showToast('Please enter a valid penalty amount.', 'error');
+                                    }
+                                }
+                            });
+                            actionsSection.appendChild(penaltyBtn);
+                        }
+
+                        // Always show Close Form button (except terminal statuses)
+                        if (!terminalStatuses.includes(currentStatusId)) {
+                            const closeFormBtn = document.createElement('button');
+                            closeFormBtn.id = 'closeFormBtn';
+                            closeFormBtn.className = 'btn btn-light-danger w-100 mb-2 dynamic-action-btn';
+                            closeFormBtn.innerHTML = '<i class="bi bi-x-circle me-1"></i> Close Form';
+                            closeFormBtn.addEventListener('click', function () {
+                                closeForm();
+                            });
+                            actionsSection.appendChild(closeFormBtn);
+                        }
                     }
-                    if (rejectBtn) {
-                        rejectBtn.style.display = 'block';
-                        rejectBtn.disabled = false;
-                        rejectBtn.classList.remove('disabled');
-                    }
-                    if (finalizeBtn) {
-                        finalizeBtn.style.display = 'none';
-                        finalizeBtn.disabled = false;
-                        finalizeBtn.classList.remove('disabled');
-                    }
 
-                    // Reset dropdown items visibility
-                    const markScheduledOption = document.getElementById('statusScheduled');
-                    const markOngoingOption = document.getElementById('statusOngoing');
-                    const markLateOption = document.getElementById('statusLate');
-                    if (markScheduledOption) markScheduledOption.style.display = 'block';
-                    if (markOngoingOption) markOngoingOption.style.display = 'block';
-                    if (markLateOption) markLateOption.style.display = 'block';
+                    // APPROVING OFFICER or CHIEF APPROVING OFFICER
+                    else if (isApprovingOfficer) {
+                        // Check if admin has already taken action
+                        const hasTakenAction = await checkIfAdminHasTakenAction(adminData.admin_id);
 
-                    // Remove any dynamically created buttons
-                    const dynamicMarkScheduledBtn = document.getElementById('markScheduledBtn');
-                    const dynamicMarkOngoingBtn = document.getElementById('markOngoingBtn');
-                    const dynamicUnmarkLateBtn = document.getElementById('unmarkLateBtn');
-                    const dynamicCloseFormBtn = document.getElementById('closeFormBtn');
-                    if (dynamicMarkScheduledBtn) dynamicMarkScheduledBtn.remove();
-                    if (dynamicMarkOngoingBtn) dynamicMarkOngoingBtn.remove();
-                    if (dynamicUnmarkLateBtn) dynamicUnmarkLateBtn.remove();
-                    if (dynamicCloseFormBtn) dynamicCloseFormBtn.remove();
-
-                    // If admin has already taken action, show message and hide appropriate buttons
-                    if (hasTakenAction) {
-                        console.log('Hiding buttons - admin has already taken action');
-
-                        // For Approving Officers and VPA, hide approve/reject buttons and show message
-                        if (isApprovingOfficer || isVPA) {
-                            if (approveBtn) approveBtn.style.display = 'none';
-                            if (rejectBtn) rejectBtn.style.display = 'none';
-                            if (moreActionsDropdown) moreActionsDropdown.style.display = 'none';
-                            if (moreActionsBtn) moreActionsBtn.style.display = 'none';
-
-                            // Show action taken message
-                            if (actionPanel) {
-                                const actionMessage = document.createElement('div');
-                                actionMessage.className = 'action-taken-message text-center p-3';
-                                actionMessage.innerHTML = `
-                                                                                <i class="bi bi-check-circle-fill text-success fs-4 d-block mb-2"></i>
-                                                                                <p class="mb-0 small text-muted">You have already taken action for this request.</p>
-                                                                            `;
-                                actionPanel.appendChild(actionMessage);
+                        if (hasTakenAction) {
+                            // Show "already taken action" message in the actions section
+                            const message = document.createElement('div');
+                            message.className = 'action-taken-message text-center p-3 dynamic-action-btn';
+                            message.innerHTML = `
+                                                                                                <i class="bi bi-check-circle-fill text-success fs-4 d-block mb-2"></i>
+                                                                                                <p class="mb-0 small text-muted">You have already taken action for this request.</p>
+                                                                                            `;
+                            actionsSection.appendChild(message);
+                        } else {
+                            // Show Approve/Reject buttons only for pending statuses (1 or 2)
+                            if ([1, 2].includes(currentStatusId)) {
+                                document.getElementById('approveBtn').style.display = 'block';
+                                document.getElementById('rejectBtn').style.display = 'block';
+                            } else {
+                                // Show message that no actions are available
+                                const message = document.createElement('div');
+                                message.className = 'action-taken-message text-center p-3 dynamic-action-btn';
+                                message.innerHTML = `
+                                                                                                    <i class="bi bi-info-circle-fill text-secondary fs-4 d-block mb-2"></i>
+                                                                                                    <p class="mb-0 small text-muted">No actions available for this request status.</p>
+                                                                                                `;
+                                actionsSection.appendChild(message);
                             }
                         }
-                        // For Head Admin who has taken action, still allow status management but not approve/reject
-                        else if (isHeadAdmin) {
-                            if (approveBtn) approveBtn.style.display = 'none';
-                            if (rejectBtn) rejectBtn.style.display = 'none';
-                            // Head Admin can still use finalize and more actions even if they've taken action
-                        }
-
-                        return; // Exit early since admin has taken action
                     }
 
-                    // Apply role-based rules if admin hasn't taken action yet
-
-                    // For Approving Officer and VPA - SAME LOGIC FOR BOTH ROLES
-                    if (isApprovingOfficer || isVPA) {
-                        // Hide More dropdown for both Approving Officer and VPA
-                        if (moreActionsDropdown) moreActionsDropdown.style.display = 'none';
-                        if (moreActionsBtn) moreActionsBtn.style.display = 'none';
-
-                        // Show Approve/Reject buttons for both roles
-                        if (approveBtn) approveBtn.style.display = 'block';
-                        if (rejectBtn) rejectBtn.style.display = 'block';
-
-                        // Hide Finalize button for both roles
-                        if (finalizeBtn) finalizeBtn.style.display = 'none';
-
-                        console.log('Applied Approving Officer/VPA UI: Show Approve/Reject, Hide More dropdown and Finalize');
+                    // OTHER ROLES - No access (shouldn't reach here but just in case)
+                    else {
+                        const message = document.createElement('div');
+                        message.className = 'action-taken-message text-center p-3 dynamic-action-btn';
+                        message.innerHTML = `
+                                                                                            <i class="bi bi-shield-exclamation fs-4 d-block mb-2 text-muted"></i>
+                                                                                            <p class="mb-0 small text-muted">You don't have permission to take actions.</p>
+                                                                                        `;
+                        actionsSection.appendChild(message);
                     }
-
-                    if (isHeadAdmin) {
-                        // Hide Approve/Reject buttons for Head Admin
-                        if (approveBtn) approveBtn.style.display = 'none';
-                        if (rejectBtn) rejectBtn.style.display = 'none';
-
-                        // Show Finalize button for Head Admin (unless status requires changes)
-                        if (finalizeBtn) finalizeBtn.style.display = 'block';
-
-                        // Ensure More dropdown is visible for Head Admin (unless status requires changes)
-                        if (moreActionsDropdown) moreActionsDropdown.style.display = 'block';
-                        if (moreActionsBtn) moreActionsBtn.style.display = 'block';
-                        console.log('Showing Finalize button and More dropdown for Head Admin');
-
-                        // Apply Head Admin status-based UI updates
-                        console.log('Applying Head Admin status-based UI for status:', {
-                            statusId: currentStatusId,
-                            statusName: currentStatusName
-                        });
-
-                        // Use the actual status IDs from your system
-                        switch (currentStatusId) {
-                            case 1: // Pencil Booked (status ID 1) - Same as Pending Approval
-                            case 2: // Pending Approval (status ID 2)
-                                console.log(`Status: ${currentStatusId === 1 ? 'Pencil Booked' : 'Pending Approval'} - Replacing More dropdown with Close Form button`);
-
-                                // Hide More dropdown
-                                if (moreActionsDropdown) {
-                                    moreActionsDropdown.style.display = 'none';
-                                }
-
-                                // Create Close Form button
-                                const closeFormBtnPending = document.createElement('button');
-                                closeFormBtnPending.id = 'closeFormBtn';
-                                closeFormBtnPending.className = 'btn btn-light-danger w-100 mb-2';
-                                closeFormBtnPending.innerHTML = '<i class="bi bi-x-circle me-1"></i> Close Form';
-                                closeFormBtnPending.addEventListener('click', function () {
-                                    closeForm();
-                                });
-
-                                // Add button to action panel
-                                if (actionPanel) {
-                                    actionPanel.appendChild(closeFormBtnPending);
-                                }
-                                break;
-
-                            case 3: // Awaiting Payment (status ID 3)
-                                console.log('Status: Awaiting Payment - Replacing Finalize with Mark Scheduled, replacing More with Close Form');
-
-                                // Replace Finalize button with Mark Scheduled
-                                if (finalizeBtn) {
-                                    finalizeBtn.style.display = 'none';
-                                }
-
-                                // Replace More dropdown with Close Form button
-                                if (moreActionsDropdown) {
-                                    moreActionsDropdown.style.display = 'none';
-                                }
-
-                                // Create Mark Scheduled button
-                                const markScheduledBtn = document.createElement('button');
-                                markScheduledBtn.id = 'markScheduledBtn';
-                                markScheduledBtn.className = 'btn btn-primary w-100 mb-2';
-                                markScheduledBtn.innerHTML = '<i class="bi bi-calendar-event me-1"></i> Mark Scheduled';
-                                markScheduledBtn.addEventListener('click', function () {
-                                    handleMarkScheduled(); // Use the custom handler instead of handleStatusAction
-                                });
-
-                                // Create Close Form button
-                                const closeFormBtnAwaiting = document.createElement('button');
-                                closeFormBtnAwaiting.id = 'closeFormBtn';
-                                closeFormBtnAwaiting.className = 'btn btn-light-danger w-100 mb-2';
-                                closeFormBtnAwaiting.innerHTML = '<i class="bi bi-x-circle me-1"></i> Close Form';
-                                closeFormBtnAwaiting.addEventListener('click', function () {
-                                    closeForm();
-                                });
-
-                                // Add buttons to action panel
-                                if (actionPanel) {
-                                    actionPanel.appendChild(markScheduledBtn);
-                                    actionPanel.appendChild(closeFormBtnAwaiting);
-                                }
-                                break;
-
-                            case 4: // Scheduled (status ID 4)
-                                console.log('Status: Scheduled - Replacing Finalize with Mark Ongoing, replacing More with Close Form');
-
-                                // Replace Finalize button with Mark Ongoing
-                                if (finalizeBtn) {
-                                    finalizeBtn.style.display = 'none';
-                                }
-
-                                // Replace More dropdown with Close Form button
-                                if (moreActionsDropdown) {
-                                    moreActionsDropdown.style.display = 'none';
-                                }
-
-                                // Create Mark Ongoing button
-                                const markOngoingBtn = document.createElement('button');
-                                markOngoingBtn.id = 'markOngoingBtn';
-                                markOngoingBtn.className = 'btn btn-primary w-100 mb-2';
-                                markOngoingBtn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Mark Ongoing';
-                                markOngoingBtn.addEventListener('click', function () {
-                                    handleStatusAction('Ongoing');
-                                });
-
-                                // Create Close Form button
-                                const closeFormBtnScheduled = document.createElement('button');
-                                closeFormBtnScheduled.id = 'closeFormBtn';
-                                closeFormBtnScheduled.className = 'btn btn-light-danger w-100 mb-2';
-                                closeFormBtnScheduled.innerHTML = '<i class="bi bi-x-circle me-1"></i> Close Form';
-                                closeFormBtnScheduled.addEventListener('click', function () {
-                                    closeForm();
-                                });
-
-                                // Add buttons to action panel
-                                if (actionPanel) {
-                                    actionPanel.appendChild(markOngoingBtn);
-                                    actionPanel.appendChild(closeFormBtnScheduled);
-                                }
-                                break;
-
-                            case 5: // Ongoing (status ID 5)
-                                console.log('Status: Ongoing - Replacing Finalize with Mark Late, replacing More with Close Form');
-
-                                // Hide existing buttons
-                                if (finalizeBtn) {
-                                    finalizeBtn.style.display = 'none';
-                                }
-                                if (moreActionsDropdown) {
-                                    moreActionsDropdown.style.display = 'none';
-                                }
-
-                                // Only create Mark Late button if it doesn't exist
-                                if (!document.getElementById('markLateBtn')) {
-                                    const markLateBtn = document.createElement('button');
-                                    markLateBtn.id = 'markLateBtn';
-                                    markLateBtn.className = 'btn btn-primary w-100 mb-2';
-                                    markLateBtn.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i> Mark Late/Damaged';
-                                    markLateBtn.addEventListener('click', function () {
-                                        handleStatusAction('Late');
-                                    });
-                                    actionPanel.appendChild(markLateBtn);
-                                }
-
-                                // Only create Close Form button if it doesn't exist
-                                if (!document.getElementById('closeFormBtn')) {
-                                    const closeFormBtnOngoing = document.createElement('button');
-                                    closeFormBtnOngoing.id = 'closeFormBtn';
-                                    closeFormBtnOngoing.className = 'btn btn-light-danger w-100 mb-2';
-                                    closeFormBtnOngoing.innerHTML = '<i class="bi bi-x-circle me-1"></i> Close Form';
-                                    closeFormBtnOngoing.addEventListener('click', function () {
-                                        closeForm();
-                                    });
-                                    actionPanel.appendChild(closeFormBtnOngoing);
-                                }
-                                break;
-
-                            case 6: // Late (status ID 6)
-                                console.log('Status: Late - Replacing Finalize with Unmark Late, replacing More with Close Form');
-
-                                // Replace Finalize button with Unmark Late
-                                if (finalizeBtn) {
-                                    finalizeBtn.style.display = 'none';
-                                }
-
-                                // Replace More dropdown with Close Form button
-                                if (moreActionsDropdown) {
-                                    moreActionsDropdown.style.display = 'none';
-                                }
-
-                                // Create Unmark Late button
-                                const unmarkLateBtn = document.createElement('button');
-                                unmarkLateBtn.id = 'unmarkLateBtn';
-                                unmarkLateBtn.className = 'btn btn-primary w-100 mb-2';
-                                unmarkLateBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise me-1"></i> Unmark Late/Damaged';
-                                unmarkLateBtn.addEventListener('click', function () {
-                                    handleUnmarkLate();
-                                });
-
-                                // Create Close Form button
-                                const closeFormBtnLate = document.createElement('button');
-                                closeFormBtnLate.id = 'closeFormBtn';
-                                closeFormBtnLate.className = 'btn btn-light-danger w-100 mb-2';
-                                closeFormBtnLate.innerHTML = '<i class="bi bi-x-circle me-1"></i> Close Form';
-                                closeFormBtnLate.addEventListener('click', function () {
-                                    closeForm();
-                                });
-
-                                // Add buttons to action panel
-                                if (actionPanel) {
-                                    actionPanel.appendChild(unmarkLateBtn);
-                                    actionPanel.appendChild(closeFormBtnLate);
-                                }
-                                break;
-
-                            default:
-                                console.log('Status: Other - Showing all options');
-                                // For other statuses, ensure finalize button is enabled
-                                if (finalizeBtn) {
-                                    finalizeBtn.disabled = false;
-                                    finalizeBtn.classList.remove('disabled');
-                                }
-                                break;
-                        }
-                    }
-
-
 
                 } catch (error) {
                     console.error('Error checking admin role:', error);
-                    // Fallback: show default UI if there's an error fetching role
-                    console.log('Using default UI due to error fetching admin role');
                 }
             }
             async function loadApprovalHistory() {
@@ -1956,30 +2016,30 @@
                 }
 
                 return history.map(item => `
-                                                                                                    <div class="d-flex align-items-center mb-3 p-2 border rounded">
-                                                                                                        <div class="me-3 flex-shrink-0">
-                                                                                                            ${item.admin_photo ?
+                                                                                                                                                                                <div class="d-flex align-items-center mb-3 p-2 border rounded">
+                                                                                                                                                                                    <div class="me-3 flex-shrink-0">
+                                                                                                                                                                                        ${item.admin_photo ?
                         `<img src="${item.admin_photo}" class="rounded-circle" width="45" height="45" alt="${item.admin_name}" style="object-fit: cover;">` :
                         `<div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white" style="width: 45px; height: 45px;">
-                                                                                                                    ${item.admin_name.split(' ').map(n => n.charAt(0)).join('')}
-                                                                                                                </div>`
+                                                                                                                                                                                                ${item.admin_name.split(' ').map(n => n.charAt(0)).join('')}
+                                                                                                                                                                                            </div>`
                     }
-                                                                                                        </div>
-                                                                                                        <div class="flex-grow-1">
-                                                                                                            <div class="d-flex justify-content-between align-items-start">
-                                                                                                                <div>
-                                                                                                                    <strong class="d-block">${item.admin_name}</strong>
-                                                                                                                    <small class="text-muted">
-                                                                                                                        <i class="fa ${item.action_icon} ${item.action_class} me-1"></i>
-                                                                                                                        ${item.action} this request
-                                                                                                                    </small>
-                                                                                                                    ${item.remarks ? `<div class="mt-1 small text-muted">"${item.remarks}"</div>` : ''}
-                                                                                                                </div>
-                                                                                                                <small class="text-muted text-end">${item.formatted_date}</small>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                `).join('');
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                    <div class="flex-grow-1">
+                                                                                                                                                                                        <div class="d-flex justify-content-between align-items-start">
+                                                                                                                                                                                            <div>
+                                                                                                                                                                                                <strong class="d-block">${item.admin_name}</strong>
+                                                                                                                                                                                                <small class="text-muted">
+                                                                                                                                                                                                    <i class="fa ${item.action_icon} ${item.action_class} me-1"></i>
+                                                                                                                                                                                                    ${item.action} this request
+                                                                                                                                                                                                </small>
+                                                                                                                                                                                                ${item.remarks ? `<div class="mt-1 small text-muted">"${item.remarks}"</div>` : ''}
+                                                                                                                                                                                            </div>
+                                                                                                                                                                                            <small class="text-muted text-end">${item.formatted_date}</small>
+                                                                                                                                                                                        </div>
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                </div>
+                                                                                                                                                                            `).join('');
             }
 
 
@@ -2036,6 +2096,16 @@
             if (finalizeBtn) {
                 finalizeBtn.addEventListener('click', function () {
                     finalizeModal.show();
+                });
+            }
+
+
+            // Activity filter functionality
+            const activityFilter = document.getElementById('activityFilter');
+            if (activityFilter) {
+                activityFilter.addEventListener('change', function () {
+                    const filterValue = this.value;
+                    displayMixedActivity(currentComments, currentFees, filterValue);
                 });
             }
 
@@ -2269,12 +2339,12 @@
                     }
 
                     container.innerHTML = `
-                            <div class="comment-loading">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading activity...</span>
-                                </div>
-                            </div>
-                        `;
+                                                                                                        <div class="comment-loading">
+                                                                                                            <div class="spinner-border text-primary" role="status">
+                                                                                                                <span class="visually-hidden">Loading activity...</span>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    `;
 
                     const commentsResponse = await fetch(`/api/admin/requisition/${requestId}/comments`, {
                         headers: {
@@ -2305,11 +2375,11 @@
                     const container = document.getElementById('formRemarks');
                     if (container) {
                         container.innerHTML = `
-                                <div class="empty-comments text-danger">
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                    <p>Failed to load activity.</p>
-                                </div>
-                            `;
+                                                                                                            <div class="empty-comments text-danger">
+                                                                                                                <i class="bi bi-exclamation-triangle"></i>
+                                                                                                                <p>Failed to load activity.</p>
+                                                                                                            </div>
+                                                                                                        `;
                     }
                 }
             }
@@ -2332,11 +2402,11 @@
 
                 if (comments.length === 0 && fees.length === 0) {
                     container.innerHTML = `
-                            <div class="empty-comments">
-                                <i class="bi bi-chat"></i>
-                                <p>No action has been taken in this form yet.</p>
-                            </div>
-                        `;
+                                                                                                        <div class="empty-comments">
+                                                                                                            <i class="bi bi-chat"></i>
+                                                                                                            <p>No action has been taken in this form yet.</p>
+                                                                                                        </div>
+                                                                                                    `;
                     return;
                 }
 
@@ -2377,31 +2447,31 @@
             // Function to generate comment HTML
             function generateCommentHTML(comment) {
                 return `
-                                                                                                                    <div class="comment mb-3">
-                                                                                                                        <div class="d-flex align-items-start">
-                                                                                                                            <!-- Admin Profile Picture -->
-                                                                                                                            <div class="me-2 flex-shrink-0">
-                                                                                                                                ${comment.admin.photo_url ?
+                                                                                                                                                                                                <div class="comment mb-3">
+                                                                                                                                                                                                    <div class="d-flex align-items-start">
+                                                                                                                                                                                                        <!-- Admin Profile Picture -->
+                                                                                                                                                                                                        <div class="me-2 flex-shrink-0">
+                                                                                                                                                                                                            ${comment.admin.photo_url ?
                         `<img src="${comment.admin.photo_url}" class="rounded-circle" width="40" height="40" alt="${comment.admin.first_name}'s profile picture" style="object-fit: cover;">` :
                         `<div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white" style="width: 40px; height: 40px; font-size: 1rem;">
-                                                                                                                                        ${comment.admin.first_name.charAt(0)}${comment.admin.last_name.charAt(0)}
-                                                                                                                                    </div>`
+                                                                                                                                                                                                                    ${comment.admin.first_name.charAt(0)}${comment.admin.last_name.charAt(0)}
+                                                                                                                                                                                                                </div>`
                     }
-                                                                                                                            </div>
+                                                                                                                                                                                                        </div>
 
-                                                                                                                            <!-- Message Bubble -->
-                                                                                                                            <div class="flex-grow-1">
-                                                                                                                                <div class="d-flex align-items-center mb-1">
-                                                                                                                                    <strong class="me-2" style="font-size: 0.85rem;">${comment.admin.first_name} ${comment.admin.last_name}</strong>
-                                                                                                                                    <small class="text-muted">${formatTimeAgo(comment.created_at)}</small>
-                                                                                                                                </div>
-                                                                                                                                <div class="message-bubble bg-primary text-white p-3 rounded-3" style="max-width: 80%; border-bottom-left-radius: 4px !important;">
-                                                                                                                                    <p class="mb-0" style="white-space: pre-wrap; line-height: 1.4;">${escapeHtml(comment.comment)}</p>
-                                                                                                                                </div>
-                                                                                                                            </div>
-                                                                                                                        </div>
-                                                                                                                    </div>
-                                                                                                                    `;
+                                                                                                                                                                                                        <!-- Message Bubble -->
+                                                                                                                                                                                                        <div class="flex-grow-1">
+                                                                                                                                                                                                            <div class="d-flex align-items-center mb-1">
+                                                                                                                                                                                                                <strong class="me-2" style="font-size: 0.85rem;">${comment.admin.first_name} ${comment.admin.last_name}</strong>
+                                                                                                                                                                                                                <small class="text-muted">${formatTimeAgo(comment.created_at)}</small>
+                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                            <div class="message-bubble bg-primary text-white p-3 rounded-3" style="max-width: 80%; border-bottom-left-radius: 4px !important;">
+                                                                                                                                                                                                                <p class="mb-0" style="white-space: pre-wrap; line-height: 1.4;">${escapeHtml(comment.comment)}</p>
+                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                `;
             }
 
 
@@ -2440,31 +2510,31 @@
                 }
 
                 return `
-                                                            <div class="comment mb-3">
-                                                                <div class="d-flex align-items-start">
-                                                                    <!-- Icon Circle -->
-                                                                    <div class="me-2 flex-shrink-0">
-                                                                        <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                                                                             style="width: 40px; height: 40px; font-size: 1rem; background-color: #d4edda; color: #28a745;">
-                                                                            <i class="fa fa-money-bill"></i>
-                                                                        </div>
-                                                                    </div>
+                                                                                                                                        <div class="comment mb-3">
+                                                                                                                                            <div class="d-flex align-items-start">
+                                                                                                                                                <!-- Icon Circle -->
+                                                                                                                                                <div class="me-2 flex-shrink-0">
+                                                                                                                                                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                                                                                                                                         style="width: 40px; height: 40px; font-size: 1rem; background-color: #d4edda; color: #28a745;">
+                                                                                                                                                        <i class="fa fa-money-bill"></i>
+                                                                                                                                                    </div>
+                                                                                                                                                </div>
 
-                                                                    <!-- Action Bubble -->
-                                                                    <div class="flex-grow-1">
-                                                                        <div class="message-bubble bg-info text-white p-3 rounded-3" 
-                                                                             style="max-width: 80%; border-bottom-left-radius: 4px !important;">
-                                                                            <p class="mb-1" style="white-space: normal; line-height: 1.4;">
-                                                                                ${message}
-                                                                            </p>
-                                                                            <small class="text-dark">
-                                                                                ${formatTimeAgo(fee.created_at)}
-                                                                            </small>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        `;
+                                                                                                                                                <!-- Action Bubble -->
+                                                                                                                                                <div class="flex-grow-1">
+                                                                                                                                                    <div class="message-bubble bg-info text-white p-3 rounded-3" 
+                                                                                                                                                         style="max-width: 80%; border-bottom-left-radius: 4px !important;">
+                                                                                                                                                        <p class="mb-1" style="white-space: normal; line-height: 1.4;">
+                                                                                                                                                            ${message}
+                                                                                                                                                        </p>
+                                                                                                                                                        <small class="text-dark">
+                                                                                                                                                            ${formatTimeAgo(fee.created_at)}
+                                                                                                                                                        </small>
+                                                                                                                                                    </div>
+                                                                                                                                                </div>
+                                                                                                                                            </div>
+                                                                                                                                        </div>
+                                                                                                                                    `;
             }
 
             // Helper function to format time ago (e.g., "2 minutes ago")
@@ -2496,66 +2566,6 @@
                 return div.innerHTML;
             }
 
-            // Auto-resize textarea
-            commentTextarea.addEventListener('input', function () {
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
-            });
-
-            // Send comment
-            commentSendBtn.addEventListener('click', async function () {
-                const commentText = commentTextarea.value.trim();
-
-                if (!commentText) {
-                    showToast('Please enter a comment', 'error');
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`/api/admin/requisition/${requestId}/comment`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${adminToken}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            comment: commentText
-                        })
-                    });
-
-                    const result = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(result.message || 'Failed to add comment');
-                    }
-
-                    if (result.success) {
-                        // Clear textarea and reset height
-                        commentTextarea.value = '';
-                        commentTextarea.style.height = 'auto';
-
-                        // Reload comments to show the new one
-                        loadMixedActivity();
-
-                        // Show success message
-                        showToast('Comment added successfully', 'success');
-                    }
-
-                } catch (error) {
-                    console.error('Error adding comment:', error);
-                    showToast('Failed to add comment: ' + error.message, 'error');
-                }
-            });
-
-            // Allow sending with Enter key (but allow Shift+Enter for new lines)
-            commentTextarea.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    commentSendBtn.click();
-                }
-            });
-
             // Simple toast notification function
             window.showToast = function (message, type = 'success', duration = 3000) {
                 const toast = document.createElement('div');
@@ -2581,18 +2591,18 @@
                 toast.style.borderRadius = '0.3rem';
 
                 toast.innerHTML = `
-                                                                                                                                                                                                                                    <div class="d-flex align-items-center px-3 py-1"> 
-                                                                                                                                                                                                                                        <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                                                                                                                                                                                                                                        <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                                                                                                                                                                                                                                        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                    <div class="loading-bar" style="
-                                                                                                                                                                                                                                        height: 3px;
-                                                                                                                                                                                                                                        background: rgba(255,255,255,0.7);
-                                                                                                                                                                                                                                        width: 100%;
-                                                                                                                                                                                                                                        transition: width ${duration}ms linear;
-                                                                                                                                                                                                                                    "></div>
-                                                                                                                                                                                                                                `;
+                                                                                                                                                                                                                                                                                                                <div class="d-flex align-items-center px-3 py-1"> 
+                                                                                                                                                                                                                                                                                                                    <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                                                                                                                                                                                                                                                                                                                    <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
+                                                                                                                                                                                                                                                                                                                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                <div class="loading-bar" style="
+                                                                                                                                                                                                                                                                                                                    height: 3px;
+                                                                                                                                                                                                                                                                                                                    background: rgba(255,255,255,0.7);
+                                                                                                                                                                                                                                                                                                                    width: 100%;
+                                                                                                                                                                                                                                                                                                                    transition: width ${duration}ms linear;
+                                                                                                                                                                                                                                                                                                                "></div>
+                                                                                                                                                                                                                                                                                                            `;
 
                 document.body.appendChild(toast);
 
@@ -2645,10 +2655,9 @@
                     if (response.ok) {
                         const requestData = await response.json();
 
-                        // Update the total approved fee in both locations
+                        // FIX THIS LINE - use the correct element ID
                         const totalFee = formatMoney(requestData.fees.approved_fee);
-                        document.getElementById('totalApprovedFee').textContent = `${totalFee}`;
-                        document.getElementById('feeBreakdownTotal').textContent = `${totalFee}`;
+                        document.getElementById('feeBreakdownTotal').textContent = totalFee; // Changed from 'totalApprovedFee'
 
                         // Update additional fees display
                         if (requestData.fees.requisition_fees) {
@@ -2684,61 +2693,61 @@
                 switch (status) {
                     case 'Scheduled':
                         modalContent.innerHTML = `
-                                                                                                                    <div class="text-center">
-                                                                                                                        <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
-                                                                                                                        <p>Are you sure? This action cannot be undone.</p>
-                                                                                                                        <p class="text-muted small">
-                                                                                                                            This will set the form's status to <strong>Scheduled</strong>.
-                                                                                                                            The request can still be cancelled if an emergency happens. 
-                                                                                                                            If such a situation occurs, make sure to contact the requester about refund details and settle it in the business office on campus before closing the form.
-                                                                                                                        </p>
-                                                                                                                    </div>
-                                                                                                                `;
+                                                                                                                                                                                                <div class="text-center">
+                                                                                                                                                                                                    <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                                                                                                                                                                                                    <p>Are you sure? This action cannot be undone.</p>
+                                                                                                                                                                                                    <p class="text-muted small">
+                                                                                                                                                                                                        This will set the form's status to <strong>Scheduled</strong>.
+                                                                                                                                                                                                        The request can still be cancelled if an emergency happens. 
+                                                                                                                                                                                                        If such a situation occurs, make sure to contact the requester about refund details and settle it in the business office on campus before closing the form.
+                                                                                                                                                                                                    </p>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                            `;
                         break;
                     case 'Ongoing':
                         modalContent.innerHTML = `
-                                                                                                                    <div class="text-center">
-                                                                                                                        <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
-                                                                                                                        <p>Are you sure? This action cannot be undone.</p>
-                                                                                                                        <p class="text-muted small">
-                                                                                                                            Sets the form status to <strong>Ongoing</strong>. Use this to manually set it if not already done. 
-                                                                                                                        </p>
-                                                                                                                    </div>
-                                                                                                                `;
+                                                                                                                                                                                                <div class="text-center">
+                                                                                                                                                                                                    <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                                                                                                                                                                                                    <p>Are you sure? This action cannot be undone.</p>
+                                                                                                                                                                                                    <p class="text-muted small">
+                                                                                                                                                                                                        Sets the form status to <strong>Ongoing</strong>. Use this to manually set it if not already done. 
+                                                                                                                                                                                                    </p>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                            `;
                         break;
                     case 'Late':
                         modalContent.innerHTML = `
-                                                                                                                    <div class="text-center">
-                                                                                                                        <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
-                                                                                                                        <p>Are you sure? This action cannot be undone.</p>
-                                                                                                                        <p class="text-muted small">
-                                                                                                                            This will set the form's status to <strong>Late</strong> and mark it as overdue.
-                                                                                                                        </p>
-                                                                                                                    </div>
-                                                                                                                    <div class="mt-4">
-                                                                                                                        <div class="mb-3">
-                                                                                                                            <label for="latePenaltyAmount" class="form-label">Late Penalty Amount (Optional)</label>
-                                                                                                                            <div class="input-group">
-                                                                                                                                <span class="input-group-text">₱</span>
-                                                                                                                                <input type="number" class="form-control" id="latePenaltyAmount" 
-                                                                                                                                       placeholder="Enter penalty amount" step="0.01" min="0" value="0">
-                                                                                                                            </div>
-                                                                                                                            <small class="text-muted">Enter the late penalty amount to be added to the fees (leave as 0 for no penalty).</small>
-                                                                                                                        </div>
-                                                                                                                    </div>
-                                                                                                                `;
+                                                                                                                                                                                                <div class="text-center">
+                                                                                                                                                                                                    <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                                                                                                                                                                                                    <p>Are you sure? This action cannot be undone.</p>
+                                                                                                                                                                                                    <p class="text-muted small">
+                                                                                                                                                                                                        This will set the form's status to <strong>Late</strong> and mark it as overdue.
+                                                                                                                                                                                                    </p>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                <div class="mt-4">
+                                                                                                                                                                                                    <div class="mb-3">
+                                                                                                                                                                                                        <label for="latePenaltyAmount" class="form-label">Late Penalty Amount (Optional)</label>
+                                                                                                                                                                                                        <div class="input-group">
+                                                                                                                                                                                                            <span class="input-group-text">₱</span>
+                                                                                                                                                                                                            <input type="number" class="form-control" id="latePenaltyAmount" 
+                                                                                                                                                                                                                   placeholder="Enter penalty amount" step="0.01" min="0" value="0">
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        <small class="text-muted">Enter the late penalty amount to be added to the fees (leave as 0 for no penalty).</small>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                            `;
                         break;
                     case 'Cancel Form':
                         modalContent.innerHTML = `
-                                                                                                                    <div class="text-center">
-                                                                                                                        <i class="fa fa-exclamation-circle fa-3x text-danger mb-3"></i>
-                                                                                                                        <p>Are you sure? This action cannot be undone.</p>
-                                                                                                                        <p class="text-muted small">
-                                                                                                                            This will <strong class="text-danger">cancel</strong> the form and set its status to <strong>Cancelled</strong>.
-                                                                                                                            Note: This action cannot be undone. The requester will be notified about the cancellation.
-                                                                                                                        </p>
-                                                                                                                    </div>
-                                                                                                                `;
+                                                                                                                                                                                                <div class="text-center">
+                                                                                                                                                                                                    <i class="fa fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                                                                                                                                                                                                    <p>Are you sure? This action cannot be undone.</p>
+                                                                                                                                                                                                    <p class="text-muted small">
+                                                                                                                                                                                                        This will <strong class="text-danger">cancel</strong> the form and set its status to <strong>Cancelled</strong>.
+                                                                                                                                                                                                        Note: This action cannot be undone. The requester will be notified about the cancellation.
+                                                                                                                                                                                                    </p>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                            `;
                         break;
                 }
 
@@ -2840,15 +2849,15 @@
                 const modalContent = document.getElementById('statusModalContent');
 
                 modalContent.innerHTML = `
-                                                                                                            <div class="text-center">
-                                                                                                                <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
-                                                                                                                <p>Are you sure you want to unmark this form as late/damaged?</p>
-                                                                                                                <p class="text-muted small">
-                                                                                                                    This will set the form's status back to <strong>Ongoing</strong>, remove the late flag, 
-                                                                                                                    and reset any penalty fees to zero.
-                                                                                                                </p>
-                                                                                                            </div>
-                                                                                                        `;
+                                                                                                                                                                                        <div class="text-center">
+                                                                                                                                                                                            <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                                                                                                                                                                                            <p>Are you sure you want to unmark this form as late/damaged?</p>
+                                                                                                                                                                                            <p class="text-muted small">
+                                                                                                                                                                                                This will set the form's status back to <strong>Ongoing</strong>, remove the late flag, 
+                                                                                                                                                                                                and reset any penalty fees to zero.
+                                                                                                                                                                                            </p>
+                                                                                                                                                                                        </div>
+                                                                                                                                                                                    `;
 
                 selectedStatus = 'Ongoing'; // Set to Ongoing to unmark late
                 statusUpdateModal.show();
@@ -4033,10 +4042,10 @@
                 document.getElementById('modalPurpose').textContent = request.form_details.purpose;
                 document.getElementById('modalParticipants').textContent = request.form_details.num_participants;
                 document.getElementById('modalStatus').innerHTML = `
-                                                    <span class="badge" style="background-color: ${request.form_details.status.color}">
-                                                        ${request.form_details.status.name}
-                                                    </span>
-                                                    `;
+                                                                                                                                <span class="badge" style="background-color: ${request.form_details.status.color}">
+                                                                                                                                    ${request.form_details.status.name}
+                                                                                                                                </span>
+                                                                                                                                `;
                 document.getElementById('modalFee').textContent = `${formatMoney(request.fees.approved_fee)}`;
                 document.getElementById('modalApprovals').textContent = `${request.approval_info.approval_count}`;
                 document.getElementById('modalRejections').textContent = `${request.approval_info.rejection_count}`;
@@ -4355,16 +4364,16 @@
                         }
 
                         feeElement.innerHTML = `
-                                                            <div>
-                                                                <span class="item-name">${labelHtml}</span>
-                                                            </div>
-                                                            <span class="d-flex align-items-center">
-                                                                <span class="item-price me-2">${amountText}</span>
-                                                                <button class="btn btn-sm btn-danger delete-fee-btn" data-fee-id="${fee.fee_id}" data-fee-type="${fee.type}">
-                                                                    <i class="fa fa-times"></i>
-                                                                </button>
-                                                            </span>
-                                                        `;
+                                                                                                                                        <div>
+                                                                                                                                            <span class="item-name">${labelHtml}</span>
+                                                                                                                                        </div>
+                                                                                                                                        <span class="d-flex align-items-center">
+                                                                                                                                            <span class="item-price me-2">${amountText}</span>
+                                                                                                                                            <button class="btn btn-sm btn-danger delete-fee-btn" data-fee-id="${fee.fee_id}" data-fee-type="${fee.type}">
+                                                                                                                                                <i class="fa fa-times"></i>
+                                                                                                                                            </button>
+                                                                                                                                        </span>
+                                                                                                                                    `;
 
                         additionalFeesContainer.appendChild(feeElement);
                     });
@@ -4418,11 +4427,11 @@
                 } else {
                     // Show empty message
                     additionalFeesContainer.innerHTML = `
-                                                        <div class="text-center text-muted py-4">
-                                                            <i class="fa fa-coins fa-2x d-block mb-2"></i>
-                                                            <p class="mb-0">No additional fees or discounts</p>
-                                                        </div>
-                                                    `;
+                                                                                                                                    <div class="text-center text-muted py-4">
+                                                                                                                                        <i class="fa fa-coins fa-2x d-block mb-2"></i>
+                                                                                                                                        <p class="mb-0">No additional fees or discounts</p>
+                                                                                                                                    </div>
+                                                                                                                                `;
                 }
             }
 
@@ -4442,69 +4451,97 @@
                     }
                 }
             }
-
+            // Update document buttons and icons
             function updateDocumentIcons(documents) {
-                // Formal Letter
-                const formalLetterIcon = document.getElementById('formalLetterIcon');
-                if (formalLetterIcon) {
-                    const formalLetterContainer = formalLetterIcon.closest('.document-mini-item');
-                    if (documents.formal_letter.url) {
-                        formalLetterIcon.classList.remove('text-muted');
-                        formalLetterIcon.classList.add('text-primary');
-                        if (formalLetterContainer) formalLetterContainer.classList.add('border-primary', 'border-opacity-25');
-                    } else {
-                        formalLetterIcon.classList.add('text-muted');
-                        formalLetterIcon.classList.remove('text-primary');
-                        if (formalLetterContainer) formalLetterContainer.classList.remove('border-primary', 'border-opacity-25');
+                // Helper function to update button state
+                function updateButton(buttonId, iconId, hasDocument, documentUrl, title) {
+                    const button = document.getElementById(buttonId);
+                    const icon = document.getElementById(iconId);
+
+                    if (button && icon) {
+                        if (hasDocument) {
+                            // Enable button
+                            button.classList.remove('btn-document-null');
+                            button.classList.add('btn-primary');
+                            button.disabled = false;
+                            button.setAttribute('data-document-url', documentUrl);
+                            button.setAttribute('data-document-title', title);
+                            button.setAttribute('data-bs-toggle', 'modal');
+                            button.setAttribute('data-bs-target', '#documentModal');
+
+                            // Update icon
+                            icon.classList.remove('text-muted');
+                            icon.classList.add('text-primary');
+                        } else {
+                            // Disable button
+                            button.classList.remove('btn-primary');
+                            button.classList.add('btn-document-null');
+                            button.disabled = true;
+                            button.removeAttribute('data-document-url');
+                            button.removeAttribute('data-bs-toggle');
+                            button.removeAttribute('data-bs-target');
+
+                            // Update icon
+                            icon.classList.add('text-muted');
+                            icon.classList.remove('text-primary');
+                        }
                     }
                 }
+
+                // Formal Letter
+                updateButton(
+                    'formalLetterBtn',
+                    'formalLetterIcon',
+                    documents.formal_letter.url,
+                    documents.formal_letter.url,
+                    'Formal Letter'
+                );
 
                 // Facility Layout
-                const facilityLayoutIcon = document.getElementById('facilityLayoutIcon');
-                if (facilityLayoutIcon) {
-                    const facilityContainer = facilityLayoutIcon.closest('.document-mini-item');
-                    if (documents.facility_layout.url) {
-                        facilityLayoutIcon.classList.remove('text-muted');
-                        facilityLayoutIcon.classList.add('text-primary');
-                        if (facilityContainer) facilityContainer.classList.add('border-primary', 'border-opacity-25');
-                    } else {
-                        facilityLayoutIcon.classList.add('text-muted');
-                        facilityLayoutIcon.classList.remove('text-primary');
-                        if (facilityContainer) facilityContainer.classList.remove('border-primary', 'border-opacity-25');
-                    }
-                }
+                updateButton(
+                    'facilityLayoutBtn',
+                    'facilityLayoutIcon',
+                    documents.facility_layout.url,
+                    documents.facility_layout.url,
+                    'Facility Layout'
+                );
 
                 // Proof of Payment
-                const proofOfPaymentIcon = document.getElementById('proofOfPaymentIcon');
-                if (proofOfPaymentIcon) {
-                    const proofContainer = proofOfPaymentIcon.closest('.document-mini-item');
-                    if (documents.proof_of_payment.url) {
-                        proofOfPaymentIcon.classList.remove('text-muted');
-                        proofOfPaymentIcon.classList.add('text-primary');
-                        if (proofContainer) proofContainer.classList.add('border-primary', 'border-opacity-25');
-                    } else {
-                        proofOfPaymentIcon.classList.add('text-muted');
-                        proofOfPaymentIcon.classList.remove('text-primary');
-                        if (proofContainer) proofContainer.classList.remove('border-primary', 'border-opacity-25');
-                    }
-                }
+                updateButton(
+                    'proofOfPaymentBtn',
+                    'proofOfPaymentIcon',
+                    documents.proof_of_payment.url,
+                    documents.proof_of_payment.url,
+                    'Proof of Payment'
+                );
 
-                // Official Receipt
-                const officialReceiptIcon = document.getElementById('officialReceiptIcon');
-                if (officialReceiptIcon) {
-                    const receiptContainer = officialReceiptIcon.closest('.document-mini-item');
-                    if (documents.official_receipt.url || documents.form_details?.official_receipt_num) {
-                        officialReceiptIcon.classList.remove('text-muted');
-                        officialReceiptIcon.classList.add('text-primary');
-                        if (receiptContainer) receiptContainer.classList.add('border-primary', 'border-opacity-25');
-                    } else {
-                        officialReceiptIcon.classList.add('text-muted');
-                        officialReceiptIcon.classList.remove('text-primary');
-                        if (receiptContainer) receiptContainer.classList.remove('border-primary', 'border-opacity-25');
+                // Official Receipt - Check both uploaded document AND generated receipt number
+                const hasOfficialReceipt = documents.official_receipt.url || documents.form_details?.official_receipt_num;
+                const receiptUrl = documents.official_receipt.url || (documents.form_details?.official_receipt_num ? `/official-receipt/${requestId}` : null);
+
+                updateButton(
+                    'officialReceiptBtn',
+                    'officialReceiptIcon',
+                    hasOfficialReceipt,
+                    receiptUrl,
+                    'Official Receipt'
+                );
+
+                // Special handling for official receipt if it's just a receipt number
+                if (documents.form_details?.official_receipt_num && !documents.official_receipt.url) {
+                    const button = document.getElementById('officialReceiptBtn');
+                    if (button) {
+                        button.classList.remove('btn-document-null');
+                        button.classList.add('btn-primary');
+                        button.disabled = false;
+                        button.removeAttribute('data-bs-toggle');
+                        button.removeAttribute('data-bs-target');
+                        button.onclick = function () {
+                            window.open(`/official-receipt/${requestId}`, '_blank');
+                        };
                     }
                 }
             }
-
 
             async function fetchRequestDetails() {
                 try {
@@ -4541,151 +4578,110 @@
                     statusBadge.style.backgroundColor = request.form_details.status.color;
 
                     // Contact information - simplified grid layout
-                    document.getElementById('formDetails').innerHTML = `
-                                    <div class="contact-row mb-3 pb-2 border-bottom">
-                                        <div class="fw-bold text-primary mb-1">Requester</div>
-                                        <div>${request.user_details.first_name} ${request.user_details.last_name}</div>
-                                    </div>
-                                    <div class="contact-row mb-3 pb-2 border-bottom">
-                                        <div class="fw-bold text-primary mb-1">School ID</div>
-                                        <div>${request.user_details.school_id || 'N/A'}</div>
-                                    </div>
-                                    <div class="contact-row mb-3 pb-2 border-bottom">
-                                        <div class="fw-bold text-primary mb-1">Email</div>
-                                        <div class="text-break">${request.user_details.email}</div>
-                                    </div>
-                                    <div class="contact-row mb-3 pb-2 border-bottom">
-                                        <div class="fw-bold text-primary mb-1">Organization</div>
-                                        <div>${request.user_details.organization_name || 'N/A'}</div>
-                                    </div>
-                                    <div class="contact-row mb-3 pb-2 border-bottom">
-                                        <div class="fw-bold text-primary mb-1">User Type</div>
-                                        <div>${request.user_details.user_type}</div>
-                                    </div>
-                                    <div class="contact-row">
-                                        <div class="fw-bold text-primary mb-1">Contact Number</div>
-                                        <div>${request.user_details.contact_number || 'N/A'}</div>
-                                    </div>
-                                `;
 
+                    document.getElementById('formDetails').innerHTML = `
+                                                    <div class="d-flex justify-content-between py-1 border-bottom">
+                                                        <span class="text-muted">Requester:</span>
+                                                        <span class="fw-medium">${request.user_details.first_name} ${request.user_details.last_name}</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between py-1 border-bottom">
+                                                        <span class="text-muted">School ID:</span>
+                                                        <span class="fw-medium">${request.user_details.school_id || 'N/A'}</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between py-1 border-bottom">
+                                                        <span class="text-muted">Email:</span>
+                                                       <span class="fw-medium" style="word-break: break-word;">${request.user_details.email}</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between py-1 border-bottom">
+                                                        <span class="text-muted">Organization:</span>
+                                                        <span class="fw-medium">${request.user_details.organization_name || 'N/A'}</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between py-1 border-bottom">
+                                                        <span class="text-muted">User Type:</span>
+                                                        <span class="fw-medium">${request.user_details.user_type}</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between py-1">
+                                                        <span class="text-muted">Contact #:</span>
+                                                        <span class="fw-medium">${request.user_details.contact_number || 'N/A'}</span>
+                                                    </div>
+                                                `;
                     // Event details - simplified layout
                     document.getElementById('eventDetails').innerHTML = `
-                                    <div class="row g-3">
-                                        <div class="col-sm-6">
-                                            <div class="mb-3">
-                                                <div class="fw-bold text-primary">Endorser</div>
-                                                <div>${request.documents.endorser || 'N/A'}</div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="fw-bold text-primary">Rental Purpose</div>
-                                                <div>${request.form_details.purpose}</div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="fw-bold text-primary">Number of Tables</div>
-                                                <div>${request.form_details.num_tables || 0}</div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="fw-bold text-primary">Start Schedule</div>
-                                                <div>${formatStartDateTime(request.schedule)}</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <div class="mb-3">
-                                                <div class="fw-bold text-primary">Date Endorsed</div>
-                                                <div>${formatDateEndorsed(request.documents.date_endorsed) || 'N/A'}</div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="fw-bold text-primary">Participants</div>
-                                                <div>${request.form_details.num_participants}</div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="fw-bold text-primary">Number of Chairs</div>
-                                                <div>${request.form_details.num_chairs || 0}</div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="fw-bold text-primary">End Schedule</div>
-                                                <div>${formatEndDateTime(request.schedule)}</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-12">
-                                            <div class="fw-bold text-primary">Additional Requests</div>
-                                            <div>${request.form_details.additional_requests || 'No additional requests.'}</div>
-                                        </div>
-                                    </div>
-                                `;
+                                                                                                                <div class="row g-3">
+                                                                                                                    <div class="col-sm-6">
+                                                                                                                        <div class="mb-3">
+                                                                                                                            <div class="fw-bold text-primary">Endorser</div>
+                                                                                                                            <div>${request.documents.endorser || 'N/A'}</div>
+                                                                                                                        </div>
+                                                                                                                        <div class="mb-3">
+                                                                                                                            <div class="fw-bold text-primary">Rental Purpose</div>
+                                                                                                                            <div>${request.form_details.purpose}</div>
+                                                                                                                        </div>
+                                                                                                                        <div class="mb-3">
+                                                                                                                            <div class="fw-bold text-primary">Number of Tables</div>
+                                                                                                                            <div>${request.form_details.num_tables || 0}</div>
+                                                                                                                        </div>
+                                                                                                                        <div class="mb-3">
+                                                                                                                            <div class="fw-bold text-primary">Start Schedule</div>
+                                                                                                                            <div>${formatStartDateTime(request.schedule)}</div>
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                    <div class="col-sm-6">
+                                                                                                                        <div class="mb-3">
+                                                                                                                            <div class="fw-bold text-primary">Date Endorsed</div>
+                                                                                                                            <div>${formatDateEndorsed(request.documents.date_endorsed) || 'N/A'}</div>
+                                                                                                                        </div>
+                                                                                                                        <div class="mb-3">
+                                                                                                                            <div class="fw-bold text-primary">Participants</div>
+                                                                                                                            <div>${request.form_details.num_participants}</div>
+                                                                                                                        </div>
+                                                                                                                        <div class="mb-3">
+                                                                                                                            <div class="fw-bold text-primary">Number of Chairs</div>
+                                                                                                                            <div>${request.form_details.num_chairs || 0}</div>
+                                                                                                                        </div>
+                                                                                                                        <div class="mb-3">
+                                                                                                                            <div class="fw-bold text-primary">End Schedule</div>
+                                                                                                                            <div>${formatEndDateTime(request.schedule)}</div>
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                    <div class="col-12">
+                                                                                                                        <div class="fw-bold text-primary">Additional Requests</div>
+                                                                                                                        <div>${request.form_details.additional_requests || 'No additional requests.'}</div>
+                                                                                                                    </div>
+                                                                                                                </div>
+                                                                                                            `;
                     // Update requested items with fee breakdown
                     document.getElementById('requestedItems').innerHTML = `
-                                    <div class="requested-items-list">
-                                        ${request.requested_items.facilities.length > 0 ? `
-                                            <div class="mb-3">
-                                                <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Facilities:</h6>
-                                                ${request.requested_items.facilities.map(f => `
-                                                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
-                                                        <span class="item-name">${f.name}</span>
-                                                        <span class="item-price fw-bold">${formatMoney(f.fee)}${f.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
-                                                    </div>
-                                                `).join('')}
-                                            </div>
-                                        ` : ''}
+                                                                                                                <div class="requested-items-list">
+                                                                                                                    ${request.requested_items.facilities.length > 0 ? `
+                                                                                                                        <div class="mb-3">
+                                                                                                                            <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Facilities:</h6>
+                                                                                                                            ${request.requested_items.facilities.map(f => `
+                                                                                                                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                                                                                                                    <span class="item-name">${f.name}</span>
+                                                                                                                                    <span class="item-price fw-bold">${formatMoney(f.fee)}${f.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
+                                                                                                                                </div>
+                                                                                                                            `).join('')}
+                                                                                                                        </div>
+                                                                                                                    ` : ''}
 
-                                        ${request.requested_items.equipment.length > 0 ? `
-                                            <div>
-                                                <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Equipment:</h6>
-                                                ${request.requested_items.equipment.map(e => `
-                                                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
-                                                        <span class="item-name">${e.name} × ${e.quantity || 1}</span>
-                                                        <span class="item-price fw-bold">${formatMoney(e.fee)}${e.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
-                                                    </div>
-                                                `).join('')}
-                                            </div>
-                                        ` : ''}
-                                    </div>
-                                `;
+                                                                                                                    ${request.requested_items.equipment.length > 0 ? `
+                                                                                                                        <div>
+                                                                                                                            <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Equipment:</h6>
+                                                                                                                            ${request.requested_items.equipment.map(e => `
+                                                                                                                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                                                                                                                    <span class="item-name">${e.name} × ${e.quantity || 1}</span>
+                                                                                                                                    <span class="item-price fw-bold">${formatMoney(e.fee)}${e.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
+                                                                                                                                </div>
+                                                                                                                            `).join('')}
+                                                                                                                        </div>
+                                                                                                                    ` : ''}
+                                                                                                                </div>
+                                                                                                            `;
 
                     // Update status cards
                     document.getElementById('approvalsCount').textContent = request.approval_info.approval_count;
                     document.getElementById('rejectionsCount').textContent = request.approval_info.rejection_count;
-
-                    // Update document items in the mini grid
-                    document.getElementById('formalLetterDocument').innerHTML = request.documents.formal_letter.url ?
-                        `<button type="button" class="btn btn-sm btn-link text-primary p-0" data-bs-toggle="modal" data-bs-target="#documentModal" 
-                                data-document-url="${request.documents.formal_letter.url}" data-document-title="Formal Letter">
-                                <i class="fas fa-external-link-alt me-1"></i>View
-                            </button>` :
-                        '<span class="badge bg-secondary bg-opacity-10 text-secondary">Not uploaded</span>';
-
-                    document.getElementById('facilityLayoutDocument').innerHTML = request.documents.facility_layout.url ?
-                        `<button type="button" class="btn btn-sm btn-link text-primary p-0" data-bs-toggle="modal" data-bs-target="#documentModal" 
-                                data-document-url="${request.documents.facility_layout.url}" data-document-title="Facility Setup">
-                                <i class="fas fa-external-link-alt me-1"></i>View
-                            </button>` :
-                        '<span class="badge bg-secondary bg-opacity-10 text-secondary">Not uploaded</span>';
-
-                    document.getElementById('proofOfPaymentDocument').innerHTML = request.documents.proof_of_payment.url ?
-                        `<button type="button" class="btn btn-sm btn-link text-primary p-0" data-bs-toggle="modal" data-bs-target="#documentModal" 
-                                data-document-url="${request.documents.proof_of_payment.url}" data-document-title="Proof of Payment">
-                                <i class="fas fa-external-link-alt me-1"></i>View
-                            </button>` :
-                        '<span class="badge bg-secondary bg-opacity-10 text-secondary">Not uploaded</span>';
-
-                    // Official Receipt - Check both uploaded document AND generated receipt number
-                    const officialReceiptContainer = document.getElementById('officialReceiptDocument');
-                    if (request.documents.official_receipt.url) {
-                        officialReceiptContainer.innerHTML =
-                            `<button type="button" class="btn btn-sm btn-link text-primary p-0" data-bs-toggle="modal" data-bs-target="#documentModal" 
-                                    data-document-url="${request.documents.official_receipt.url}" data-document-title="Official Receipt">
-                                    <i class="fas fa-external-link-alt me-1"></i>View
-                                </button>`;
-                    } else if (request.form_details.official_receipt_num) {
-                        const receiptNum = request.form_details.official_receipt_num;
-                        officialReceiptContainer.innerHTML =
-                            `<a href="/official-receipt/${requestId}" target="_blank" class="btn btn-sm btn-link text-success p-0">
-                                    <i class="fas fa-receipt me-1"></i> OR: ${receiptNum}
-                                </a>`;
-                    } else {
-                        officialReceiptContainer.innerHTML = '<span class="badge bg-secondary bg-opacity-10 text-secondary">Not available</span>';
-                    }
-
                     // Update document icons
                     updateDocumentIcons(request.documents);
                     // Load additional data and wait for completion
@@ -4718,10 +4714,10 @@
                     // Show error state
                     document.getElementById('loadingState').style.display = 'none';
                     document.getElementById('contentState').innerHTML = `
-                                                                                                    <div class="alert alert-danger">
-                                                                                                        Failed to load request details. Please try refreshing the page.
-                                                                                                    </div>
-                                                                                                `;
+                                                                                                                                                                                <div class="alert alert-danger">
+                                                                                                                                                                                    Failed to load request details. Please try refreshing the page.
+                                                                                                                                                                                </div>
+                                                                                                                                                                            `;
                     document.getElementById('contentState').style.display = 'block';
                 }
             }
@@ -4761,7 +4757,7 @@
                 const endDateTime = new Date(`${schedule.end_date}T${schedule.end_time}`);
                 const durationHours = Math.max(0, (endDateTime - startDateTime) / (1000 * 60 * 60));
 
-                let totalBaseFees = 0;
+                let totalBaseFees = 0; // Track total
 
                 // Add facilities with proper rate type logic and waiver checkboxes
                 if (requestedItems.facilities && requestedItems.facilities.length > 0) {
@@ -4784,20 +4780,20 @@
                         }
 
                         facilityElement.innerHTML = `
-                                                                            <div class="d-flex align-items-center">
-                                                                                <div class="form-check me-2">
-                                                                                    <input class="form-check-input waiver-checkbox" type="checkbox" 
-                                                                                        data-type="facility" 
-                                                                                        data-id="${facility.requested_facility_id}"
-                                                                                        ${facility.is_waived ? 'checked' : ''}>
-                                                                                </div>
-                                                                                <span class="item-name">${facility.name}</span>
+                                                                        <div class="d-flex align-items-center">
+                                                                            <div class="form-check me-2">
+                                                                                <input class="form-check-input waiver-checkbox" type="checkbox" 
+                                                                                    data-type="facility" 
+                                                                                    data-id="${facility.requested_facility_id}"
+                                                                                    ${facility.is_waived ? 'checked' : ''}>
                                                                             </div>
-                                                                            <div class="text-end">
-                                                                                <small>${rateDescription}</small>
-                                                                                <div><strong>${formatMoney(itemTotal)}</strong></div>
-                                                                            </div>
-                                                                        `;
+                                                                            <span class="item-name">${facility.name}</span>
+                                                                        </div>
+                                                                        <div class="text-end">
+                                                                            <small>${rateDescription}</small>
+                                                                            <div><strong>${formatMoney(itemTotal)}</strong></div>
+                                                                        </div>
+                                                                    `;
                         facilitiesContainer.appendChild(facilityElement);
                     });
                 }
@@ -4824,55 +4820,39 @@
                         }
 
                         equipmentElement.innerHTML = `
-                                                                                                                                                                                                    <div class="d-flex align-items-center">
-                                                                                                                                                                                                        <div class="form-check me-2">
-                                                                                                                                                                                                            <input class="form-check-input waiver-checkbox" type="checkbox" 
-                                                                                                                                                                                                                data-type="equipment" 
-                                                                                                                                                                                                                data-id="${equipment.requested_equipment_id}"
-                                                                                                                                                                                                                ${equipment.is_waived ? 'checked' : ''}>
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                        <span class="item-name">
-                                                                                                                                                                                                            ${equipment.name} ${quantity > 1 ? `(×${quantity})` : ''}
-                                                                                                                                                                                                        </span>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    <div class="text-end">
-                                                                                                                                                                                                        <small>${rateDescription}</small>
-                                                                                                                                                                                                        <div><strong>${formatMoney(itemTotal)}</strong></div>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                `;
+                                                                        <div class="d-flex align-items-center">
+                                                                            <div class="form-check me-2">
+                                                                                <input class="form-check-input waiver-checkbox" type="checkbox" 
+                                                                                    data-type="equipment" 
+                                                                                    data-id="${equipment.requested_equipment_id}"
+                                                                                    ${equipment.is_waived ? 'checked' : ''}>
+                                                                            </div>
+                                                                            <span class="item-name">
+                                                                                ${equipment.name} ${quantity > 1 ? `(×${quantity})` : ''}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="text-end">
+                                                                            <small>${rateDescription}</small>
+                                                                            <div><strong>${formatMoney(itemTotal)}</strong></div>
+                                                                        </div>
+                                                                    `;
                         equipmentContainer.appendChild(equipmentElement);
                     });
                 }
 
-                // Add event listeners to waiver checkboxes in the Fee Breakdown
+                // Add event listeners to waiver checkboxes
                 document.querySelectorAll('#baseFeesContainer .waiver-checkbox').forEach(checkbox => {
                     checkbox.addEventListener('change', function () {
                         handleWaiverChange(this);
                     });
                 });
 
-                // Debug logging for backend troubleshooting
-                console.log('Base Fees Update:', {
-                    facilities: requestedItems.facilities?.map(f => ({
-                        id: f.requested_facility_id,
-                        name: f.name,
-                        fee: f.fee,
-                        rate_type: f.rate_type,
-                        is_waived: f.is_waived
-                    })),
-                    equipment: requestedItems.equipment?.map(e => ({
-                        id: e.requested_equipment_id,
-                        name: e.name,
-                        fee: e.fee,
-                        rate_type: e.rate_type,
-                        quantity: e.quantity,
-                        is_waived: e.is_waived
-                    })),
-                    durationHours: durationHours,
-                    totalBaseFees: totalBaseFees
-                });
-            }
+                // IMPORTANT: Update the footer total with the calculated value
+                document.getElementById('feeBreakdownTotal').textContent = formatMoney(totalBaseFees);
 
+                // Debug logging
+                console.log('Base Fees Total:', totalBaseFees);
+            }
             function formatDateEndorsed(dateString) {
                 if (!dateString || dateString === 'N/A') return 'N/A';
 
@@ -5008,27 +4988,27 @@
                 }
 
                 feeItem.innerHTML = `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ${adminPhoto ?
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ${adminPhoto ?
                         `<img src="${adminPhoto}" class="rounded-circle me-3" width="32" height="32" alt="Admin Photo">` :
                         `<i class="bi bi-person-circle fs-5 me-3 text-secondary"></i>`
                     }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div class="flex-grow-1">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <small class="text-muted fst-italic">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ${fee.label} (${typeName}) of ₱${amount.toFixed(2)} added by <strong>${adminName}</strong>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </small>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <button class="btn btn-sm remove-btn text-secondary p-0 border-0">
-                                                                                                                                                                                                    <i class="bi bi-x-lg"></i>
-                                                                                                                                                                                                </button>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <div class="flex-grow-1">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div class="d-flex justify-content-between align-items-center">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <small class="text-muted fst-italic">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ${fee.label} (${typeName}) of ₱${amount.toFixed(2)} added by <strong>${adminName}</strong>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </small>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <button class="btn btn-sm remove-btn text-secondary p-0 border-0">
+                                                                                                                                                                                                                                                                                <i class="bi bi-x-lg"></i>
+                                                                                                                                                                                                                                                                            </button>
 
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </button>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <small class="text-muted fst-italic">${timestamp}</small>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    `;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <small class="text-muted fst-italic">${timestamp}</small>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                `;
 
                 // Add remove functionality for regular fees
                 feeItem.querySelector(".remove-btn").addEventListener("click", async function () {
@@ -5195,6 +5175,313 @@
             setTimeout(() => {
                 setupEventListeners();
             }, 100);
+
+            // Sticky Activity Timeline functionality
+            const stickyTimelineBtn = document.getElementById('stickyTimelineBtn');
+            const timelineModal = document.getElementById('timelineModal');
+            const closeTimelineBtn = document.getElementById('closeTimelineBtn');
+            const timelineContent = document.getElementById('timelineContent');
+            const timelineComment = document.getElementById('timelineComment');
+            const timelineSendBtn = document.getElementById('timelineSendBtn');
+            const timelineFilter = document.getElementById('timelineFilter');
+            const refreshTimelineBtn = document.getElementById('refreshTimelineBtn');
+            let isTimelineLoaded = false;
+            let currentTimelineFilter = 'all';
+
+
+// Toggle timeline modal - Update this section
+stickyTimelineBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    
+    if (timelineModal.classList.contains('show')) {
+        timelineModal.classList.remove('show');
+    } else {
+        timelineModal.classList.add('show');
+        
+        // Lazy load content if not loaded yet
+        if (!isTimelineLoaded) {
+            loadTimelineContent();
+        }
+    }
+});
+// Close timeline button
+if (closeTimelineBtn) {
+    closeTimelineBtn.addEventListener('click', function() {
+        console.log('Close button clicked'); // Debug log
+        timelineModal.classList.remove('show');
+    });
+}
+
+// Also add a backup click handler for any element with class 'close-timeline'
+document.querySelectorAll('.close-timeline').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        timelineModal.classList.remove('show');
+    });
+});
+
+
+            // Close when clicking outside
+            document.addEventListener('click', function (e) {
+                if (!timelineModal.contains(e.target) && !stickyTimelineBtn.contains(e.target)) {
+                    timelineModal.classList.remove('show');
+                }
+            });
+
+            // Filter change
+            timelineFilter.addEventListener('change', function () {
+                currentTimelineFilter = this.value;
+                loadTimelineContent();
+            });
+
+
+            // Refresh button
+            refreshTimelineBtn.addEventListener('click', function () {
+                isTimelineLoaded = false;
+                loadTimelineContent();
+                showToast('Timeline refreshed', 'success');
+            });
+
+            // Make modal draggable
+            const modalHeader = document.getElementById('timelineModalHeader');
+            let isDragging = false;
+            let offsetX, offsetY;
+
+
+            modalHeader.addEventListener('mousedown', function (e) {
+                // Don't start dragging if clicking on close button, select, or any interactive element
+                if (e.target.tagName === 'SELECT' ||
+                    e.target.tagName === 'OPTION' ||
+                    e.target.closest('select') ||
+                    e.target.closest('.close-timeline') ||  // Add this line
+                    e.target.closest('#refreshTimelineBtn') || // Add this line
+                    e.target.closest('#timelineFilter')) { // Add this line
+                    return;
+                }
+                isDragging = true;
+                offsetX = e.clientX - timelineModal.offsetLeft;
+                offsetY = e.clientY - timelineModal.offsetTop;
+                modalHeader.style.cursor = 'grabbing';
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    timelineModal.style.left = (e.clientX - offsetX) + 'px';
+                    timelineModal.style.top = (e.clientY - offsetY) + 'px';
+                    timelineModal.style.bottom = 'auto';
+                    timelineModal.style.right = 'auto';
+                }
+            });
+            document.addEventListener('mouseup', function () {
+                isDragging = false;
+                modalHeader.style.cursor = 'move';
+            });
+
+            // Load timeline content with filter
+            async function loadTimelineContent() {
+                timelineContent.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary mb-2" role="status"><span class="visually-hidden">Loading...</span></div><p class="small mb-0">Loading activity...</p></div>';
+
+
+                try {
+                    let activities = [];
+
+                    // Load comments if filter is 'all' or 'comment'
+                    if (currentTimelineFilter === 'all' || currentTimelineFilter === 'comment') {
+                        const commentsResponse = await fetch(`/api/admin/requisition/${requestId}/comments`, {
+                            headers: {
+                                'Authorization': `Bearer ${adminToken}`,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        const commentsResult = await commentsResponse.json();
+                        const comments = commentsResult.comments || [];
+
+                        comments.forEach(comment => {
+                            activities.push({
+                                type: 'comment',
+                                data: comment,
+                                timestamp: new Date(comment.created_at)
+                            });
+                        });
+                    }
+
+                    // Load fees if filter is 'all' or 'fee'
+                    if (currentTimelineFilter === 'all' || currentTimelineFilter === 'fee') {
+                        const feesResponse = await fetch(`/api/admin/requisition/${requestId}/fees`, {
+                            headers: {
+                                'Authorization': `Bearer ${adminToken}`,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        const feesResult = await feesResponse.json();
+                        const fees = feesResult || [];
+
+                        fees.forEach(fee => {
+                            activities.push({
+                                type: 'fee',
+                                data: fee,
+                                timestamp: new Date(fee.created_at)
+                            });
+                        });
+                    }
+
+                    // Sort by timestamp (newest first)
+                    activities.sort((a, b) => b.timestamp - a.timestamp);
+
+                    if (activities.length === 0) {
+                        timelineContent.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-comment-slash fa-2x mb-2"></i><p class="small mb-0">No activity yet</p></div>';
+                    } else {
+                        timelineContent.innerHTML = activities.map(activity => {
+                            if (activity.type === 'comment') {
+                                return generateTimelineCommentHTML(activity.data);
+                            } else {
+                                return generateTimelineFeeHTML(activity.data);
+                            }
+                        }).join('');
+                    }
+
+                    isTimelineLoaded = true;
+
+                } catch (error) {
+                    console.error('Error loading timeline:', error);
+                    timelineContent.innerHTML = '<div class="text-center text-danger py-4"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><p class="small mb-0">Failed to load activity</p></div>';
+                }
+            }
+
+
+            // Generate comment HTML for timeline
+            function generateTimelineCommentHTML(comment) {
+                const timeAgo = formatTimeAgo(comment.created_at);
+                return `
+                            <div class="timeline-item mb-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-2 flex-shrink-0">
+                                        ${comment.admin.photo_url ?
+                        `<img src="${comment.admin.photo_url}" class="rounded-circle" width="32" height="32" style="object-fit: cover;">` :
+                        `<div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                                ${comment.admin.first_name.charAt(0)}${comment.admin.last_name.charAt(0)}
+                                            </div>`
+                    }
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <strong class="small">${comment.admin.first_name} ${comment.admin.last_name}</strong>
+                                            <small class="text-muted">${timeAgo}</small>
+                                        </div>
+                                        <div class="bg-light p-2 rounded small">
+                                            ${escapeHtml(comment.comment)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+            }
+
+
+            // Generate fee HTML for timeline
+            function generateTimelineFeeHTML(fee) {
+                const amount = parseFloat(fee.type === 'discount' ? fee.discount_amount : fee.fee_amount);
+                const typeName = fee.type === 'discount' ? 'Discount' : 'Additional fee';
+                const adminName = fee.added_by?.name || 'Admin';
+                const timeAgo = formatTimeAgo(fee.created_at);
+
+                let amountDisplay = '';
+                if (fee.type === 'discount') {
+                    if (fee.discount_type === 'Percentage') {
+                        amountDisplay = `${parseFloat(amount)}%`;
+                    } else {
+                        amountDisplay = `-${formatMoney(amount)}`;
+                    }
+                } else {
+                    amountDisplay = `${formatMoney(amount)}`;
+                }
+
+                return `
+                            <div class="timeline-item mb-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-2 flex-shrink-0">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                             style="width: 32px; height: 32px; background-color: #d4edda; color: #28a745;">
+                                            <i class="fas fa-money-bill" style="font-size: 0.9rem;"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <strong class="small">${adminName}</strong>
+                                            <small class="text-muted">${timeAgo}</small>
+                                        </div>
+                                        <div class="bg-light p-2 rounded small">
+                                            added ${typeName} - ${fee.label}: ${amountDisplay}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+            }
+
+
+
+            // Send comment from timeline
+            timelineSendBtn.addEventListener('click', async function () {
+                const commentText = timelineComment.value.trim();
+
+                if (!commentText) {
+                    showToast('Please enter a comment', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/admin/requisition/${requestId}/comment`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            comment: commentText
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.message || 'Failed to add comment');
+                    }
+
+                    if (result.success) {
+                        timelineComment.value = '';
+                        timelineComment.style.height = 'auto';
+
+                        // Reload timeline content
+                        isTimelineLoaded = false;
+                        loadTimelineContent();
+
+                        showToast('Comment added successfully', 'success');
+                    }
+
+                } catch (error) {
+                    console.error('Error adding comment:', error);
+                    showToast('Failed to add comment: ' + error.message, 'error');
+                }
+            });
+
+            // Allow Enter to send
+            timelineComment.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    timelineSendBtn.click();
+                }
+            });
+
+            // Auto-resize textarea
+            timelineComment.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+
+
         });
     </script>
 @endsection

@@ -20,25 +20,25 @@ class AdminRoleSeeder extends Seeder
                 'role_id' => 1,
                 'role_title' => 'Head Admin',
                 'description' => 'Complete system access and administration, including adding new admins.'
-                // SHOW ALL
+                // SHOW ALL action buttons, in sequence.
             ],
             [
                 'role_id' => 2,
                 'role_title' => 'Chief Approving Officer',
                 'description' => 'Manage and review forms, equipment, and facilities.'
-                // Hide Administrators
+                // Approve/Reject button only, then 'you've already approved' once they've already made an action for the request_id
             ],
             [
                 'role_id' => 3,
                 'role_title' => 'Approving Officer',
                 'description' => 'Manage and review forms, equipment, and facilities.'
-                // Hide Administrators
+                // Approve/Reject button only, then 'you've already approved' once they've already made an action for the request_id
             ],
             [
                 'role_id' => 4,
                 'role_title' => 'Inventory Manager',
                 'description' => 'Manage facilities & equipment only.'
-                // Hide Administrators, Active Bookings, Pending Approval
+                // has no access to this view. ignore
             ]
         ]);
     }

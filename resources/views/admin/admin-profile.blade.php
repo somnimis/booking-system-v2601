@@ -1,19 +1,295 @@
-<template>
+@extends('layouts.admin')
+
+@section('title', 'Admin Profile')
+
+@section('content')
+    <style>
+        /* Department list styles */
+        #department-list .list-group-item {
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        #department-list .list-group-item:hover {
+            background-color: #f8f9fa;
+            border-left-color: #0d6efd;
+        }
+
+        #department-list .list-group-item.active {
+            background-color: #e7f1ff;
+            color: #0d6efd;
+            border-left-color: #0d6efd;
+            border-top-color: #dee2e6;
+            border-bottom-color: #dee2e6;
+        }
+
+        #department-list .list-group-item .form-check-input {
+            cursor: pointer;
+            margin-top: 0;
+        }
+
+        #department-list .list-group-item .department-code {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        #department-list .list-group-item.active .department-code {
+            color: #0d6efd;
+        }
+
+        /* Selected department badges */
+        .department-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e7f1ff;
+            color: #0d6efd;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .department-badge.primary {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .department-badge .remove-dept {
+            cursor: pointer;
+            margin-left: 0.25rem;
+            font-size: 0.7rem;
+        }
+
+        .department-badge .remove-dept:hover {
+            color: #dc3545;
+        }
+
+        .card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+
+        .card-img-container {
+            position: relative;
+            height: 160px;
+            overflow: hidden;
+        }
+
+        .card-img-container img {
+            transition: transform 0.4s ease;
+        }
+
+        /* Status badge styling */
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Truncate text with ellipsis */
+        .text-truncate-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Department text truncation */
+        .department-text {
+            display: block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Facility selection styles */
+        #facility-list .list-group-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #facility-list .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        #facility-list .list-group-item.active {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        #facility-list .list-group-item .form-check-input {
+            cursor: pointer;
+        }
+
+        .selected-facility-item {
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border-left: 4px solid #0d6efd;
+        }
+
+        .selected-facility-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .selected-facility-item .remove-facility {
+            cursor: pointer;
+            color: #dc3545;
+        }
+
+        .selected-facility-item .remove-facility:hover {
+            color: #b02a37;
+        }
+
+        .card {
+            border: 0 !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            border-radius: 0.75rem;
+            /* optional, for smoother corners */
+        }
+
+        #department-buttons-container button {
+            display: inline-flex !important;
+            width: auto !important;
+        }
+
+        /* Ensure proper column sizing */
+        #password-full-width-container .form-control,
+        #password-half-width-container .form-control {
+            width: 100%;
+        }
+
+        main#main .profile-wrapper .profile-hero {
+            /* Fluid side gap: min 20px, preferred 5vw, max 120px */
+            --side-gap: clamp(20px, 9vw, 150px);
+
+            /* Fluid height: min 180px, preferred 20vh, max 300px */
+            height: clamp(180px, 20vh, 300px) !important;
+
+            width: calc(100vw - (2 * var(--side-gap))) !important;
+            position: relative !important;
+            left: 50% !important;
+            right: 50% !important;
+            margin-left: calc(-50vw + var(--side-gap)) !important;
+            margin-right: calc(-50vw + var(--side-gap)) !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            padding-top: 0 !important;
+            max-width: calc(100vw - (2 * var(--side-gap))) !important;
+        }
+
+        /* Remove any top spacing from parent elements */
+        main#main .profile-wrapper {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+
+        /* If there's a header/navbar, reduce the body padding-top */
+        body {
+            padding-top: 0 !important;
+        }
+
+        /* Remove any spacing from the main element itself */
+        main#main {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+
+        /* If using Bootstrap, remove any container spacing */
+        .container.position-relative {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+
+        /* Ensure wallpaper starts at the very top */
+        #wallpaper-container {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+
+        .one-line-truncate {
+            white-space: nowrap;
+            /* keeps it on one line */
+            overflow: hidden;
+            /* hides overflow */
+            text-overflow: ellipsis;
+            /* shows "..." */
+        }
+
+        /* Service modal styles for multiple selection */
+        #service-list .list-group-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #service-list .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        #service-list .list-group-item.active {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+
+        #service-list .list-group-item.active .form-check-input {
+            background-color: white;
+            border-color: white;
+        }
+
+        #service-list .list-group-item .form-check-input {
+            cursor: pointer;
+        }
+
+        .selected-service-item {
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border-left: 4px solid #0d6efd;
+        }
+
+        .selected-service-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .selected-service-item .remove-service {
+            cursor: pointer;
+            color: #dc3545;
+            padding: 0;
+            background: none;
+            border: none;
+        }
+
+        .selected-service-item .remove-service:hover {
+            color: #b02a37;
+        }
+    </style>
+
     <main id="main">
         <div class="profile-wrapper position-relative">
             <!-- Hero/Wallpaper Section -->
-            <div class="profile-hero position-relative mb-5" :style="{ height: '200px', backgroundColor: '#f8f9fa' }">
+            <div class="profile-hero position-relative mb-5" style="height: 200px; background-color: #f8f9fa;">
                 <div id="wallpaper-container" class="w-100 h-100"
-                    :style="{
-                        background: wallpaperUrl ? `url(${wallpaperUrl}) center center / cover no-repeat` : 
-                        'url(https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033948/verzp7lqedwsfn3hz8xf.jpg) center center / cover no-repeat'
-                    }">
+                    style="background: url('https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033948/verzp7lqedwsfn3hz8xf.jpg')
+                                                                                                                        center center / cover no-repeat;">
+                    <!-- Wallpaper will be loaded here -->
                 </div>
-                <button class="btn btn-light position-absolute bottom-0 end-0 m-3" @click="triggerWallpaperUpload">
+                <button class="btn btn-light position-absolute bottom-0 end-0 m-3">
                     <i class="bi bi-image me-2"></i>Change Cover
                 </button>
             </div>
-            <input type="file" id="wallpaper-upload" class="d-none" accept="image/*" @change="handleWallpaperUpload" ref="wallpaperUpload">
+            <input type="file" id="wallpaper-upload" class="d-none" accept="image/*">
 
             <div class="container position-relative">
                 <!-- Profile Avatar -->
@@ -21,14 +297,15 @@
                     <div class="position-relative">
                         <div class="avatar-container rounded-circle border border-4 border-white"
                             style="width: 150px; height: 150px; overflow: hidden;">
-                            <img :src="profilePhotoUrl || 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png'"
-                                class="w-100 h-100 object-fit-cover" id="profile-photo">
+                            <img id="profile-photo"
+                                src="{{ url('https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png') }}"
+                                class="w-100 h-100 object-fit-cover">
                         </div>
                         <button class="btn btn-sm btn-light rounded-circle position-absolute bottom-0 end-0 shadow-sm"
-                            style="width: 32px; height: 32px;" @click="triggerPhotoUpload">
+                            style="width: 32px; height: 32px;" onclick="document.getElementById('photo-upload').click()">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <input type="file" id="photo-upload" class="d-none" accept="image/*" @change="handlePhotoUpload" ref="photoUpload">
+                        <input type="file" id="photo-upload" class="d-none" accept="image/*">
                     </div>
                 </div>
 
@@ -38,28 +315,28 @@
                     <div class="col-md-8">
                         <div class="card shadow-sm h-100">
                             <div class="card-body p-3">
-                                <div v-if="loading" class="text-center py-4">
+                                <div id="main-info-loading" class="text-center py-4">
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                 </div>
-                                <div v-else class="mt-3 ms-3">
-                                    <h2 class="card-title mb-4">{{ adminFullName }}</h2>
+                                <div id="main-info-content" style="display: none; margin-top: 15px; margin-left: 10px;">
+                                    <h2 class="card-title mb-4" id="admin-full-name"></h2>
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <p><strong>School ID:</strong> <span>{{ adminData.school_id || 'Not set' }}</span></p>
-                                            <p><strong>Email:</strong> <span>{{ adminData.email }}</span></p>
-                                            <p><strong>Contact:</strong> <span>{{ adminData.contact_number || 'Not set' }}</span></p>
+                                            <p><strong>School ID:</strong> <span id="admin-school-id"></span></p>
+                                            <p><strong>Email:</strong> <span id="admin-email"></span></p>
+                                            <p><strong>Contact:</strong> <span id="admin-contact"></span></p>
                                         </div>
                                         <div class="col-md-6">
-                                            <p><strong>Member Since:</strong> <span>{{ formatDate(adminData.created_at) }}</span></p>
-                                            <p><strong>Last Updated:</strong> <span>{{ formatDate(adminData.updated_at) }}</span></p>
+                                            <p><strong>Member Since:</strong> <span id="admin-created"></span></p>
+                                            <p><strong>Last Updated:</strong> <span id="admin-updated"></span></p>
                                         </div>
                                     </div>
 
                                     <!-- ✨ Edit Profile button -->
                                     <div class="mt-3">
-                                        <button type="button" class="btn btn-primary" @click="openEditModal">
+                                        <button type="button" class="btn btn-primary" id="editProfileBtn">
                                             <i class="bi bi-pencil me-1"></i> Edit Profile
                                         </button>
                                     </div>
@@ -73,117 +350,15 @@
                         <div class="card shadow-sm mb-3">
                             <div class="card-body">
                                 <h5 class="card-title mb-3">Role Details</h5>
-                                <div v-if="adminData.role">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <span class="badge bg-primary me-2">{{ adminData.role.role_title }}</span>
-                                    </div>
-                                    <p class="text-muted small">{{ adminData.role.description }}</p>
-                                </div>
+                                <div id="role-content"></div>
                             </div>
                         </div>
 
                         <div class="card shadow-sm">
                             <div class="card-body">
                                 <h5 class="card-title">Managing Departments</h5>
-                                <div v-if="adminData.departments?.length > 0">
-                                    <div v-for="dept in adminData.departments" :key="dept.department_id" 
-                                         class="badge bg-light text-dark me-2 mb-2">
-                                        {{ dept.department_name }}{{ dept.pivot? is_primary ? ' (Primary)' : '' }}
-                                    </div>
-                                </div>
-                                <div v-else class="text-muted">No departments assigned</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Managing Facilities Card -->
-                    <div class="col-12 mt-4">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center py-3">
-                                <h5 class="card-title mb-0">Managing Facilities</h5>
-                                <span v-if="isHeadAdmin" class="badge bg-info">Head Admin View - All Admins</span>
-                                <button v-else type="button" class="btn btn-primary btn-sm" @click="openFacilityModal">
-                                    <i class="bi bi-plus-circle me-1"></i> Add new
-                                </button>
-                            </div>
-                            <div class="card-body">
-                                <div id="facilities-content">
-                                    <!-- Facilities content will be rendered by component logic -->
-                                    <component :is="facilitiesComponent" :admins="allAdmins" v-if="isHeadAdmin && allAdmins.length" />
-                                    <div v-else-if="!isHeadAdmin && adminFacilities.length" class="row g-4">
-                                        <div v-for="facility in adminFacilities" :key="facility.admin_facility_id" 
-                                             class="col-md-4 col-lg-3">
-                                            <div class="card h-100 shadow-sm border-0 overflow-hidden">
-                                                <div class="card-img-top" style="height: 160px; overflow: hidden;">
-                                                    <img :src="facility.facility.images?.[0]?.image_url || 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1750895337/oxvsxogzu9koqhctnf7s.webp'" 
-                                                         class="w-100 h-100 object-fit-cover"
-                                                         :alt="facility.facility.facility_name"
-                                                         @error="handleImageError">
-                                                    <div class="position-absolute top-0 end-0 m-2">
-                                                        <span class="badge" :class="getStatusBadgeClass(facility.facility.status?.status_id)">
-                                                            {{ facility.facility.status?.status_name || 'N/A' }}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="card-body">
-                                                    <h6 class="card-title mb-2 one-line-truncate"
-                                                        :title="facility.facility.facility_name">
-                                                        {{ facility.facility.facility_name }}
-                                                    </h6>
-                                                    <button class="btn btn-sm btn-danger w-100" 
-                                                            @click="removeFacilityAssignment(facility.admin_facility_id)">
-                                                        <i class="bi bi-trash me-1"></i> Remove
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div v-else class="text-center py-5">
-                                        <p class="text-muted">No facilities assigned</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Managing Services & Resources Card -->
-                    <div class="col-12 mt-4">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center py-3">
-                                <h5 class="card-title mb-0">Managing Services & Resources</h5>
-                                <span v-if="isHeadAdmin" class="badge bg-info">Head Admin View - All Admins</span>
-                                <button v-else type="button" class="btn btn-primary btn-sm" @click="openServiceModal">
-                                    <i class="bi bi-plus-circle me-1"></i> Add new
-                                </button>
-                            </div>
-                            <div class="card-body">
-                                <div id="services-content">
-                                    <component :is="servicesComponent" :admins="allAdmins" v-if="isHeadAdmin && allAdmins.length" />
-                                    <div v-else-if="!isHeadAdmin && adminServices.length" class="row g-4">
-                                        <div v-for="service in adminServices" :key="service.admin_service_id" 
-                                             class="col-md-4 col-lg-3">
-                                            <div class="card h-100 shadow-sm border-0">
-                                                <div class="card-body text-center">
-                                                    <div class="mb-3">
-                                                        <i class="bi bi-gear display-4 text-primary"></i>
-                                                    </div>
-                                                    <h6 class="card-title one-line-truncate" :title="service.service_name">
-                                                        {{ service.service_name }}
-                                                    </h6>
-                                                    <div class="mt-3">
-                                                        <button class="btn btn-sm btn-danger w-100" 
-                                                                @click="removeServiceAssignment(service.admin_service_id)">
-                                                            <i class="bi bi-trash me-1"></i> Remove
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div v-else class="text-center py-5">
-                                        <i class="bi bi-gear display-6 text-muted mb-3"></i>
-                                        <p class="text-muted">No services or resources assigned</p>
-                                    </div>
+                                <div id="departments-content">
+                                    <div class="text-muted">No departments assigned</div>
                                 </div>
                             </div>
                         </div>
@@ -193,1298 +368,799 @@
         </div>
 
         <!-- Edit Profile Modal -->
-        <div class="modal fade" id="editProfileModal" tabindex="-1" ref="editProfileModal">
+        <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Edit Profile</h5>
-                        <button type="button" class="btn-close" @click="closeEditModal"></button>
+                        <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-
                     <div class="modal-body">
-                        <form @submit.prevent="saveProfileChanges">
+                        <form id="editProfileForm">
                             <div class="row g-3">
                                 <!-- Names on one row -->
                                 <div class="col-md-4">
-                                    <label class="form-label">First Name</label>
-                                    <input type="text" class="form-control" v-model="editForm.first_name" required>
+                                    <label for="edit-first-name" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="edit-first-name" name="first_name"
+                                        placeholder="First Name" required>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Middle Name</label>
-                                    <input type="text" class="form-control" v-model="editForm.middle_name">
+                                    <label for="edit-middle-name" class="form-label">Middle Name</label>
+                                    <input type="text" class="form-control" id="edit-middle-name" name="middle_name"
+                                        placeholder="Middle Name">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Last Name</label>
-                                    <input type="text" class="form-control" v-model="editForm.last_name" required>
+                                    <label for="edit-last-name" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="edit-last-name" name="last_name"
+                                        placeholder="Last Name" required>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label d-flex align-items-center">
+                                    <label for="edit-school-id" class="form-label d-flex align-items-center">
                                         School ID
-                                        <small class="text-muted ms-2">(Format: 00-0000-00)</small>
+                                        <small class="text-muted ms-2">(Optional - Format: 00-0000-00)</small>
                                     </label>
-                                    <input type="text" class="form-control" v-model="editForm.school_id"
-                                           placeholder="00-0000-00" @input="formatSchoolId" required>
+                                    <input type="text" class="form-control" id="edit-school-id" name="school_id"
+                                        placeholder="00-0000-00" pattern="\d{2}-\d{4}-\d{2}" maxlength="10" minlength="10">
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" v-model="editForm.email" required>
+                                    <label for="edit-email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="edit-email" name="email"
+                                        placeholder="samplemail@gmail.com" required>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label">Contact Number</label>
-                                    <input type="tel" class="form-control" v-model="editForm.contact_number"
-                                           placeholder="e.g. 09123456789" required>
+                                    <label for="edit-contact" class="form-label">Contact Number</label>
+                                    <input type="tel" class="form-control" id="edit-contact" name="contact_number"
+                                        placeholder="e.g. 09123456789" pattern="\d{11,}" minlength="11" required>
                                 </div>
 
-                                <!-- Role Dropdown - Only for Head Admin -->
-                                <div class="col-md-6" v-if="isHeadAdmin">
-                                    <label class="form-label">Role</label>
-                                    <select class="form-select" v-model="editForm.role_id" required>
-                                        <option value="">Select Role</option>
-                                        <option v-for="role in roles" :key="role.role_id" :value="role.role_id">
-                                            {{ role.role_title }}
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <!-- New Password -->
-                                <div :class="isHeadAdmin ? 'col-12' : 'col-md-6'">
-                                    <label class="form-label d-flex align-items-center">
+                                <!-- Password Field - Now positioned next to Contact Number -->
+                                <div class="col-md-6">
+                                    <label for="edit-password" class="form-label d-flex align-items-center">
                                         New Password
                                         <small class="text-muted ms-2">(Leave blank to keep current)</small>
                                     </label>
-                                    <input type="password" class="form-control" v-model="editForm.password"
-                                           placeholder="New Password">
+                                    <input type="password" class="form-control" id="edit-password" name="password"
+                                        placeholder="New Password">
                                 </div>
 
-                                <!-- Departments Section - Only for Head Admin -->
-                                <div class="col-12" v-if="isHeadAdmin">
-                                    <label class="form-label">Departments</label>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <button v-for="dept in departments" :key="dept.department_id"
-                                                type="button"
-                                                class="btn"
-                                                :class="selectedDepartments.includes(dept.department_id) ? 'btn-primary' : 'btn-outline-primary'"
-                                                @click="toggleDepartment(dept.department_id)">
-                                            {{ dept.department_name }} ({{ dept.department_code }})
-                                        </button>
+                                <!-- Departments Section - For roles 1, 2, and 3 -->
+                                <div class="col-12" id="departments-section-container" style="display: none;">
+                                    <label class="form-label fw-bold mb-2">Departments</label>
+                                    <div class="mb-2">
+                                        <small class="text-muted">Select departments (first selected becomes
+                                            primary)</small>
                                     </div>
-                                    <div class="form-text">
-                                        Click to select/deselect departments. First selected becomes primary.
+
+                                    <!-- Search/filter for departments -->
+                                    <div class="mb-2">
+                                        <input type="text" id="department-search" class="form-control form-control-sm"
+                                            placeholder="Search departments...">
                                     </div>
+
+                                    <!-- Compact vertical department list -->
+                                    <div id="department-list-container"
+                                        style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 8px;">
+                                        <div id="department-list" class="list-group list-group-flush">
+                                            <!-- Departments will be loaded here dynamically -->
+                                            <div class="text-muted text-center py-3">Loading departments...</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Selected departments summary -->
+                                    <div class="mt-3">
+                                        <label class="form-label small text-muted">Selected Departments:</label>
+                                        <div id="selected-departments-summary" class="d-flex flex-wrap gap-1">
+                                            <span class="text-muted small">None selected</span>
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" id="selected-departments" name="department_ids">
                                 </div>
                             </div>
                         </form>
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @click="closeEditModal">Cancel</button>
-                        <button type="button" class="btn btn-primary" @click="saveProfileChanges" 
-                                :disabled="saving">
-                            <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
-                            Save Changes
-                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="saveProfileChanges">Save Changes</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Add Facility Modal -->
-        <div class="modal fade" id="addFacilityModal" tabindex="-1" ref="addFacilityModal">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Add Managing Facility</h5>
-                        <button type="button" class="btn-close" @click="closeFacilityModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <!-- Admin Selection (only for Head Admin) -->
-                            <div class="col-12 mb-4" v-if="isHeadAdmin">
-                                <label class="form-label">Select Admin</label>
-                                <select class="form-select" v-model="selectedAdminId">
-                                    <option value="">Select an admin (optional)</option>
-                                    <option :value="adminData.admin_id">Myself ({{ adminData.first_name }} {{ adminData.last_name }})</option>
-                                    <option v-for="admin in otherAdmins" :key="admin.admin_id" :value="admin.admin_id">
-                                        {{ admin.first_name }} {{ admin.last_name }} - {{ admin.role?.role_title }} ({{ admin.email }})
-                                    </option>
-                                </select>
-                                <div class="form-text">
-                                    Select an admin to assign facilities to. Leave empty to assign to yourself.
-                                </div>
-                            </div>
-
-                            <!-- Facility Search -->
-                            <div class="col-12 mb-4">
-                                <label class="form-label">Search Facilities</label>
-                                <div class="input-group mb-3">
-                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                    <input type="text" class="form-control" v-model="facilitySearch"
-                                           placeholder="Search by facility name, building code, or floor level...">
-                                    <button class="btn btn-outline-secondary" type="button" @click="clearFacilitySearch">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Facilities List -->
-                            <div class="col-12">
-                                <label class="form-label mb-3">Available Facilities</label>
-                                <div v-if="loadingFacilities" class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading facilities...</span>
-                                    </div>
-                                </div>
-                                <div v-else>
-                                    <div class="list-group" style="max-height: 300px; overflow-y: auto;">
-                                        <div v-for="facility in filteredFacilities" :key="facility.facility_id"
-                                             class="list-group-item list-group-item-action"
-                                             :class="{ active: isFacilitySelected(facility.facility_id) }"
-                                             @click="toggleFacility(facility)">
-                                            <div class="d-flex align-items-center">
-                                                <div class="form-check me-3">
-                                                    <input class="form-check-input" type="checkbox" 
-                                                           :checked="isFacilitySelected(facility.facility_id)"
-                                                           @click.stop @change="toggleFacility(facility)">
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <h6 class="mb-1">{{ facility.facility_name }}</h6>
-                                                </div>
-                                                <div class="badge bg-light text-dark">
-                                                    {{ facility.category?.category_name || 'Uncategorized' }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div v-if="filteredFacilities.length === 0" class="text-center py-4">
-                                        <i class="bi bi-building display-4 text-muted mb-3"></i>
-                                        <p class="text-muted">No facilities found</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Selected Facilities Summary -->
-                            <div class="col-12 mt-4" v-if="selectedFacilities.length">
-                                <label class="form-label">Selected Facilities</label>
-                                <div class="card border-primary">
-                                    <div class="card-body p-3">
-                                        <div v-for="(facility, index) in selectedFacilities" :key="facility.facility_id"
-                                             class="selected-facility-item d-flex justify-content-between align-items-center mb-2">
-                                            <div>
-                                                <strong>{{ facility.facility_name }}</strong>
-                                            </div>
-                                            <button type="button" class="btn btn-sm btn-link text-danger" 
-                                                    @click="removeSelectedFacility(index)">
-                                                <i class="bi bi-x-lg"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @click="closeFacilityModal">Cancel</button>
-                        <button type="button" class="btn btn-primary" @click="saveFacilityAssignments" 
-                                :disabled="!canSaveFacilities || savingFacilities">
-                            <span v-if="savingFacilities" class="spinner-border spinner-border-sm me-2"></span>
-                            <i class="bi bi-save me-1"></i> Save Assignment
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add Service Modal -->
-        <div class="modal fade" id="addServiceModal" tabindex="-1" ref="addServiceModal">
-            <div class="dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Assign New Service or Resource</h5>
-                        <button type="button" class="btn-close" @click="closeServiceModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <!-- Service Selection -->
-                            <div class="col-12 mb-4">
-                                <label class="form-label">Select Service/Resource</label>
-                                <div v-if="loadingServices" class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading services...</span>
-                                    </div>
-                                </div>
-                                <div v-else>
-                                    <div class="list-group" style="max-height: 300px; overflow-y: auto;">
-                                        <div v-for="service in availableServices" :key="service.service_id"
-                                             class="list-group-item list-group-item-action"
-                                             :class="{ active: isServiceSelected(service.service_id) }"
-                                             @click="toggleService(service)">
-                                            <div class="d-flex align-items-center">
-                                                <div class="form-check me-3">
-                                                    <input class="form-check-input" type="checkbox" 
-                                                           :checked="isServiceSelected(service.service_id)"
-                                                           @click.stop @change="toggleService(service)">
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <h6 class="mb-1">{{ service.service_name }}</h6>
-                                                </div>
-                                                <div>
-                                                    <i class="bi bi-gear text-muted"></i>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div v-if="availableServices.length === 0" class="text-center py-4">
-                                        <i class="bi bi-gear display-4 text-muted mb-3"></i>
-                                        <p class="text-muted">No services available</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Selected Services Summary -->
-                            <div class="col-12 mt-4" v-if="selectedServices.length">
-                                <label class="form-label">Selected Services</label>
-                                <div class="card border-primary">
-                                    <div class="card-body p-3">
-                                        <div v-for="(service, index) in selectedServices" :key="service.service_id"
-                                             class="selected-service-item d-flex justify-content-between align-items-center mb-2">
-                                            <div class="d-flex align-items-center">
-                                                <i class="bi bi-gear text-primary me-3"></i>
-                                                <div>
-                                                    <strong>{{ service.service_name }}</strong>
-                                                </div>
-                                            </div>
-                                            <button type="button" class="btn btn-sm btn-link text-danger" 
-                                                    @click="removeSelectedService(index)">
-                                                <i class="bi bi-x-lg"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @click="closeServiceModal">Cancel</button>
-                        <button type="button" class="btn btn-primary" @click="saveServiceAssignments" 
-                                :disabled="selectedServices.length === 0 || savingServices">
-                            <span v-if="savingServices" class="spinner-border spinner-border-sm me-2"></span>
-                            <i class="bi bi-save me-1"></i> Assign Services
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
     </main>
-</template>
 
-<script>
-import { Modal } from 'bootstrap';
-import axios from 'axios';
+@endsection
 
-export default {
-    name: 'AdminProfile',
-    data() {
-        return {
-            loading: true,
-            saving: false,
-            savingFacilities: false,
-            savingServices: false,
-            loadingFacilities: false,
-            loadingServices: false,
-            
-            adminData: {},
-            allAdmins: [],
-            roles: [],
-            departments: [],
-            allFacilities: [],
-            allServices: [],
-            
-            adminFacilities: [],
-            adminServices: [],
-            
-            // Edit form
-            editForm: {
-                first_name: '',
-                middle_name: '',
-                last_name: '',
-                school_id: '',
-                email: '',
-                contact_number: '',
-                role_id: null,
-                password: ''
-            },
-            selectedDepartments: [],
-            
-            // Facility modal
-            selectedAdminId: '',
-            facilitySearch: '',
-            selectedFacilities: [],
-            
-            // Service modal
-            selectedServices: [],
-            
-            // Modals
-            editModal: null,
-            facilityModal: null,
-            serviceModal: null,
-            
-            // Cloudinary config
-            cloudinaryConfig: {
-                cloudName: 'dn98ntlkd',
-                apiKey: '545682193957699',
-                uploadPresetPhoto: 'admin-photos',
-                uploadPresetWallpaper: 'admin-wallpapers'
-            }
-        };
-    },
-    computed: {
-        isHeadAdmin() {
-            return this.adminData.role?.role_title === 'Head Admin';
-        },
-        adminFullName() {
-            if (!this.adminData.first_name) return '';
-            return `${this.adminData.first_name} ${this.adminData.last_name}`.trim();
-        },
-        profilePhotoUrl() {
-            return this.adminData.photo_url;
-        },
-        wallpaperUrl() {
-            return this.adminData.wallpaper_url;
-        },
-        otherAdmins() {
-            return this.allAdmins.filter(admin => admin.admin_id !== this.adminData.admin_id);
-        },
-        filteredFacilities() {
-            if (!this.facilitySearch.trim()) return this.allFacilities;
-            
-            const search = this.facilitySearch.toLowerCase();
-            return this.allFacilities.filter(facility => 
-                facility.facility_name.toLowerCase().includes(search) ||
-                (facility.building_code && facility.building_code.toLowerCase().includes(search)) ||
-                (facility.description && facility.description.toLowerCase().includes(search)) ||
-                (facility.department?.department_name && facility.department.department_name.toLowerCase().includes(search))
-            );
-        },
-        availableServices() {
-            return this.allServices;
-        },
-        canSaveFacilities() {
-            if (this.isHeadAdmin) {
-                return this.selectedAdminId && this.selectedFacilities.length > 0;
-            }
-            return this.selectedFacilities.length > 0;
-        },
-        facilitiesComponent() {
-            return {
-                template: `
-                    <div class="accordion" id="facilitiesAccordion">
-                        <div v-for="(admin, index) in admins" :key="admin.admin_id" 
-                             class="accordion-item mb-3 border rounded">
-                            <h2 class="accordion-header" :id="'headingFacility' + index">
-                                <button class="accordion-button" :class="{ collapsed: index > 0 }" 
-                                        type="button" data-bs-toggle="collapse" 
-                                        :data-bs-target="'#collapseFacility' + index">
-                                    <div class="d-flex align-items-center w-100">
-                                        <div class="me-3">
-                                            <i class="bi bi-person-circle fs-4"></i>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <strong>{{ admin.first_name }} {{ admin.middle_name || '' }} {{ admin.last_name }}</strong>
-                                            <br>
-                                            <small class="text-muted">
-                                                {{ admin.role?.role_title || 'No Role' }} | {{ admin.email }} | ID: {{ admin.school_id || 'N/A' }}
-                                            </small>
-                                        </div>
-                                        <span class="badge" :class="admin.facilities?.length ? 'bg-primary' : 'bg-secondary'">
-                                            {{ admin.facilities?.length || 0 }} Facilities
-                                        </span>
-                                    </div>
-                                </button>
-                            </h2>
-                            <div :id="'collapseFacility' + index" class="accordion-collapse collapse" 
-                                 :class="{ show: index === 0 }" :aria-labelledby="'headingFacility' + index">
-                                <div class="accordion-body">
-                                    <div v-if="admin.facilities?.length" class="row g-3">
-                                        <div v-for="facility in admin.facilities" :key="facility.facility_id" 
-                                             class="col-md-4 col-lg-3">
-                                            <div class="card h-100 border-0 bg-light">
-                                                <div class="card-body p-3">
-                                                    <div class="d-flex align-items-center mb-2">
-                                                        <i class="bi bi-building text-primary me-2"></i>
-                                                        <h6 class="card-title mb-0 one-line-truncate" :title="facility.facility_name">
-                                                            {{ facility.facility_name }}
-                                                        </h6>
-                                                    </div>
-                                                    <small class="text-muted d-block">
-                                                        <i class="bi bi-hash me-1"></i>ID: {{ facility.facility_id }}
-                                                    </small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div v-else class="text-center py-4">
-                                        <i class="bi bi-building-slash display-6 text-muted mb-2"></i>
-                                        <p class="text-muted mb-0">No facilities assigned</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `,
-                props: ['admins']
-            };
-        },
-        servicesComponent() {
-            return {
-                template: `
-                    <div class="accordion" id="servicesAccordion">
-                        <div v-for="(admin, index) in admins" :key="admin.admin_id" 
-                             class="accordion-item mb-3 border rounded">
-                            <h2 class="accordion-header" :id="'headingService' + index">
-                                <button class="accordion-button" :class="{ collapsed: index > 0 }" 
-                                        type="button" data-bs-toggle="collapse" 
-                                        :data-bs-target="'#collapseService' + index">
-                                    <div class="d-flex align-items-center w-100">
-                                        <div class="me-3">
-                                            <i class="bi bi-person-badge fs-4"></i>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <strong>{{ admin.first_name }} {{ admin.middle_name || '' }} {{ admin.last_name }}</strong>
-                                                    <br>
-                                                    <small class="text-muted">
-                                                        {{ admin.role?.role_title || 'No Role' }} | {{ admin.email }}
-                                                    </small>
-                                                </div>
-                                            </div>
-                                            <small v-if="admin.departments?.length" class="text-muted d-block mt-1">
-                                                <i class="bi bi-diagram-3 me-1"></i>
-                                                {{ admin.departments.map(d => d.department_name).join(', ') }}
-                                            </small>
-                                        </div>
-                                        <span class="badge" :class="admin.services?.length ? 'bg-success' : 'bg-secondary'">
-                                            {{ admin.services?.length || 0 }} Services
-                                        </span>
-                                    </div>
-                                </button>
-                            </h2>
-                            <div :id="'collapseService' + index" class="accordion-collapse collapse" 
-                                 :class="{ show: index === 0 }" :aria-labelledby="'headingService' + index">
-                                <div class="accordion-body">
-                                    <div v-if="admin.services?.length" class="row g-3">
-                                        <div v-for="service in admin.services" :key="service.service_id" 
-                                             class="col-md-4 col-lg-3">
-                                            <div class="card h-100 border-0 bg-light">
-                                                <div class="card-body p-3">
-                                                    <div class="d-flex align-items-center mb-2">
-                                                        <i class="bi bi-gear text-success me-2"></i>
-                                                        <h6 class="card-title mb-0 one-line-truncate" :title="service.service_name">
-                                                            {{ service.service_name }}
-                                                        </h6>
-                                                    </div>
-                                                    <small class="text-muted d-block">
-                                                        <i class="bi bi-hash me-1"></i>ID: {{ service.service_id }}
-                                                    </small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div v-else class="text-center py-4">
-                                        <i class="bi bi-gear-wide-connected display-6 text-muted mb-2"></i>
-                                        <p class="text-muted mb-0">No services assigned</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `,
-                props: ['admins']
-            };
-        }
-    },
-    methods: {
-        async loadProfile() {
-            const token = localStorage.getItem('adminToken');
-            if (!token) {
-                window.location.href = '/admin/login';
-                return;
-            }
+@section('scripts')
+    <!-- Include toast.js -->
+    <script src="{{ asset('js/admin/toast.js') }}"></script>
 
-            try {
-                const response = await axios.get('/api/admin/profile', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                this.adminData = response.data;
-                
-                // Store in localStorage for other components
-                localStorage.setItem('adminId', this.adminData.admin_id);
-                localStorage.setItem('adminRoleTitle', this.adminData.role?.role_title);
-                localStorage.setItem('adminRoleId', this.adminData.role?.role_id);
-                
-                await Promise.all([
-                    this.loadManagingFacilities(),
-                    this.loadManagingServices()
-                ]);
-                
-                if (this.isHeadAdmin) {
-                    await this.loadAllAdmins();
-                }
-                
-                this.loading = false;
-            } catch (error) {
-                console.error('Error loading profile:', error);
-                this.loading = false;
-            }
-        },
-        
-        async loadManagingFacilities() {
-            if (this.isHeadAdmin) {
-                await this.loadAllAdmins();
-                return;
-            }
-            
-            const token = localStorage.getItem('adminToken');
-            try {
-                const response = await axios.get(`/api/admin-facilities/admin/${this.adminData.admin_id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                if (response.data.success) {
-                    this.adminFacilities = response.data.data.facilities;
-                }
-            } catch (error) {
-                console.error('Error loading facilities:', error);
-            }
-        },
-        
-        async loadManagingServices() {
-            if (this.isHeadAdmin) {
-                await this.loadAllAdmins();
-                return;
-            }
-            
-            const token = localStorage.getItem('adminToken');
-            try {
-                const adminServicesResponse = await axios.get('/api/admin-services', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                const adminServices = adminServicesResponse.data.filter(
-                    as => as.admin_id == this.adminData.admin_id
-                );
-                
-                if (adminServices.length) {
-                    const servicesResponse = await axios.get('/api/extra-services', {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    
-                    this.adminServices = adminServices
-                        .map(adminService => {
-                            const service = servicesResponse.data.find(
-                                s => s.service_id == adminService.service_id
-                            );
-                            if (service) {
-                                return {
-                                    ...service,
-                                    admin_service_id: adminService.admin_service_id || adminService.id
-                                };
-                            }
-                            return null;
-                        })
-                        .filter(s => s !== null);
-                }
-            } catch (error) {
-                console.error('Error loading services:', error);
-            }
-        },
-        
-        async loadAllAdmins() {
-            const token = localStorage.getItem('adminToken');
-            try {
-                const response = await axios.get('/api/admins', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                this.allAdmins = response.data;
-            } catch (error) {
-                console.error('Error loading admins:', error);
-            }
-        },
-        
-        async loadRolesAndDepartments() {
-            const token = localStorage.getItem('adminToken');
-            try {
-                const [rolesResponse, deptResponse] = await Promise.all([
-                    axios.get('/api/admin-role', { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get('/api/departments', { headers: { Authorization: `Bearer ${token}` } })
-                ]);
-                
-                this.roles = rolesResponse.data;
-                this.departments = deptResponse.data;
-            } catch (error) {
-                console.error('Error loading roles and departments:', error);
-                throw error;
-            }
-        },
-        
-        async loadAvailableFacilities() {
-            this.loadingFacilities = true;
-            const token = localStorage.getItem('adminToken');
-            
-            try {
-                // Get current admin's assigned facilities
-                const assignedResponse = await axios.get(`/api/admin-facilities/admin/${this.adminData.admin_id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                const assignedFacilityIds = assignedResponse.data.success
-                    ? assignedResponse.data.data.facilities.map(f => f.facility_id)
-                    : [];
-                
-                // Load all facilities
-                const facilitiesResponse = await axios.get('/api/facilities?per_page=100', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                this.allFacilities = (facilitiesResponse.data.data || [])
-                    .filter(facility => !assignedFacilityIds.includes(facility.facility_id));
-                    
-            } catch (error) {
-                console.error('Error loading facilities:', error);
-            } finally {
-                this.loadingFacilities = false;
-            }
-        },
-        
-        async loadAvailableServices() {
-            this.loadingServices = true;
-            const token = localStorage.getItem('adminToken');
-            
-            try {
-                // Get current admin's assigned services
-                const assignedResponse = await axios.get('/api/admin-services', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                const assignedServiceIds = assignedResponse.data
-                    .filter(as => as.admin_id == this.adminData.admin_id)
-                    .map(as => as.service_id);
-                
-                // Load all services
-                const servicesResponse = await axios.get('/api/extra-services', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                this.allServices = servicesResponse.data
-                    .filter(service => !assignedServiceIds.includes(service.service_id));
-                    
-            } catch (error) {
-                console.error('Error loading services:', error);
-            } finally {
-                this.loadingServices = false;
-            }
-        },
-        
-        formatDate(date) {
-            if (!date) return '';
-            return new Date(date).toLocaleDateString();
-        },
-        
-        formatSchoolId(event) {
-            let digits = event.target.value.replace(/\D/g, '');
+    <script>
+        // Global Variables
+        let currentAdminData = null;
+        let departmentsData = null;
+
+        // Core Configuration and Helper Functions
+        document.getElementById('edit-school-id').addEventListener('input', function (e) {
+            // keep only digits
+            let digits = e.target.value.replace(/\D/g, '');
+            // add dashes after 2 and 6 digits
             if (digits.length > 2 && digits.length <= 6) {
                 digits = digits.slice(0, 2) + '-' + digits.slice(2);
             } else if (digits.length > 6) {
                 digits = digits.slice(0, 2) + '-' + digits.slice(2, 6) + '-' + digits.slice(6, 8);
             }
-            this.editForm.school_id = digits;
-        },
-        
-        getStatusBadgeClass(statusId) {
-            if (statusId === 1) return 'bg-success';
-            if (statusId === 2) return 'bg-warning';
-            if (statusId === 3) return 'bg-danger';
-            return 'bg-secondary';
-        },
-        
-        handleImageError(event) {
-            event.target.src = 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1750895337/oxvsxogzu9koqhctnf7s.webp';
-        },
-        
-        // Photo and Wallpaper Upload
-        triggerPhotoUpload() {
-            this.$refs.photoUpload.click();
-        },
-        
-        triggerWallpaperUpload() {
-            this.$refs.wallpaperUpload.click();
-        },
-        
-        async handlePhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const originalSrc = this.profilePhotoUrl;
-            const oldPublicId = this.adminData.photo_public_id;
-            
+            e.target.value = digits;
+        });
+
+        // Cloudinary configuration
+        const cloudinaryConfig = {
+            cloudName: 'dn98ntlkd',
+            apiKey: '545682193957699',
+            uploadPresetPhoto: 'admin-photos',
+            uploadPresetWallpaper: 'admin-wallpapers'
+        };
+
+        // Utility Functions
+        function canManageDepartments(adminData) {
+            // Roles that can manage departments: 1 = Head Admin, 2 = Vice President, 3 = Approving Officer
+            return adminData && adminData.role && [1, 2, 3].includes(adminData.role.role_id);
+        }
+
+        function getCurrentAdminId() {
+            return currentAdminData ? currentAdminData.admin_id : null;
+        }
+
+        function isCurrentAdminHeadAdmin() {
+            return currentAdminData && currentAdminData.role && currentAdminData.role.role_id === 1;
+        }
+
+        // Function to delete old image from Cloudinary via backend
+        async function deleteOldCloudinaryImage(publicId, type) {
+            if (!publicId) return true;
+
+            // Skip deletion for default images
+            const defaultIds = ['ksdmh4mmpxdtjogdgjmm', 'verzp7lqedwsfn3hz8xf'];
+            if (defaultIds.includes(publicId)) {
+                console.log('Skipping deletion of default image:', publicId);
+                return true;
+            }
+
             try {
-                // Upload to Cloudinary
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', this.cloudinaryConfig.uploadPresetPhoto);
-                
-                const uploadResponse = await axios.post(
-                    `https://api.cloudinary.com/v1_1/${this.cloudinaryConfig.cloudName}/upload`,
-                    formData
-                );
-                
-                if (!uploadResponse.data.secure_url || !uploadResponse.data.public_id) {
-                    throw new Error('Invalid Cloudinary response');
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('/api/admin/delete-cloudinary-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({
+                        public_id: publicId,
+                        type: type
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.warn('Failed to delete old image:', errorData);
+                    // Don't throw error - continue with upload even if deletion fails
+                    return false;
                 }
-                
-                // Update database
-                const token = localStorage.getItem('adminToken');
-                await axios.post('/api/admin/update-photo-records', {
-                    photo_url: uploadResponse.data.secure_url,
-                    photo_public_id: uploadResponse.data.public_id,
-                    type: 'photo'
-                }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                // Update local data
-                this.adminData.photo_url = uploadResponse.data.secure_url;
-                this.adminData.photo_public_id = uploadResponse.data.public_id;
-                
-                // Delete old image if not default
-                if (oldPublicId && !['ksdmh4mmpxdtjogdgjmm', 'verzp7lqedwsfn3hz8xf'].includes(oldPublicId)) {
-                    await axios.post('/api/admin/delete-cloudinary-image', {
-                        public_id: oldPublicId,
-                        type: 'photo'
-                    }, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                }
-                
-                this.$toast?.success('Profile photo updated successfully!');
-                
+
+                const result = await response.json();
+                console.log('Old image deleted successfully:', result);
+                return result.deleted;
             } catch (error) {
-                console.error('Error uploading photo:', error);
-                this.$toast?.error('Failed to upload photo: ' + error.message);
-                this.adminData.photo_url = originalSrc;
-            } finally {
-                event.target.value = '';
-            }
-        },
-        
-        async handleWallpaperUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const originalBackground = this.wallpaperUrl;
-            const oldPublicId = this.adminData.wallpaper_public_id;
-            
-            try {
-                // Upload to Cloudinary
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', this.cloudinaryConfig.uploadPresetWallpaper);
-                
-                const uploadResponse = await axios.post(
-                    `https://api.cloudinary.com/v1_1/${this.cloudinaryConfig.cloudName}/upload`,
-                    formData
-                );
-                
-                if (!uploadResponse.data.secure_url || !uploadResponse.data.public_id) {
-                    throw new Error('Invalid Cloudinary response');
-                }
-                
-                // Update database
-                const token = localStorage.getItem('adminToken');
-                await axios.post('/api/admin/update-photo-records', {
-                    wallpaper_url: uploadResponse.data.secure_url,
-                    wallpaper_public_id: uploadResponse.data.public_id,
-                    type: 'wallpaper'
-                }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                // Update local data
-                this.adminData.wallpaper_url = uploadResponse.data.secure_url;
-                this.adminData.wallpaper_public_id = uploadResponse.data.public_id;
-                
-                // Delete old image if not default
-                if (oldPublicId && !['ksdmh4mmpxdtjogdgjmm', 'verzp7lqedwsfn3hz8xf'].includes(oldPublicId)) {
-                    await axios.post('/api/admin/delete-cloudinary-image', {
-                        public_id: oldPublicId,
-                        type: 'wallpaper'
-                    }, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                }
-                
-                this.$toast?.success('Wallpaper updated successfully!');
-                
-            } catch (error) {
-                console.error('Error uploading wallpaper:', error);
-                this.$toast?.error('Failed to upload wallpaper: ' + error.message);
-                this.adminData.wallpaper_url = originalBackground;
-            } finally {
-                event.target.value = '';
-            }
-        },
-        
-        // Edit Profile Modal
-        openEditModal() {
-            this.editForm = {
-                first_name: this.adminData.first_name || '',
-                middle_name: this.adminData.middle_name || '',
-                last_name: this.adminData.last_name || '',
-                school_id: this.adminData.school_id || '',
-                email: this.adminData.email || '',
-                contact_number: this.adminData.contact_number || '',
-                role_id: this.adminData.role_id,
-                password: ''
-            };
-            
-            if (this.adminData.departments) {
-                this.selectedDepartments = this.adminData.departments.map(d => d.department_id);
-            }
-            
-            this.loadRolesAndDepartments().then(() => {
-                this.editModal.show();
-            });
-        },
-        
-        closeEditModal() {
-            this.editModal.hide();
-        },
-        
-        toggleDepartment(deptId) {
-            const index = this.selectedDepartments.indexOf(deptId);
-            if (index === -1) {
-                this.selectedDepartments.push(deptId);
-            } else {
-                this.selectedDepartments.splice(index, 1);
-            }
-        },
-        
-        async saveProfileChanges() {
-            // Validate School ID
-            const schoolIdPattern = /^\d{2}-\d{4}-\d{2}$/;
-            if (!schoolIdPattern.test(this.editForm.school_id)) {
-                this.$toast?.error('School ID must follow the format ##-####-##');
-                return;
-            }
-            
-            // Validate department selection
-            if (this.isHeadAdmin) {
-                const noDeptRequiredRoleIds = [1, 2];
-                if (this.selectedDepartments.length === 0 && !noDeptRequiredRoleIds.includes(this.editForm.role_id)) {
-                    this.$toast?.error('Please select at least one department');
-                    return;
-                }
-            }
-            
-            this.saving = true;
-            
-            const jsonData = {
-                first_name: this.editForm.first_name,
-                last_name: this.editForm.last_name,
-                middle_name: this.editForm.middle_name,
-                school_id: this.editForm.school_id,
-                email: this.editForm.email,
-                contact_number: this.editForm.contact_number,
-                role_id: this.editForm.role_id
-            };
-            
-            if (this.isHeadAdmin) {
-                jsonData.department_ids = this.selectedDepartments;
-            }
-            
-            if (this.editForm.password) {
-                jsonData.password = this.editForm.password;
-            }
-            
-            try {
-                const token = localStorage.getItem('adminToken');
-                await axios.post(`/api/admin/update/${this.adminData.admin_id}`, jsonData, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                this.$toast?.success('Profile updated successfully!');
-                this.closeEditModal();
-                setTimeout(() => location.reload(), 1000);
-                
-            } catch (error) {
-                console.error('Error updating profile:', error);
-                this.$toast?.error('Failed to update profile: ' + (error.response?.data?.message || error.message));
-            } finally {
-                this.saving = false;
-            }
-        },
-        
-        // Facility Modal
-        async openFacilityModal() {
-            this.selectedFacilities = [];
-            this.facilitySearch = '';
-            this.selectedAdminId = '';
-            
-            await this.loadAvailableFacilities();
-            this.facilityModal.show();
-        },
-        
-        closeFacilityModal() {
-            this.facilityModal.hide();
-        },
-        
-        isFacilitySelected(facilityId) {
-            return this.selectedFacilities.some(f => f.facility_id === facilityId);
-        },
-        
-        toggleFacility(facility) {
-            const index = this.selectedFacilities.findIndex(f => f.facility_id === facility.facility_id);
-            if (index === -1) {
-                this.selectedFacilities.push(facility);
-            } else {
-                this.selectedFacilities.splice(index, 1);
-            }
-        },
-        
-        removeSelectedFacility(index) {
-            this.selectedFacilities.splice(index, 1);
-        },
-        
-        clearFacilitySearch() {
-            this.facilitySearch = '';
-        },
-        
-        async saveFacilityAssignments() {
-            const targetAdminId = this.isHeadAdmin && this.selectedAdminId 
-                ? this.selectedAdminId 
-                : this.adminData.admin_id;
-            
-            if (!targetAdminId || this.selectedFacilities.length === 0) return;
-            
-            this.savingFacilities = true;
-            
-            const requestData = {
-                admin_id: parseInt(targetAdminId),
-                facility_ids: this.selectedFacilities.map(f => parseInt(f.facility_id))
-            };
-            
-            try {
-                const token = localStorage.getItem('adminToken');
-                const response = await axios.post('/api/admin-facilities/batch', requestData, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                this.$toast?.success(response.data.message || 'Facilities assigned successfully!');
-                this.closeFacilityModal();
-                
-                // Refresh data
-                await this.loadManagingFacilities();
-                
-            } catch (error) {
-                console.error('Error saving facilities:', error);
-                this.$toast?.error('Failed to save assignments: ' + (error.response?.data?.message || error.message));
-            } finally {
-                this.savingFacilities = false;
-            }
-        },
-        
-        async removeFacilityAssignment(assignmentId) {
-            if (!confirm('Remove this assignment?')) return;
-            
-            try {
-                const token = localStorage.getItem('adminToken');
-                await axios.delete(`/api/admin-facilities/${assignmentId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                this.$toast?.success('Removed successfully');
-                await this.loadManagingFacilities();
-                
-            } catch (error) {
-                console.error('Error removing facility:', error);
-                this.$toast?.error('Failed to remove: ' + (error.response?.data?.message || error.message));
-            }
-        },
-        
-        // Service Modal
-        async openServiceModal() {
-            this.selectedServices = [];
-            await this.loadAvailableServices();
-            this.serviceModal.show();
-        },
-        
-        closeServiceModal() {
-            this.serviceModal.hide();
-        },
-        
-        isServiceSelected(serviceId) {
-            return this.selectedServices.some(s => s.service_id === serviceId);
-        },
-        
-        toggleService(service) {
-            const index = this.selectedServices.findIndex(s => s.service_id === service.service_id);
-            if (index === -1) {
-                this.selectedServices.push(service);
-            } else {
-                this.selectedServices.splice(index, 1);
-            }
-        },
-        
-        removeSelectedService(index) {
-            this.selectedServices.splice(index, 1);
-        },
-        
-        async saveServiceAssignments() {
-            if (this.selectedServices.length === 0) return;
-            
-            this.savingServices = true;
-            
-            const requestData = {
-                service_ids: this.selectedServices.map(s => parseInt(s.service_id))
-            };
-            
-            try {
-                const token = localStorage.getItem('adminToken');
-                const response = await axios.post('/api/extra-services/assign', requestData, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                this.$toast?.success(response.data.message || 'Services assigned successfully!');
-                this.closeServiceModal();
-                
-                // Refresh data
-                await this.loadManagingServices();
-                
-            } catch (error) {
-                console.error('Error saving services:', error);
-                this.$toast?.error('Failed to assign services: ' + (error.response?.data?.message || error.message));
-            } finally {
-                this.savingServices = false;
-            }
-        },
-        
-        async removeServiceAssignment(assignmentId) {
-            if (!confirm('Are you sure you want to remove this service assignment?')) return;
-            
-            try {
-                const token = localStorage.getItem('adminToken');
-                await axios.delete(`/api/admin-services/${assignmentId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                
-                this.$toast?.success('Service removed successfully');
-                await this.loadManagingServices();
-                
-            } catch (error) {
-                console.error('Error removing service:', error);
-                this.$toast?.error('Failed to remove service: ' + (error.response?.data?.message || error.message));
+                console.error('Error deleting old image from Cloudinary:', error);
+                // Continue with upload even if deletion fails
+                return false;
             }
         }
-    },
-    
-    mounted() {
-        // Initialize modals
-        this.editModal = new Modal(this.$refs.editProfileModal);
-        this.facilityModal = new Modal(this.$refs.addFacilityModal);
-        this.serviceModal = new Modal(this.$refs.addServiceModal);
-        
-        // Load profile data
-        this.loadProfile();
-    }
-};
-</script>
 
-<style scoped>
-.card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 0 !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
+        async function loadRolesAndDepartments() {
+            const token = localStorage.getItem('adminToken');
 
-.card-img-container {
-    position: relative;
-    height: 160px;
-    overflow: hidden;
-}
+            try {
+                // Load departments only (roles are removed)
+                const deptResponse = await fetch('/api/departments', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
 
-.card-img-container img {
-    transition: transform 0.4s ease;
-}
+                if (!deptResponse.ok) throw new Error('Failed to fetch departments');
+                const deptData = await deptResponse.json();
 
-.status-badge {
-    font-size: 0.7rem;
-    padding: 4px 8px;
-    border-radius: 20px;
-    backdrop-filter: blur(4px);
-    background-color: rgba(255, 255, 255, 0.9);
-}
+                // Check if departments data is an array
+                if (Array.isArray(deptData)) {
+                    departmentsData = deptData;
+                } else if (deptData.data && Array.isArray(deptData.data)) {
+                    departmentsData = deptData.data;
+                } else if (deptData.departments && Array.isArray(deptData.departments)) {
+                    departmentsData = deptData.departments;
+                } else {
+                    console.error('Unexpected departments response format:', deptData);
+                    departmentsData = [];
+                }
 
-.text-truncate-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+            } catch (error) {
+                console.error('Error loading modal options:', error);
+                throw error;
+            }
+        }
+        // Function to update hidden input with selected departments
+        function updateSelectedDepartments() {
+            const selectedItems = document.querySelectorAll('#department-list .list-group-item.active');
+            const selectedDeptIds = Array.from(selectedItems).map(item => item.dataset.deptId);
+            document.getElementById('selected-departments').value = JSON.stringify(selectedDeptIds);
 
-.department-text {
-    display: block;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
+            // Update summary badges
+            updateSelectedDepartmentsSummary();
+        }
 
-#facility-list .list-group-item {
-    cursor: pointer;
-    transition: all 0.2s;
-}
+        // Function to update selected departments summary
+        function updateSelectedDepartmentsSummary() {
+            const summary = document.getElementById('selected-departments-summary');
+            const selectedItems = document.querySelectorAll('#department-list .list-group-item.active');
 
-#facility-list .list-group-item:hover {
-    background-color: #f8f9fa;
-}
+            if (selectedItems.length === 0) {
+                summary.innerHTML = '<span class="text-muted small">None selected</span>';
+                return;
+            }
 
-#facility-list .list-group-item.active {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-}
+            let html = '';
+            selectedItems.forEach((item, index) => {
+                const deptName = item.querySelector('.dept-name').textContent;
+                const isPrimary = index === 0; // First selected is primary
+                html += `<span class="department-badge ${isPrimary ? 'primary' : ''}" data-dept-id="${item.dataset.deptId}">
+                        ${deptName} ${isPrimary ? '(Primary)' : ''}
+                        <span class="remove-dept" onclick="removeDepartment('${item.dataset.deptId}')">×</span>
+                    </span>`;
+            });
+            summary.innerHTML = html;
+        }
 
-#facility-list .list-group-item .form-check-input {
-    cursor: pointer;
-}
 
-.selected-facility-item {
-    padding: 8px 12px;
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    border-left: 4px solid #0d6efd;
-}
+        // Function to remove a department from selection
+        window.removeDepartment = function (deptId) {
+            const deptItem = document.querySelector(`#department-list .list-group-item[data-dept-id="${deptId}"]`);
+            if (deptItem) {
+                deptItem.classList.remove('active');
+                deptItem.querySelector('.form-check-input').checked = false;
+                updateSelectedDepartments();
+            }
+        };
 
-.selected-facility-item:last-child {
-    margin-bottom: 0;
-}
 
-.selected-facility-item .remove-facility {
-    cursor: pointer;
-    color: #dc3545;
-}
+        // Function to create department list
+        function createDepartmentButtons() {
+            const deptList = document.getElementById('department-list');
+            if (!deptList) {
+                console.error('Department list not found - retrying in 50ms');
+                setTimeout(createDepartmentButtons, 50);
+                return;
+            }
 
-.selected-facility-item .remove-facility:hover {
-    color: #b02a37;
-}
+            deptList.innerHTML = '';
 
-#department-buttons-container button {
-    display: inline-flex !important;
-    width: auto !important;
-}
+            if (!departmentsData || departmentsData.length === 0) {
+                deptList.innerHTML = '<div class="text-muted text-center py-3">No departments available</div>';
+                return;
+            }
 
-#password-full-width-container .form-control,
-#password-half-width-container .form-control {
-    width: 100%;
-}
+            // Sort departments by name
+            const sortedDepts = [...departmentsData].sort((a, b) =>
+                a.department_name.localeCompare(b.department_name)
+            );
 
-main#main .profile-wrapper .profile-hero {
-    --side-gap: clamp(20px, 9vw, 150px);
-    height: clamp(180px, 20vh, 300px) !important;
-    width: calc(100vw - (2 * var(--side-gap))) !important;
-    position: relative !important;
-    left: 50% !important;
-    right: 50% !important;
-    margin-left: calc(-50vw + var(--side-gap)) !important;
-    margin-right: calc(-50vw + var(--side-gap)) !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding-top: 0 !important;
-    max-width: calc(100vw - (2 * var(--side-gap))) !important;
-}
+            sortedDepts.forEach(dept => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item list-group-item-action d-flex align-items-center';
+                item.dataset.deptId = dept.department_id;
 
-main#main .profile-wrapper {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
+                item.innerHTML = `
+                        <div class="form-check me-2">
+                            <input class="form-check-input" type="checkbox" value="${dept.department_id}" id="dept-${dept.department_id}">
+                        </div>
+                        <div class="flex-grow-1">
+                            <span class="dept-name">${dept.department_name}</span>
+                            <small class="department-code ms-2">${dept.department_code}</small>
+                        </div>
+                    `;
 
-body {
-    padding-top: 0 !important;
-}
+                // Add click event to toggle selection
+                item.addEventListener('click', function (e) {
+                    // Prevent double toggling if clicking directly on checkbox
+                    if (e.target.type !== 'checkbox') {
+                        const checkbox = this.querySelector('.form-check-input');
+                        checkbox.checked = !checkbox.checked;
+                        this.classList.toggle('active', checkbox.checked);
+                        updateSelectedDepartments();
+                    }
+                });
 
-main#main {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
+                // Add separate event for checkbox to handle its own changes
+                const checkbox = item.querySelector('.form-check-input');
+                checkbox.addEventListener('change', function (e) {
+                    e.stopPropagation();
+                    item.classList.toggle('active', this.checked);
+                    updateSelectedDepartments();
+                });
 
-.container.position-relative {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
+                deptList.appendChild(item);
+            });
 
-#wallpaper-container {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
+            // Pre-select current departments
+            if (currentAdminData && currentAdminData.departments && currentAdminData.departments.length > 0) {
+                currentAdminData.departments.forEach(dept => {
+                    const item = deptList.querySelector(`[data-dept-id="${dept.department_id}"]`);
+                    if (item) {
+                        item.classList.add('active');
+                        item.querySelector('.form-check-input').checked = true;
+                    }
+                });
+                updateSelectedDepartments();
+            }
 
-.one-line-truncate {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+            // Add search functionality
+            const searchInput = document.getElementById('department-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    const searchTerm = this.value.toLowerCase();
+                    const items = deptList.querySelectorAll('.list-group-item');
 
-#service-list .list-group-item {
-    cursor: pointer;
-    transition: all 0.2s;
-}
+                    items.forEach(item => {
+                        const deptName = item.querySelector('.dept-name').textContent.toLowerCase();
+                        const deptCode = item.querySelector('.department-code').textContent.toLowerCase();
+                        const matches = deptName.includes(searchTerm) || deptCode.includes(searchTerm);
+                        item.style.display = matches ? 'flex' : 'none';
+                    });
+                });
+            }
 
-#service-list .list-group-item:hover {
-    background-color: #f8f9fa;
-}
+            // Add role change listener for auto-select
+            const roleSelect = document.getElementById('edit-role');
+            if (roleSelect) {
+                roleSelect.replaceWith(roleSelect.cloneNode(true));
+                const newRoleSelect = document.getElementById('edit-role');
 
-#service-list .list-group-item.active {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-    color: white;
-}
+                newRoleSelect.addEventListener('change', function () {
+                    const selectedRoleId = parseInt(this.value);
+                    // Roles that should auto-select all departments (Head Admin and VP)
+                    const autoSelectRoleIds = [1, 2];
 
-#service-list .list-group-item.active .form-check-input {
-    background-color: white;
-    border-color: white;
-}
+                    if (autoSelectRoleIds.includes(selectedRoleId)) {
+                        // Select all departments
+                        const allItems = deptList.querySelectorAll('.list-group-item');
+                        allItems.forEach(item => {
+                            if (item.style.display !== 'none') {
+                                item.classList.add('active');
+                                item.querySelector('.form-check-input').checked = true;
+                            }
+                        });
+                        updateSelectedDepartments();
+                    }
+                });
+            }
+        }
 
-#service-list .list-group-item .form-check-input {
-    cursor: pointer;
-}
 
-.selected-service-item {
-    padding: 8px 12px;
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    border-left: 4px solid #0d6efd;
-}
+        // ==================== MAIN DOM CONTENT LOADED ====================
 
-.selected-service-item:last-child {
-    margin-bottom: 0;
-}
+        document.addEventListener('DOMContentLoaded', function () {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                window.location.href = '/admin/admin-login';
+                return;
+            }
 
-.selected-service-item .remove-service {
-    cursor: pointer;
-    color: #dc3545;
-    padding: 0;
-    background: none;
-    border: none;
-}
+            // Load profile data
+            fetch('/api/admin/profile', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch profile data');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    currentAdminData = data;
+                    console.log('Profile data:', data);
 
-.selected-service-item .remove-service:hover {
-    color: #b02a37;
-}
-</style>
+                    // Load profile photo
+                    if (data.photo_url) {
+                        document.getElementById('profile-photo').src = data.photo_url;
+                    }
+
+                    // Load wallpaper if exists
+                    if (data.wallpaper_url) {
+                        document.getElementById('wallpaper-container').style.backgroundImage = `url(${data.wallpaper_url})`;
+                        document.getElementById('wallpaper-container').style.backgroundSize = 'cover';
+                        document.getElementById('wallpaper-container').style.backgroundPosition = 'center';
+                    }
+
+                    // Update main info
+                    document.getElementById('admin-full-name').textContent = `${data.first_name} ${data.last_name}`;
+                    document.getElementById('admin-school-id').textContent = data.school_id || 'Not set';
+                    document.getElementById('admin-email').textContent = data.email;
+                    document.getElementById('admin-contact').textContent = data.contact_number || 'Not set';
+                    document.getElementById('admin-created').textContent = new Date(data.created_at).toLocaleDateString();
+                    document.getElementById('admin-updated').textContent = new Date(data.updated_at).toLocaleDateString();
+
+                    // Update role details
+                    if (data.role) {
+                        document.getElementById('role-content').innerHTML = `
+                                                                    <div class="d-flex align-items-center mb-3">
+                                                                        <span class="badge bg-primary me-2">${data.role.role_title}</span>
+                                                                    </div>
+                                                                    <p class="text-muted small">${data.role.description}</p>
+                                                                `;
+                    }
+
+                    // Update departments
+                    if (data.departments && data.departments.length > 0) {
+                        const deptList = data.departments.map(dept => {
+                            const isPrimary = dept.pivot.is_primary ? ' (Primary)' : '';
+                            return `<div class="badge bg-light text-dark me-2 mb-2">${dept.department_name}${isPrimary}</div>`;
+                        }).join('');
+                        document.getElementById('departments-content').innerHTML = deptList;
+                    } else {
+                        document.getElementById('departments-content').innerHTML =
+                            '<div class="text-muted">No departments assigned</div>';
+                    }
+
+                    // Show content
+                    document.getElementById('main-info-loading').style.display = 'none';
+                    document.getElementById('main-info-content').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error fetching profile:', error);
+                    document.getElementById('main-info-loading').innerHTML =
+                        '<div class="text-danger">Error loading profile data</div>';
+                });
+
+            // Edit Profile Modal Functionality
+            document.getElementById('editProfileBtn').addEventListener('click', function () {
+                const modalElement = document.getElementById('editProfileModal');
+                const modal = new bootstrap.Modal(modalElement);
+
+                // Load roles and departments into the modal
+                loadRolesAndDepartments().then(() => {
+                    // Pre-fill form with current admin data
+                    if (currentAdminData) {
+                        document.getElementById('edit-first-name').value = currentAdminData.first_name || '';
+                        document.getElementById('edit-last-name').value = currentAdminData.last_name || '';
+                        document.getElementById('edit-middle-name').value = currentAdminData.middle_name || '';
+                        document.getElementById('edit-school-id').value = currentAdminData.school_id || '';
+                        document.getElementById('edit-email').value = currentAdminData.email || '';
+                        document.getElementById('edit-contact').value = currentAdminData.contact_number || '';
+
+                        // Set the current admin's role after a brief delay to ensure options are populated
+                        setTimeout(() => {
+                            const roleSelect = document.getElementById('edit-role');
+                            if (roleSelect && currentAdminData.role_id) {
+                                roleSelect.value = currentAdminData.role_id;
+                                console.log('Set role to:', currentAdminData.role_id);
+                            }
+                        }, 100);
+                    }
+                    // Use Bootstrap modal event to create buttons when modal is shown
+                    modalElement.addEventListener('shown.bs.modal', function onModalShow() {
+                        // Check if user can manage departments (roles 1, 2, or 3)
+                        const canManage = canManageDepartments(currentAdminData);
+                        console.log('Can manage departments:', canManage, 'Current Admin Data:', currentAdminData);
+
+                        // Departments section - for roles 1, 2, and 3
+                        const deptSection = document.getElementById('departments-section-container');
+                        if (deptSection) {
+                            deptSection.style.display = canManage ? 'block' : 'none';
+                        }
+
+                        // Only create department buttons if canManage
+                        if (canManage) {
+                            createDepartmentButtons();
+                        }
+
+                        modalElement.removeEventListener('shown.bs.modal', onModalShow);
+                    });
+
+                    modal.show();
+                }).catch(error => {
+                    console.error('Error loading modal data:', error);
+                    showToast('Failed to load edit form data', 'error', 3000);
+                });
+            });
+
+            document.getElementById('saveProfileChanges').addEventListener('click', async function () {
+                const token = localStorage.getItem('adminToken');
+                const canManage = canManageDepartments(currentAdminData);
+
+                // Validate School ID format ONLY if provided
+                const schoolId = document.getElementById('edit-school-id').value.trim();
+                if (schoolId) {
+                    const schoolIdPattern = /^\d{2}-\d{4}-\d{2}$/;
+                    if (!schoolIdPattern.test(schoolId)) {
+                        showToast('School ID must follow the format ##-####-##', 'error', 4000);
+                        return;
+                    }
+                }
+
+                // Get selected department values (for users who can manage departments)
+                let selectedDepartments = [];
+                if (canManage) {
+                    selectedDepartments = JSON.parse(document.getElementById('selected-departments').value || '[]');
+                }
+
+                // Validate department selection (only for users who can manage departments)
+                if (canManage) {
+                    const noDeptRequiredRoleIds = [1, 2]; // Head Admin and VP don't need departments
+                    // Use the role data from currentAdminData
+                    if (selectedDepartments.length === 0 && !noDeptRequiredRoleIds.includes(currentAdminData.role.role_id)) {
+                        showToast('Please select at least one department', 'error', 3000);
+                        return;
+                    }
+                }
+
+                // Prepare data for API - use role_id from currentAdminData
+                const jsonData = {
+                    first_name: document.getElementById('edit-first-name').value,
+                    last_name: document.getElementById('edit-last-name').value,
+                    middle_name: document.getElementById('edit-middle-name').value,
+                    school_id: schoolId || null,
+                    email: document.getElementById('edit-email').value,
+                    contact_number: document.getElementById('edit-contact').value,
+                    role_id: currentAdminData.role.role_id // Use role_id from the loaded profile data
+                };
+
+                // Only include departments if user can manage them
+                if (canManage) {
+                    jsonData.department_ids = selectedDepartments;
+                }
+
+                // Get password from the single password field
+                const password = document.getElementById('edit-password').value;
+                if (password) jsonData.password = password;
+
+                try {
+                    const response = await fetch(
+                        `/api/admin/update/${currentAdminData.admin_id}`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                            },
+                            body: JSON.stringify(jsonData)
+                        }
+                    );
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to update profile');
+                    }
+
+                    showToast('Profile updated successfully!', 'success', 3000);
+                    bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide();
+                    setTimeout(() => location.reload(), 1000);
+
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    showToast('Failed to update profile: ' + error.message, 'error', 4000);
+                }
+            });
+            // Handle photo upload with Cloudinary
+            document.getElementById('photo-upload').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                let oldPublicId = null;
+
+                try {
+                    // Show loading state
+                    const originalSrc = document.getElementById('profile-photo').src;
+                    document.getElementById('profile-photo').src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIwLjM1ZW0iPlVwbG9hZGluZy4uLjwvdGV4dD48L3N2Zz4=';
+
+                    // Store old public_id for deletion after successful upload
+                    if (currentAdminData && currentAdminData.photo_public_id) {
+                        oldPublicId = currentAdminData.photo_public_id;
+                    }
+
+                    // Upload new photo to Cloudinary
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_preset', cloudinaryConfig.uploadPresetPhoto);
+
+                    console.log('Uploading photo to Cloudinary...');
+
+                    const uploadResponse = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!uploadResponse.ok) {
+                        const errorText = await uploadResponse.text();
+                        console.error('Cloudinary upload failed:', errorText);
+                        throw new Error('Failed to upload to Cloudinary');
+                    }
+
+                    const cloudinaryResult = await uploadResponse.json();
+                    console.log('Cloudinary upload result:', cloudinaryResult);
+
+                    if (!cloudinaryResult.secure_url || !cloudinaryResult.public_id) {
+                        throw new Error('Invalid response from Cloudinary');
+                    }
+
+                    // Update database records
+                    console.log('Updating database records...');
+                    const updateResponse = await fetch('/api/admin/update-photo-records', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        },
+                        body: JSON.stringify({
+                            photo_url: cloudinaryResult.secure_url,
+                            photo_public_id: cloudinaryResult.public_id,
+                            type: 'photo'
+                        })
+                    });
+
+                    if (!updateResponse.ok) {
+                        const errorData = await updateResponse.json();
+                        console.error('Database update failed:', errorData);
+                        throw new Error(errorData.message || 'Failed to update database');
+                    }
+
+                    const updateResult = await updateResponse.json();
+                    console.log('Database update result:', updateResult);
+
+                    // Update UI and current data
+                    document.getElementById('profile-photo').src = cloudinaryResult.secure_url;
+                    currentAdminData.photo_url = cloudinaryResult.secure_url;
+                    currentAdminData.photo_public_id = cloudinaryResult.public_id;
+
+                    // Delete old image from Cloudinary after successful update
+                    if (oldPublicId) {
+                        console.log('Deleting old photo from Cloudinary:', oldPublicId);
+                        await deleteOldCloudinaryImage(oldPublicId, 'photo');
+                    }
+
+                    showToast('Profile photo updated successfully!', 'success', 2000);
+
+                    // Refresh the entire page after 2 seconds to show the toast
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('Error uploading photo:', error);
+                    document.getElementById('profile-photo').src = originalSrc;
+                    showToast('Failed to upload photo: ' + error.message, 'error', 4000);
+                } finally {
+                    // Clear the file input
+                    e.target.value = '';
+                }
+            });
+
+            // Handle wallpaper upload with Cloudinary
+            document.querySelector('.profile-hero button').addEventListener('click', () => {
+                document.getElementById('wallpaper-upload').click();
+            });
+
+            document.getElementById('wallpaper-upload').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                let oldPublicId = null;
+
+                try {
+                    // Show loading state
+                    const originalBackground = document.getElementById('wallpaper-container').style.backgroundImage;
+                    document.getElementById('wallpaper-container').style.backgroundImage = 'linear-gradient(45deg, #f8f9fa 25%, #e9ecef 25%, #e9ecef 50%, #f8f9fa 50%, #f8f9fa 75%, #e9ecef 75%, #e9ecef 100%)';
+                    document.getElementById('wallpaper-container').style.backgroundSize = '20px 20px';
+
+                    // Store old public_id for deletion after successful upload
+                    if (currentAdminData && currentAdminData.wallpaper_public_id) {
+                        oldPublicId = currentAdminData.wallpaper_public_id;
+                    }
+
+                    // Upload new wallpaper to Cloudinary
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_preset', cloudinaryConfig.uploadPresetWallpaper);
+
+                    console.log('Uploading wallpaper to Cloudinary...');
+
+                    const uploadResponse = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!uploadResponse.ok) {
+                        const errorText = await uploadResponse.text();
+                        console.error('Cloudinary wallpaper upload failed:', errorText);
+                        throw new Error('Failed to upload to Cloudinary');
+                    }
+
+                    const cloudinaryResult = await uploadResponse.json();
+                    console.log('Cloudinary wallpaper upload result:', cloudinaryResult);
+
+                    if (!cloudinaryResult.secure_url || !cloudinaryResult.public_id) {
+                        throw new Error('Invalid response from Cloudinary');
+                    }
+
+                    // Update database records
+                    console.log('Updating database records for wallpaper...');
+                    const updateResponse = await fetch('/api/admin/update-photo-records', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        },
+                        body: JSON.stringify({
+                            wallpaper_url: cloudinaryResult.secure_url,
+                            wallpaper_public_id: cloudinaryResult.public_id,
+                            type: 'wallpaper'
+                        })
+                    });
+
+                    if (!updateResponse.ok) {
+                        const errorData = await updateResponse.json();
+                        console.error('Database update failed:', errorData);
+                        throw new Error(errorData.message || 'Failed to update database');
+                    }
+
+                    const updateResult = await updateResponse.json();
+                    console.log('Database update result:', updateResult);
+
+                    // Update UI and current data
+                    document.getElementById('wallpaper-container').style.backgroundImage = `url(${cloudinaryResult.secure_url})`;
+                    document.getElementById('wallpaper-container').style.backgroundSize = 'cover';
+                    currentAdminData.wallpaper_url = cloudinaryResult.secure_url;
+                    currentAdminData.wallpaper_public_id = cloudinaryResult.public_id;
+
+                    // Delete old image from Cloudinary after successful update
+                    if (oldPublicId) {
+                        console.log('Deleting old wallpaper from Cloudinary:', oldPublicId);
+                        await deleteOldCloudinaryImage(oldPublicId, 'wallpaper');
+                    }
+
+                    showToast('Wallpaper updated successfully!', 'success', 2000);
+
+                    // Refresh the entire page after 2 seconds to show the toast
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('Error uploading wallpaper:', error);
+                    document.getElementById('wallpaper-container').style.backgroundImage = originalBackground;
+                    showToast('Failed to upload wallpaper: ' + error.message, 'error', 4000);
+                } finally {
+                    // Clear the file input
+                    e.target.value = '';
+                }
+            });
+
+        });
+    </script>
+@endsection
