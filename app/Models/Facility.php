@@ -30,24 +30,24 @@ class Facility extends Model
         'created_by'
     ];
 
-// SCOPES //
+    // SCOPES //
 
-public function scopeVenues($query)
-{
-    return $query->whereIn('category_id', [1, 4, 5])
-                 ->orWhereNull('parent_facility_id');
-}
+    public function scopeVenues($query)
+    {
+        return $query->whereIn('category_id', [1, 4, 5])
+            ->orWhereNull('parent_facility_id');
+    }
 
-public function scopeRooms($query)
-{
-    return $query->whereIn('category_id', [2, 3])
-                 ->orWhereNotNull('parent_facility_id');
-}
+    public function scopeRooms($query)
+    {
+        return $query->whereIn('category_id', [2, 3])
+            ->orWhereNotNull('parent_facility_id');
+    }
 
-public function scopeByBuilding($query, $buildingId)
-{
-    return $query->where('parent_facility_id', $buildingId);
-}
+    public function scopeByBuilding($query, $buildingId)
+    {
+        return $query->where('parent_facility_id', $buildingId);
+    }
 
     // Relationships
     public function admins()
@@ -74,6 +74,11 @@ public function scopeByBuilding($query, $buildingId)
     public function department()
     {
         return $this->belongsTo(Department::class, 'department_id', 'department_id');
+    }
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'department_facilities', 'facility_id', 'department_id')
+            ->withTimestamps();
     }
     public function images()
     {

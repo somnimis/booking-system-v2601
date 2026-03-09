@@ -126,7 +126,7 @@ Route::middleware('web')->group(function () {
     Route::view('/admin/manage-requests', 'admin.manage-requests');
     Route::get('/admin/requisition/{requestId}', function ($requestId) {
         return view('admin.request-view', ['requestId' => $requestId]);
-    })->middleware('auth'); // This uses the default 'web' guard
+    });
 
     Route::get('/admin/form-review/{requestId}', function ($requestId) {
         return view('admin.form-review', ['requestId' => $requestId]);

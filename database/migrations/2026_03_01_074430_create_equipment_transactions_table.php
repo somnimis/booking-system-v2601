@@ -10,10 +10,7 @@ return new class extends Migration {
         Schema::create('equipment_transactions', function (Blueprint $table) {
             $table->id();
 
-            // Core links - manual foreign keys since you don't use 'id'
-            $table->unsignedBigInteger('request_id');
             $table->unsignedBigInteger('requested_equipment_id');
-            $table->unsignedBigInteger('item_id');
 
             // Scan timestamps
             $table->timestamp('released_at')->nullable();
@@ -25,6 +22,7 @@ return new class extends Migration {
 
             // Location tracking
             $table->unsignedBigInteger('facility_id')->nullable();
+            // Manual location tracking
             $table->string('destination_name')->nullable();
 
             // Condition tracking
@@ -41,19 +39,10 @@ return new class extends Migration {
             // === ALL FOREIGN KEYS DEFINED HERE ===
             
             // Core links
-            $table->foreign('request_id')
-                ->references('request_id')
-                ->on('requisition_forms')
-                ->onDelete('restrict');
                 
             $table->foreign('requested_equipment_id')
                 ->references('requested_equipment_id')
                 ->on('requested_equipment')
-                ->onDelete('restrict');
-                
-            $table->foreign('item_id')
-                ->references('item_id')
-                ->on('equipment_items')
                 ->onDelete('restrict');
 
             // Admin scanners
@@ -82,7 +71,7 @@ return new class extends Migration {
             // Status
             $table->foreign('status_id')
                 ->references('status_id')
-                ->on('form_statuses')
+                ->on('availability_statuses')
                 ->onDelete('restrict');
         });
     }

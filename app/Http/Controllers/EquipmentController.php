@@ -87,67 +87,70 @@ class EquipmentController extends Controller
 
     // ----- Store Equipment ----- //
 
-    public function store(Request $request): JsonResponse
-    {
-        $data = $request->validate([
-            'equipment_name' => 'required|string|max:50',
-            'description' => 'nullable|string|max:255',
-            'brand' => 'nullable|string|max:80',
-            'storage_location' => 'required|string|max:50',
-            'category_id' => 'required|exists:equipment_categories,category_id',
-            'external_fee' => 'required|numeric|min:0',
-            'rate_type' => 'required|in:Per Hour,Per Event',
-            'status_id' => 'required|exists:availability_statuses,status_id',
-            'department_id' => 'required|exists:departments,department_id',
-            'maximum_rental_hour' => 'nullable|integer',
+public function store(Request $request): JsonResponse
+{
+    $data = $request->validate([
+        'equipment_name' => 'required|string|max:50',
+        'description' => 'nullable|string|max:255',
+        'brand' => 'nullable|string|max:80',
+        'storage_location' => 'required|string|max:50',
+        'category_id' => 'required|exists:equipment_categories,category_id',
+        'external_fee' => 'required|numeric|min:0',
+        'rate_type' => 'required|in:Per Hour,Per Event',
+        'status_id' => 'required|exists:availability_statuses,status_id',
+        'departments' => 'required|array|min:1',
+        'departments.*' => 'exists:departments,department_id',
+        'maximum_rental_hour' => 'nullable|integer',
 
-            'items' => 'sometimes|array',
-            'items.*.item_name' => 'sometimes|string|max:100',
-            'items.*.condition_id' => 'required|exists:conditions,condition_id',
-            'items.*.barcode_number' => 'nullable|string|max:100',
-            'items.*.item_notes' => 'nullable|string',
+        'items' => 'sometimes|array',
+        'items.*.item_name' => 'sometimes|string|max:100',
+        'items.*.condition_id' => 'required|exists:conditions,condition_id',
+        'items.*.barcode_number' => 'nullable|string|max:100',
+        'items.*.item_notes' => 'nullable|string',
 
-            'images' => 'sometimes|array',
-            'images.*.image_url' => 'required|url|max:500',
-            'images.*.description' => 'nullable|string',
-            'images.*.sort_order' => 'sometimes|integer',
-            'images.*.image_type' => 'required|exists:image_types,image_type',
-        ]);
+        'images' => 'sometimes|array',
+        'images.*.image_url' => 'required|url|max:500',
+        'images.*.description' => 'nullable|string',
+        'images.*.sort_order' => 'sometimes|integer',
+        'images.*.image_type' => 'required|exists:image_types,image_type',
+    ]);
 
+    // Create equipment with first department as primary for backward compatibility
+    $equipment = Equipment::create([
+        'equipment_name' => $data['equipment_name'],
+        'description' => $data['description'] ?? null,
+        'brand' => $data['brand'] ?? null,
+        'storage_location' => $data['storage_location'],
+        'category_id' => $data['category_id'],
+        'external_fee' => $data['external_fee'],
+        'rate_type' => $data['rate_type'],
+        'status_id' => $data['status_id'],
+        'department_id' => $data['departments'][0], // Keep first department for backward compatibility
+        'maximum_rental_hour' => $data['maximum_rental_hour'],
+        'created_by' => auth()->id()
+    ]);
 
-        $equipment = Equipment::create([
-            'equipment_name' => $data['equipment_name'],
-            'description' => $data['description'] ?? null,
-            'brand' => $data['brand'] ?? null,
-            'storage_location' => $data['storage_location'],
-            'category_id' => $data['category_id'],
-            'external_fee' => $data['external_fee'],
-            'rate_type' => $data['rate_type'],
-            'status_id' => $data['status_id'],
-            'department_id' => $data['department_id'],
-            'maximum_rental_hour' => $data['maximum_rental_hour'],
-            'created_by' => auth()->id()
-        ]);
+    // Attach all selected departments to the pivot table
+    $equipment->departments()->attach($data['departments']);
 
-        // Optional: Handle items and images if provided
-        if (!empty($data['items'])) {
-            foreach ($data['items'] as $item) {
-                $equipment->items()->create($item);
-            }
+    // Optional: Handle items and images if provided
+    if (!empty($data['items'])) {
+        foreach ($data['items'] as $item) {
+            $equipment->items()->create($item);
         }
-
-        if (!empty($data['images'])) {
-            foreach ($data['images'] as $image) {
-                $equipment->images()->create($image);
-            }
-        }
-
-        return response()->json([
-            'message' => 'Equipment created successfully',
-            'data' => $this->formatEquipment($equipment->fresh()) // refresh with relations
-        ], 201);
     }
 
+    if (!empty($data['images'])) {
+        foreach ($data['images'] as $image) {
+            $equipment->images()->create($image);
+        }
+    }
+
+    return response()->json([
+        'message' => 'Equipment created successfully',
+        'data' => $this->formatEquipment($equipment->fresh(['departments'])) // Include departments
+    ], 201);
+}
 
     // ----- Display Equipment ----- //
 
@@ -177,41 +180,157 @@ class EquipmentController extends Controller
 
     // ----- Update Equipment ----- //
 
-    public function update(Request $request, $id)
-    {
-        try {
-            $validated = $request->validate([
-                'equipment_name' => 'required|string|max:255',
-                'description' => 'nullable|string|max:255',
-                'brand' => 'nullable|string|max:255',
-                'storage_location' => 'required|string|max:255',
-                'category_id' => 'required|exists:equipment_categories,category_id',
-                'external_fee' => 'required|numeric|min:0',
-                'rate_type' => 'required|in:Per Hour,Per Event',
-                'status_id' => 'required|exists:availability_statuses,status_id',
-                'department_id' => 'required|exists:departments,department_id',
-                'maximum_rental_hour' => 'required|integer|min:1',
-            ]);
+public function update(Request $request, $id)
+{
+    try {
+        $validated = $request->validate([
+            'equipment_name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:255',
+            'brand' => 'nullable|string|max:255',
+            'storage_location' => 'required|string|max:255',
+            'category_id' => 'required|exists:equipment_categories,category_id',
+            'external_fee' => 'required|numeric|min:0',
+            'rate_type' => 'required|in:Per Hour,Per Event',
+            'status_id' => 'required|exists:availability_statuses,status_id',
+            'departments' => 'required|array|min:1',
+            'departments.*' => 'exists:departments,department_id',
+            'maximum_rental_hour' => 'required|integer|min:1',
+        ]);
 
-            $equipment = Equipment::findOrFail($id);
+        $equipment = Equipment::findOrFail($id);
+
+        // Update equipment with first department as primary for backward compatibility
+        $equipment->update([
+            'equipment_name' => $validated['equipment_name'],
+            'description' => $validated['description'],
+            'brand' => $validated['brand'],
+            'storage_location' => $validated['storage_location'],
+            'category_id' => $validated['category_id'],
+            'external_fee' => $validated['external_fee'],
+            'rate_type' => $validated['rate_type'],
+            'status_id' => $validated['status_id'],
+            'department_id' => $validated['departments'][0], // Keep first department for backward compatibility
+            'maximum_rental_hour' => $validated['maximum_rental_hour'],
+        ]);
+
+        // Sync departments - this will add new and remove old ones automatically
+        $equipment->departments()->sync($validated['departments']);
+
+        return response()->json([
+            'message' => 'Equipment updated successfully',
+            'data' => $equipment->fresh(['departments'])
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error updating equipment: ' . $e->getMessage());
+        return response()->json([
+            'message' => 'Failed to update equipment',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 
 
-            $equipment->update($validated);
+/**
+ * Mass assign departments to multiple equipment
+ */
+public function massAssignDepartments(Request $request): JsonResponse
+{
+    try {
+        $validated = $request->validate([
+            'equipment_ids' => 'required|array|min:1',
+            'equipment_ids.*' => 'exists:equipment,equipment_id',
+            'department_ids' => 'required|array|min:1',
+            'department_ids.*' => 'exists:departments,department_id',
+        ]);
 
-            return response()->json([
-                'message' => 'Equipment updated successfully',
-                'data' => $equipment
-            ]);
+        $equipmentIds = $validated['equipment_ids'];
+        $departmentIds = $validated['department_ids'];
 
-        } catch (\Exception $e) {
-            \Log::error('Error updating equipment: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Failed to update equipment',
-                'error' => $e->getMessage()
-            ], 500);
+        $results = [
+            'success' => [],
+            'failed' => []
+        ];
+
+        foreach ($equipmentIds as $equipmentId) {
+            try {
+                $equipment = Equipment::findOrFail($equipmentId);
+
+                // Always replace all existing departments with the new ones
+                $equipment->departments()->sync($departmentIds);
+
+                $results['success'][] = [
+                    'equipment_id' => $equipmentId,
+                    'equipment_name' => $equipment->equipment_name
+                ];
+
+            } catch (\Exception $e) {
+                \Log::error('Failed to mass assign departments to equipment', [
+                    'equipment_id' => $equipmentId,
+                    'error' => $e->getMessage()
+                ]);
+
+                $results['failed'][] = [
+                    'equipment_id' => $equipmentId,
+                    'error' => $e->getMessage()
+                ];
+            }
         }
+
+        $successCount = count($results['success']);
+        $failedCount = count($results['failed']);
+
+        if ($successCount === 0) {
+            $message = "Failed to assign departments to any equipment.";
+        } else if ($failedCount === 0) {
+            $message = "Successfully assigned departments to " . ($successCount === 1 ? "1 equipment" : "{$successCount} equipment items");
+        } else {
+            $message = "Assigned departments to {$successCount} " . ($successCount === 1 ? "equipment" : "equipment items") . 
+                       ", failed for {$failedCount} " . ($failedCount === 1 ? "equipment" : "equipment items");
+        }
+
+        return response()->json([
+            'message' => $message,
+            'results' => $results
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error in mass department assignment for equipment', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'message' => 'Failed to process mass department assignment',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+/**
+ * Helper method to generate appropriate message for mass assignment
+ */
+private function getMassAssignmentMessage(array $results, string $action, string $type): string
+{
+    $successCount = count($results['success']);
+    $failedCount = count($results['failed']);
+
+    $actionText = [
+        'add' => 'added to',
+        'replace' => 'assigned to',
+        'remove' => 'removed from'
+    ][$action];
+
+    if ($successCount === 0) {
+        return "Failed to {$action} departments for any {$type}s.";
     }
 
+    if ($failedCount === 0) {
+        return "Successfully {$actionText} " . ($successCount === 1 ? "1 {$type}" : "{$successCount} {$type}s");
+    }
+
+    return "Departments {$actionText} {$successCount} " . ($successCount === 1 ? $type : "{$type}s") . 
+           ", failed for {$failedCount} " . ($failedCount === 1 ? $type : "{$type}s");
+}
     public function edit(Request $request)
     {
         $equipmentId = $request->query('id');

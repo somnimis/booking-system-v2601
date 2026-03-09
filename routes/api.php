@@ -146,6 +146,25 @@ Route::prefix('admin')->group(function () {
     Route::get('/equipment-transactions/ongoing', [EquipmentTransactionController::class, 'getOngoingTransactions']);
 });
 
+// Admin equipment tracking routes
+Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
+    // Existing routes...
+    
+    // New routes for equipment tracking
+    Route::get('/equipment/to-release', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'getToRelease']);
+    Route::get('/equipment/to-return', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'getToReturn']);
+    Route::get('/equipment/available-items/{equipmentId}', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'getAvailableItems']);
+    Route::post('/equipment/release-item', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'releaseItem']);
+});
+
+// Mass Assignment Routes //
+// Equipment mass department assignment
+Route::post('/admin/equipment/mass-assign-departments', [EquipmentController::class, 'massAssignDepartments']);
+
+// Facility mass department assignment
+Route::post('/admin/facilities/mass-assign-departments', [FacilityController::class, 'massAssignDepartments']);
+
+
 // ---------------- Scanner Routes ---------------- //
 Route::prefix('scanner')->group(function () {
     Route::post('/scan', [ScannerController::class, 'scan']);

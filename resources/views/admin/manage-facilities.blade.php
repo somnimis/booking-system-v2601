@@ -125,10 +125,25 @@
         </div>
 
         <div class="col-auto text-nowrap">
-          <a href="{{ url('/admin/add-facility') }}" class="btn btn-primary me-2">
-            <i class="bi bi-plus-circle-fill me-2"></i>Add New
-          </a>
+          <div class="btn-group" role="group">
+            <a href="{{ url('/admin/add-facility') }}" class="btn btn-primary">
+              <i class="bi bi-plus-circle-fill me-2"></i>Add New
+            </a>
+            <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <span class="visually-hidden">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <button class="dropdown-item" type="button" data-bs-toggle="modal"
+                  data-bs-target="#massAssignDepartmentsModal">
+                  <i class="bi bi-diagram-3-fill me-2"></i>Mass Assign Departments
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
+
       </div>
       <!-- Facilities List (scrollable) -->
       <div id="facilitiesContainer" class="flex-grow-1 overflow-auto" style="height: calc(100vh - 300px);">
@@ -185,6 +200,87 @@
             <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete Facility</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Mass Assign Departments Modal for Facilities -->
+    <div class="modal fade" id="massAssignDepartmentsModal" tabindex="-1"
+      aria-labelledby="massAssignDepartmentsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="massAssignDepartmentsModalLabel">Mass Assign Departments to Facilities</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="massAssignForm">
+              <!-- Facility Selection -->
+              <div class="mb-4">
+                <label class="form-label fw-bold" style="color: #003366;">Select Facilities</label>
+                <select id="facilityMultiSelect" class="form-select" multiple size="6" style="border-color: #003366;">
+                  <!-- Will be populated dynamically -->
+                </select>
+                <div class="form-text text-muted">Hold Ctrl/Cmd to select multiple facilities</div>
+              </div>
+
+              <!-- Department Selection -->
+              <div class="mb-4">
+                <label class="form-label fw-bold" style="color: #003366;">Select Departments to Assign</label>
+                <select id="departmentMultiSelect" class="form-select" multiple size="6" style="border-color: #003366;">
+                  <!-- Will be populated dynamically -->
+                </select>
+                <div class="form-text text-muted">Hold Ctrl/Cmd to select multiple departments</div>
+              </div>
+
+              <!-- Summary -->
+              <div class="alert" style="background-color: #f8f9fa; border-left: 4px solid #003366;" id="selectionSummary">
+                <i class="bi bi-info-circle me-2" style="color: #003366;"></i>
+                <span id="summaryText">No facilities selected</span>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn" id="executeMassAssignBtn" style="background-color: #003366; color: white;"
+              onmouseover="this.style.backgroundColor='#004080'" onmouseout="this.style.backgroundColor='#003366'">
+              <i class="bi bi-check-circle me-2"></i>Assign Departments
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warning Modal -->
+    <div class="modal fade" id="assignmentWarningModal" tabindex="-1" aria-labelledby="warningModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="warningModalLabel" style="color: #003366;">Confirm Department Assignment</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="text-center mb-3">
+              <i class="bi bi-exclamation-triangle-fill" style="color: #003366; font-size: 2.5rem;"></i>
+            </div>
+            <p class="text-center mb-0">
+              This action will <strong>replace all existing department assignments</strong> for the selected facilities
+              with the new departments.
+            </p>
+            <p class="text-center text-muted mt-2 mb-0">
+              Are you sure you want to continue?
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn" id="confirmAssignBtn" style="background-color: #003366; color: white;"
+              onmouseover="this.style.backgroundColor='#004080'" onmouseout="this.style.backgroundColor='#003366'">
+              <i class="bi bi-check-circle me-2"></i>Yes, Assign Departments
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 @endsection
 @section('scripts')
@@ -295,7 +391,6 @@
             "/api/facilities",
             {
               headers: {
-                Authorization: `Bearer ${token}`,
                 Accept: "application/json",
               },
             }
@@ -310,6 +405,7 @@
           const data = await response.json();
           allFacilities = data.data || [];
           filteredFacilities = [...allFacilities];
+          window.filteredFacilities = filteredFacilities; // Add this line
 
           // Render facilities dynamically
           renderFacilities(allFacilities);
@@ -381,11 +477,11 @@
         if (facilitiesList.length === 0) {
           // Show no facilities found message with icon
           container.innerHTML = `
-                                              <div class="col-12 text-center py-5">
-                                                <i class="bi bi-tools fs-1 text-muted" style="font-size: 4rem !important;"></i>
-                                                <p class="mt-2 text-muted">No facilities found.</p>
-                                              </div>
-                                            `;
+                                                              <div class="col-12 text-center py-5">
+                                                                <i class="bi bi-tools fs-1 text-muted" style="font-size: 4rem !important;"></i>
+                                                                <p class="mt-2 text-muted">No facilities found.</p>
+                                                              </div>
+                                                            `;
           // Clear pagination when no results
           paginationContainer.innerHTML = '';
           return;
@@ -435,76 +531,76 @@
             // List layout
             card.className = "col-12 facilities-card mb-0";
             card.innerHTML = `
-        <div class="card h-100 shadow-sm rounded-3">
-          <div class="row g-0">
-            <div class="col-md-2" style="max-width: 120px; flex: 0 0 120px;">
-              <img src="${primaryImage}" 
-                   class="img-fluid rounded-start" 
-                   style="width: 120px; height: 120px; object-fit: cover;" 
-                   alt="${facilities.facility_name}">
-            </div>
-            <div class="col-md-8">
-              <div class="card-body py-3">
-                <h5 class="card-title fw-bold mb-2">${facilities.facility_name}</h5>
-                <p class="card-text mb-2">
-                  <span class="badge ${statusClass} me-2">${facilities.status.status_name}</span>
-    <small class="text-muted">
-      <i class="bi bi-tag-fill text-secondary me-1"></i>${facilities.category.category_name}
-      <i class="bi bi-tag-fill text-secondary me-1"></i>${facilities.subcategory.subcategory_name}
-    </small>
-                </p>
-                <p class="card-text text-muted mb-0">
-                  ${facilities.description || "No description available"}
-                </p>
-              </div>
-            </div>
-            <div class="col-md-2 d-flex align-items-center justify-content-center">
-              <div class="d-grid gap-2 w-100 px-2">
-                <a href="/admin/edit-facility?id=${facilities.facility_id}" 
-                   class="btn btn-sm btn-primary">
-                   Manage
-                </a>
-                <button class="btn btn-sm btn-outline-danger btn-delete" 
-                        data-id="${facilities.facility_id}">
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
+                        <div class="card h-100 shadow-sm rounded-3">
+                          <div class="row g-0">
+                            <div class="col-md-2" style="max-width: 120px; flex: 0 0 120px;">
+                              <img src="${primaryImage}" 
+                                   class="img-fluid rounded-start" 
+                                   style="width: 120px; height: 120px; object-fit: cover;" 
+                                   alt="${facilities.facility_name}">
+                            </div>
+                            <div class="col-md-8">
+                              <div class="card-body py-3">
+                                <h5 class="card-title fw-bold mb-2">${facilities.facility_name}</h5>
+                                <p class="card-text mb-2">
+                                  <span class="badge ${statusClass} me-2">${facilities.status.status_name}</span>
+                    <small class="text-muted">
+                      <i class="bi bi-tag-fill text-secondary me-1"></i>${facilities.category.category_name}
+                      <i class="bi bi-tag-fill text-secondary me-1"></i>${facilities.subcategory.subcategory_name}
+                    </small>
+                                </p>
+                                <p class="card-text text-muted mb-0">
+                                  ${facilities.description || "No description available"}
+                                </p>
+                              </div>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-center justify-content-center">
+                              <div class="d-grid gap-2 w-100 px-2">
+                                <a href="/admin/edit-facility?id=${facilities.facility_id}" 
+                                   class="btn btn-sm btn-primary">
+                                   Manage
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger btn-delete" 
+                                        data-id="${facilities.facility_id}">
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      `;
           } else {
             // Grid layout
             card.className = "col-md-4 col-lg-3 facilities-card mb-3";
             card.innerHTML = `
-        <div class="card h-100">
-          <img src="${primaryImage}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="${facilities.facility_name}">
-          <div class="card-body d-flex flex-column p-2">
-            <div>
-            <h6 class="card-title mb-1 fw-bold text-truncate" 
-                style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                data-bs-toggle="tooltip" data-bs-placement="top" title="${facilities.facility_name}">
-              ${facilities.facility_name}
-            </h6>
-            <p class="card-text text-muted mb-1 small text-truncate" 
-              style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-              <i class="bi bi-tag-fill text-secondary me-1"></i>
-              ${facilities.category.category_name} |
-              <i class="fa fa-layer-group text-secondary ms-1 me-1" 
-                data-bs-toggle="tooltip" data-bs-placement="top" 
-                title="${facilities.subcategory.subcategory_name}"></i>
-              ${facilities.subcategory.subcategory_name}
-            </p>
-              <span class="badge ${statusClass} mb-2">${facilities.status.status_name}</span>
-              <p class="card-text mb-2 small text-truncate">${facilities.description || "No description available"}</p>
-            </div>
-            <div class="facilities-actions mt-auto d-grid gap-1">
-              <a href="/admin/edit-facility?id=${facilities.facility_id}" class="btn btn-sm btn-primary btn-manage">Manage</a>
-              <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${facilities.facility_id}">Delete</button>
-            </div>
-          </div>
-        </div>
-      `;
+                        <div class="card h-100">
+                          <img src="${primaryImage}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="${facilities.facility_name}">
+                          <div class="card-body d-flex flex-column p-2">
+                            <div>
+                            <h6 class="card-title mb-1 fw-bold text-truncate" 
+                                style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="${facilities.facility_name}">
+                              ${facilities.facility_name}
+                            </h6>
+                            <p class="card-text text-muted mb-1 small text-truncate" 
+                              style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                              <i class="bi bi-tag-fill text-secondary me-1"></i>
+                              ${facilities.category.category_name} |
+                              <i class="fa fa-layer-group text-secondary ms-1 me-1" 
+                                data-bs-toggle="tooltip" data-bs-placement="top" 
+                                title="${facilities.subcategory.subcategory_name}"></i>
+                              ${facilities.subcategory.subcategory_name}
+                            </p>
+                              <span class="badge ${statusClass} mb-2">${facilities.status.status_name}</span>
+                              <p class="card-text mb-2 small text-truncate">${facilities.description || "No description available"}</p>
+                            </div>
+                            <div class="facilities-actions mt-auto d-grid gap-1">
+                              <a href="/admin/edit-facility?id=${facilities.facility_id}" class="btn btn-sm btn-primary btn-manage">Manage</a>
+                              <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${facilities.facility_id}">Delete</button>
+                            </div>
+                          </div>
+                        </div>
+                      `;
           }
 
           container.appendChild(card);
@@ -698,11 +794,11 @@
         prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
         prevLi.id = "prevPage";
         prevLi.innerHTML = `
-                  <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
-                    <span aria-hidden="true">&laquo;</span>
-                    <span class="visually-hidden">Previous</span>
-                  </a>
-                `;
+                                  <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                    <span aria-hidden="true">&laquo;</span>
+                                    <span class="visually-hidden">Previous</span>
+                                  </a>
+                                `;
         paginationContainer.appendChild(prevLi);
 
         // Page numbers
@@ -726,11 +822,11 @@
         nextLi.className = `page-item ${currentPage === totalPages ? "disabled" : ""}`;
         nextLi.id = "nextPage";
         nextLi.innerHTML = `
-                          <a class="page-link" href="#" data-page="${currentPage + 1}">
-                            <span aria-hidden="true">&raquo;</span>
-                            <span class="visually-hidden">Next</span>
-                          </a>
-                        `;
+                                          <a class="page-link" href="#" data-page="${currentPage + 1}">
+                                            <span aria-hidden="true">&raquo;</span>
+                                            <span class="visually-hidden">Next</span>
+                                          </a>
+                                        `;
         paginationContainer.appendChild(nextLi);
 
         // Add event listeners
@@ -761,8 +857,215 @@
         });
       }
 
+      // Mass Assignment Modal functionality for Facilities
+      let facilitiesList = [];
+      let departmentsList = [];
+
+      // Fetch facilities for dropdown
+      async function fetchFacilitiesForDropdown() {
+        try {
+          const response = await fetch("/api/facilities/dropdown", {
+            headers: {
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch facilities");
+
+          const result = await response.json();
+          facilitiesList = result.data || [];
+          populateFacilityMultiSelect();
+        } catch (error) {
+          console.error("Error fetching facilities:", error);
+          showToast('Failed to load facilities', 'error');
+        }
+      }
+
+      // Fetch departments for dropdown
+      async function fetchDepartmentsForModal() {
+        try {
+          const response = await fetch("/api/departments", {
+            headers: {
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch departments");
+
+          const result = await response.json();
+          departmentsList = Array.isArray(result) ? result : (result.data || []);
+          populateDepartmentMultiSelect();
+        } catch (error) {
+          console.error("Error fetching departments:", error);
+          showToast('Failed to load departments', 'error');
+        }
+      }
+
+      // Populate facility multi-select
+      function populateFacilityMultiSelect() {
+        const select = document.getElementById('facilityMultiSelect');
+        if (!select) return;
+        select.innerHTML = '';
+
+        facilitiesList.forEach(facility => {
+          const option = document.createElement('option');
+          option.value = facility.facility_id;
+          option.textContent = facility.facility_name;
+          select.appendChild(option);
+        });
+      }
+
+      // Populate department multi-select
+      function populateDepartmentMultiSelect() {
+        const select = document.getElementById('departmentMultiSelect');
+        if (!select) return;
+        select.innerHTML = '';
+
+        departmentsList.forEach(dept => {
+          const option = document.createElement('option');
+          option.value = dept.department_id;
+          option.textContent = dept.department_name;
+          select.appendChild(option);
+        });
+      }
+
+      // Update selection summary
+      function updateSelectionSummary() {
+        const facilitySelect = document.getElementById('facilityMultiSelect');
+        const departmentSelect = document.getElementById('departmentMultiSelect');
+
+        const facilityCount = facilitySelect ? facilitySelect.selectedOptions.length : 0;
+        const departmentCount = departmentSelect ? departmentSelect.selectedOptions.length : 0;
+
+        const summarySpan = document.getElementById('summaryText');
+        if (summarySpan) {
+          if (facilityCount === 0 && departmentCount === 0) {
+            summarySpan.textContent = 'No facilities or departments selected';
+          } else if (facilityCount === 0) {
+            summarySpan.textContent = 'Please select at least one facility';
+          } else if (departmentCount === 0) {
+            summarySpan.textContent = 'Please select at least one department';
+          } else {
+            summarySpan.textContent = `${facilityCount} facility/facilities and ${departmentCount} department(s) selected. Current department assignments will be replaced.`;
+          }
+        }
+      }
+
+      // Show warning modal before execution
+      document.getElementById('executeMassAssignBtn')?.addEventListener('click', function () {
+        const facilitySelect = document.getElementById('facilityMultiSelect');
+        const departmentSelect = document.getElementById('departmentMultiSelect');
+
+        const facilityIds = facilitySelect ? Array.from(facilitySelect.selectedOptions).map(opt => parseInt(opt.value)) : [];
+        const departmentIds = departmentSelect ? Array.from(departmentSelect.selectedOptions).map(opt => parseInt(opt.value)) : [];
+
+        if (facilityIds.length === 0) {
+          showToast('Please select at least one facility', 'error');
+          return;
+        }
+
+        if (departmentIds.length === 0) {
+          showToast('Please select at least one department', 'error');
+          return;
+        }
+
+        // Store data for confirmation
+        window.pendingAssignment = {
+          facilityIds: facilityIds,
+          departmentIds: departmentIds
+        };
+
+        // Show warning modal
+        const warningModal = new bootstrap.Modal(document.getElementById('assignmentWarningModal'));
+        warningModal.show();
+      });
+
+      // Execute mass assignment after confirmation
+      document.getElementById('confirmAssignBtn')?.addEventListener('click', async function () {
+        if (!window.pendingAssignment) return;
+
+        const { facilityIds, departmentIds } = window.pendingAssignment;
+
+        // Disable button and show loading
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+        try {
+          const response = await fetch('/api/admin/facilities/mass-assign-departments', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+              facility_ids: facilityIds,
+              department_ids: departmentIds,
+              action: 'replace' // Always replace existing assignments
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Failed to process mass assignment');
+          }
+
+          const result = await response.json();
+
+          // Show success message
+          showToast(result.message, 'success');
+
+          // Close both modals
+          const warningModal = bootstrap.Modal.getInstance(document.getElementById('assignmentWarningModal'));
+          const massModal = bootstrap.Modal.getInstance(document.getElementById('massAssignDepartmentsModal'));
+
+          if (warningModal) warningModal.hide();
+          if (massModal) massModal.hide();
+
+          // Clear pending data
+          window.pendingAssignment = null;
+
+          // Refresh facilities data
+          await fetchFacilities();
+
+        } catch (error) {
+          console.error('Error in mass assignment:', error);
+          showToast('Failed to process mass assignment: ' + error.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      });
+
+      // Add event listeners for changes that update summary
+      document.getElementById('facilityMultiSelect')?.addEventListener('change', updateSelectionSummary);
+      document.getElementById('departmentMultiSelect')?.addEventListener('change', updateSelectionSummary);
+
+      // Fetch data when modal is opened
+      const massAssignModal = document.getElementById('massAssignDepartmentsModal');
+      if (massAssignModal) {
+        massAssignModal.addEventListener('show.bs.modal', function () {
+          fetchFacilitiesForDropdown();
+          fetchDepartmentsForModal();
+
+          // Reset selections
+          const facilitySelect = document.getElementById('facilityMultiSelect');
+          const departmentSelect = document.getElementById('departmentMultiSelect');
+
+          if (facilitySelect) facilitySelect.selectedIndex = -1;
+          if (departmentSelect) departmentSelect.selectedIndex = -1;
+
+          updateSelectionSummary();
+        });
+      }
+
       // Start the application
       init();
     });
+
   </script>
 @endsection

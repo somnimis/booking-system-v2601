@@ -16,7 +16,7 @@ class AdminSeeder extends Seeder
     {
         DB::table('admins')->insert([
 
-            // ------- For Developer ------- //
+            // ------- Head Admin / Dev's account ------- //
 
             [
                 'first_name' => 'Dev',
@@ -34,7 +34,7 @@ class AdminSeeder extends Seeder
                 'updated_at' => now(),
             ],
 
-            // ------- Head Admins ------- //
+            // ------- Chief Approval Officer ------- //
             [
                 'first_name' => 'Earnest',
                 'last_name' => 'Dagohoy',
@@ -42,7 +42,7 @@ class AdminSeeder extends Seeder
                 'title' => 'President of Administration',
                 'signature_url' => null,
                 'signature_public_id' => null,
-                'role_id' => 1,
+                'role_id' => 2,
                 'school_id' => null,
                 'email' => 'vpa@example.test',
                 'contact_number' => null,
@@ -57,7 +57,7 @@ class AdminSeeder extends Seeder
                 'title' => 'Vice President of Administration',
                 'signature_url' => null,
                 'signature_public_id' => null,
-                'role_id' => 1,
+                'role_id' => 2,
                 'school_id' => null,
                 'email' => 'ovpa@example.test',
                 'contact_number' => null,
@@ -66,7 +66,7 @@ class AdminSeeder extends Seeder
                 'updated_at' => now(),
             ],
 
-            // ------- Signatories ------- //
+            // ------- Approving Officers ------- //
             [
                 'first_name' => 'Rey',
                 'last_name' => 'Quimba',
@@ -74,7 +74,7 @@ class AdminSeeder extends Seeder
                 'title' => 'Head of Buildings and Maintenance Services',
                 'signature_url' => null,
                 'signature_public_id' => null,
-                'role_id' => 2,
+                'role_id' => 3,
                 'school_id' => '2249-12-43',
                 'email' => 'bum@example.test',
                 'contact_number' => null,
@@ -89,7 +89,7 @@ class AdminSeeder extends Seeder
                 'title' => 'Head of Electrical Maintenance Services',
                 'signature_url' => null,
                 'signature_public_id' => null,
-                'role_id' => 2,
+                'role_id' => 3,
                 'school_id' => null,
                 'email' => 'ems@example.test',
                 'contact_number' => null,
@@ -104,7 +104,7 @@ class AdminSeeder extends Seeder
                 'title' => 'Head of CTSSO',
                 'signature_url' => null,
                 'signature_public_id' => null,
-                'role_id' => 2,
+                'role_id' => 3,
                 'school_id' => null,
                 'email' => 'ctsso@example.test',
                 'contact_number' => null,
@@ -119,7 +119,7 @@ class AdminSeeder extends Seeder
                 'title' => 'Educational Media Center Coordinator',
                 'signature_url' => null,
                 'signature_public_id' => null,
-                'role_id' => 2,
+                'role_id' => 3,
                 'school_id' => null,
                 'email' => 'emc@example.test',
                 'contact_number' => null,
@@ -134,7 +134,7 @@ class AdminSeeder extends Seeder
                 'title' => 'Head of Grounds and Upkeep Maintence Services',
                 'signature_url' => null,
                 'signature_public_id' => null,
-                'role_id' => 2,
+                'role_id' => 3,
                 'school_id' => null,
                 'email' => 'gum@example.test',
                 'contact_number' => null,
@@ -149,7 +149,7 @@ class AdminSeeder extends Seeder
                 'title' => 'Head of University Computer Service Center',
                 'signature_url' => null,
                 'signature_public_id' => null,
-                'role_id' => 2,
+                'role_id' => 3,
                 'school_id' => null,
                 'email' => 'ucsc@example.test',
                 'contact_number' => null,
@@ -167,7 +167,7 @@ class AdminSeeder extends Seeder
                 'title' => 'Schedule Coordinator or in charge of venue',
                 'signature_url' => null,
                 'signature_public_id' => null,
-                'role_id' => 2,
+                'role_id' => 3,
                 'school_id' => null,
                 'email' => 'signatory@example.test',
                 'contact_number' => null,
@@ -186,7 +186,7 @@ class AdminSeeder extends Seeder
                 'title' => 'Inventory Managing Staff',
                 'signature_url' => null,
                 'signature_public_id' => null,
-                'role_id' => 3,
+                'role_id' => 4,
                 'school_id' => null,
                 'email' => 'staff@example.test',
                 'contact_number' => null,

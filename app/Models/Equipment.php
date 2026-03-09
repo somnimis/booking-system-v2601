@@ -37,6 +37,11 @@ class Equipment extends Model
     {
         return $this->belongsTo(Department::class, 'department_id', 'department_id');
     }
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'department_equipment', 'equipment_id', 'department_id')
+            ->withTimestamps();
+    }
     public function items()
     {
         return $this->hasMany(EquipmentItem::class, 'equipment_id', 'equipment_id');
