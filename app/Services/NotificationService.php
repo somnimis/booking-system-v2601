@@ -199,7 +199,7 @@ class NotificationService
                         'schedule_display' => $scheduleDisplay,
                         'purpose' => $requisitionForm->purpose->purpose_name ?? 'N/A',
                         'participants' => $requisitionForm->num_participants,
-                        'admin_link' => "/admin/requisition/{$requisitionForm->request_id}",
+                        'admin_link' => url("/admin/requisition/{$requisitionForm->request_id}"),
                         'has_facilities' => !empty($groupedResources['facilities']),
                         'has_equipment' => !empty($groupedResources['equipment']),
                         'has_services' => !empty($groupedResources['services']),
