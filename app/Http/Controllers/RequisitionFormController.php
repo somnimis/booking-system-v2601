@@ -638,8 +638,20 @@ public function checkAvailability(Request $request)
     }
 
     // ----- Submit requisition form with overbooking protection ----- //
+// ----- Submit requisition form with overbooking protection ----- //
 public function submitForm(Request $request)
 {
+    // Log the start of submission with request data
+    \Log::info('=== SUBMIT FORM STARTED ===', [
+        'timestamp' => now()->toDateTimeString(),
+        'environment' => app()->environment(),
+        'all_day' => $request->all_day,
+        'has_items' => session()->has('selected_items'),
+        'items_count' => count(session('selected_items', [])),
+        'user_type' => $request->user_type,
+        'email' => $request->email
+    ]);
+
     // Build rules array dynamically
     $rules = [
         'user_type' => 'required|in:Internal,External',
@@ -672,15 +684,21 @@ public function submitForm(Request $request)
     if (!$request->all_day) {
         $rules['start_time'] = 'required|date_format:H:i';
         $rules['end_time'] = 'required|date_format:H:i|after:start_time';
+        \Log::info('All-day is false, requiring time fields');
     } else {
         $rules['start_time'] = 'nullable';
         $rules['end_time'] = 'nullable';
+        \Log::info('All-day is true, time fields optional');
     }
 
     $validator = Validator::make($request->all(), $rules);
 
     if ($validator->fails()) {
-        \Log::error('Validation failed', ['errors' => $validator->errors()->toArray()]);
+        \Log::error('=== VALIDATION FAILED ===', [
+            'errors' => $validator->errors()->toArray(),
+            'request_data' => $request->except(['formal_letter_url', 'facility_layout_url'])
+        ]);
+        
         return response()->json([
             'success' => false,
             'message' => 'Validation failed',
@@ -688,23 +706,51 @@ public function submitForm(Request $request)
         ], 422);
     }
 
+    \Log::info('Validation passed successfully');
+
     DB::beginTransaction();
 
     try {
         $selectedItems = session('selected_items', []);
+        \Log::info('Selected items from session', [
+            'count' => count($selectedItems),
+            'items_preview' => collect($selectedItems)->map(function($item) {
+                return [
+                    'type' => $item['type'] ?? 'unknown',
+                    'id' => $item['id'] ?? ($item[$item['type'].'_id'] ?? 'unknown'),
+                    'name' => $item['name'] ?? 'Unknown',
+                    'quantity' => $item['quantity'] ?? 1
+                ];
+            })->toArray()
+        ]);
+
         if (empty($selectedItems)) {
+            \Log::error('Cart empty - throwing exception');
             throw new \Exception('Your booking cart is empty. Add items before submitting.');
         }
 
         \Log::debug('Selected items structure', ['items' => $selectedItems]);
 
         $requestInfo = session('request_info');
-        $selectedItems = session('selected_items', []);
         $tempUploads = session('temp_uploads', []);
 
         if (!$request->first_name || !$request->last_name || !$request->email) {
+            \Log::error('User information missing', [
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email
+            ]);
             throw new \Exception('User information not found. Please fill in all required fields.');
         }
+
+        \Log::info('Checking availability before submission', [
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'all_day' => $request->all_day,
+            'items_count' => count($selectedItems)
+        ]);
 
         $conflictCheck = $this->checkAvailability(new Request([
             'start_date' => $request->start_date,
@@ -721,7 +767,16 @@ public function submitForm(Request $request)
         ]));
 
         $conflictData = $conflictCheck->getData();
+        \Log::info('Availability check result', [
+            'success' => $conflictData->success ?? false,
+            'available' => $conflictData->data->available ?? false,
+            'message' => $conflictData->message ?? 'No message'
+        ]);
+
         if (!$conflictData->success || !$conflictData->data->available) {
+            \Log::warning('Availability conflict detected', [
+                'message' => $conflictData->message ?? 'Time slot not available'
+            ]);
             throw new \Exception($conflictData->message ?? 'Time slot no longer available. Please choose another.');
         }
 
@@ -729,6 +784,7 @@ public function submitForm(Request $request)
         \Log::debug('Generated access code', ['code' => $accessCode]);
 
         // Create requisition form
+        \Log::info('Creating requisition form in database');
         $requisitionForm = RequisitionForm::create([
             'user_type' => $request->user_type,
             'first_name' => $request->first_name,
@@ -760,6 +816,11 @@ public function submitForm(Request $request)
             'tentative_fee' => session('fee_summary.total_fee', 0),
         ]);
 
+        \Log::info('Requisition form created', [
+            'request_id' => $requisitionForm->request_id,
+            'access_code' => $requisitionForm->access_code
+        ]);
+
         // Save selected items
         $facilityIds = [];
         $equipmentIds = [];
@@ -774,6 +835,9 @@ public function submitForm(Request $request)
                     'facility_id' => $facilityId,
                     'is_waived' => false,
                 ]);
+                
+                \Log::debug('Facility saved', ['facility_id' => $facilityId]);
+                
             } elseif ($item['type'] === 'equipment') {
                 $equipmentId = $item['equipment_id'] ?? $item['id'];
                 $equipmentIds[] = $equipmentId;
@@ -808,16 +872,32 @@ public function submitForm(Request $request)
                         ->count();
 
                     $availableCount -= $existingBookings;
+                    
+                    \Log::debug('Equipment availability (all-day)', [
+                        'equipment_id' => $equipmentId,
+                        'total_available' => $availableCount + $existingBookings,
+                        'existing_bookings' => $existingBookings,
+                        'available' => $availableCount,
+                        'requested' => $quantity
+                    ]);
                 } else {
                     // Regular time-based check
                     $availableCount = EquipmentItem::where('equipment_id', $equipmentId)
                         ->where('status_id', 1)
                         ->whereIn('condition_id', [1, 2, 3])
                         ->count();
+                        
+                    \Log::debug('Equipment availability (timed)', [
+                        'equipment_id' => $equipmentId,
+                        'available' => $availableCount,
+                        'requested' => $quantity
+                    ]);
                 }
 
                 if ($availableCount < $quantity) {
-                    throw new \Exception("Not enough available items for {$item['name']}. Requested: {$quantity}, Available: {$availableCount}");
+                    $errorMsg = "Not enough available items for {$item['name']}. Requested: {$quantity}, Available: {$availableCount}";
+                    \Log::error($errorMsg);
+                    throw new \Exception($errorMsg);
                 }
 
                 RequestedEquipment::create([
@@ -825,6 +905,11 @@ public function submitForm(Request $request)
                     'equipment_id' => $equipmentId,
                     'quantity' => $quantity,
                     'is_waived' => false,
+                ]);
+                
+                \Log::debug('Equipment saved', [
+                    'equipment_id' => $equipmentId,
+                    'quantity' => $quantity
                 ]);
             }
         }
@@ -839,22 +924,50 @@ public function submitForm(Request $request)
                     'service_id' => $serviceId,
                 ]);
             }
+            \Log::info('Extra services saved', ['count' => count($serviceIds)]);
         }
 
         // Send confirmation email to requester
-        $this->notificationService->sendConfirmationEmail($requisitionForm);
+        \Log::info('Attempting to send confirmation email', [
+            'to' => $requisitionForm->email,
+            'request_id' => $requisitionForm->request_id
+        ]);
+        
+        try {
+            $this->notificationService->sendConfirmationEmail($requisitionForm);
+            \Log::info('✓ Confirmation email sent successfully');
+        } catch (\Exception $e) {
+            \Log::error('✗ Confirmation email failed: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Don't throw - we still want to complete the submission
+        }
 
         // Clear session
         session()->forget(['request_info', 'selected_items', 'fee_summary', 'temp_uploads']);
+        \Log::info('Session cleared');
 
         DB::commit();
+        \Log::info('✓ Database transaction committed successfully');
 
-        // Send approval request emails to responsible admins (temporarily to your email)
+        // Send approval request emails to responsible admins
+        \Log::info('Attempting to send admin approval emails');
         try {
             $this->notificationService->sendAdminApprovalEmails($requisitionForm);
+            \Log::info('✓ Admin approval emails process completed');
         } catch (\Exception $e) {
-            \Log::error('Failed to send admin approval emails for request #' . $requisitionForm->request_id . ': ' . $e->getMessage());
+            \Log::error('✗ Failed to send admin approval emails: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Don't throw - we still want to return success to user
         }
+
+        \Log::info('=== SUBMIT FORM COMPLETED SUCCESSFULLY ===', [
+            'request_id' => $requisitionForm->request_id,
+            'email' => $requisitionForm->email
+        ]);
 
         return $this->jsonResponse(true, 'Requisition submitted successfully!', [
             'access_code' => $requisitionForm->access_code,
@@ -863,7 +976,14 @@ public function submitForm(Request $request)
 
     } catch (\Exception $e) {
         DB::rollBack();
-        \Log::error('Submission error: ' . $e->getMessage());
+        \Log::error('=== SUBMIT FORM FAILED ===', [
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString(),
+            'request_data' => $request->except(['formal_letter_url', 'facility_layout_url'])
+        ]);
+        
         return $this->jsonResponse(false, 'Submission failed: ' . $e->getMessage(), [], 500);
     }
 }

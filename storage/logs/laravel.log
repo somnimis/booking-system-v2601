@@ -6075,3 +6075,4 @@ Did you mean one of these?
 #36 C:/Users/ASUS/Documents/GitHub/booking-system-v2601/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('C://Users//ASUS//D...')
 #37 {main}
 "} 
+[2026-03-09 20:35:37] local.ERROR: Submission error: Time slot conflicts with existing booking(s).  
