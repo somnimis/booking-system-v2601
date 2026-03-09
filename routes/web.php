@@ -31,6 +31,9 @@ Route::middleware('web')->group(function () {
     */
     // Catalogs
     Route::view('/booking-catalog', 'public.booking-catalog');
+    Route::get('/csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+})->middleware('web');
 
     // About Pages
     Route::view('/about-equipment', 'public.about-equipment');
