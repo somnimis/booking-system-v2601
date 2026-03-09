@@ -35,11 +35,10 @@ use Illuminate\Support\Facades\Log;
 // ==================== PUBLIC ROUTES ==================== //
 
 Route::post('/log-client-error', function (Request $request) {
-    // Log the JSON payload into laravel.log
     Log::error('Client error:', $request->all());
-
     return response()->json(['status' => 'logged']);
-});
+})->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); 
+
 
 // ---------------- Authentication ---------------- //
 Route::post('/admin/login', [AdminAuthController::class, 'login'])->middleware('throttle:5,1');

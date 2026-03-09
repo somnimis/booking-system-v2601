@@ -1294,50 +1294,68 @@
             }
         }
 
-        async function fetchData(url, options = {}) {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-
-            try {
-                const response = await fetch(url, {
-                    ...options,
-                    headers: {
-                        "X-CSRF-TOKEN": csrfToken,
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                        ...(options.headers || {}),
-                    },
-                    credentials: "same-origin"
-                });
-
-                // Log non-200 responses
-                if (!response.ok) {
-                    console.error(`HTTP error! status: ${response.status}`, {
-                        url: url,
-                        status: response.status,
-                        statusText: response.statusText,
-                        headers: Object.fromEntries(response.headers.entries())
-                    });
-
-                    // Try to get error response body
-                    try {
-                        const errorData = await response.json();
-                        console.error('Error response body:', errorData);
-                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-                    } catch (e) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                }
-
-                return await response.json();
-            } catch (error) {
-                console.error('Fetch error:', {
-                    url: url,
-                    error: error.message,
-                    stack: error.stack
-                });
-                throw error;
-            }
+async function fetchData(url, options = {}) {
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    
+    if (!csrfToken) {
+        console.error('CSRF token not found in meta tag');
+        // Fallback: try to get from cookie
+        const cookieToken = getCookie('XSRF-TOKEN');
+        if (!cookieToken) {
+            throw new Error('CSRF token not available');
         }
+    }
+
+    try {
+        // Ensure headers are properly set
+        const headers = {
+            'X-CSRF-TOKEN': csrfToken,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            ...(options.headers || {})
+        };
+
+        // For Laravel Sanctum, include credentials
+        const response = await fetch(url, {
+            ...options,
+            headers: headers,
+            credentials: 'same-origin', // Important for cookies
+            mode: 'same-origin'
+        });
+
+        if (!response.ok) {
+            // Handle 419 CSRF mismatch specifically
+            if (response.status === 419) {
+                console.error('CSRF token mismatch - refreshing page');
+                // Refresh the page to get a new CSRF token
+                window.location.reload();
+                throw new Error('Session expired. Please try again.');
+            }
+
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Fetch error:', {
+            url: url,
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
+    }
+}
+
+// Helper function to get cookie value
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
 
         function showToast(message, type = "success", duration = 3000) {
             const toast = document.createElement("div");
@@ -2228,123 +2246,56 @@
         // FORM MANAGEMENT
         // ============================================
 
-        async function addToForm(id, type, quantity = 1) {
-            try {
-                // For equipment, validate quantity only
-                if (type === 'equipment') {
-                    const equipmentItem = allItems.find(item =>
-                        item.equipment_id === parseInt(id) && CATALOG_TYPE === 'equipment'
-                    );
+async function addToForm(id, type, quantity = 1) {
+    try {
+        const requestBody = {
+            type: type,
+            equipment_id: type === 'equipment' ? parseInt(id) : undefined,
+            facility_id: type === 'facility' ? parseInt(id) : undefined,
+            quantity: parseInt(quantity)
+        };
 
-                    if (equipmentItem) {
-                        const availableQty = equipmentItem.available_quantity || 0;
-                        if (quantity > availableQty) {
-                            throw new Error(`Cannot add ${quantity} items. Only ${availableQty} available.`);
-                        }
-                        if (quantity < 1) {
-                            throw new Error("Quantity must be at least 1");
-                        }
-                    }
-                }
+        const response = await fetchData("/api/requisition/add-item", {
+            method: "POST",
+            body: JSON.stringify(requestBody)
+        });
 
-                const requestBody = {
-                    type: type,
-                    equipment_id: type === 'equipment' ? parseInt(id) : undefined,
-                    facility_id: type === 'facility' ? parseInt(id) : undefined,
-                    quantity: parseInt(quantity)
-                };
-
-                // Log the request for debugging
-                console.debug('Adding item to form:', {
-                    url: "/api/requisition/add-item",
-                    method: "POST",
-                    body: requestBody
-                });
-
-                const response = await fetchData("/api/requisition/add-item", {
-                    method: "POST",
-                    body: JSON.stringify(requestBody)
-                });
-
-                // Check for HTTP error status in fetchData response
-                if (!response) {
-                    throw new Error("Empty response from server");
-                }
-
-                if (!response.success) {
-                    // Log detailed error information
-                    console.error('Server returned error:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        response: response,
-                        requestBody: requestBody,
-                        timestamp: new Date().toISOString()
-                    });
-
-                    // Throw with specific error message if available
-                    throw new Error(response.message || response.error || "Failed to add item");
-                }
-
-                selectedItems = response.data.selected_items || [];
-
-                const itemType = type.charAt(0).toUpperCase() + type.slice(1);
-                showToast(`${itemType} added to form`);
-
-                await updateAllUI();
-                localStorage.setItem('formUpdated', Date.now().toString());
-            } catch (error) {
-                // Enhanced error logging for 500 errors
-                console.error("=== ADD ITEM ERROR ===");
-                console.error("Error type:", error.name);
-                console.error("Error message:", error.message);
-                console.error("Error stack:", error.stack);
-                console.error("Request details:", {
-                    id: id,
-                    type: type,
-                    quantity: quantity,
-                    url: "/api/requisition/add-item",
-                    method: "POST",
-                    timestamp: new Date().toISOString(),
-                    userAgent: navigator.userAgent
-                });
-
-                // Check if it's a network error vs server error
-                if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch')) {
-                    console.error("Network error detected - possible CORS, connectivity, or server down");
-                    showToast("Cannot connect to server. Please check your internet connection.", "error");
-                } else if (error.message.includes('500')) {
-                    console.error("Server 500 Internal Error - check Laravel logs");
-                    showToast("Server error occurred. Our team has been notified.", "error");
-                } else {
-                    showToast(error.message || "Error adding item to form", "error");
-                }
-
-                // Log to server-side if you have an endpoint for client-side logs
-                try {
-                    await fetch('/api/log-client-error', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            error: error.message,
-                            stack: error.stack,
-                            context: {
-                                action: 'addToForm',
-                                id: id,
-                                type: type,
-                                quantity: quantity,
-                                url: window.location.href
-                            },
-                            timestamp: new Date().toISOString()
-                        })
-                    });
-                } catch (logError) {
-                    // Silently fail if logging endpoint doesn't exist
-                    console.debug('Client-side logging endpoint not available');
-                }
-            }
+        if (!response || !response.success) {
+            throw new Error(response?.message || "Failed to add item");
         }
+
+        selectedItems = response.data?.selected_items || [];
+        showToast(`${type} added to form`, 'success');
+        await updateAllUI();
+        localStorage.setItem('formUpdated', Date.now().toString());
+        
+    } catch (error) {
+        console.error("Add to form error:", error);
+        
+        // Handle specific error types
+        if (error.message.includes('419')) {
+            showToast('Session expired. Please refresh the page.', 'error');
+            // Optionally refresh CSRF token
+            await refreshCsrfToken();
+        } else {
+            showToast(error.message || "Error adding item to form", "error");
+        }
+    }
+}
+
+async function refreshCsrfToken() {
+    try {
+        const response = await fetch('/csrf-token', {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+        document.querySelector('meta[name="csrf-token"]').content = data.csrf_token;
+    } catch (error) {
+        console.error('Failed to refresh CSRF token:', error);
+    }
+}
+
         async function removeFromForm(id, type) {
             try {
                 const requestBody = {
