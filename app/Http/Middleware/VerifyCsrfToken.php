@@ -15,7 +15,9 @@ class VerifyCsrfToken extends Middleware
     // Add your API routes here to bypass CSRF for local testing
     // Example: 'api/requisition/add-item',
     protected $except = [
-         'api/*', // Exclude all API routes from CSRF verification
+        'api/requisition/add-item',
+        'api/requisition/remove-item',
+        'api/*', // Exclude all API routes from CSRF verification
         'requisition/*',
         'requester/*',
         'feedback',

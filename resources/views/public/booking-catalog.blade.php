@@ -1296,19 +1296,21 @@
 
 async function fetchData(url, options = {}) {
     // Get CSRF token from meta tag
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    let csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    
+    // If not in meta tag, try to get from cookie
+    if (!csrfToken) {
+        csrfToken = getCookie('XSRF-TOKEN');
+    }
     
     if (!csrfToken) {
-        console.error('CSRF token not found in meta tag');
-        // Fallback: try to get from cookie
-        const cookieToken = getCookie('XSRF-TOKEN');
-        if (!cookieToken) {
-            throw new Error('CSRF token not available');
-        }
+        console.error('CSRF token not available');
+        // Optionally refresh the page or fetch a new token
+        await refreshCsrfToken();
+        csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
     }
 
     try {
-        // Ensure headers are properly set
         const headers = {
             'X-CSRF-TOKEN': csrfToken,
             'Content-Type': 'application/json',
@@ -1317,7 +1319,6 @@ async function fetchData(url, options = {}) {
             ...(options.headers || {})
         };
 
-        // For Laravel Sanctum, include credentials
         const response = await fetch(url, {
             ...options,
             headers: headers,
@@ -1325,15 +1326,14 @@ async function fetchData(url, options = {}) {
             mode: 'same-origin'
         });
 
-        if (!response.ok) {
-            // Handle 419 CSRF mismatch specifically
-            if (response.status === 419) {
-                console.error('CSRF token mismatch - refreshing page');
-                // Refresh the page to get a new CSRF token
-                window.location.reload();
-                throw new Error('Session expired. Please try again.');
-            }
+        if (response.status === 419) {
+            console.error('CSRF token mismatch - attempting to refresh');
+            await refreshCsrfToken();
+            // Retry the request with new token
+            return fetchData(url, options);
+        }
 
+        if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
@@ -2287,13 +2287,28 @@ async function refreshCsrfToken() {
     try {
         const response = await fetch('/csrf-token', {
             method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
             credentials: 'same-origin'
         });
-        const data = await response.json();
-        document.querySelector('meta[name="csrf-token"]').content = data.csrf_token;
+        
+        if (response.ok) {
+            const data = await response.json();
+            // Update meta tag
+            const metaTag = document.querySelector('meta[name="csrf-token"]');
+            if (metaTag) {
+                metaTag.content = data.csrf_token;
+            }
+            // Update cookie if needed
+            document.cookie = `XSRF-TOKEN=${data.csrf_token}; path=/`;
+            return data.csrf_token;
+        }
     } catch (error) {
         console.error('Failed to refresh CSRF token:', error);
     }
+    return null;
 }
 
         async function removeFromForm(id, type) {
