@@ -69,14 +69,15 @@
                     </div>
                 </div>
             </div>
-            {{-- Ongoing Transactions Card --}}
+            {{-- To Return Card --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-0 fw-semibold">
-                            Ongoing Transactions
+                            To Return
+                            <span class="badge bg-warning ms-2" id="toReturnCount">0</span>
                         </h5>
-                        <small class="text-muted">Currently active equipment movements</small>
+                        <small class="text-muted">Items currently checked out</small>
                     </div>
                     <button class="btn btn-primary" id="beginTransactionBtn" data-bs-toggle="modal"
                         data-bs-target="#beginTransactionModal">
@@ -116,6 +117,191 @@
                         <button class="btn btn-light btn-sm px-4" id="loadMoreBtn" onclick="loadMoreTransactions()">
                             <i class="fa-regular fa-arrow-down me-2"></i>
                             Load More Transactions
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {{-- To Release Container --}}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <div>
+                        <h5 class="mb-0 fw-semibold">
+                            To Release
+                            <span class="badge bg-primary ms-2" id="toReleaseCount">0</span>
+                        </h5>
+                        <small class="text-muted">Requested equipment waiting for release</small>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {{-- Loading State --}}
+                    <div id="toReleaseLoading" class="text-center py-5" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading requested equipment...</p>
+                    </div>
+
+                    {{-- Error State --}}
+                    <div id="toReleaseError" class="text-center py-5" style="display: none;">
+                        <i class="fa-solid fa-circle-exclamation fa-3x text-danger mb-3"></i>
+                        <p class="text-muted">Failed to load requested equipment. Please try again.</p>
+                        <button class="btn btn-outline-primary btn-sm" onclick="loadToRelease()">
+                            <i class="fa-solid fa-rotate me-2"></i>Retry
+                        </button>
+                    </div>
+
+                    {{-- Empty State --}}
+                    <div id="toReleaseEmpty" class="text-center py-5" style="display: none;">
+                        <i class="fa-solid fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No pending equipment requests to release.</p>
+                    </div>
+
+                    {{-- To Release List --}}
+                    <div class="table-responsive" id="toReleaseList" style="display: none;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Requester</th>
+                                    <th>Equipment</th>
+                                    <th class="text-center">Qty</th>
+                                    <th>Available</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="toReleaseTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    {{-- Load More Button --}}
+                    <div id="toReleaseLoadMoreContainer" class="p-3 text-center border-top" style="display: none;">
+                        <button class="btn btn-light btn-sm px-4" id="toReleaseLoadMoreBtn" onclick="loadMoreToRelease()">
+                            <i class="fa-regular fa-arrow-down me-2"></i>
+                            Load More
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Release Item Modal --}}
+        <div class="modal fade" id="releaseItemModal" tabindex="-1" aria-labelledby="releaseItemModalLabel"
+            aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="releaseItemModalLabel">
+                            <i class="fa-solid fa-hand-back-point-up me-2" style="color: var(--cpu-primary);"></i>
+                            Release Equipment
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{-- Loading State --}}
+                        <div id="releaseModalLoading" class="text-center py-5" style="display: none;">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted">Loading available items...</p>
+                        </div>
+
+                        {{-- Request Info Card --}}
+                        <div id="releaseRequestInfo" class="card bg-light border-0 mb-4" style="display: none;">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block">Requester</small>
+                                        <span id="releaseRequesterName" class="fw-semibold"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block">Organization</small>
+                                        <span id="releaseOrganization"></span>
+                                    </div>
+                                </div>
+                                <hr class="my-2">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block">Equipment Requested</small>
+                                        <span id="releaseEquipmentName" class="fw-semibold"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block">Quantity Requested</small>
+                                        <span id="releaseQuantityRequested" class="badge bg-primary"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Available Items List --}}
+                        <div id="releaseItemsContainer" style="display: none;">
+                            <h6 class="fw-semibold mb-3">Select Item to Release</h6>
+                            <div class="row g-3" id="availableItemsGrid"></div>
+                        </div>
+
+                        {{-- No Items Available --}}
+                        <div id="noItemsAvailable" class="text-center py-5" style="display: none;">
+                            <i class="fa-solid fa-box-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No available items found for this equipment type.</p>
+                            <p class="small text-muted">Please check equipment inventory or mark items as available.</p>
+                        </div>
+
+                        {{-- Release Form (shown after item selection) --}}
+                        <div id="releaseFormContainer" style="display: none;">
+                            <h6 class="fw-semibold mb-3">Release Details</h6>
+
+                            {{-- Selected Item Summary --}}
+                            <div class="alert alert-info d-flex align-items-center mb-3" id="selectedItemSummary">
+                                <i class="fa-solid fa-circle-check me-2"></i>
+                                <span id="selectedItemName"></span>
+                                <small class="text-muted ms-2" id="selectedItemBarcode"></small>
+                            </div>
+
+                            {{-- Destination --}}
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">
+                                    <i class="fa-regular fa-building me-1"></i>
+                                    Destination
+                                </label>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <select class="form-select" id="releaseFacilitySelect">
+                                            <option value="">Select a facility...</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" id="releaseManualDestination"
+                                            placeholder="Or enter manual location...">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Condition --}}
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">
+                                    <i class="fa-regular fa-clipboard me-1"></i>
+                                    Equipment Condition
+                                </label>
+                                <div class="d-flex gap-2 flex-wrap" id="releaseConditionRadios">
+                                    <!-- Will be populated dynamically -->
+                                </div>
+                            </div>
+
+                            {{-- Release Notes --}}
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">
+                                    <i class="fa-regular fa-note-sticky me-1"></i>
+                                    Release Notes
+                                </label>
+                                <textarea class="form-control" id="releaseModalNotes" rows="2"
+                                    placeholder="Add any notes about the release..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="confirmReleaseBtn" style="display: none;"
+                            onclick="confirmRelease()">
+                            <i class="fa-regular fa-circle-check me-2"></i>
+                            Confirm Release
                         </button>
                     </div>
                 </div>
@@ -424,15 +610,15 @@
         let scannerRunning = false;
         const SYSTEM_PREFIX = "EQ-";
 
-// Update DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function () {
-    loadOngoingTransactions();
-    loadLookupData(); // This now loads both conditions AND availability statuses
-    loadFacilities();
-    loadRequisitions();
-    setupEventListeners();
-    setupScannerControls();
-});
+        // Update DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function () {
+            loadOngoingTransactions();
+            loadLookupData(); // This now loads both conditions AND availability statuses
+            loadFacilities();
+            loadRequisitions();
+            setupEventListeners();
+            setupScannerControls();
+        });
         // Load ongoing transactions
         function loadOngoingTransactions(page = 1) {
             const loadingEl = document.getElementById('transactionsLoading');
@@ -498,62 +684,62 @@ document.addEventListener('DOMContentLoaded', function () {
 
             transactions.forEach(transaction => {
                 const itemHtml = `
-                                                <div class="list-group-item p-3">
-                                                    <div class="row align-items-center">
-                                                        <div class="col-lg-6">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="rounded bg-light d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; overflow: hidden;">
-                                                                    ${transaction.item_image ?
+                                                        <div class="list-group-item p-3">
+                                                            <div class="row align-items-center">
+                                                                <div class="col-lg-6">
+                                                                    <div class="d-flex align-items-center">
+                                                                        <div class="rounded bg-light d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; overflow: hidden;">
+                                                                            ${transaction.item_image ?
                         `<img src="${transaction.item_image}" alt="${transaction.item_name}" style="width: 48px; height: 48px; object-fit: cover;">` :
                         `<i class="fa-solid fa-laptop fa-xl" style="color: var(--cpu-primary); opacity: 0.5;"></i>`
                     }
-                                                                </div>
-                                                                <div>
-                                                                    <h6 class="mb-1 fw-semibold">${transaction.item_name}</h6>
-                                                                    <div class="d-flex flex-wrap gap-2 small">
-                                                                        <span class="text-muted">
-                                                                            <i class="fa-regular fa-file-lines me-1"></i>
-                                                                            Request #${transaction.request_id || 'N/A'}
-                                                                        </span>
-                                                                        <span class="text-muted">
-                                                                            <i class="fa-regular fa-building me-1"></i>
-                                                                            ${transaction.destination}
-                                                                        </span>
-                                                                        ${transaction.requester !== 'N/A' ?
+                                                                        </div>
+                                                                        <div>
+                                                                            <h6 class="mb-1 fw-semibold">${transaction.item_name}</h6>
+                                                                            <div class="d-flex flex-wrap gap-2 small">
+                                                                                <span class="text-muted">
+                                                                                    <i class="fa-regular fa-file-lines me-1"></i>
+                                                                                    Request #${transaction.request_id || 'N/A'}
+                                                                                </span>
+                                                                                <span class="text-muted">
+                                                                                    <i class="fa-regular fa-building me-1"></i>
+                                                                                    ${transaction.destination}
+                                                                                </span>
+                                                                                ${transaction.requester !== 'N/A' ?
                         `<span class="text-muted">
-                                                                                <i class="fa-regular fa-user me-1"></i>
-                                                                                ${transaction.requester}
+                                                                                        <i class="fa-regular fa-user me-1"></i>
+                                                                                        ${transaction.requester}
+                                                                                    </span>` : ''
+                    }
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-lg-6">
+                                                                    <div class="d-flex flex-wrap align-items-center justify-content-lg-end gap-3">
+                                                                        <span class="badge px-3 py-2" style="background-color: ${transaction.condition.color_code}20; color: ${transaction.condition.color_code};">
+                                                                            <i class="fa-regular fa-circle-check me-1"></i>
+                                                                            ${transaction.condition.name}
+                                                                        </span>
+                                                                        <span class="badge px-3 py-2" style="background-color: ${getStatusColor(transaction.status.type)}20; color: ${getStatusColor(transaction.status.type)};">
+                                                                            <i class="fa-regular ${getStatusIcon(transaction.status.type)} me-1"></i>
+                                                                            ${transaction.status.name}
+                                                                        </span>
+                                                                        ${transaction.is_late ?
+                        `<span class="badge bg-danger px-3 py-2">
+                                                                                <i class="fa-regular fa-clock me-1"></i>
+                                                                                Overdue
                                                                             </span>` : ''
                     }
+                                                                        <small class="text-muted">
+                                                                            <i class="fa-regular fa-calendar me-1"></i>
+                                                                            ${transaction.released_at || transaction.returned_at || 'Just now'}
+                                                                        </small>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div class="col-lg-6">
-                                                            <div class="d-flex flex-wrap align-items-center justify-content-lg-end gap-3">
-                                                                <span class="badge px-3 py-2" style="background-color: ${transaction.condition.color_code}20; color: ${transaction.condition.color_code};">
-                                                                    <i class="fa-regular fa-circle-check me-1"></i>
-                                                                    ${transaction.condition.name}
-                                                                </span>
-                                                                <span class="badge px-3 py-2" style="background-color: ${getStatusColor(transaction.status.type)}20; color: ${getStatusColor(transaction.status.type)};">
-                                                                    <i class="fa-regular ${getStatusIcon(transaction.status.type)} me-1"></i>
-                                                                    ${transaction.status.name}
-                                                                </span>
-                                                                ${transaction.is_late ?
-                        `<span class="badge bg-danger px-3 py-2">
-                                                                        <i class="fa-regular fa-clock me-1"></i>
-                                                                        Overdue
-                                                                    </span>` : ''
-                    }
-                                                                <small class="text-muted">
-                                                                    <i class="fa-regular fa-calendar me-1"></i>
-                                                                    ${transaction.released_at || transaction.returned_at || 'Just now'}
-                                                                </small>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            `;
+                                                    `;
                 listEl.innerHTML += itemHtml;
             });
         }
@@ -571,14 +757,14 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('pendingReturnsCount').textContent = pendingReturns;
         }
 
-// Update your loadLookupData function
-function loadLookupData() {
-    // Load conditions
-    loadConditions();
-    
-    // Load availability statuses
-    loadAvailabilityStatuses();
-}
+        // Update your loadLookupData function
+        function loadLookupData() {
+            // Load conditions
+            loadConditions();
+
+            // Load availability statuses
+            loadAvailabilityStatuses();
+        }
 
         // Load facilities for dropdown
         function loadFacilities() {
@@ -732,20 +918,20 @@ function loadLookupData() {
             const radiosHtml = conditions.map((condition, index) => {
                 const color = condition.color_code || conditionColors[condition.condition_id] || '#6c757d';
                 return `
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" 
-                            name="condition_${condition.condition_id}" 
-                            id="condition_${condition.condition_id}" 
-                            value="${condition.condition_id}" 
-                            ${index === 0 ? 'checked' : ''}>
-                        <label class="form-check-label" for="condition_${condition.condition_id}">
-                            <span class="badge px-3 py-2" style="background-color: ${color}20; color: ${color};">
-                                <i class="fa-regular fa-circle-check me-1"></i>
-                                ${condition.condition_name}
-                            </span>
-                        </label>
-                    </div>
-                `;
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" 
+                                    name="condition_${condition.condition_id}" 
+                                    id="condition_${condition.condition_id}" 
+                                    value="${condition.condition_id}" 
+                                    ${index === 0 ? 'checked' : ''}>
+                                <label class="form-check-label" for="condition_${condition.condition_id}">
+                                    <span class="badge px-3 py-2" style="background-color: ${color}20; color: ${color};">
+                                        <i class="fa-regular fa-circle-check me-1"></i>
+                                        ${condition.condition_name}
+                                    </span>
+                                </label>
+                            </div>
+                        `;
             }).join('');
 
             releaseContainer.innerHTML = radiosHtml.replace(/name="[^"]*"/g, 'name="releaseCondition"');
@@ -1338,6 +1524,406 @@ function loadLookupData() {
             };
             return icons[type] || 'fa-circle';
         }
+
+        // ========== TO RELEASE FUNCTIONS ==========
+        let toReleasePage = 1;
+        let toReleaseHasMore = false;
+        let currentReleaseRequest = null;
+        let selectedReleaseItem = null;
+
+        function loadToRelease(page = 1) {
+            const loadingEl = document.getElementById('toReleaseLoading');
+            const errorEl = document.getElementById('toReleaseError');
+            const emptyEl = document.getElementById('toReleaseEmpty');
+            const listEl = document.getElementById('toReleaseList');
+            const loadMoreContainer = document.getElementById('toReleaseLoadMoreContainer');
+
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            emptyEl.style.display = 'none';
+            listEl.style.display = 'none';
+            loadMoreContainer.style.display = 'none';
+
+            fetch(`/api/admin/equipment/to-release?page=${page}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    loadingEl.style.display = 'none';
+
+                    if (data.success && data.data && data.data.length > 0) {
+                        if (page === 1) {
+                            document.getElementById('toReleaseTableBody').innerHTML = '';
+                        }
+                        renderToReleaseRows(data.data);
+                        document.getElementById('toReleaseCount').textContent = data.meta.total || data.data.length;
+
+                        toReleaseHasMore = data.meta.current_page < data.meta.last_page;
+                        toReleasePage = data.meta.current_page;
+
+                        listEl.style.display = 'block';
+                        if (toReleaseHasMore) {
+                            loadMoreContainer.style.display = 'block';
+                        }
+                    } else {
+                        emptyEl.style.display = 'block';
+                        document.getElementById('toReleaseCount').textContent = '0';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading to release:', error);
+                    loadingEl.style.display = 'none';
+                    errorEl.style.display = 'block';
+                });
+        }
+
+        function loadMoreToRelease() {
+            if (toReleaseHasMore) {
+                loadToRelease(toReleasePage + 1);
+            }
+        }
+
+        function renderToReleaseRows(items) {
+            const tbody = document.getElementById('toReleaseTableBody');
+
+            items.forEach(item => {
+                const row = document.createElement('tr');
+
+                const canReleaseClass = item.can_release ? '' : 'text-muted';
+                const releaseButton = item.can_release
+                    ? `<button class="btn btn-sm btn-primary" onclick="openReleaseModal(${item.requested_equipment_id}, ${item.equipment_id}, '${item.equipment_name}', ${item.quantity_requested}, '${item.requester_name}', '${item.organization_name}')">
+                    <i class="fa-solid fa-hand-back-point-up me-1"></i>Release
+                   </button>`
+                    : `<button class="btn btn-sm btn-secondary" disabled title="Not enough available items (${item.available_items}/${item.quantity_requested})">
+                    <i class="fa-solid fa-ban me-1"></i>Insufficient
+                   </button>`;
+
+                row.innerHTML = `
+                <td>
+                    <div class="d-flex flex-column">
+                        <span class="fw-semibold">${item.requester_name}</span>
+                        <small class="text-muted">${item.organization_name}</small>
+                    </div>
+                </td>
+                <td>
+                    <span class="fw-semibold">${item.equipment_name}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-primary">${item.quantity_requested}</span>
+                </td>
+                <td class="${canReleaseClass}">
+                    ${item.available_items} available
+                    ${!item.can_release ? `<br><small class="text-danger">Need ${item.quantity_requested - item.available_items} more</small>` : ''}
+                </td>
+                <td>
+                    <span class="badge px-3 py-2" style="background-color: #6c757d20; color: #6c757d;">
+                        ${item.status}
+                    </span>
+                </td>
+                <td class="text-end">
+                    ${releaseButton}
+                </td>
+            `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // ========== RELEASE MODAL FUNCTIONS ==========
+        function openReleaseModal(requestedEquipmentId, equipmentId, equipmentName, quantityRequested, requesterName, organization) {
+            currentReleaseRequest = {
+                requested_equipment_id: requestedEquipmentId,
+                equipment_id: equipmentId,
+                equipment_name: equipmentName,
+                quantity: quantityRequested,
+                requester: requesterName,
+                organization: organization
+            };
+
+            // Reset modal state
+            document.getElementById('releaseRequestInfo').style.display = 'block';
+            document.getElementById('releaseItemsContainer').style.display = 'none';
+            document.getElementById('noItemsAvailable').style.display = 'none';
+            document.getElementById('releaseFormContainer').style.display = 'none';
+            document.getElementById('confirmReleaseBtn').style.display = 'none';
+
+            // Set request info
+            document.getElementById('releaseRequesterName').textContent = requesterName;
+            document.getElementById('releaseOrganization').textContent = organization;
+            document.getElementById('releaseEquipmentName').textContent = equipmentName;
+            document.getElementById('releaseQuantityRequested').textContent = quantityRequested;
+
+            // Load available items
+            loadAvailableItems(equipmentId);
+
+            // Show modal
+            new bootstrap.Modal(document.getElementById('releaseItemModal')).show();
+        }
+
+        function loadAvailableItems(equipmentId) {
+            const modalLoading = document.getElementById('releaseModalLoading');
+            const itemsContainer = document.getElementById('releaseItemsContainer');
+            const noItems = document.getElementById('noItemsAvailable');
+
+            modalLoading.style.display = 'block';
+            itemsContainer.style.display = 'none';
+            noItems.style.display = 'none';
+
+            fetch(`/api/admin/equipment/available-items/${equipmentId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    modalLoading.style.display = 'none';
+
+                    if (data.success && data.data && data.data.length > 0) {
+                        renderAvailableItems(data.data);
+                        itemsContainer.style.display = 'block';
+                    } else {
+                        noItems.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading available items:', error);
+                    modalLoading.style.display = 'none';
+                    noItems.style.display = 'block';
+                    noItems.innerHTML = '<i class="fa-solid fa-circle-exclamation fa-3x text-danger mb-3"></i><p>Failed to load available items</p>';
+                });
+        }
+
+        function renderAvailableItems(items) {
+            const grid = document.getElementById('availableItemsGrid');
+            grid.innerHTML = '';
+
+            items.forEach(item => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+
+                col.innerHTML = `
+                <div class="card item-select-card" onclick="selectItem(${item.item_id}, '${item.item_name}', '${item.barcode_number || 'No barcode'}')" style="cursor: pointer;">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded bg-light p-2 me-3" style="width: 48px; height: 48px; overflow: hidden;">
+                                ${item.image_url && item.image_url !== 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1750895337/oxvsxogzu9koqhctnf7s.webp'
+                        ? `<img src="${item.image_url}" alt="${item.item_name}" style="width: 48px; height: 48px; object-fit: cover;">`
+                        : `<i class="fa-solid fa-laptop fa-2x text-muted" style="opacity: 0.5;"></i>`}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${item.item_name}</h6>
+                                <small class="text-muted d-block">${item.barcode_number || 'No barcode'}</small>
+                                <div class="mt-1">
+                                    <span class="badge px-2 py-1" style="background-color: ${item.condition_color}20; color: ${item.condition_color};">
+                                        ${item.condition_name}
+                                    </span>
+                                    <span class="badge px-2 py-1" style="background-color: ${item.status_color}20; color: ${item.status_color};">
+                                        ${item.status_name}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+                grid.appendChild(col);
+            });
+
+            // Add hover effect CSS if not already present
+            if (!document.getElementById('itemSelectCardStyle')) {
+                const style = document.createElement('style');
+                style.id = 'itemSelectCardStyle';
+                style.textContent = `
+                .item-select-card {
+                    transition: all 0.2s ease;
+                    border: 2px solid transparent;
+                }
+                .item-select-card:hover {
+                    border-color: var(--cpu-primary);
+                    background-color: rgba(19, 91, 163, 0.02);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+                .item-select-card.selected {
+                    border-color: var(--cpu-primary);
+                    background-color: rgba(19, 91, 163, 0.05);
+                }
+            `;
+                document.head.appendChild(style);
+            }
+        }
+
+        function selectItem(itemId, itemName, barcode) {
+            // Remove selected class from all cards
+            document.querySelectorAll('.item-select-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selected class to clicked card
+            event.currentTarget.classList.add('selected');
+
+            // Store selected item
+            selectedReleaseItem = {
+                item_id: itemId,
+                item_name: itemName,
+                barcode: barcode
+            };
+
+            // Show release form
+            document.getElementById('releaseItemsContainer').style.display = 'none';
+            document.getElementById('releaseFormContainer').style.display = 'block';
+            document.getElementById('confirmReleaseBtn').style.display = 'inline-block';
+
+            // Update selected item summary
+            document.getElementById('selectedItemName').textContent = itemName;
+            document.getElementById('selectedItemBarcode').textContent = barcode;
+
+            // Load facilities if not already loaded
+            if (document.getElementById('releaseFacilitySelect').options.length <= 1) {
+                loadFacilitiesForRelease();
+            }
+        }
+
+        function loadFacilitiesForRelease() {
+            fetch('/api/facilities/dropdown', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const facilitySelect = document.getElementById('releaseFacilitySelect');
+
+                    if (data.success && data.data && data.data.length > 0) {
+                        facilitySelect.innerHTML = '<option value="">Select a facility...</option>' +
+                            data.data.map(f => `<option value="${f.facility_id}">${f.facility_name}</option>`).join('');
+                    }
+                })
+                .catch(error => console.error('Error loading facilities:', error));
+        }
+
+        function confirmRelease() {
+            if (!selectedReleaseItem) {
+                alert('Please select an item to release');
+                return;
+            }
+
+            const conditionRadio = document.querySelector('input[name="releaseModalCondition"]:checked');
+            if (!conditionRadio) {
+                alert('Please select equipment condition');
+                return;
+            }
+
+            const facilityId = document.getElementById('releaseFacilitySelect').value;
+            const manualDestination = document.getElementById('releaseManualDestination').value;
+            const notes = document.getElementById('releaseModalNotes').value;
+
+            // Validate destination
+            if (!facilityId && !manualDestination) {
+                alert('Please select a destination or enter a manual location');
+                return;
+            }
+
+            const payload = {
+                requested_equipment_id: currentReleaseRequest.requested_equipment_id,
+                item_id: selectedReleaseItem.item_id,
+                condition_id: conditionRadio.value,
+                facility_id: facilityId || null,
+                destination_name: manualDestination || null,
+                release_notes: notes || null
+            };
+
+            // Show loading
+            document.getElementById('releaseModalLoading').style.display = 'block';
+            document.getElementById('releaseRequestInfo').style.display = 'none';
+            document.getElementById('releaseFormContainer').style.display = 'none';
+            document.getElementById('confirmReleaseBtn').style.display = 'none';
+
+            fetch('/api/admin/equipment/release-item', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('releaseModalLoading').style.display = 'none';
+
+                    if (data.success) {
+                        // Close modal
+                        bootstrap.Modal.getInstance(document.getElementById('releaseItemModal')).hide();
+
+                        // Show success message
+                        showToast('success', data.message || 'Item released successfully');
+
+                        // Refresh both containers
+                        loadToRelease();
+                        loadOngoingTransactions(); // This will now load To Return
+
+                        // Reset
+                        selectedReleaseItem = null;
+                        currentReleaseRequest = null;
+                    } else {
+                        alert(data.message || 'Failed to release item');
+                        // Show the form again
+                        document.getElementById('releaseRequestInfo').style.display = 'block';
+                        document.getElementById('releaseFormContainer').style.display = 'block';
+                        document.getElementById('confirmReleaseBtn').style.display = 'inline-block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error releasing item:', error);
+                    document.getElementById('releaseModalLoading').style.display = 'none';
+                    alert('Failed to release item. Please try again.');
+
+                    // Show the form again
+                    document.getElementById('releaseRequestInfo').style.display = 'block';
+                    document.getElementById('releaseFormContainer').style.display = 'block';
+                    document.getElementById('confirmReleaseBtn').style.display = 'inline-block';
+                });
+        }
+
+        // Update the DOMContentLoaded event listener
+        document.addEventListener('DOMContentLoaded', function () {
+            loadOngoingTransactions(); // This will now load To Return
+            loadToRelease(); // Load To Release
+            loadLookupData();
+            loadFacilities();
+            loadRequisitions();
+            setupEventListeners();
+            setupScannerControls();
+
+            // Add event listeners for release modal
+            const facilitySelect = document.getElementById('releaseFacilitySelect');
+            const manualDestination = document.getElementById('releaseManualDestination');
+
+            if (facilitySelect && manualDestination) {
+                facilitySelect.addEventListener('change', function () {
+                    if (this.value) {
+                        manualDestination.value = '';
+                        manualDestination.disabled = true;
+                    } else {
+                        manualDestination.disabled = false;
+                    }
+                });
+
+                manualDestination.addEventListener('input', function () {
+                    if (this.value) {
+                        facilitySelect.value = '';
+                    }
+                });
+            }
+        });
     </script>
 
     <style>

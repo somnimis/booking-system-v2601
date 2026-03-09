@@ -375,4 +375,11 @@ private function getTransactionStatusName(EquipmentTransaction $transaction): st
     
     return 'Pending';
 }
+
+
+
+
+
+
+
 }

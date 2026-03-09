@@ -12,19 +12,19 @@ use Illuminate\Http\JsonResponse;
 
 class FacilityController extends Controller
 {
-// ----- Index - Show all facilities ----- //
+    // ----- Index - Show all facilities ----- //
 
-public function getFacilitiesForDropdown()
-{
-    $facilities = Facility::select('facility_id', 'facility_name')
-        ->orderBy('facility_name')
-        ->get();
+    public function getFacilitiesForDropdown()
+    {
+        $facilities = Facility::select('facility_id', 'facility_name')
+            ->orderBy('facility_name')
+            ->get();
 
-    return response()->json([
-        'success' => true,
-        'data' => $facilities
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'data' => $facilities
+        ]);
+    }
 
     public function publicIndex(): JsonResponse
     {
@@ -95,92 +95,98 @@ public function getFacilitiesForDropdown()
     }
 
     // ----- Create - Show add facility form ----- //
-public function create()
-{
-    // Just get departments and statuses first
-    $departments = Department::all();
-    $statuses = AvailabilityStatus::all();
-    
-    // Return with empty categories for now
-    $categories = [];
-    $subcategories = [];
-    
-    return view('admin.add-facility', compact('categories', 'subcategories', 'departments', 'statuses'));
-}
+    public function create()
+    {
+        // Just get departments and statuses first
+        $departments = Department::all();
+        $statuses = AvailabilityStatus::all();
+
+        // Return with empty categories for now
+        $categories = [];
+        $subcategories = [];
+
+        return view('admin.add-facility', compact('categories', 'subcategories', 'departments', 'statuses'));
+    }
 
     // ----- Store - Save new facility ----- //
-public function store(Request $request)
-{
-    try {
-        $data = $request->validate([
-            'facility_name' => 'required|string|max:50',
-            'description' => 'nullable|string|max:250',
-            'location_note' => 'nullable|string|max:200',
-            'capacity' => 'required|integer|min:1',
-            'category_id' => 'required|exists:facility_categories,category_id',
-            'subcategory_id' => 'nullable|exists:facility_subcategories,subcategory_id',
-            'department_id' => 'required|exists:departments,department_id',
-            'location_type' => 'required|in:Indoors,Outdoors',
-            'external_fee' => 'required|numeric|min:0',
-            'rate_type' => 'required|in:Per Hour,Per Event',
-            'status_id' => 'required|exists:availability_statuses,status_id',
-            'parent_facility_id' => 'nullable|exists:facilities,facility_id',
-            'floor_level' => 'nullable|integer|min:1',
-            'building_code' => 'nullable|string|max:20',
-            'total_levels' => 'nullable|integer|min:1',
-            'total_rooms' => 'nullable|integer|min:1',
-            'created_by' => 'required|exists:admins,admin_id'
-        ]);
+    public function store(Request $request)
+    {
+        try {
+            $data = $request->validate([
+                'facility_name' => 'required|string|max:50',
+                'description' => 'nullable|string|max:250',
+                'location_note' => 'nullable|string|max:200',
+                'capacity' => 'required|integer|min:1',
+                'category_id' => 'required|exists:facility_categories,category_id',
+                'subcategory_id' => 'nullable|exists:facility_subcategories,subcategory_id',
+                'departments' => 'required|array|min:1',
+                'departments.*' => 'exists:departments,department_id',
+                'location_type' => 'required|in:Indoors,Outdoors',
+                'external_fee' => 'required|numeric|min:0',
+                'rate_type' => 'required|in:Per Hour,Per Event',
+                'status_id' => 'required|exists:availability_statuses,status_id',
+                'parent_facility_id' => 'nullable|exists:facilities,facility_id',
+                'floor_level' => 'nullable|integer|min:1',
+                'building_code' => 'nullable|string|max:20',
+                'total_levels' => 'nullable|integer|min:1',
+                'total_rooms' => 'nullable|integer|min:1',
+                'created_by' => 'required|exists:admins,admin_id'
+            ]);
 
-        $user = auth()->user();
+            $user = auth()->user();
 
-        $facility = Facility::create([
-            'facility_name' => $data['facility_name'],
-            'description' => $data['description'],
-            'location_note' => $data['location_note'],
-            'capacity' => $data['capacity'],
-            'category_id' => $data['category_id'],
-            'subcategory_id' => $data['subcategory_id'] ?? null,
-            'department_id' => $data['department_id'],
-            'location_type' => $data['location_type'],
-            'external_fee' => $data['external_fee'],
-            'rate_type' => $data['rate_type'],
-            'status_id' => $data['status_id'],
-            'parent_facility_id' => $data['parent_facility_id'] ?? null,
-            'floor_level' => $data['floor_level'] ?? null,
-            'building_code' => $data['building_code'] ?? null,
-            'total_levels' => $data['total_levels'] ?? null,
-            'total_rooms' => $data['total_rooms'] ?? null,
-            'created_by' => $user->admin_id
-        ]);
+            $facility = Facility::create([
+                'facility_name' => $data['facility_name'],
+                'description' => $data['description'],
+                'location_note' => $data['location_note'],
+                'capacity' => $data['capacity'],
+                'category_id' => $data['category_id'],
+                'subcategory_id' => $data['subcategory_id'] ?? null,
+                'department_id' => $data['departments'][0], // Keep first department for backward compatibility
+                'location_type' => $data['location_type'],
+                'external_fee' => $data['external_fee'],
+                'rate_type' => $data['rate_type'],
+                'status_id' => $data['status_id'],
+                'parent_facility_id' => $data['parent_facility_id'] ?? null,
+                'floor_level' => $data['floor_level'] ?? null,
+                'building_code' => $data['building_code'] ?? null,
+                'total_levels' => $data['total_levels'] ?? null,
+                'total_rooms' => $data['total_rooms'] ?? null,
+                'created_by' => $user->admin_id
+            ]);
 
-        \Log::info('Facility created successfully', [
-            'facility_id' => $facility->facility_id,
-            'created_by' => $user->admin_id
-        ]);
+            // Attach all selected departments to the pivot table
+            $facility->departments()->attach($data['departments']);
 
-        return response()->json([
-            'message' => 'Facility created successfully!',
-            'data' => [
+            \Log::info('Facility created successfully', [
                 'facility_id' => $facility->facility_id,
-                'facility_name' => $facility->facility_name
-            ]
-        ], 201);
+                'created_by' => $user->admin_id,
+                'departments' => $data['departments']
+            ]);
 
-    } catch (\Exception $e) {
-        \Log::error('Error creating facility', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-            'user_id' => auth()->check() ? auth()->user()->admin_id : 'unknown',
-            'request_data' => $request->except(['password', 'token']) // Exclude sensitive data
-        ]);
-        
-        return response()->json([
-            'message' => 'Failed to create facility',
-            'error' => $e->getMessage()
-        ], 500);
+            return response()->json([
+                'message' => 'Facility created successfully!',
+                'data' => [
+                    'facility_id' => $facility->facility_id,
+                    'facility_name' => $facility->facility_name,
+                    'departments' => $facility->departments
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            \Log::error('Error creating facility', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth()->check() ? auth()->user()->admin_id : 'unknown',
+                'request_data' => $request->except(['password', 'token'])
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to create facility',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
 
     // ----- Edit - Show edit form ----- //
@@ -196,248 +202,354 @@ public function store(Request $request)
     }
 
     // ----- Update - Save facility changes ----- //
-public function update(Request $request, $id)
-{
-    $facility = Facility::findOrFail($id);
+    public function update(Request $request, $id)
+    {
+        $facility = Facility::findOrFail($id);
 
-    $data = $request->validate([
-        'facility_name' => 'required|string|max:50',
-        'description' => 'nullable|string|max:250',
-        'location_note' => 'nullable|string|max:200',
-        'capacity' => 'required|integer|min:1',
-        'category_id' => 'required|exists:facility_categories,category_id',
-        'subcategory_id' => 'nullable|exists:facility_subcategories,subcategory_id',
-        'department_id' => 'required|exists:departments,department_id',
-        'location_type' => 'required|in:Indoors,Outdoors',
-        'external_fee' => 'required|numeric|min:0',
-        'rate_type' => 'required|in:Per Hour,Per Event',
-        'status_id' => 'required|exists:availability_statuses,status_id',
-        'parent_facility_id' => 'nullable|exists:facilities,facility_id',
-        'floor_level' => 'nullable|integer|min:1',
-        'building_code' => 'nullable|string|max:20',
-        'total_levels' => 'nullable|integer|min:1',
-        'total_rooms' => 'nullable|integer|min:1',
-    ]);
-
-    $user = auth()->user();
-
-    $facility->update([
-        'facility_name' => $data['facility_name'],
-        'description' => $data['description'],
-        'location_note' => $data['location_note'],
-        'capacity' => $data['capacity'],
-        'category_id' => $data['category_id'],
-        'subcategory_id' => $data['subcategory_id'] ?? null,
-        'department_id' => $data['department_id'],
-        'location_type' => $data['location_type'],
-        'external_fee' => $data['external_fee'],
-        'rate_type' => $data['rate_type'],
-        'status_id' => $data['status_id'],
-        'parent_facility_id' => $data['parent_facility_id'] ?? null,
-        'floor_level' => $data['floor_level'] ?? null,
-        'building_code' => $data['building_code'] ?? null,
-        'total_levels' => $data['total_levels'] ?? null,
-        'total_rooms' => $data['total_rooms'] ?? null,
-        'updated_by' => $user->admin_id,
-    ]);
-
-    // Return JSON response for API calls
-    if ($request->wantsJson() || $request->is('api/*')) {
-        return response()->json([
-            'message' => 'Facility updated successfully!',
-            'data' => $facility
-        ]);
-    }
-
-    // Return redirect for web requests
-    return redirect()->route('admin.manage-facilities')
-        ->with('success', 'Facility updated successfully!');
-}
-
-    // ----- Destroy - Delete facility ----- //
-
-public function destroy($facilityId)
-{
-    $facility = Facility::with(['images'])->findOrFail($facilityId);
-    
-    $user = auth()->user();
-
-    // Track who deleted it
-    $facility->update([
-        'deleted_by' => $user->admin_id,
-    ]);
-
-    \Log::info('Starting facility deletion', [
-        'facility_id' => $facilityId,
-        'image_count' => $facility->images->count(),
-        'all_images' => $facility->images->pluck('cloudinary_public_id')
-    ]);
-
-    // Delete images from Cloudinary and DB
-    foreach ($facility->images as $image) {
-        \Log::info('Processing image for deletion', [
-            'image_id' => $image->image_id,
-            'cloudinary_public_id' => $image->cloudinary_public_id
+        $data = $request->validate([
+            'facility_name' => 'required|string|max:50',
+            'description' => 'nullable|string|max:250',
+            'location_note' => 'nullable|string|max:200',
+            'capacity' => 'required|integer|min:1',
+            'category_id' => 'required|exists:facility_categories,category_id',
+            'subcategory_id' => 'nullable|exists:facility_subcategories,subcategory_id',
+            'departments' => 'required|array|min:1',
+            'departments.*' => 'exists:departments,department_id',
+            'location_type' => 'required|in:Indoors,Outdoors',
+            'external_fee' => 'required|numeric|min:0',
+            'rate_type' => 'required|in:Per Hour,Per Event',
+            'status_id' => 'required|exists:availability_statuses,status_id',
+            'parent_facility_id' => 'nullable|exists:facilities,facility_id',
+            'floor_level' => 'nullable|integer|min:1',
+            'building_code' => 'nullable|string|max:20',
+            'total_levels' => 'nullable|integer|min:1',
+            'total_rooms' => 'nullable|integer|min:1',
         ]);
 
-        // Only delete from Cloudinary if it's a real Cloudinary image (not the default placeholder)
-        if (!empty($image->cloudinary_public_id) && $image->cloudinary_public_id !== 'oxvsxogzu9koqhctnf7s') {
-            try {
-                \Log::info('Attempting Cloudinary deletion', [
-                    'public_id' => $image->cloudinary_public_id
-                ]);
-                
-                // Use the public ID AS-IS from the database (it already includes the full path)
-                $result = Cloudinary::uploadApi()->destroy($image->cloudinary_public_id);
-                
-                \Log::info('Cloudinary deletion successful', [
-                    'public_id' => $image->cloudinary_public_id,
-                    'result' => $result['result']
-                ]);
-                
-            } catch (\Exception $e) {
-                \Log::error("Failed to delete Cloudinary image", [
-                    'public_id' => $image->cloudinary_public_id,
-                    'error' => $e->getMessage(),
-                    'facility_id' => $facilityId
-                ]);
-            }
-        } else {
-            \Log::info('Skipping Cloudinary deletion - default placeholder or empty public_id', [
-                'public_id' => $image->cloudinary_public_id
+        $user = auth()->user();
+
+        $facility->update([
+            'facility_name' => $data['facility_name'],
+            'description' => $data['description'],
+            'location_note' => $data['location_note'],
+            'capacity' => $data['capacity'],
+            'category_id' => $data['category_id'],
+            'subcategory_id' => $data['subcategory_id'] ?? null,
+            'department_id' => $data['departments'][0], // Keep first department for backward compatibility
+            'location_type' => $data['location_type'],
+            'external_fee' => $data['external_fee'],
+            'rate_type' => $data['rate_type'],
+            'status_id' => $data['status_id'],
+            'parent_facility_id' => $data['parent_facility_id'] ?? null,
+            'floor_level' => $data['floor_level'] ?? null,
+            'building_code' => $data['building_code'] ?? null,
+            'total_levels' => $data['total_levels'] ?? null,
+            'total_rooms' => $data['total_rooms'] ?? null,
+            'updated_by' => $user->admin_id,
+        ]);
+
+        // Sync departments - this will add new and remove old ones automatically
+        $facility->departments()->sync($data['departments']);
+
+        // Return JSON response for API calls
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'message' => 'Facility updated successfully!',
+                'data' => $facility->fresh(['departments'])
             ]);
         }
 
-        // Delete image record from DB
-        $image->delete();
-        \Log::info('Database image record deleted', ['image_id' => $image->image_id]);
+        // Return redirect for web requests
+        return redirect()->route('admin.manage-facilities')
+            ->with('success', 'Facility updated successfully!');
     }
 
-    // Delete the facility
-    $facility->delete();
-
-    \Log::info('Facility deletion completed', ['facility_id' => $facilityId]);
-
-    return response()->json([
-        'message' => 'Facility and associated Cloudinary images deleted successfully!',
-        'facility_id' => $facilityId
-    ], 200);
-}
-
-public function testCloudinaryDelete(Request $request)
+    /**
+     * Mass assign departments to multiple facilities
+     */
+public function massAssignDepartments(Request $request): JsonResponse
 {
-    $publicId = $request->query('public_id');
-    
-    if (!$publicId) {
-        return response()->json([
-            'success' => false,
-            'error' => 'No public_id provided'
-        ], 400);
-    }
-
     try {
-        \Log::info('Testing Cloudinary deletion', ['public_id' => $publicId]);
-        
-        // Use the correct Cloudinary destruction method with error handling
-        $result = Cloudinary::uploadApi()->destroy($publicId);
-        
-        \Log::info('Cloudinary test deletion response', [
-            'public_id' => $publicId,
-            'result' => $result,
-            'result_type' => gettype($result)
+        $validated = $request->validate([
+            'facility_ids' => 'required|array|min:1',
+            'facility_ids.*' => 'exists:facilities,facility_id',
+            'department_ids' => 'required|array|min:1',
+            'department_ids.*' => 'exists:departments,department_id',
         ]);
-        
-        // Check if result is valid
-        if (!$result || !is_array($result)) {
-            throw new \Exception('Invalid response from Cloudinary: ' . json_encode($result));
+
+        $facilityIds = $validated['facility_ids'];
+        $departmentIds = $validated['department_ids'];
+
+        $results = [
+            'success' => [],
+            'failed' => []
+        ];
+
+        foreach ($facilityIds as $facilityId) {
+            try {
+                $facility = Facility::findOrFail($facilityId);
+                
+                // Replace all existing departments with the new ones
+                $facility->departments()->sync($departmentIds);
+
+                $results['success'][] = [
+                    'facility_id' => $facilityId,
+                    'facility_name' => $facility->facility_name
+                ];
+
+            } catch (\Exception $e) {
+                \Log::error('Failed to mass assign departments to facility', [
+                    'facility_id' => $facilityId,
+                    'error' => $e->getMessage()
+                ]);
+
+                $results['failed'][] = [
+                    'facility_id' => $facilityId,
+                    'error' => $e->getMessage()
+                ];
+            }
         }
-        
-        // Check the actual result status
-        $success = isset($result['result']) && $result['result'] === 'ok';
-        
+
+        $successCount = count($results['success']);
+        $failedCount = count($results['failed']);
+
+        if ($successCount === 0) {
+            $message = "Failed to assign departments to any facilities.";
+        } else if ($failedCount === 0) {
+            $message = "Successfully assigned departments to " . ($successCount === 1 ? "1 facility" : "{$successCount} facilities");
+        } else {
+            $message = "Assigned departments to {$successCount} " . ($successCount === 1 ? "facility" : "facilities") . 
+                       ", failed for {$failedCount} " . ($failedCount === 1 ? "facility" : "facilities");
+        }
+
         return response()->json([
-            'success' => $success,
-            'result' => $result,
-            'public_id_used' => $publicId,
-            'message' => $success ? 'Deletion successful' : 'Deletion may have failed'
+            'message' => $message,
+            'results' => $results
         ]);
-        
+
     } catch (\Exception $e) {
-        \Log::error('Cloudinary test deletion failed', [
-            'public_id' => $publicId,
+        \Log::error('Error in mass department assignment for facilities', [
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString()
         ]);
-        
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage(),
-            'public_id_used' => $publicId
-        ], 500);
-    }
-}
 
-public function testCloudinaryConnection()
-{
-    try {
-        // Test basic Cloudinary connectivity
-        $ping = Cloudinary::uploadApi()->ping();
-        
-        \Log::info('Cloudinary ping test', ['result' => $ping]);
-        
         return response()->json([
-            'success' => true,
-            'ping_result' => $ping,
-            'message' => 'Cloudinary connection successful'
-        ]);
-        
-    } catch (\Exception $e) {
-        \Log::error('Cloudinary connection test failed', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage(),
-            'message' => 'Cloudinary connection failed - check credentials'
-        ], 500);
-    }
-}
-
-public function checkCloudinaryConfig()
-{
-    try {
-        // Check if Cloudinary configuration is loaded
-        $cloudName = config('cloudinary.cloud_name');
-        $apiKey = config('cloudinary.api_key');
-        $apiSecret = config('cloudinary.api_secret');
-        
-        \Log::info('Cloudinary Configuration Check', [
-            'cloud_name' => $cloudName ? 'SET' : 'MISSING',
-            'api_key' => $apiKey ? 'SET' : 'MISSING', 
-            'api_secret' => $apiSecret ? 'SET' : 'MISSING',
-        ]);
-        
-        return response()->json([
-            'cloud_name_set' => !empty($cloudName),
-            'api_key_set' => !empty($apiKey),
-            'api_secret_set' => !empty($apiSecret),
-            'cloudinary_url_set' => !empty(env('CLOUDINARY_URL')),
-            'config' => [
-                'cloud_name' => $cloudName,
-                'api_key' => $apiKey ? '***' . substr($apiKey, -4) : null,
-                'api_secret' => $apiSecret ? '***' . substr($apiSecret, -4) : null,
-            ]
-        ]);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
+            'message' => 'Failed to process mass department assignment',
             'error' => $e->getMessage()
         ], 500);
     }
 }
+
+    /**
+     * Helper method to generate appropriate message for mass assignment
+     */
+    private function getMassAssignmentMessage(array $results, string $action, string $type): string
+    {
+        $successCount = count($results['success']);
+        $failedCount = count($results['failed']);
+
+        $actionText = [
+            'add' => 'added to',
+            'replace' => 'assigned to',
+            'remove' => 'removed from'
+        ][$action];
+
+        if ($successCount === 0) {
+            return "Failed to {$action} departments for any {$type}s.";
+        }
+
+        if ($failedCount === 0) {
+            return "Successfully {$actionText} " . ($successCount === 1 ? "1 {$type}" : "{$successCount} {$type}s");
+        }
+
+        return "Departments {$actionText} {$successCount} " . ($successCount === 1 ? $type : "{$type}s") .
+            ", failed for {$failedCount} " . ($failedCount === 1 ? $type : "{$type}s");
+    }
+
+    // ----- Destroy - Delete facility ----- //
+
+    public function destroy($facilityId)
+    {
+        $facility = Facility::with(['images'])->findOrFail($facilityId);
+
+        $user = auth()->user();
+
+        // Track who deleted it
+        $facility->update([
+            'deleted_by' => $user->admin_id,
+        ]);
+
+        \Log::info('Starting facility deletion', [
+            'facility_id' => $facilityId,
+            'image_count' => $facility->images->count(),
+            'all_images' => $facility->images->pluck('cloudinary_public_id')
+        ]);
+
+        // Delete images from Cloudinary and DB
+        foreach ($facility->images as $image) {
+            \Log::info('Processing image for deletion', [
+                'image_id' => $image->image_id,
+                'cloudinary_public_id' => $image->cloudinary_public_id
+            ]);
+
+            // Only delete from Cloudinary if it's a real Cloudinary image (not the default placeholder)
+            if (!empty($image->cloudinary_public_id) && $image->cloudinary_public_id !== 'oxvsxogzu9koqhctnf7s') {
+                try {
+                    \Log::info('Attempting Cloudinary deletion', [
+                        'public_id' => $image->cloudinary_public_id
+                    ]);
+
+                    // Use the public ID AS-IS from the database (it already includes the full path)
+                    $result = Cloudinary::uploadApi()->destroy($image->cloudinary_public_id);
+
+                    \Log::info('Cloudinary deletion successful', [
+                        'public_id' => $image->cloudinary_public_id,
+                        'result' => $result['result']
+                    ]);
+
+                } catch (\Exception $e) {
+                    \Log::error("Failed to delete Cloudinary image", [
+                        'public_id' => $image->cloudinary_public_id,
+                        'error' => $e->getMessage(),
+                        'facility_id' => $facilityId
+                    ]);
+                }
+            } else {
+                \Log::info('Skipping Cloudinary deletion - default placeholder or empty public_id', [
+                    'public_id' => $image->cloudinary_public_id
+                ]);
+            }
+
+            // Delete image record from DB
+            $image->delete();
+            \Log::info('Database image record deleted', ['image_id' => $image->image_id]);
+        }
+
+        // Delete the facility
+        $facility->delete();
+
+        \Log::info('Facility deletion completed', ['facility_id' => $facilityId]);
+
+        return response()->json([
+            'message' => 'Facility and associated Cloudinary images deleted successfully!',
+            'facility_id' => $facilityId
+        ], 200);
+    }
+
+    public function testCloudinaryDelete(Request $request)
+    {
+        $publicId = $request->query('public_id');
+
+        if (!$publicId) {
+            return response()->json([
+                'success' => false,
+                'error' => 'No public_id provided'
+            ], 400);
+        }
+
+        try {
+            \Log::info('Testing Cloudinary deletion', ['public_id' => $publicId]);
+
+            // Use the correct Cloudinary destruction method with error handling
+            $result = Cloudinary::uploadApi()->destroy($publicId);
+
+            \Log::info('Cloudinary test deletion response', [
+                'public_id' => $publicId,
+                'result' => $result,
+                'result_type' => gettype($result)
+            ]);
+
+            // Check if result is valid
+            if (!$result || !is_array($result)) {
+                throw new \Exception('Invalid response from Cloudinary: ' . json_encode($result));
+            }
+
+            // Check the actual result status
+            $success = isset($result['result']) && $result['result'] === 'ok';
+
+            return response()->json([
+                'success' => $success,
+                'result' => $result,
+                'public_id_used' => $publicId,
+                'message' => $success ? 'Deletion successful' : 'Deletion may have failed'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Cloudinary test deletion failed', [
+                'public_id' => $publicId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'public_id_used' => $publicId
+            ], 500);
+        }
+    }
+
+    public function testCloudinaryConnection()
+    {
+        try {
+            // Test basic Cloudinary connectivity
+            $ping = Cloudinary::uploadApi()->ping();
+
+            \Log::info('Cloudinary ping test', ['result' => $ping]);
+
+            return response()->json([
+                'success' => true,
+                'ping_result' => $ping,
+                'message' => 'Cloudinary connection successful'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Cloudinary connection test failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'message' => 'Cloudinary connection failed - check credentials'
+            ], 500);
+        }
+    }
+
+    public function checkCloudinaryConfig()
+    {
+        try {
+            // Check if Cloudinary configuration is loaded
+            $cloudName = config('cloudinary.cloud_name');
+            $apiKey = config('cloudinary.api_key');
+            $apiSecret = config('cloudinary.api_secret');
+
+            \Log::info('Cloudinary Configuration Check', [
+                'cloud_name' => $cloudName ? 'SET' : 'MISSING',
+                'api_key' => $apiKey ? 'SET' : 'MISSING',
+                'api_secret' => $apiSecret ? 'SET' : 'MISSING',
+            ]);
+
+            return response()->json([
+                'cloud_name_set' => !empty($cloudName),
+                'api_key_set' => !empty($apiKey),
+                'api_secret_set' => !empty($apiSecret),
+                'cloudinary_url_set' => !empty(env('CLOUDINARY_URL')),
+                'config' => [
+                    'cloud_name' => $cloudName,
+                    'api_key' => $apiKey ? '***' . substr($apiKey, -4) : null,
+                    'api_secret' => $apiSecret ? '***' . substr($apiSecret, -4) : null,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 
@@ -468,148 +580,148 @@ public function checkCloudinaryConfig()
     }
 
     // ----- Upload Facility Image ----- //
-public function uploadImage(Request $request, $facilityId): JsonResponse
-{
-    // Validate the uploaded image and data
-    $validated = $request->validate([
-        'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'description' => 'nullable|string|max:255',
-        'type_id' => 'sometimes|exists:image_types,type_id'
-    ]);
-
-    // Find the facility
-    $facility = Facility::findOrFail($facilityId);
-
-
-    // Upload to Cloudinary
-    $uploaded = Cloudinary::upload(
-        $request->file('image')->getRealPath(),
-        ['upload_preset' => 'facility-photos']
-    );
-
-    $imageUrl = $uploaded->getSecurePath();
-    $publicId = $uploaded->getPublicId();
-
-    // Determine image type if not provided
-    $imageType = $validated['type_id'] ?? ($facility->images()->count() == 0 ? 1 : 2);
-
-    // Create the image record
-    $facility->images()->create([
-        'image_url' => $imageUrl,
-        'type_id' => $imageType,
-        'cloudinary_public_id' => $publicId,
-        'description' => $validated['description'],
-        'sort_order' => $facility->images()->count() + 1
-    ]);
-
-    return response()->json([
-        'message' => 'Image uploaded successfully',
-        'type_id' => $imageType,
-        'image_url' => $imageUrl,
-        'public_id' => $publicId
-    ]);
-}
-
-public function saveImageReference(Request $request, $facilityId): JsonResponse
-{
-    try {
+    public function uploadImage(Request $request, $facilityId): JsonResponse
+    {
+        // Validate the uploaded image and data
         $validated = $request->validate([
-            'image_url' => 'required|url',
-            'cloudinary_public_id' => 'required|string',
-            'description' => 'nullable|string|max:255'
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'description' => 'nullable|string|max:255',
+            'type_id' => 'sometimes|exists:image_types,type_id'
         ]);
 
-        $facility = Facility::findOrFail($facilityId);
-
-        // Determine image type (first image = primary, others = secondary)
-        $imageType = $facility->images()->count() == 0 ? 'Primary' : 'Secondary';
-
-        // Create the image record
-        $image = $facility->images()->create([
-            'image_url' => $validated['image_url'],
-            'image_type' => $imageType,
-            'cloudinary_public_id' => $validated['cloudinary_public_id'],
-            'description' => $validated['description'] ?? 'Facility photo',
-            'sort_order' => $facility->images()->count() + 1
-        ]);
-
-        \Log::info('Image reference saved successfully', [
-            'facility' => $facilityId,
-            'image_id' => $image->image_id,
-            'public_id' => $validated['cloudinary_public_id']
-        ]);
-
-        return response()->json([
-            'message' => 'Image reference saved successfully',
-            'image_id' => $image->image_id,
-            'type' => $imageType
-        ]);
-
-    } catch (\Exception $e) {
-        \Log::error('Error saving image reference', [
-            'error' => $e->getMessage(),
-            'facilityId' => $facilityId,
-            'request_data' => $request->all()
-        ]);
-
-        return response()->json([
-            'message' => 'Failed to save image reference: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-    // ----- Delete Facility Image ----- //
-public function deleteImage($facilityId, $imageId): JsonResponse
-{
-    \Log::info('Attempting to delete facility image', [
-        'facilityId' => $facilityId,
-        'imageId' => $imageId
-    ]);
-
-    try {
         // Find the facility
         $facility = Facility::findOrFail($facilityId);
 
-        // Find the image
-        $image = $facility->images()->findOrFail($imageId);
 
-        // Store public ID before deletion
-        $publicId = $image->cloudinary_public_id;
+        // Upload to Cloudinary
+        $uploaded = Cloudinary::upload(
+            $request->file('image')->getRealPath(),
+            ['upload_preset' => 'facility-photos']
+        );
 
-        // Delete DB record first
-        $image->delete();
+        $imageUrl = $uploaded->getSecurePath();
+        $publicId = $uploaded->getPublicId();
 
-        // Delete from Cloudinary if public ID exists (skip default placeholder)
-        if ($publicId && $publicId !== 'oxvsxogzu9koqhctnf7s') {
-            try {
-                Cloudinary::destroy($publicId);
-            } catch (\Exception $cloudinaryError) {
-                \Log::error('Cloudinary delete failed but continuing', [
-                    'error' => $cloudinaryError->getMessage(),
-                    'public_id' => $publicId
-                ]);
-                // Continue even if Cloudinary delete fails
-            }
+        // Determine image type if not provided
+        $imageType = $validated['type_id'] ?? ($facility->images()->count() == 0 ? 1 : 2);
+
+        // Create the image record
+        $facility->images()->create([
+            'image_url' => $imageUrl,
+            'type_id' => $imageType,
+            'cloudinary_public_id' => $publicId,
+            'description' => $validated['description'],
+            'sort_order' => $facility->images()->count() + 1
+        ]);
+
+        return response()->json([
+            'message' => 'Image uploaded successfully',
+            'type_id' => $imageType,
+            'image_url' => $imageUrl,
+            'public_id' => $publicId
+        ]);
+    }
+
+    public function saveImageReference(Request $request, $facilityId): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'image_url' => 'required|url',
+                'cloudinary_public_id' => 'required|string',
+                'description' => 'nullable|string|max:255'
+            ]);
+
+            $facility = Facility::findOrFail($facilityId);
+
+            // Determine image type (first image = primary, others = secondary)
+            $imageType = $facility->images()->count() == 0 ? 'Primary' : 'Secondary';
+
+            // Create the image record
+            $image = $facility->images()->create([
+                'image_url' => $validated['image_url'],
+                'image_type' => $imageType,
+                'cloudinary_public_id' => $validated['cloudinary_public_id'],
+                'description' => $validated['description'] ?? 'Facility photo',
+                'sort_order' => $facility->images()->count() + 1
+            ]);
+
+            \Log::info('Image reference saved successfully', [
+                'facility' => $facilityId,
+                'image_id' => $image->image_id,
+                'public_id' => $validated['cloudinary_public_id']
+            ]);
+
+            return response()->json([
+                'message' => 'Image reference saved successfully',
+                'image_id' => $image->image_id,
+                'type' => $imageType
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error saving image reference', [
+                'error' => $e->getMessage(),
+                'facilityId' => $facilityId,
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to save image reference: ' . $e->getMessage()
+            ], 500);
         }
+    }
 
-        // Reorder remaining images
-        $this->reorderImageRecords($facility);
-
-        return response()->json(['message' => 'Image deleted successfully']);
-
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-        return response()->json(['message' => 'Image or facility not found'], 404);
-    } catch (\Exception $e) {
-        \Log::error('Error in deleteImage', [
-            'error' => $e->getMessage(),
+    // ----- Delete Facility Image ----- //
+    public function deleteImage($facilityId, $imageId): JsonResponse
+    {
+        \Log::info('Attempting to delete facility image', [
             'facilityId' => $facilityId,
             'imageId' => $imageId
         ]);
-        return response()->json([
-            'message' => 'Failed to delete image: ' . $e->getMessage()
-        ], 500);
+
+        try {
+            // Find the facility
+            $facility = Facility::findOrFail($facilityId);
+
+            // Find the image
+            $image = $facility->images()->findOrFail($imageId);
+
+            // Store public ID before deletion
+            $publicId = $image->cloudinary_public_id;
+
+            // Delete DB record first
+            $image->delete();
+
+            // Delete from Cloudinary if public ID exists (skip default placeholder)
+            if ($publicId && $publicId !== 'oxvsxogzu9koqhctnf7s') {
+                try {
+                    Cloudinary::destroy($publicId);
+                } catch (\Exception $cloudinaryError) {
+                    \Log::error('Cloudinary delete failed but continuing', [
+                        'error' => $cloudinaryError->getMessage(),
+                        'public_id' => $publicId
+                    ]);
+                    // Continue even if Cloudinary delete fails
+                }
+            }
+
+            // Reorder remaining images
+            $this->reorderImageRecords($facility);
+
+            return response()->json(['message' => 'Image deleted successfully']);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Image or facility not found'], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in deleteImage', [
+                'error' => $e->getMessage(),
+                'facilityId' => $facilityId,
+                'imageId' => $imageId
+            ]);
+            return response()->json([
+                'message' => 'Failed to delete image: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     private function reorderImageRecords(Facility $facility): void
     {

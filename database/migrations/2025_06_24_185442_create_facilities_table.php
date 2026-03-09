@@ -32,7 +32,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('subcategory_id')->nullable();
             $table->string('location_note', 200)->default('No location note provided.');
             $table->unsignedInteger('capacity')->default(1);
-            $table->unsignedTinyInteger('department_id');
+            $table->unsignedTinyInteger('department_id')->nullable();
             $table->enum('location_type', ['Indoors', 'Outdoors']);
 
             // fees and rates

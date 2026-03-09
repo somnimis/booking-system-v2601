@@ -11,7 +11,7 @@ class AdminRoleSeeder extends Seeder
 // Dashboard, Inventories, and Transactions Section are always visible for all roles. 
 // For the Management section, filter navlinks based on role based on this seeder:
 
-// admin_table (Eloquent model with relations: Admin) (Primary key: admin_id)
+    // admin_table (Eloquent model with relations: Admin) (Primary key: admin_id)
 
     public function run(): void
     {
@@ -24,12 +24,18 @@ class AdminRoleSeeder extends Seeder
             ],
             [
                 'role_id' => 2,
-                'role_title' => 'Approving Officer',
+                'role_title' => 'Chief Approving Officer',
                 'description' => 'Manage and review forms, equipment, and facilities.'
                 // Hide Administrators
             ],
             [
                 'role_id' => 3,
+                'role_title' => 'Approving Officer',
+                'description' => 'Manage and review forms, equipment, and facilities.'
+                // Hide Administrators
+            ],
+            [
+                'role_id' => 4,
                 'role_title' => 'Inventory Manager',
                 'description' => 'Manage facilities & equipment only.'
                 // Hide Administrators, Active Bookings, Pending Approval

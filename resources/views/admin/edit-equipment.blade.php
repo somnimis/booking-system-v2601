@@ -4,28 +4,27 @@
 
 @section('content')
     <style>
+        .card-body.position-relative {
+            min-height: 200px;
+        }
 
-.card-body.position-relative {
-    min-height: 200px;
-}
+        #itemsLoading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            width: 100%;
+        }
 
-#itemsLoading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10;
-    width: 100%;
-}
-
-#itemsEmptyState {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10;
-    width: 100%;
-}
+        #itemsEmptyState {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            width: 100%;
+        }
 
 
         .spinner-border {
@@ -243,186 +242,189 @@
                     </div>
 
 
-<!-- Inventory Items Card -->
-<div class="col-md-6">
-    <div class="card h-100">
-        <div class="card-header d-flex justify-content-between align-items-center" style="height: 56px;">
-            <h5 class="fw-bold mb-0">Inventory Items</h5>
-            <button type="button" class="btn btn-sm btn-secondary" id="addItemBtn">
-                <i class="bi bi-plus me-1"></i>Add Item
-            </button>
-        </div>
-        <div class="card-body position-relative" style="min-height: 300px;">
-            <!-- Loading State -->
-            <div id="itemsLoading" class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading items...</span>
-                </div>
-                <p class="mt-2 text-muted">Loading items...</p>
-            </div>
-
-            <!-- Empty State -->
-            <div id="itemsEmptyState" class="text-center py-4 d-none">
-                <i class="bi bi-inbox fs-1 text-muted"></i>
-                <p class="mt-2 text-muted">No items added yet.</p>
-                <p class="text-muted small">Click "Add Item" to track individual equipment pieces.</p>
-            </div>
-
-            <!-- Items Container -->
-            <div id="itemsContainer" class="d-none">
-                <!-- Items will be populated here -->
-            </div>
-        </div>
-    </div>
-</div>
-                </div>
-
-<!-- Equipment Details Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="fw-bold mb-0">Equipment Details</h5>
-            </div>
-            <div class="card-body">
-                <div class="details-section">
-                    <!-- Basic Information Section -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <label for="equipmentName" class="form-label fw-bold d-flex align-items-center">
-                                Equipment Name
-                                <i class="bi bi-pencil text-secondary ms-2 edit-icon" data-field="equipmentName"
-                                    style="cursor: pointer;"></i>
-                                <div class="edit-actions ms-2 d-none" data-field="equipmentName">
-                                    <button type="button" class="btn btn-sm btn-success me-1 save-btn">
-                                        <i class="bi bi-check"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-danger cancel-btn">
-                                        <i class="bi bi-x"></i>
-                                    </button>
+                    <!-- Inventory Items Card -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center"
+                                style="height: 56px;">
+                                <h5 class="fw-bold mb-0">Inventory Items</h5>
+                                <button type="button" class="btn btn-sm btn-secondary" id="addItemBtn">
+                                    <i class="bi bi-plus me-1"></i>Add Item
+                                </button>
+                            </div>
+                            <div class="card-body position-relative" style="min-height: 300px;">
+                                <!-- Loading State -->
+                                <div id="itemsLoading" class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading items...</span>
+                                    </div>
+                                    <p class="mt-2 text-muted">Loading items...</p>
                                 </div>
-                            </label>
-                            <input type="text" class="form-control text-secondary" id="equipmentName" value=""
-                                readonly>
-                        </div>
 
-                        <div class="col-md-6">
-                            <label for="brand" class="form-label fw-bold d-flex align-items-center">
-                                Brand
-                                <i class="bi bi-pencil text-secondary ms-2 edit-icon" data-field="brand"
-                                    style="cursor: pointer;"></i>
-                                <div class="edit-actions ms-2 d-none" data-field="brand">
-                                    <button type="button" class="btn btn-sm btn-success me-1 save-btn">
-                                        <i class="bi bi-check"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-danger cancel-btn">
-                                        <i class="bi bi-x"></i>
-                                    </button>
+                                <!-- Empty State -->
+                                <div id="itemsEmptyState" class="text-center py-4 d-none">
+                                    <i class="bi bi-inbox fs-1 text-muted"></i>
+                                    <p class="mt-2 text-muted">No items added yet.</p>
+                                    <p class="text-muted small">Click "Add Item" to track individual equipment pieces.</p>
                                 </div>
-                            </label>
-                            <input type="text" class="form-control text-secondary" id="brand" value=""
-                                readonly>
-                        </div>
-                    </div>
 
-                    <div class="row mb-4">
-                        <div class="col-12 position-relative">
-                            <label for="description" class="form-label fw-bold d-flex align-items-center">
-                                Description
-                                <i class="bi bi-pencil text-secondary ms-2 edit-icon"
-                                    data-field="description" style="cursor: pointer;"></i>
-                                <div class="edit-actions ms-2 d-none" data-field="description">
-                                    <button type="button" class="btn btn-sm btn-success me-1 save-btn">
-                                        <i class="bi bi-check"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-danger cancel-btn">
-                                        <i class="bi bi-x"></i>
-                                    </button>
+                                <!-- Items Container -->
+                                <div id="itemsContainer" class="d-none">
+                                    <!-- Items will be populated here -->
                                 </div>
-                            </label>
-                            <textarea class="form-control text-secondary" id="description" rows="3"
-                                readonly></textarea>
-                            <small class="text-muted position-absolute bottom-0 end-0 me-4 mb-1"
-                                id="descriptionWordCount">0/255 characters</small>
-                        </div>
-                    </div>
-
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <label for="storageLocation" class="form-label fw-bold d-flex align-items-center">
-                                Storage Location
-                                <i class="bi bi-pencil text-secondary ms-2 edit-icon"
-                                    data-field="storageLocation" style="cursor: pointer;"></i>
-                                <div class="edit-actions ms-2 d-none" data-field="storageLocation">
-                                    <button type="button" class="btn btn-sm btn-success me-1 save-btn">
-                                        <i class="bi bi-check"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-danger cancel-btn">
-                                        <i class="bi bi-x"></i>
-                                    </button>
-                                </div>
-                            </label>
-                            <input type="text" class="form-control text-secondary" id="storageLocation"
-                                value="" readonly>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label for="category" class="form-label fw-bold">Category</label>
-                            <select class="form-select" id="category" required>
-                                <option value="">Select Category</option>
-                                <!-- Categories will be populated dynamically -->
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label for="companyFee" class="form-label fw-bold">Rental Fee
-                                (₱)</label>
-                            <div class="input-group">
-                                <span class="input-group-text">₱</span>
-                                <input type="number" class="form-control" id="companyFee" min="0"
-                                    step="0.01" required placeholder="0.00">
                             </div>
                         </div>
-
-                        <div class="col-md-3">
-                            <label for="availabilityStatus" class="form-label fw-bold">Availability
-                                Status</label>
-                            <select class="form-select" id="availabilityStatus" required>
-                                <!-- Statuses will be populated dynamically -->
-                            </select>
-                        </div>
                     </div>
+                </div>
 
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <label for="rateType" class="form-label fw-bold">Rate Type</label>
-                            <select class="form-select" id="rateType" required>
-                                <option value="">Select Rate Type</option>
-                                <option value="Per Hour">Per Hour</option>
-                                <option value="Per Event">Per Event</option>
-                            </select>
-                        </div>
+                <!-- Equipment Details Section -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="fw-bold mb-0">Equipment Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="details-section">
+                                    <!-- Basic Information Section -->
+                                    <div class="row mb-4">
+                                        <div class="col-md-6">
+                                            <label for="equipmentName" class="form-label fw-bold d-flex align-items-center">
+                                                Equipment Name
+                                                <i class="bi bi-pencil text-secondary ms-2 edit-icon"
+                                                    data-field="equipmentName" style="cursor: pointer;"></i>
+                                                <div class="edit-actions ms-2 d-none" data-field="equipmentName">
+                                                    <button type="button" class="btn btn-sm btn-success me-1 save-btn">
+                                                        <i class="bi bi-check"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-danger cancel-btn">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </label>
+                                            <input type="text" class="form-control text-secondary" id="equipmentName"
+                                                value="" readonly>
+                                        </div>
 
-                        <div class="col-md-4">
-                            <label for="department" class="form-label fw-bold">Owning
-                                Department</label>
-                            <select class="form-select" id="department" required>
-                                <!-- Departments will be populated dynamically -->
-                            </select>
-                        </div>
+                                        <div class="col-md-6">
+                                            <label for="brand" class="form-label fw-bold d-flex align-items-center">
+                                                Brand
+                                                <i class="bi bi-pencil text-secondary ms-2 edit-icon" data-field="brand"
+                                                    style="cursor: pointer;"></i>
+                                                <div class="edit-actions ms-2 d-none" data-field="brand">
+                                                    <button type="button" class="btn btn-sm btn-success me-1 save-btn">
+                                                        <i class="bi bi-check"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-danger cancel-btn">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </label>
+                                            <input type="text" class="form-control text-secondary" id="brand" value=""
+                                                readonly>
+                                        </div>
+                                    </div>
 
-                        <div class="col-md-4">
-                            <label for="minRentalHours" class="form-label fw-bold">Min. Rental
-                                Duration (hours)</label>
-                            <input type="number" class="form-control" id="minRentalHours" min="1"
-                                value="1" required>
+                                    <div class="row mb-4">
+                                        <div class="col-12 position-relative">
+                                            <label for="description" class="form-label fw-bold d-flex align-items-center">
+                                                Description
+                                                <i class="bi bi-pencil text-secondary ms-2 edit-icon"
+                                                    data-field="description" style="cursor: pointer;"></i>
+                                                <div class="edit-actions ms-2 d-none" data-field="description">
+                                                    <button type="button" class="btn btn-sm btn-success me-1 save-btn">
+                                                        <i class="bi bi-check"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-danger cancel-btn">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </label>
+                                            <textarea class="form-control text-secondary" id="description" rows="3"
+                                                readonly></textarea>
+                                            <small class="text-muted position-absolute bottom-0 end-0 me-4 mb-1"
+                                                id="descriptionWordCount">0/255 characters</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-4">
+                                        <div class="col-md-3">
+                                            <label for="storageLocation"
+                                                class="form-label fw-bold d-flex align-items-center">
+                                                Storage Location
+                                                <i class="bi bi-pencil text-secondary ms-2 edit-icon"
+                                                    data-field="storageLocation" style="cursor: pointer;"></i>
+                                                <div class="edit-actions ms-2 d-none" data-field="storageLocation">
+                                                    <button type="button" class="btn btn-sm btn-success me-1 save-btn">
+                                                        <i class="bi bi-check"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-danger cancel-btn">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </label>
+                                            <input type="text" class="form-control text-secondary" id="storageLocation"
+                                                value="" readonly>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <label for="category" class="form-label fw-bold">Category</label>
+                                            <select class="form-select" id="category" required>
+                                                <option value="">Select Category</option>
+                                                <!-- Categories will be populated dynamically -->
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <label for="companyFee" class="form-label fw-bold">Rental Fee
+                                                (₱)</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">₱</span>
+                                                <input type="number" class="form-control" id="companyFee" min="0"
+                                                    step="0.01" required placeholder="0.00">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <label for="availabilityStatus" class="form-label fw-bold">Availability
+                                                Status</label>
+                                            <select class="form-select" id="availabilityStatus" required>
+                                                <!-- Statuses will be populated dynamically -->
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-4">
+                                        <div class="col-md-4">
+                                            <label for="rateType" class="form-label fw-bold">Rate Type</label>
+                                            <select class="form-select" id="rateType" required>
+                                                <option value="">Select Rate Type</option>
+                                                <option value="Per Hour">Per Hour</option>
+                                                <option value="Per Event">Per Event</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <label for="departments" class="form-label fw-bold">Owning Departments</label>
+                                            <select class="form-select" id="departments" name="departments[]" multiple
+                                                required size="4">
+                                                <!-- Departments will be populated dynamically -->
+                                            </select>
+                                            <small class="text-muted">Hold Ctrl/Cmd to select multiple departments</small>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <label for="minRentalHours" class="form-label fw-bold">Min. Rental Duration
+                                                (hours)</label>
+                                            <input type="number" class="form-control" id="minRentalHours" min="1" value="1"
+                                                required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
 
                 <!-- Form Actions -->
                 <div class="d-flex justify-content-center gap-2 mt-4">
@@ -534,8 +536,7 @@
                                         <i class="bi bi-upc-scan"></i> Generate
                                     </button>
                                     <!-- Download existing barcode button -->
-                                    <button class="btn btn-success d-none" type="button"
-                                        id="downloadExistingBarcodeBtn">
+                                    <button class="btn btn-success d-none" type="button" id="downloadExistingBarcodeBtn">
                                         <i class="bi bi-download"></i> Download
                                     </button>
                                 </div>
@@ -544,8 +545,7 @@
                                 <div class="barcode-container d-none mt-3" id="barcodeContainer">
                                     <canvas id="barcodePreview" class="barcode-preview"></canvas>
                                     <div class="mt-2">
-                                        <button type="button" class="btn btn-sm btn-secondary"
-                                            id="downloadBarcodeBtn">
+                                        <button type="button" class="btn btn-sm btn-secondary" id="downloadBarcodeBtn">
                                             <i class="bi bi-download"></i> Download
                                         </button>
                                     </div>
@@ -734,18 +734,18 @@
                 toast.style.borderRadius = '0.3rem';
 
                 toast.innerHTML = `
-                                                                                                            <div class="d-flex align-items-center px-3 py-1"> 
-                                                                                                                <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                                                                                                                <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                                                                                                                <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                                                                                                            </div>
-                                                                                                            <div class="loading-bar" style="
-                                                                                                                height: 3px;
-                                                                                                                background: rgba(255,255,255,0.7);
-                                                                                                                width: 100%;
-                                                                                                                transition: width ${duration}ms linear;
-                                                                                                            "></div>
-                                                                                                        `;
+                                                                                                                        <div class="d-flex align-items-center px-3 py-1"> 
+                                                                                                                            <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                                                                                                                            <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
+                                                                                                                            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                                                                                        </div>
+                                                                                                                        <div class="loading-bar" style="
+                                                                                                                            height: 3px;
+                                                                                                                            background: rgba(255,255,255,0.7);
+                                                                                                                            width: 100%;
+                                                                                                                            transition: width ${duration}ms linear;
+                                                                                                                        "></div>
+                                                                                                                    `;
 
                 document.body.appendChild(toast);
 
@@ -1228,23 +1228,23 @@
             });
 
 
-// Helper function to check if items container is empty and show appropriate state
-function checkItemsContainerEmpty() {
-    const itemsContainer = document.getElementById('itemsContainer');
-    const itemsEmptyState = document.getElementById('itemsEmptyState');
-    
-    if (!itemsContainer || !itemsEmptyState) return;
+            // Helper function to check if items container is empty and show appropriate state
+            function checkItemsContainerEmpty() {
+                const itemsContainer = document.getElementById('itemsContainer');
+                const itemsEmptyState = document.getElementById('itemsEmptyState');
 
-    const hasItems = itemsContainer.querySelector('.equipment-item');
-    
-    if (!hasItems) {
-        itemsContainer.classList.add('d-none');
-        itemsEmptyState.classList.remove('d-none');
-    } else {
-        itemsContainer.classList.remove('d-none');
-        itemsEmptyState.classList.add('d-none');
-    }
-}
+                if (!itemsContainer || !itemsEmptyState) return;
+
+                const hasItems = itemsContainer.querySelector('.equipment-item');
+
+                if (!hasItems) {
+                    itemsContainer.classList.add('d-none');
+                    itemsEmptyState.classList.remove('d-none');
+                } else {
+                    itemsContainer.classList.remove('d-none');
+                    itemsEmptyState.classList.add('d-none');
+                }
+            }
 
             // 18. Initialize Inventory Item Modal
             const addItemBtn = document.getElementById('addItemBtn');
@@ -1312,8 +1312,8 @@ function checkItemsContainerEmpty() {
                                 if (removePhotoBtn) removePhotoBtn.classList.remove('d-none');
                                 if (itemPhotoPreview) {
                                     itemPhotoPreview.innerHTML = `
-                                                                                                            <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px;">
-                                                                                                        `;
+                                                                                                                        <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px;">
+                                                                                                                    `;
                                 }
 
                                 // Store the file for later processing
@@ -1749,28 +1749,28 @@ function checkItemsContainerEmpty() {
 
                 // Update the existing element's content
                 itemElement.innerHTML = `
-                                                <div class="card-body">
-                                                    <div class="photo-container">
-                                                        <img src="${updatedItem.image_url}" class="img-thumbnail">
-                                                    </div>
-                                                    <div class="flex-grow-1">
-                                                        <h6 class="card-title">${updatedItem.item_name}</h6>
-                                                        <div class="d-flex flex-wrap gap-3">
-                                                            <span class="badge ${conditionColors[updatedItem.condition.condition_name] || 'bg-secondary'}">${updatedItem.condition.condition_name}</span>
-                                                        </div>
-                                                        ${updatedItem.barcode_number ? `<div class="mt-2"><strong>Barcode:</strong> ${updatedItem.barcode_number}</div>` : ''}
-                                                        ${updatedItem.item_notes ? `<p class="mt-2 mb-0"><strong>Notes:</strong> ${updatedItem.item_notes.substring(0, 50)}${updatedItem.item_notes.length > 50 ? '...' : ''}</p>` : ''}
-                                                    </div>
-                                                    <div class="d-flex align-self-start">
-                                                        <button type="button" class="btn btn-sm btn-primary me-1" onclick="openEditItemModal(${updatedItem.item_id}, event)">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem(${updatedItem.item_id}, '${updatedItem.cloudinary_public_id}', event)">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            `;
+                                                            <div class="card-body">
+                                                                <div class="photo-container">
+                                                                    <img src="${updatedItem.image_url}" class="img-thumbnail">
+                                                                </div>
+                                                                <div class="flex-grow-1">
+                                                                    <h6 class="card-title">${updatedItem.item_name}</h6>
+                                                                    <div class="d-flex flex-wrap gap-3">
+                                                                        <span class="badge ${conditionColors[updatedItem.condition.condition_name] || 'bg-secondary'}">${updatedItem.condition.condition_name}</span>
+                                                                    </div>
+                                                                    ${updatedItem.barcode_number ? `<div class="mt-2"><strong>Barcode:</strong> ${updatedItem.barcode_number}</div>` : ''}
+                                                                    ${updatedItem.item_notes ? `<p class="mt-2 mb-0"><strong>Notes:</strong> ${updatedItem.item_notes.substring(0, 50)}${updatedItem.item_notes.length > 50 ? '...' : ''}</p>` : ''}
+                                                                </div>
+                                                                <div class="d-flex align-self-start">
+                                                                    <button type="button" class="btn btn-sm btn-primary me-1" onclick="openEditItemModal(${updatedItem.item_id}, event)">
+                                                                        <i class="bi bi-pencil"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem(${updatedItem.item_id}, '${updatedItem.cloudinary_public_id}', event)">
+                                                                        <i class="bi bi-trash"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        `;
 
                 // Update the item in the equipmentItems array
                 const itemIndex = equipmentItems.findIndex(i => i.item_id == updatedItem.item_id);
@@ -1780,69 +1780,69 @@ function checkItemsContainerEmpty() {
                 }
             }
 
-         function addItemToUI(item) {
-    const itemsContainer = document.getElementById('itemsContainer');
-    const itemsEmptyState = document.getElementById('itemsEmptyState');
-    
-    if (!itemsContainer || !itemsEmptyState) return;
+            function addItemToUI(item) {
+                const itemsContainer = document.getElementById('itemsContainer');
+                const itemsEmptyState = document.getElementById('itemsEmptyState');
 
-    // Debug: Check if item already exists
-    const existingElement = document.querySelector(`.equipment-item[data-item-id="${item.item_id}"]`);
-    if (existingElement) {
-        console.log('Item already exists in UI, updating instead:', item.item_id);
-        updateItemInUI(item);
-        return;
-    }
+                if (!itemsContainer || !itemsEmptyState) return;
 
-    // If this is the first item being added, hide empty state and show container
-    if (itemsEmptyState && !itemsEmptyState.classList.contains('d-none')) {
-        itemsEmptyState.classList.add('d-none');
-        itemsContainer.classList.remove('d-none');
-    }
+                // Debug: Check if item already exists
+                const existingElement = document.querySelector(`.equipment-item[data-item-id="${item.item_id}"]`);
+                if (existingElement) {
+                    console.log('Item already exists in UI, updating instead:', item.item_id);
+                    updateItemInUI(item);
+                    return;
+                }
 
-    const conditionColors = {
-        "New": "bg-success text-white",
-        "Good": "bg-primary text-white",
-        "Fair": "bg-warning text-dark",
-        "Needs Maintenance": "bg-danger text-white",
-        "Damaged": "bg-dark text-white"
-    };
+                // If this is the first item being added, hide empty state and show container
+                if (itemsEmptyState && !itemsEmptyState.classList.contains('d-none')) {
+                    itemsEmptyState.classList.add('d-none');
+                    itemsContainer.classList.remove('d-none');
+                }
 
-    const itemCard = document.createElement('div');
-    itemCard.className = 'card equipment-item';
-    itemCard.dataset.itemId = item.item_id;
+                const conditionColors = {
+                    "New": "bg-success text-white",
+                    "Good": "bg-primary text-white",
+                    "Fair": "bg-warning text-dark",
+                    "Needs Maintenance": "bg-danger text-white",
+                    "Damaged": "bg-dark text-white"
+                };
 
-    itemCard.innerHTML = `
-        <div class="card-body">
-            <div class="photo-container">
-                <img src="${item.image_url}" class="img-thumbnail">
-            </div>
-            <div class="flex-grow-1">
-                <h6 class="card-title">${item.item_name}</h6>
-                <div class="d-flex flex-wrap gap-3">
-                    <span class="badge ${conditionColors[item.condition.condition_name] || 'bg-secondary'}">${item.condition.condition_name}</span>
-                </div>
-                ${item.barcode_number ? `<div class="mt-2"><strong>Barcode:</strong> ${item.barcode_number}</div>` : ''}
-                ${item.item_notes ? `<p class="mt-2 mb-0"><strong>Notes:</strong> ${item.item_notes.substring(0, 50)}${item.item_notes.length > 50 ? '...' : ''}</p>` : ''}
-            </div>
-            <div class="d-flex align-self-start">
-                <button type="button" class="btn btn-sm btn-primary me-1" onclick="openEditItemModal(${item.item_id}, event)">
-                    <i class="bi bi-pencil"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem(${item.item_id}, '${item.cloudinary_public_id}', event)">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-        </div>
-    `;
+                const itemCard = document.createElement('div');
+                itemCard.className = 'card equipment-item';
+                itemCard.dataset.itemId = item.item_id;
 
-    itemsContainer.appendChild(itemCard);
+                itemCard.innerHTML = `
+                    <div class="card-body">
+                        <div class="photo-container">
+                            <img src="${item.image_url}" class="img-thumbnail">
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="card-title">${item.item_name}</h6>
+                            <div class="d-flex flex-wrap gap-3">
+                                <span class="badge ${conditionColors[item.condition.condition_name] || 'bg-secondary'}">${item.condition.condition_name}</span>
+                            </div>
+                            ${item.barcode_number ? `<div class="mt-2"><strong>Barcode:</strong> ${item.barcode_number}</div>` : ''}
+                            ${item.item_notes ? `<p class="mt-2 mb-0"><strong>Notes:</strong> ${item.item_notes.substring(0, 50)}${item.item_notes.length > 50 ? '...' : ''}</p>` : ''}
+                        </div>
+                        <div class="d-flex align-self-start">
+                            <button type="button" class="btn btn-sm btn-primary me-1" onclick="openEditItemModal(${item.item_id}, event)">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem(${item.item_id}, '${item.cloudinary_public_id}', event)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
 
-    // Add to equipmentItems array if it's a new item
-    if (!equipmentItems.find(i => i.item_id == item.item_id)) {
-        equipmentItems.push(item);
-    }
-}
+                itemsContainer.appendChild(itemCard);
+
+                // Add to equipmentItems array if it's a new item
+                if (!equipmentItems.find(i => i.item_id == item.item_id)) {
+                    equipmentItems.push(item);
+                }
+            }
 
             // 20. Function to upload item photo to Cloudinary
             async function uploadItemToCloudinary(file, equipmentId) {
@@ -1874,182 +1874,182 @@ function checkItemsContainerEmpty() {
                 }
             }
 
-          // 21. Load equipment data
-async function loadEquipmentData(equipmentId) {
-    try {
-        // Show loading state for items immediately
-        const itemsLoading = document.getElementById('itemsLoading');
-        const itemsContainer = document.getElementById('itemsContainer');
-        const itemsEmptyState = document.getElementById('itemsEmptyState');
-        
-        if (itemsLoading && itemsContainer && itemsEmptyState) {
-            itemsLoading.classList.remove('d-none');
-            itemsContainer.classList.add('d-none');
-            itemsEmptyState.classList.add('d-none');
-        }
+            // 21. Load equipment data
+            async function loadEquipmentData(equipmentId) {
+                try {
+                    // Show loading state for items immediately
+                    const itemsLoading = document.getElementById('itemsLoading');
+                    const itemsContainer = document.getElementById('itemsContainer');
+                    const itemsEmptyState = document.getElementById('itemsEmptyState');
 
-        const response = await fetch(`/api/equipment/${equipmentId}`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
-                'Accept': 'application/json'
-            }
-        });
+                    if (itemsLoading && itemsContainer && itemsEmptyState) {
+                        itemsLoading.classList.remove('d-none');
+                        itemsContainer.classList.add('d-none');
+                        itemsEmptyState.classList.add('d-none');
+                    }
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch equipment data');
-        }
-
-        const data = await response.json();
-        const equipment = data.data;
-
-        // Populate form fields
-        document.getElementById('equipmentName').value = equipment.equipment_name;
-        document.getElementById('description').value = equipment.description || '';
-        document.getElementById('brand').value = equipment.brand || '';
-        document.getElementById('storageLocation').value = equipment.storage_location;
-
-        document.getElementById('companyFee').value = equipment.external_fee;
-        document.getElementById('minRentalHours').value = equipment.maximum_rental_hour || 1;
-
-        // Update word count
-        const descriptionWordCount = document.getElementById('descriptionWordCount');
-        if (descriptionWordCount) {
-            descriptionWordCount.textContent = `${equipment.description?.length || 0}/255 characters`;
-        }
-
-        // Load images
-        if (equipment.images && equipment.images.length > 0) {
-            const photosPreview = document.getElementById('photosPreview');
-            photosPreview.innerHTML = '';
-
-            equipment.images.forEach(image => {
-                const preview = document.createElement('div');
-                preview.className = 'photo-preview';
-                preview.dataset.imageId = image.image_id;
-                preview.dataset.publicId = image.cloudinary_public_id;
-
-                const img = document.createElement('img');
-                img.src = image.image_url;
-                img.className = 'img-thumbnail h-100 w-100 object-fit-cover';
-
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0';
-                removeBtn.innerHTML = '<i class="bi bi-x"></i>';
-                removeBtn.onclick = function () {
-                    // Mark for deletion (will be processed on form submit)
-                    pendingImageDeletions.push({
-                        imageId: image.image_id,
-                        publicId: image.cloudinary_public_id,
-                        previewElement: preview
+                    const response = await fetch(`/api/equipment/${equipmentId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                            'Accept': 'application/json'
+                        }
                     });
-                    preview.remove();
-                };
 
-                preview.appendChild(img);
-                preview.appendChild(removeBtn);
-                photosPreview.appendChild(preview);
-            });
-        }
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch equipment data');
+                    }
 
-        // Fetch dropdown data
-        await fetchDropdownData(equipment);
+                    const data = await response.json();
+                    const equipment = data.data;
 
-        // Load equipment items
-        await loadEquipmentItems(equipmentId);
+                    // Populate form fields
+                    document.getElementById('equipmentName').value = equipment.equipment_name;
+                    document.getElementById('description').value = equipment.description || '';
+                    document.getElementById('brand').value = equipment.brand || '';
+                    document.getElementById('storageLocation').value = equipment.storage_location;
 
-    } catch (error) {
-        console.error('Error loading equipment data:', error);
-        alert('Failed to load equipment data: ' + error.message);
-        
-        // Hide loading animation on error
-        const itemsLoading = document.getElementById('itemsLoading');
-        const itemsEmptyState = document.getElementById('itemsEmptyState');
-        if (itemsLoading) itemsLoading.classList.add('d-none');
-        if (itemsEmptyState) {
-            itemsEmptyState.classList.remove('d-none');
-            itemsEmptyState.innerHTML = `
-                <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
-                <p class="mt-2 text-muted">Failed to load equipment data</p>
-                <p class="text-muted small">${error.message}</p>
-            `;
-        }
-    }
-}
+                    document.getElementById('companyFee').value = equipment.external_fee;
+                    document.getElementById('minRentalHours').value = equipment.maximum_rental_hour || 1;
 
-          // 22. Load equipment items
-async function loadEquipmentItems(equipmentId) {
-    try {
-        const itemsContainer = document.getElementById('itemsContainer');
-        const itemsLoading = document.getElementById('itemsLoading');
-        const itemsEmptyState = document.getElementById('itemsEmptyState');
-        
-        if (!itemsContainer || !itemsLoading || !itemsEmptyState) {
-            console.error('Required elements not found');
-            return;
-        }
+                    // Update word count
+                    const descriptionWordCount = document.getElementById('descriptionWordCount');
+                    if (descriptionWordCount) {
+                        descriptionWordCount.textContent = `${equipment.description?.length || 0}/255 characters`;
+                    }
 
-        // Show loading, hide container and empty state
-        itemsLoading.classList.remove('d-none');
-        itemsContainer.classList.add('d-none');
-        itemsEmptyState.classList.add('d-none');
-        
-        // Clear any existing items
-        itemsContainer.innerHTML = '';
+                    // Load images
+                    if (equipment.images && equipment.images.length > 0) {
+                        const photosPreview = document.getElementById('photosPreview');
+                        photosPreview.innerHTML = '';
 
-        const token = localStorage.getItem('adminToken');
-        const response = await fetch(`/api/admin/equipment/${equipmentId}/items`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
+                        equipment.images.forEach(image => {
+                            const preview = document.createElement('div');
+                            preview.className = 'photo-preview';
+                            preview.dataset.imageId = image.image_id;
+                            preview.dataset.publicId = image.cloudinary_public_id;
+
+                            const img = document.createElement('img');
+                            img.src = image.image_url;
+                            img.className = 'img-thumbnail h-100 w-100 object-fit-cover';
+
+                            const removeBtn = document.createElement('button');
+                            removeBtn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0';
+                            removeBtn.innerHTML = '<i class="bi bi-x"></i>';
+                            removeBtn.onclick = function () {
+                                // Mark for deletion (will be processed on form submit)
+                                pendingImageDeletions.push({
+                                    imageId: image.image_id,
+                                    publicId: image.cloudinary_public_id,
+                                    previewElement: preview
+                                });
+                                preview.remove();
+                            };
+
+                            preview.appendChild(img);
+                            preview.appendChild(removeBtn);
+                            photosPreview.appendChild(preview);
+                        });
+                    }
+
+                    // Fetch dropdown data
+                    await fetchDropdownData(equipment);
+
+                    // Load equipment items
+                    await loadEquipmentItems(equipmentId);
+
+                } catch (error) {
+                    console.error('Error loading equipment data:', error);
+                    alert('Failed to load equipment data: ' + error.message);
+
+                    // Hide loading animation on error
+                    const itemsLoading = document.getElementById('itemsLoading');
+                    const itemsEmptyState = document.getElementById('itemsEmptyState');
+                    if (itemsLoading) itemsLoading.classList.add('d-none');
+                    if (itemsEmptyState) {
+                        itemsEmptyState.classList.remove('d-none');
+                        itemsEmptyState.innerHTML = `
+                            <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
+                            <p class="mt-2 text-muted">Failed to load equipment data</p>
+                            <p class="text-muted small">${error.message}</p>
+                        `;
+                    }
+                }
             }
-        });
 
-        if (!response.ok) {
-            throw new Error(`Failed to fetch equipment items: ${response.status}`);
-        }
+            // 22. Load equipment items
+            async function loadEquipmentItems(equipmentId) {
+                try {
+                    const itemsContainer = document.getElementById('itemsContainer');
+                    const itemsLoading = document.getElementById('itemsLoading');
+                    const itemsEmptyState = document.getElementById('itemsEmptyState');
 
-        const data = await response.json();
-        equipmentItems = data.data || [];
+                    if (!itemsContainer || !itemsLoading || !itemsEmptyState) {
+                        console.error('Required elements not found');
+                        return;
+                    }
 
-        // Hide loading animation
-        itemsLoading.classList.add('d-none');
+                    // Show loading, hide container and empty state
+                    itemsLoading.classList.remove('d-none');
+                    itemsContainer.classList.add('d-none');
+                    itemsEmptyState.classList.add('d-none');
 
-        if (equipmentItems.length === 0) {
-            // Show empty state
-            itemsEmptyState.classList.remove('d-none');
-            itemsContainer.classList.add('d-none');
-        } else {
-            // Show container and populate items
-            itemsContainer.classList.remove('d-none');
-            itemsEmptyState.classList.add('d-none');
-            
-            equipmentItems.forEach(item => {
-                addItemToUI(item);
-            });
-        }
+                    // Clear any existing items
+                    itemsContainer.innerHTML = '';
 
-    } catch (error) {
-        console.error('Error loading equipment items:', error);
-        
-        // Hide loading animation on error
-        const itemsLoading = document.getElementById('itemsLoading');
-        const itemsEmptyState = document.getElementById('itemsEmptyState');
-        const itemsContainer = document.getElementById('itemsContainer');
-        
-        if (itemsLoading) itemsLoading.classList.add('d-none');
-        if (itemsContainer) itemsContainer.classList.add('d-none');
-        if (itemsEmptyState) {
-            itemsEmptyState.classList.remove('d-none');
-            itemsEmptyState.innerHTML = `
-                <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
-                <p class="mt-2 text-muted">Failed to load items</p>
-                <p class="text-muted small">${error.message}</p>
-            `;
-        }
-        
-        showToast('Failed to load equipment items: ' + error.message, 'error');
-    }
-}
+                    const token = localStorage.getItem('adminToken');
+                    const response = await fetch(`/api/admin/equipment/${equipmentId}/items`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch equipment items: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    equipmentItems = data.data || [];
+
+                    // Hide loading animation
+                    itemsLoading.classList.add('d-none');
+
+                    if (equipmentItems.length === 0) {
+                        // Show empty state
+                        itemsEmptyState.classList.remove('d-none');
+                        itemsContainer.classList.add('d-none');
+                    } else {
+                        // Show container and populate items
+                        itemsContainer.classList.remove('d-none');
+                        itemsEmptyState.classList.add('d-none');
+
+                        equipmentItems.forEach(item => {
+                            addItemToUI(item);
+                        });
+                    }
+
+                } catch (error) {
+                    console.error('Error loading equipment items:', error);
+
+                    // Hide loading animation on error
+                    const itemsLoading = document.getElementById('itemsLoading');
+                    const itemsEmptyState = document.getElementById('itemsEmptyState');
+                    const itemsContainer = document.getElementById('itemsContainer');
+
+                    if (itemsLoading) itemsLoading.classList.add('d-none');
+                    if (itemsContainer) itemsContainer.classList.add('d-none');
+                    if (itemsEmptyState) {
+                        itemsEmptyState.classList.remove('d-none');
+                        itemsEmptyState.innerHTML = `
+                            <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
+                            <p class="mt-2 text-muted">Failed to load items</p>
+                            <p class="text-muted small">${error.message}</p>
+                        `;
+                    }
+
+                    showToast('Failed to load equipment items: ' + error.message, 'error');
+                }
+            }
 
             // 23. Add 'required' class to labels with required fields
             document.querySelectorAll('label[for]').forEach(label => {
@@ -2078,8 +2078,7 @@ async function loadEquipmentItems(equipmentId) {
 
                     if (categoriesResponse.ok) {
                         const categoriesData = await categoriesResponse.json();
-                        console.log('Categories data:', categoriesData); // Debug log
-                        // Remove the .data access - the response is the array directly
+                        console.log('Categories data:', categoriesData);
                         if (Array.isArray(categoriesData)) {
                             populateDropdown('category', categoriesData, equipment.category_id, 'category_id', 'category_name');
                         }
@@ -2095,14 +2094,13 @@ async function loadEquipmentItems(equipmentId) {
 
                     if (statusesResponse.ok) {
                         const statusesData = await statusesResponse.json();
-                        console.log('Statuses data:', statusesData); // Debug log
-                        // Remove the .data access - the response is the array directly
+                        console.log('Statuses data:', statusesData);
                         if (Array.isArray(statusesData)) {
                             populateDropdown('availabilityStatus', statusesData, equipment.status_id, 'status_id', 'status_name');
                         }
                     }
 
-                    // Fetch departments
+                    // FETCH DEPARTMENTS FOR MULTIPLE SELECT
                     const departmentsResponse = await fetch('/api/departments', {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -2112,10 +2110,9 @@ async function loadEquipmentItems(equipmentId) {
 
                     if (departmentsResponse.ok) {
                         const departmentsData = await departmentsResponse.json();
-                        console.log('Departments data:', departmentsData); // Debug log
-                        // Remove the .data access - the response is the array directly
+                        console.log('Departments data:', departmentsData);
                         if (Array.isArray(departmentsData)) {
-                            populateDropdown('department', departmentsData, equipment.department_id, 'department_id', 'department_name');
+                            populateDepartmentsDropdown(departmentsData, equipment.department_ids || [equipment.department_id]);
                         }
                     }
 
@@ -2123,9 +2120,9 @@ async function loadEquipmentItems(equipmentId) {
                     const rateTypeDropdown = document.getElementById('rateType');
                     if (rateTypeDropdown) {
                         rateTypeDropdown.innerHTML = `
-                                                                                                                    <option value="Per Hour" ${equipment.rate_type === 'Per Hour' ? 'selected' : ''}>Per Hour</option>
-                                                                                                                    <option value="Per Event" ${equipment.rate_type === 'Per Event' ? 'selected' : ''}>Per Event</option>
-                                                                                                                `;
+                        <option value="Per Hour" ${equipment.rate_type === 'Per Hour' ? 'selected' : ''}>Per Hour</option>
+                        <option value="Per Event" ${equipment.rate_type === 'Per Event' ? 'selected' : ''}>Per Event</option>
+                    `;
                     }
 
                     // Fetch conditions for inventory items
@@ -2138,7 +2135,6 @@ async function loadEquipmentItems(equipmentId) {
 
                     if (conditionsResponse.ok) {
                         const conditionsData = await conditionsResponse.json();
-                        // Remove the .data access - the response is the array directly
                         if (Array.isArray(conditionsData)) {
                             populateDropdown('itemCondition', conditionsData, null, 'condition_id', 'condition_name');
                         }
@@ -2147,6 +2143,34 @@ async function loadEquipmentItems(equipmentId) {
                 } catch (error) {
                     console.error('Error fetching dropdown data:', error);
                 }
+            }
+
+            // NEW FUNCTION: Populate departments multiple select
+            function populateDepartmentsDropdown(departments, selectedIds = []) {
+                const dropdown = document.getElementById('departments');
+                if (!dropdown) {
+                    console.error('Departments dropdown not found');
+                    return;
+                }
+
+                // Clear existing options
+                dropdown.innerHTML = '';
+
+                // Add new options
+                departments.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept.department_id;
+                    option.textContent = dept.department_name;
+
+                    // Check if this department should be selected
+                    if (selectedIds.includes(dept.department_id)) {
+                        option.selected = true;
+                    }
+
+                    dropdown.appendChild(option);
+                });
+
+                console.log('Departments dropdown populated with', departments.length, 'departments');
             }
 
             // 26. Populate dropdown function
@@ -2296,17 +2320,20 @@ async function loadEquipmentItems(equipmentId) {
                     }
 
                     // 4. Update equipment details
+                    // Get selected departments from multiple select
+                    const departmentsSelect = document.getElementById('departments');
+                    const selectedDepartments = Array.from(departmentsSelect.selectedOptions).map(option => option.value);
+
                     const formData = {
                         equipment_name: document.getElementById('equipmentName').value,
                         description: document.getElementById('description').value,
                         brand: document.getElementById('brand').value,
                         storage_location: document.getElementById('storageLocation').value,
                         category_id: document.getElementById('category').value,
-
                         external_fee: document.getElementById('companyFee').value,
                         rate_type: document.getElementById('rateType').value,
                         status_id: document.getElementById('availabilityStatus').value,
-                        department_id: document.getElementById('department').value,
+                        departments: selectedDepartments, // Send array of department IDs
                         maximum_rental_hour: document.getElementById('minRentalHours').value,
                     };
 

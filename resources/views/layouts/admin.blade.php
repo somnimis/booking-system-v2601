@@ -1062,18 +1062,19 @@ function hideSidebarItemsBasedOnRole(roleId) {
         if (item) item.style.display = 'block';
     });
 
-    // Apply role-based visibility rules based on role_id from seeder
+    // Apply role-based visibility rules based on role_id from updated seeder
     switch (Number(roleId)) {
         case 1: // Head Admin (role_id = 1)
             // SHOW ALL - no items to hide
             break;
 
-        case 2: // Approving Officer (role_id = 2)
-            // Hide only Administrators
+        case 2: // Chief Approving Officer (role_id = 2)
+        case 3: // Approving Officer (role_id = 3)
+            // Both role 2 and 3: Hide only Administrators
             if (administratorsNavItem) administratorsNavItem.style.display = 'none';
             break;
 
-        case 3: // Inventory Manager (role_id = 3)
+        case 4: // Inventory Manager (role_id = 4)
             // Hide Administrators, Active Bookings, Pending Approval
             if (administratorsNavItem) administratorsNavItem.style.display = 'none';
             if (calendarNavItem) calendarNavItem.style.display = 'none';           // Active Bookings
