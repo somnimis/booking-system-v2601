@@ -32,10 +32,10 @@ class Admin extends Authenticatable
         'hashed_password'
     ];
 
-protected $hidden = [
-    'hashed_password',
-    'role_id'
-];
+    protected $hidden = [
+        'hashed_password',
+        'role_id'
+    ];
     protected $with = ['role'];  // Always load the role relationship
 
     // ----- Role Assignment ----- //
@@ -58,11 +58,28 @@ protected $hidden = [
 
 
     // ----- Department Assignments ----- //
- 
+
     public function primaryDepartment()
     {
         return $this->departments()->wherePivot('is_primary', true);
     }
+
+    /**
+     * Equipment that this admin has waived
+     */
+    public function waivedEquipment()
+    {
+        return $this->hasMany(RequestedEquipment::class, 'waived_by', 'admin_id');
+    }
+
+    /**
+     * Facilities that this admin has waived
+     */
+    public function waivedFacilities()
+    {
+        return $this->hasMany(RequestedFacility::class, 'waived_by', 'admin_id');
+    }
+
 
     // ----- Requisition Management ----- //
 
@@ -144,33 +161,33 @@ protected $hidden = [
     }
 
     public function departments(): BelongsToMany
-{
-    return $this->belongsToMany(Department::class, 'admin_departments', 'admin_id', 'department_id')
-        ->withPivot('is_primary')  // Only include is_primary, not timestamps
-        ->withTimestamps();
-}
+    {
+        return $this->belongsToMany(Department::class, 'admin_departments', 'admin_id', 'department_id')
+            ->withPivot('is_primary')  // Only include is_primary, not timestamps
+            ->withTimestamps();
+    }
 
 
-/**
- * The services that belong to the admin.
- */
-public function services()
-{
-    return $this->belongsToMany(ExtraService::class, 'admin_services', 'admin_id', 'service_id')
-                ->withPivot([]); // No timestamps or extra pivot fields
-}
-public function facilities()
-{
-    return $this->belongsToMany(
-        Facility::class,
-        'admin_facilities',
-        'admin_id',
-        'facility_id',
-        'admin_id',
-        'facility_id'
-    )
-    ->select('facilities.facility_id', 'facilities.facility_name', 'facilities.department_id');
-    // No withPivot() means pivot data won't be included
-}
+    /**
+     * The services that belong to the admin.
+     */
+    public function services()
+    {
+        return $this->belongsToMany(ExtraService::class, 'admin_services', 'admin_id', 'service_id')
+            ->withPivot([]); // No timestamps or extra pivot fields
+    }
+    public function facilities()
+    {
+        return $this->belongsToMany(
+            Facility::class,
+            'admin_facilities',
+            'admin_id',
+            'facility_id',
+            'admin_id',
+            'facility_id'
+        )
+            ->select('facilities.facility_id', 'facilities.facility_name', 'facilities.department_id');
+        // No withPivot() means pivot data won't be included
+    }
 
 }

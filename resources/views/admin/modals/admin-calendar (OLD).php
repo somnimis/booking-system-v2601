@@ -91,10 +91,6 @@
                 font-size: 0.9em;
             }
 
-            .card {
-                margin-bottom: 0.5rem;
-            }
-
             .btn,
             .form-control,
             .form-select {
@@ -271,11 +267,6 @@
             content: "■";
             margin-right: 8px;
             font-size: 12px;
-        }
-
-        .card {
-            border: 1px #3333331a solid !important;
-            border-radius: 0.75rem;
         }
 
         .fc .fc-toolbar-chunk .fc-button:focus,

@@ -200,12 +200,6 @@
         justify-content: center;
     }
     
-    .card {
-        border: 0 !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        border-radius: 0.75rem;
-    }
-    
     /* Responsive adjustments */
     @media (max-width: 768px) {
         .requester-name {

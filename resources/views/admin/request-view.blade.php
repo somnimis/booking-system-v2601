@@ -228,11 +228,6 @@
             width: 100%;
         }
 
-        /* Ensure consistent card styling */
-        .card {
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
 
         .card-header {
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);

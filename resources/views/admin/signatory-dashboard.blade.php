@@ -25,11 +25,6 @@
     max-height: 400px;
     overflow-y: auto;
 }
-    .card {
-  border: 0 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  border-radius: 0.75rem; /* optional, for smoother corners */
-}
 
     /* New styles for the dashboard header */
     .dashboard-header {

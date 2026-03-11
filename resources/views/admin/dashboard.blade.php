@@ -4,34 +4,27 @@
 
 @section('content')
   <style>
-
-
     /* Feedback item styles */
-.feedback-item {
-    border-left: 3px solid #007bff;
-    padding-left: 1rem;
-}
+    .feedback-item {
+      border-left: 3px solid #007bff;
+      padding-left: 1rem;
+    }
 
-.feedback-item:last-child {
-    border-bottom: none !important;
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
-}
+    .feedback-item:last-child {
+      border-bottom: none !important;
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+    }
 
-.ratings-section .badge {
-    font-size: 0.7em;
-    padding: 0.25rem 0.5rem;
-}
+    .ratings-section .badge {
+      font-size: 0.7em;
+      padding: 0.25rem 0.5rem;
+    }
 
-.log-container {
-    max-height: 400px;
-    overflow-y: auto;
-}
-    .card {
-  border: 0 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  border-radius: 0.75rem; /* optional, for smoother corners */
-}
+    .log-container {
+      max-height: 400px;
+      overflow-y: auto;
+    }
 
     /* New styles for the dashboard header */
     .dashboard-header {
@@ -200,93 +193,93 @@
         </div>
       </div>
 
-<div class="row g-3">
-  <!-- Equipment Condition Tracker -->
-  <div class="col-12">
-    <div class="card p-3">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="{{ url('/admin/manage-equipment') }}" class="text-decoration-none">
-          <h5 class="fw-bold mb-0 text-primary">Inventory Tracker</h5>
-        </a>
-        <span class="badge bg-primary" id="equipmentCount">0 items</span>
-      </div>
-      <div class="equipment-list-container" style="height: 170px; overflow-y: auto;">
-        <div id="equipmentList" class="d-flex flex-column gap-2">
-          <!-- Equipment items will be loaded here dynamically -->
-        </div>
-      </div>
-      <div class="card-footer border-0 bg-transparent px-0 pb-0 pt-2 mt-3">
-        <a href="{{ url('/admin/scan-equipment') }}" class="btn btn-secondary w-100 py-2">
-          <i class="bi bi-qr-code-scan me-2"></i>Scan Equipment
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Pending Requisitions List -->
-  <div class="col-12 mt-3">
-    <div class="card p-3">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="{{ url('/admin/manage-requests') }}" class="text-decoration-none">
-          <h5 class="fw-bold mb-0 text-primary">Pending Forms</h5>
-        </a>
-        <span class="badge bg-primary" id="requisitionCount">0</span>
-      </div>
-      <div class="requisition-list-container" style="height: 220px; overflow-y: auto;">
-        <div id="requisitionList" class="d-flex flex-column gap-2">
-          <div class="text-center text-muted py-4">
-            <div class="spinner-border spinner-border-sm" role="status"></div>
-            <div class="mt-2">Loading requisitions...</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- Feedback & System Log Section -->
-  <div class="col-12 mt-3">
-    <div class="row">
-      <!-- System Log -->
-      <div class="col-md-6 mb-3 mb-md-0">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <h4 class="fw-bold text-primary">Admin Activity Timeline</h4>
-              <div class="d-flex gap-2">
-                <input type="date" class="form-control" id="logDateFilter" placeholder="Filter by Date">
+      <div class="row g-3">
+        <!-- Equipment Condition Tracker -->
+        <div class="col-12">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <a href="{{ url('/admin/manage-equipment') }}" class="text-decoration-none">
+                <h5 class="fw-bold mb-0 text-primary">Inventory Tracker</h5>
+              </a>
+              <span class="badge bg-primary" id="equipmentCount">0 items</span>
+            </div>
+            <div class="equipment-list-container" style="height: 170px; overflow-y: auto;">
+              <div id="equipmentList" class="d-flex flex-column gap-2">
+                <!-- Equipment items will be loaded here dynamically -->
               </div>
             </div>
-            <div id="systemLog" class="border rounded p-3 log-container">
-              <div class="text-center text-muted py-4">
-                <div class="spinner-border spinner-border-sm" role="status"></div>
-                <div class="mt-2">Loading system log...</div>
+            <div class="card-footer border-0 bg-transparent px-0 pb-0 pt-2 mt-3">
+              <a href="{{ url('/admin/scan-equipment') }}" class="btn btn-secondary w-100 py-2">
+                <i class="bi bi-qr-code-scan me-2"></i>Scan Equipment
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Requisitions List -->
+        <div class="col-12 mt-3">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <a href="{{ url('/admin/manage-requests') }}" class="text-decoration-none">
+                <h5 class="fw-bold mb-0 text-primary">Pending Forms</h5>
+              </a>
+              <span class="badge bg-primary" id="requisitionCount">0</span>
+            </div>
+            <div class="requisition-list-container" style="height: 220px; overflow-y: auto;">
+              <div id="requisitionList" class="d-flex flex-column gap-2">
+                <div class="text-center text-muted py-4">
+                  <div class="spinner-border spinner-border-sm" role="status"></div>
+                  <div class="mt-2">Loading requisitions...</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- User Feedback -->
-      <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <h4 class="fw-bold text-primary">User Feedback</h4>
-              <span class="badge bg-primary" id="feedbackCount">0</span>
+
+        <!-- Feedback & System Log Section -->
+        <div class="col-12 mt-3">
+          <div class="row">
+            <!-- System Log -->
+            <div class="col-md-6 mb-3 mb-md-0">
+              <div class="card shadow-sm h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold text-primary">Admin Activity Timeline</h4>
+                    <div class="d-flex gap-2">
+                      <input type="date" class="form-control" id="logDateFilter" placeholder="Filter by Date">
+                    </div>
+                  </div>
+                  <div id="systemLog" class="border rounded p-3 log-container">
+                    <div class="text-center text-muted py-4">
+                      <div class="spinner-border spinner-border-sm" role="status"></div>
+                      <div class="mt-2">Loading system log...</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div id="feedbackContainer" class="border rounded p-3 log-container">
-              <div class="text-center text-muted py-4">
-                <div class="spinner-border spinner-border-sm" role="status"></div>
-                <div class="mt-2">Loading feedback...</div>
+
+            <!-- User Feedback -->
+            <div class="col-md-6">
+              <div class="card shadow-sm h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold text-primary">User Feedback</h4>
+                    <span class="badge bg-primary" id="feedbackCount">0</span>
+                  </div>
+                  <div id="feedbackContainer" class="border rounded p-3 log-container">
+                    <div class="text-center text-muted py-4">
+                      <div class="spinner-border spinner-border-sm" role="status"></div>
+                      <div class="mt-2">Loading feedback...</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
     </main>
   </div>
@@ -299,11 +292,11 @@
     document.addEventListener('DOMContentLoaded', function () {
       // Show loading state
       document.getElementById('equipmentList').innerHTML = `
-                  <div class="text-center text-muted py-4">
-                      <div class="spinner-border spinner-border-sm" role="status"></div>
-                      <div class="mt-2">Loading equipment...</div>
-                  </div>
-              `;
+                    <div class="text-center text-muted py-4">
+                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                        <div class="mt-2">Loading equipment...</div>
+                    </div>
+                `;
 
       const adminId = localStorage.getItem('adminId');
       const manageProfileBtn = document.getElementById('manageProfileBtn');
@@ -347,9 +340,9 @@
               pendingRequests++;
             }
 
-         if (status === 'Scheduled' || status === 'Ongoing' || status === 'Late') {
-    ongoingEvents++;
-}
+            if (status === 'Scheduled' || status === 'Ongoing' || status === 'Late') {
+              ongoingEvents++;
+            }
 
           });
 
@@ -371,12 +364,12 @@
 
           // Show error in requisition list
           document.getElementById('requisitionList').innerHTML = `
-                          <div class="text-center text-danger py-4">
-                              <i class="bi bi-exclamation-triangle fs-4"></i>
-                              <div class="mt-2">Failed to load requisitions</div>
-                              <small class="text-muted">${error.message}</small>
-                          </div>
-                      `;
+                            <div class="text-center text-danger py-4">
+                                <i class="bi bi-exclamation-triangle fs-4"></i>
+                                <div class="mt-2">Failed to load requisitions</div>
+                                <small class="text-muted">${error.message}</small>
+                            </div>
+                        `;
         });
 
       // Fetch and display equipment data
@@ -396,81 +389,81 @@
     });
 
     // Fetch and display user feedback
-async function fetchUserFeedback() {
-    try {
+    async function fetchUserFeedback() {
+      try {
         const token = localStorage.getItem('adminToken');
         console.log('Fetching user feedback...');
 
         const response = await fetch('/api/feedback', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            }
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch feedback: ${response.status} ${response.statusText}`);
+          throw new Error(`Failed to fetch feedback: ${response.status} ${response.statusText}`);
         }
 
         const feedbackData = await response.json();
         console.log('Fetched feedback data:', feedbackData);
-        
+
         displayUserFeedback(feedbackData);
 
-    } catch (error) {
+      } catch (error) {
         console.error('Error fetching user feedback:', error);
         document.getElementById('feedbackContainer').innerHTML = `
-            <div class="text-center text-danger py-4">
-                <i class="bi bi-exclamation-triangle fs-4"></i>
-                <div class="mt-2">Failed to load feedback</div>
-                <small class="text-muted">${error.message}</small>
-            </div>
-        `;
+              <div class="text-center text-danger py-4">
+                  <i class="bi bi-exclamation-triangle fs-4"></i>
+                  <div class="mt-2">Failed to load feedback</div>
+                  <small class="text-muted">${error.message}</small>
+              </div>
+          `;
+      }
     }
-}
 
-// Display user feedback in the container
-function displayUserFeedback(feedbackData) {
-    const feedbackContainer = document.getElementById('feedbackContainer');
-    const feedbackCount = document.getElementById('feedbackCount');
+    // Display user feedback in the container
+    function displayUserFeedback(feedbackData) {
+      const feedbackContainer = document.getElementById('feedbackContainer');
+      const feedbackCount = document.getElementById('feedbackCount');
 
-    // Handle both array and object responses
-    let feedbackArray = [];
-    if (Array.isArray(feedbackData)) {
+      // Handle both array and object responses
+      let feedbackArray = [];
+      if (Array.isArray(feedbackData)) {
         feedbackArray = feedbackData;
-    } else if (feedbackData.data && Array.isArray(feedbackData.data)) {
+      } else if (feedbackData.data && Array.isArray(feedbackData.data)) {
         feedbackArray = feedbackData.data;
-    } else {
+      } else {
         // If it's an object with feedback records, convert to array
-        feedbackArray = Object.values(feedbackData).filter(item => 
-            item && typeof item === 'object' && item.feedback_id
+        feedbackArray = Object.values(feedbackData).filter(item =>
+          item && typeof item === 'object' && item.feedback_id
         );
-    }
+      }
 
-    console.log('Processed feedback array:', feedbackArray);
+      console.log('Processed feedback array:', feedbackArray);
 
-    if (feedbackArray.length === 0) {
+      if (feedbackArray.length === 0) {
         feedbackContainer.innerHTML = `
-            <div class="text-center text-muted py-4">
-                <i class="bi bi-chat-square-text fs-4"></i>
-                <div class="mt-2">No feedback submitted yet</div>
-                <small class="text-muted">User feedback will appear here</small>
-            </div>
-        `;
+              <div class="text-center text-muted py-4">
+                  <i class="bi bi-chat-square-text fs-4"></i>
+                  <div class="mt-2">No feedback submitted yet</div>
+                  <small class="text-muted">User feedback will appear here</small>
+              </div>
+          `;
         feedbackCount.textContent = '0';
         return;
-    }
+      }
 
-    // Update count
-    feedbackCount.textContent = `${feedbackArray.length} ${feedbackArray.length === 1 ? 'entry' : 'entries'}`;
+      // Update count
+      feedbackCount.textContent = `${feedbackArray.length} ${feedbackArray.length === 1 ? 'entry' : 'entries'}`;
 
-    // Sort by latest first
-    const sortedFeedback = feedbackArray.sort((a, b) => 
+      // Sort by latest first
+      const sortedFeedback = feedbackArray.sort((a, b) =>
         new Date(b.created_at || b.submitted_at || Date.now()) - new Date(a.created_at || a.submitted_at || Date.now())
-    );
+      );
 
-    // Create feedback items
-    const feedbackHTML = sortedFeedback.map(feedback => {
+      // Create feedback items
+      const feedbackHTML = sortedFeedback.map(feedback => {
         const email = feedback.email || '<span class="text-muted">No email provided</span>';
         const additionalFeedback = feedback.additional_feedback || '<span class="text-muted">No additional feedback</span>';
         const submittedDate = new Date(feedback.created_at || feedback.submitted_at || Date.now()).toLocaleDateString();
@@ -478,87 +471,87 @@ function displayUserFeedback(feedbackData) {
 
         // Format ratings with badges
         const formatRating = (rating) => {
-            const ratingClass = getRatingClass(rating);
-            return `<span class="badge ${ratingClass}">${rating}</span>`;
+          const ratingClass = getRatingClass(rating);
+          return `<span class="badge ${ratingClass}">${rating}</span>`;
         };
 
         return `
-            <div class="feedback-item border-bottom pb-3 mb-3">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div class="flex-grow-1">
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <strong class="small">${email}</strong>
-                            <small class="text-muted">• ${submittedDate} ${submittedTime}</small>
-                        </div>
-                        ${feedback.request_id ? 
-                            `<small class="text-muted">Request #${String(feedback.request_id).padStart(4, '0')}</small>` : 
-                            ''
-                        }
-                    </div>
-                </div>
-                
-                <div class="ratings-section mb-2">
-                    <div class="row g-1 small">
-                        <div class="col-6">
-                            <strong>System:</strong> ${formatRating(feedback.system_performance)}
-                        </div>
-                        <div class="col-6">
-                            <strong>Booking:</strong> ${formatRating(feedback.booking_experience)}
-                        </div>
-                        <div class="col-6">
-                            <strong>Ease of Use:</strong> ${formatRating(feedback.ease_of_use)}
-                        </div>
-                        <div class="col-6">
-                            <strong>Use Again:</strong> ${formatRating(feedback.useability)}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="additional-feedback">
-                    <strong class="small">Comments:</strong>
-                    <div class="mt-1 p-2 bg-light rounded small" style="max-height: 80px; overflow-y: auto;">
-                        ${additionalFeedback}
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
+              <div class="feedback-item border-bottom pb-3 mb-3">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                      <div class="flex-grow-1">
+                          <div class="d-flex align-items-center gap-2 mb-1">
+                              <strong class="small">${email}</strong>
+                              <small class="text-muted">• ${submittedDate} ${submittedTime}</small>
+                          </div>
+                          ${feedback.request_id ?
+            `<small class="text-muted">Request #${String(feedback.request_id).padStart(4, '0')}</small>` :
+            ''
+          }
+                      </div>
+                  </div>
 
-    feedbackContainer.innerHTML = feedbackHTML;
-}
+                  <div class="ratings-section mb-2">
+                      <div class="row g-1 small">
+                          <div class="col-6">
+                              <strong>System:</strong> ${formatRating(feedback.system_performance)}
+                          </div>
+                          <div class="col-6">
+                              <strong>Booking:</strong> ${formatRating(feedback.booking_experience)}
+                          </div>
+                          <div class="col-6">
+                              <strong>Ease of Use:</strong> ${formatRating(feedback.ease_of_use)}
+                          </div>
+                          <div class="col-6">
+                              <strong>Use Again:</strong> ${formatRating(feedback.useability)}
+                          </div>
+                      </div>
+                  </div>
 
-// Helper function to determine badge class based on rating
-function getRatingClass(rating) {
-    const ratingLower = rating.toLowerCase();
-    
-    // Positive ratings
-    if (ratingLower.includes('excellent') || 
-        ratingLower.includes('outstanding') || 
-        ratingLower.includes('very good') || 
-        ratingLower.includes('very easy') || 
+                  <div class="additional-feedback">
+                      <strong class="small">Comments:</strong>
+                      <div class="mt-1 p-2 bg-light rounded small" style="max-height: 80px; overflow-y: auto;">
+                          ${additionalFeedback}
+                      </div>
+                  </div>
+              </div>
+          `;
+      }).join('');
+
+      feedbackContainer.innerHTML = feedbackHTML;
+    }
+
+    // Helper function to determine badge class based on rating
+    function getRatingClass(rating) {
+      const ratingLower = rating.toLowerCase();
+
+      // Positive ratings
+      if (ratingLower.includes('excellent') ||
+        ratingLower.includes('outstanding') ||
+        ratingLower.includes('very good') ||
+        ratingLower.includes('very easy') ||
         ratingLower.includes('very likely') ||
         ratingLower.includes('good')) {
         return 'bg-success';
-    }
-    
-    // Neutral ratings
-    if (ratingLower.includes('satisfactory') || 
-        ratingLower.includes('neutral') || 
+      }
+
+      // Neutral ratings
+      if (ratingLower.includes('satisfactory') ||
+        ratingLower.includes('neutral') ||
         ratingLower.includes('fair')) {
         return 'bg-warning text-dark';
-    }
-    
-    // Negative ratings
-    if (ratingLower.includes('poor') || 
-        ratingLower.includes('difficult') || 
+      }
+
+      // Negative ratings
+      if (ratingLower.includes('poor') ||
+        ratingLower.includes('difficult') ||
         ratingLower.includes('unlikely')) {
         return 'bg-danger';
-    }
-    
-    return 'bg-secondary';
-}
+      }
 
-fetchUserFeedback();
+      return 'bg-secondary';
+    }
+
+    fetchUserFeedback();
 
     async function loadSystemLog(requisitionsData = null, roleFilter = 'all') {
       try {
@@ -602,12 +595,12 @@ fetchUserFeedback();
       } catch (error) {
         console.error('Error loading system log:', error);
         document.getElementById('systemLog').innerHTML = `
-                      <div class="text-center text-danger py-4">
-                          <i class="bi bi-exclamation-triangle fs-4"></i>
-                          <div class="mt-2">Failed to load system log</div>
-                          <small class="text-muted">${error.message}</small>
-                      </div>
-                  `;
+                        <div class="text-center text-danger py-4">
+                            <i class="bi bi-exclamation-triangle fs-4"></i>
+                            <div class="mt-2">Failed to load system log</div>
+                            <small class="text-muted">${error.message}</small>
+                        </div>
+                    `;
       }
     }
 
@@ -725,11 +718,11 @@ fetchUserFeedback();
 
       if (logEntries.length === 0) {
         systemLogContainer.innerHTML = `
-                      <div class="text-center text-muted py-4">
-                          <i class="bi bi-inbox fs-4"></i>
-                          <div class="mt-2">No system log entries found</div>
-                      </div>
-                  `;
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-4"></i>
+                            <div class="mt-2">No system log entries found</div>
+                        </div>
+                    `;
         return;
       }
 
@@ -740,47 +733,47 @@ fetchUserFeedback();
         switch (entry.type) {
           case 'approval':
             logContent = `
-                              <strong>${entry.admin_name}</strong> approved requisition 
-                              <span class="log-request-id">#${entry.formatted_request_id}</span>
-                              ${entry.remarks ? `with remarks: "${entry.remarks}"` : ''}
-                          `;
+                                <strong>${entry.admin_name}</strong> approved requisition 
+                                <span class="log-request-id">#${entry.formatted_request_id}</span>
+                                ${entry.remarks ? `with remarks: "${entry.remarks}"` : ''}
+                            `;
             break;
 
           case 'rejection':
             logContent = `
-                              <strong>${entry.admin_name}</strong> rejected requisition 
-                              <span class="log-request-id">#${entry.formatted_request_id}</span>
-                              ${entry.remarks ? `with remarks: "${entry.remarks}"` : ''}
-                          `;
+                                <strong>${entry.admin_name}</strong> rejected requisition 
+                                <span class="log-request-id">#${entry.formatted_request_id}</span>
+                                ${entry.remarks ? `with remarks: "${entry.remarks}"` : ''}
+                            `;
             break;
 
           case 'comment':
             logContent = `
-                              <strong>${entry.admin_name}</strong> commented on requisition 
-                              <span class="log-request-id">#${entry.formatted_request_id}</span>: 
-                              "${entry.comment}"
-                          `;
+                                <strong>${entry.admin_name}</strong> commented on requisition 
+                                <span class="log-request-id">#${entry.formatted_request_id}</span>: 
+                                "${entry.comment}"
+                            `;
             break;
 
           case 'fee':
             logContent = `
-                              <strong>${entry.admin_name}</strong> added a ${entry.fee_type.toLowerCase()} 
-                              "<strong>${entry.fee_label}</strong>" of ₱${entry.fee_amount.toFixed(2)} to requisition 
-                              <span class="log-request-id">#${entry.formatted_request_id}</span>
-                          `;
+                                <strong>${entry.admin_name}</strong> added a ${entry.fee_type.toLowerCase()} 
+                                "<strong>${entry.fee_label}</strong>" of ₱${entry.fee_amount.toFixed(2)} to requisition 
+                                <span class="log-request-id">#${entry.formatted_request_id}</span>
+                            `;
             break;
         }
 
         return `
-                      <div class="system-log-item ${entry.type}">
-                          <div class="d-flex justify-content-between align-items-start mb-1">
-                              <div class="flex-grow-1">
-                                  ${logContent}
-                              </div>
-                          </div>
-                          <small class="text-muted">${formattedTime}</small>
-                      </div>
-                  `;
+                        <div class="system-log-item ${entry.type}">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <div class="flex-grow-1">
+                                    ${logContent}
+                                </div>
+                            </div>
+                            <small class="text-muted">${formattedTime}</small>
+                        </div>
+                    `;
       }).join('');
 
       systemLogContainer.innerHTML = logHTML;
@@ -832,12 +825,12 @@ fetchUserFeedback();
         .catch(error => {
           console.error('Error fetching equipment data:', error);
           document.getElementById('equipmentList').innerHTML = `
-                      <div class="text-center text-danger py-4">
-                          <i class="bi bi-exclamation-triangle fs-4"></i>
-                          <div class="mt-2">Failed to load equipment data</div>
-                          <small class="text-muted">${error.message}</small>
-                      </div>
-                  `;
+                        <div class="text-center text-danger py-4">
+                            <i class="bi bi-exclamation-triangle fs-4"></i>
+                            <div class="mt-2">Failed to load equipment data</div>
+                            <small class="text-muted">${error.message}</small>
+                        </div>
+                    `;
         });
     }
 
@@ -862,11 +855,11 @@ fetchUserFeedback();
 
       if (allItems.length === 0) {
         equipmentList.innerHTML = `
-                      <div class="text-center text-muted py-4">
-                          <i class="bi bi-inbox fs-4"></i>
-                          <div class="mt-2">No equipment items found</div>
-                      </div>
-                  `;
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-4"></i>
+                            <div class="mt-2">No equipment items found</div>
+                        </div>
+                    `;
         equipmentCount.textContent = '0 items';
         return;
       }
@@ -881,21 +874,21 @@ fetchUserFeedback();
         const equipmentId = item.equipment_id;
 
         return `
-                      <div class="d-flex justify-content-between align-items-center py-2 border-bottom clickable-equipment-item" 
-                           data-equipment-id="${equipmentId}"
-                           style="cursor: pointer; transition: background-color 0.2s;"
-                           onmouseover="this.style.backgroundColor='#f8f9fa'" 
-                           onmouseout="this.style.backgroundColor='transparent'">
-                          <div class="flex-grow-1 me-3" style="min-width: 0;">
-                              <div class="small text-muted text-truncate">${item.equipment_name}</div>
-                              <div class="fw-medium text-truncate">${item.item_name}</div>
-                          </div>
-                          <div class="d-flex align-items-center gap-2 flex-shrink-0" style="white-space: nowrap;">
-                              <div style="width: 10px; height: 10px; border-radius: 50%; background-color: ${conditionColor}; border: 2px solid white; box-shadow: 0 0 0 1px #dee2e6;"></div>
-                              <span class="small">${conditionName}</span>
-                          </div>
-                      </div>
-                  `;
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom clickable-equipment-item" 
+                             data-equipment-id="${equipmentId}"
+                             style="cursor: pointer; transition: background-color 0.2s;"
+                             onmouseover="this.style.backgroundColor='#f8f9fa'" 
+                             onmouseout="this.style.backgroundColor='transparent'">
+                            <div class="flex-grow-1 me-3" style="min-width: 0;">
+                                <div class="small text-muted text-truncate">${item.equipment_name}</div>
+                                <div class="fw-medium text-truncate">${item.item_name}</div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 flex-shrink-0" style="white-space: nowrap;">
+                                <div style="width: 10px; height: 10px; border-radius: 50%; background-color: ${conditionColor}; border: 2px solid white; box-shadow: 0 0 0 1px #dee2e6;"></div>
+                                <span class="small">${conditionName}</span>
+                            </div>
+                        </div>
+                    `;
       }).join('');
 
       equipmentList.innerHTML = itemsHTML;
@@ -932,11 +925,11 @@ fetchUserFeedback();
 
       if (pendingRequisitions.length === 0) {
         requisitionList.innerHTML = `
-                      <div class="text-center text-muted py-4 small">
-                          <i class="bi bi-inbox fs-4"></i>
-                          <div class="mt-2">No pending requisitions</div>
-                      </div>
-                  `;
+                        <div class="text-center text-muted py-4 small">
+                            <i class="bi bi-inbox fs-4"></i>
+                            <div class="mt-2">No pending requisitions</div>
+                        </div>
+                    `;
         requisitionCount.textContent = '0';
         return;
       }
@@ -954,20 +947,20 @@ fetchUserFeedback();
         const fullText = `#${requestId.toString().padStart(4, '0')} (${purpose})`;
 
         return `
-          <div class="d-flex justify-content-between align-items-center py-2 border-bottom clickable-requisition-item small"
-               data-request-id="${requestId}"
-               style="cursor: pointer; transition: background-color 0.2s;"
-               onmouseover="this.style.backgroundColor='#f8f9fa'" 
-               onmouseout="this.style.backgroundColor='transparent'"
-               title="${fullText}">
-              <div class="flex-grow-1 me-3" style="min-width: 0;">
-                  <div class="fw-medium text-truncate">${fullText}</div>
-              </div>
-              <div class="flex-shrink-0">
-                  <span class="status-badge ${statusClass}">${status}</span>
-              </div>
-          </div>
-      `;
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom clickable-requisition-item small"
+                 data-request-id="${requestId}"
+                 style="cursor: pointer; transition: background-color 0.2s;"
+                 onmouseover="this.style.backgroundColor='#f8f9fa'" 
+                 onmouseout="this.style.backgroundColor='transparent'"
+                 title="${fullText}">
+                <div class="flex-grow-1 me-3" style="min-width: 0;">
+                    <div class="fw-medium text-truncate">${fullText}</div>
+                </div>
+                <div class="flex-shrink-0">
+                    <span class="status-badge ${statusClass}">${status}</span>
+                </div>
+            </div>
+        `;
       }).join('');
 
       requisitionList.innerHTML = requisitionsHTML;

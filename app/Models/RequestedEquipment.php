@@ -14,6 +14,7 @@ class RequestedEquipment extends Model
         'equipment_id',
         'quantity',
         'is_waived',
+        'waived_by'
     ];
 
     protected $casts = [
@@ -35,5 +36,9 @@ class RequestedEquipment extends Model
     public function isWaived()
     {
         return $this->hasMany(RequisitionFee::class, 'waived_equipment', 'requested_equipment_id');
+    }
+    public function waivedBy()
+    {
+        return $this->belongsTo(Admin::class, 'waived_by', 'admin_id');
     }
 }

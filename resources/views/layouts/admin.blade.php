@@ -120,10 +120,18 @@
             --light-gray: #f8f9fa;
         }
 
+        .card {
+            border: none;
+            border-radius: 0;
+        }
+
+        .mb-0.fw-bold {
+            color: #004993 !important;
+        }
         /* Base Layout */
         body {
             display: flex;
-            background: linear-gradient(180deg, #eceef3ff 0%, #f8f8f8 50%, #f1f1f1 100%);
+            background: linear-gradient(180deg, #eceef3ff 0%, #f5f5f5 50%, #f7f7f7 100%);
             flex-direction: column;
             min-height: 100vh;
             margin: 0;
