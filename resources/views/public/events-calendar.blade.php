@@ -317,87 +317,89 @@
             }
         }
 
-/* Mobile-specific styles */
-@media (max-width: 992px) {
-    /* Hide the original right column on mobile */
-    .col-lg-9.col-md-12 {
-        display: none !important;
-    }
-    
-    /* Style the mobile toggle */
-    .mobile-calendar-toggle {
-        display: block !important;
-        margin-top: 10px;
-    }
-    
-    .mobile-calendar-toggle .btn-group {
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .mobile-calendar-toggle .btn {
-        padding: 12px 0;
-        font-weight: 500;
-    }
-    
-    /* Mobile events list */
-    .mobile-events-list {
-        margin-top: 10px;
-    }
-    
-    .mobile-events-list .card {
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .mobile-events-list .card-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-        padding: 12px 15px;
-    }
-    
-    .mobile-events-list .card-header h6 {
-        margin: 0;
-        font-weight: 600;
-    }
-    
-    .mobile-event-item {
-        transition: transform 0.2s;
-        border-left: 4px solid transparent;
-    }
-    
-    .mobile-event-item:active {
-        transform: scale(0.98);
-        background-color: #f8f9fa;
-    }
-    
-    /* Calendar event type indicator */
-    .mobile-event-item[data-event-type="calendar_event"] {
-        border-left-color: #28a745;
-    }
-    
-    .mobile-event-item[data-event-type="requisition"] {
-        border-left-color: var(--event-color, #007bff);
-    }
-}
+        /* Mobile-specific styles */
+        @media (max-width: 992px) {
 
-/* Very small screens */
-@media (max-width: 480px) {
-    .mobile-events-list .card-body {
-        max-height: 350px !important;
-    }
-    
-    .mobile-event-item .card-body {
-        padding: 10px !important;
-    }
-    
-    .mobile-event-item h6 {
-        font-size: 0.9rem;
-    }
-    
-    .mobile-event-item .small {
-        font-size: 0.75rem;
-    }
-}
+            /* Hide the original right column on mobile */
+            .col-lg-9.col-md-12 {
+                display: none !important;
+            }
+
+            /* Style the mobile toggle */
+            .mobile-calendar-toggle {
+                display: block !important;
+                margin-top: 10px;
+            }
+
+            .mobile-calendar-toggle .btn-group {
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .mobile-calendar-toggle .btn {
+                padding: 12px 0;
+                font-weight: 500;
+            }
+
+            /* Mobile events list */
+            .mobile-events-list {
+                margin-top: 10px;
+            }
+
+            .mobile-events-list .card {
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .mobile-events-list .card-header {
+                background-color: #f8f9fa;
+                border-bottom: 1px solid #dee2e6;
+                padding: 12px 15px;
+            }
+
+            .mobile-events-list .card-header h6 {
+                margin: 0;
+                font-weight: 600;
+            }
+
+            .mobile-event-item {
+                transition: transform 0.2s;
+                border-left: 4px solid transparent;
+            }
+
+            .mobile-event-item:active {
+                transform: scale(0.98);
+                background-color: #f8f9fa;
+            }
+
+            /* Calendar event type indicator */
+            .mobile-event-item[data-event-type="calendar_event"] {
+                border-left-color: #28a745;
+            }
+
+            .mobile-event-item[data-event-type="requisition"] {
+                border-left-color: var(--event-color, #007bff);
+            }
+        }
+
+        /* Very small screens */
+        @media (max-width: 480px) {
+            .mobile-events-list .card-body {
+                max-height: 350px !important;
+            }
+
+            .mobile-event-item .card-body {
+                padding: 10px !important;
+            }
+
+            .mobile-event-item h6 {
+                font-size: 0.9rem;
+            }
+
+            .mobile-event-item .small {
+                font-size: 0.75rem;
+            }
+        }
+
         /* Mini calendar day styles */
 
         .calendar-day.today {
@@ -586,33 +588,34 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Mobile Toggle View (visible only on mobile) -->
-<div class="mobile-calendar-toggle d-none d-lg-none mb-3">
-    <div class="btn-group w-100" role="group">
-        <button type="button" class="btn btn-outline-primary active" id="showMiniCalendarBtn">
-            <i class="bi bi-calendar3"></i> Calendar
-        </button>
-        <button type="button" class="btn btn-outline-primary" id="showEventsListBtn">
-            <i class="bi bi-list-check"></i> Events
-        </button>
-    </div>
-</div>
 
-<!-- Mobile Events List (visible only on mobile, hidden by default) -->
-<div class="mobile-events-list d-none d-lg-none" id="mobileEventsList">
-    <div class="card">
-        <div class="card-header bg-light">
-            <h6 class="mb-0">Events for <span id="mobileSelectedDate">today</span></h6>
-        </div>
-        <div class="card-body p-2" id="mobileEventsListContainer" style="max-height: 400px; overflow-y: auto;">
-            <div class="text-center py-4 text-muted">
-                <i class="bi bi-calendar-event display-4"></i>
-                <p class="mt-2">Select a date to view events</p>
-            </div>
-        </div>
-    </div>
-</div>
+                        <!-- Mobile Toggle View (visible only on mobile) -->
+                        <div class="mobile-calendar-toggle d-none d-lg-none mb-3">
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn btn-outline-primary active" id="showMiniCalendarBtn">
+                                    <i class="bi bi-calendar3"></i> Calendar
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" id="showEventsListBtn">
+                                    <i class="bi bi-list-check"></i> Events
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Events List (visible only on mobile, hidden by default) -->
+                        <div class="mobile-events-list d-none d-lg-none" id="mobileEventsList">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Events for <span id="mobileSelectedDate">today</span></h6>
+                                </div>
+                                <div class="card-body p-2" id="mobileEventsListContainer"
+                                    style="max-height: 400px; overflow-y: auto;">
+                                    <div class="text-center py-4 text-muted">
+                                        <i class="bi bi-calendar-event display-4"></i>
+                                        <p class="mt-2">Select a date to view events</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Right Column: Legend and FullCalendar -->
                         <div class="col-lg-9 col-md-12 d-flex flex-column">
@@ -802,7 +805,7 @@
 
 
         document.addEventListener("DOMContentLoaded", function () {
-            
+
             const legend = document.getElementById('dynamicLegend');
 
             // Only set up event listener if legend exists
@@ -835,131 +838,131 @@
         });
 
         function loadMobileEventsList() {
-    const container = document.getElementById('mobileEventsListContainer');
-    const selectedDateSpan = document.getElementById('mobileSelectedDate');
-    
-    if (!eventCalendarInstance || !eventCalendarInstance.filteredEvents) {
-        container.innerHTML = '<div class="text-center py-4 text-muted">No events loaded</div>';
-        return;
-    }
-    
-    // Get today's date or currently selected date
-    const today = new Date();
-    const events = getEventsForDate(today);
-    
-    selectedDateSpan.textContent = today.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
-    });
-    
-    displayMobileEvents(events);
-}
+            const container = document.getElementById('mobileEventsListContainer');
+            const selectedDateSpan = document.getElementById('mobileSelectedDate');
 
-function loadMobileEventsForDate(day, monthYear) {
-    const container = document.getElementById('mobileEventsListContainer');
-    const selectedDateSpan = document.getElementById('mobileSelectedDate');
-    
-    // Parse the selected date
-    const [month, year] = monthYear.split(' ');
-    const dateStr = `${month} ${day}, ${year}`;
-    const selectedDate = new Date(dateStr);
-    
-    selectedDateSpan.textContent = dateStr;
-    
-    const events = getEventsForDate(selectedDate);
-    displayMobileEvents(events);
-}
+            if (!eventCalendarInstance || !eventCalendarInstance.filteredEvents) {
+                container.innerHTML = '<div class="text-center py-4 text-muted">No events loaded</div>';
+                return;
+            }
 
-function getEventsForDate(date) {
-    if (!eventCalendarInstance || !eventCalendarInstance.filteredEvents) return [];
-    
-    const dateStr = date.toISOString().split('T')[0];
-    
-    return eventCalendarInstance.filteredEvents.filter(event => {
-        if (!event || !event.start) return false;
-        
-        const eventStart = new Date(event.start);
-        const eventStartStr = eventStart.toISOString().split('T')[0];
-        const eventEndStr = event.end ? new Date(event.end).toISOString().split('T')[0] : eventStartStr;
-        
-        return dateStr >= eventStartStr && dateStr <= eventEndStr;
-    });
-}
+            // Get today's date or currently selected date
+            const today = new Date();
+            const events = getEventsForDate(today);
 
-function displayMobileEvents(events) {
-    const container = document.getElementById('mobileEventsListContainer');
-    
-    if (events.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-5">
-                <i class="bi bi-calendar-x display-4 text-muted"></i>
-                <p class="mt-2 text-muted">No events scheduled</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Sort events by time
-    events.sort((a, b) => new Date(a.start) - new Date(b.start));
-    
-    let html = '';
-    events.forEach(event => {
-        const eventType = event.extendedProps?.eventType || 'requisition';
-        const startTime = event.start ? new Date(event.start).toLocaleTimeString([], { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true 
-        }) : 'All day';
-        
-        const endTime = event.end ? new Date(event.end).toLocaleTimeString([], { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true 
-        }) : '';
-        
-        const facilities = event.extendedProps?.facilities || [];
-        const facilityNames = facilities.map(f => f.name).join(', ');
-        
-        html += `
-            <div class="card mb-2 mobile-event-item" data-event-id="${event.id}" style="cursor: pointer;">
-                <div class="card-body p-2">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="mb-1">${event.title || 'Untitled'}</h6>
-                            <div class="small">
-                                <span class="badge ${eventType === 'calendar_event' ? 'bg-success' : ''}" 
-                                      style="${eventType !== 'calendar_event' ? 'background-color: ' + (event.color || '#007bff') : ''}">
-                                    ${eventType === 'calendar_event' ? 'Calendar' : (event.extendedProps?.status || 'Event')}
-                                </span>
-                                <span class="ms-2">
-                                    <i class="bi bi-clock"></i> ${startTime} ${endTime ? '- ' + endTime : ''}
-                                </span>
-                            </div>
-                            ${facilityNames ? `
-                                <div class="small text-muted mt-1">
-                                    <i class="bi bi-building"></i> ${facilityNames}
+            selectedDateSpan.textContent = today.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+            });
+
+            displayMobileEvents(events);
+        }
+
+        function loadMobileEventsForDate(day, monthYear) {
+            const container = document.getElementById('mobileEventsListContainer');
+            const selectedDateSpan = document.getElementById('mobileSelectedDate');
+
+            // Parse the selected date
+            const [month, year] = monthYear.split(' ');
+            const dateStr = `${month} ${day}, ${year}`;
+            const selectedDate = new Date(dateStr);
+
+            selectedDateSpan.textContent = dateStr;
+
+            const events = getEventsForDate(selectedDate);
+            displayMobileEvents(events);
+        }
+
+        function getEventsForDate(date) {
+            if (!eventCalendarInstance || !eventCalendarInstance.filteredEvents) return [];
+
+            const dateStr = date.toISOString().split('T')[0];
+
+            return eventCalendarInstance.filteredEvents.filter(event => {
+                if (!event || !event.start) return false;
+
+                const eventStart = new Date(event.start);
+                const eventStartStr = eventStart.toISOString().split('T')[0];
+                const eventEndStr = event.end ? new Date(event.end).toISOString().split('T')[0] : eventStartStr;
+
+                return dateStr >= eventStartStr && dateStr <= eventEndStr;
+            });
+        }
+
+        function displayMobileEvents(events) {
+            const container = document.getElementById('mobileEventsListContainer');
+
+            if (events.length === 0) {
+                container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="bi bi-calendar-x display-4 text-muted"></i>
+                    <p class="mt-2 text-muted">No events scheduled</p>
+                </div>
+            `;
+                return;
+            }
+
+            // Sort events by time
+            events.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+            let html = '';
+            events.forEach(event => {
+                const eventType = event.extendedProps?.eventType || 'requisition';
+                const startTime = event.start ? new Date(event.start).toLocaleTimeString([], {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                }) : 'All day';
+
+                const endTime = event.end ? new Date(event.end).toLocaleTimeString([], {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                }) : '';
+
+                const facilities = event.extendedProps?.facilities || [];
+                const facilityNames = facilities.map(f => f.name).join(', ');
+
+                html += `
+                <div class="card mb-2 mobile-event-item" data-event-id="${event.id}" style="cursor: pointer;">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${event.title || 'Untitled'}</h6>
+                                <div class="small">
+                                    <span class="badge ${eventType === 'calendar_event' ? 'bg-success' : ''}" 
+                                          style="${eventType !== 'calendar_event' ? 'background-color: ' + (event.color || '#007bff') : ''}">
+                                        ${eventType === 'calendar_event' ? 'Calendar' : (event.extendedProps?.status || 'Event')}
+                                    </span>
+                                    <span class="ms-2">
+                                        <i class="bi bi-clock"></i> ${startTime} ${endTime ? '- ' + endTime : ''}
+                                    </span>
                                 </div>
-                            ` : ''}
+                                ${facilityNames ? `
+                                    <div class="small text-muted mt-1">
+                                        <i class="bi bi-building"></i> ${facilityNames}
+                                    </div>
+                                ` : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
-    });
-    
-    container.innerHTML = html;
-    
-    // Add click handlers
-    document.querySelectorAll('.mobile-event-item').forEach(item => {
-        item.addEventListener('click', function() {
-            const eventId = this.dataset.eventId;
-            const event = eventCalendarInstance.filteredEvents.find(e => e.id === eventId);
-            if (event && eventCalendarInstance) {
-                eventCalendarInstance.showEventModal({ extendedProps: event.extendedProps, ...event });
-            }
-        });
-    });
-}
+            `;
+            });
+
+            container.innerHTML = html;
+
+            // Add click handlers
+            document.querySelectorAll('.mobile-event-item').forEach(item => {
+                item.addEventListener('click', function () {
+                    const eventId = this.dataset.eventId;
+                    const event = eventCalendarInstance.filteredEvents.find(e => e.id === eventId);
+                    if (event && eventCalendarInstance) {
+                        eventCalendarInstance.showEventModal({ extendedProps: event.extendedProps, ...event });
+                    }
+                });
+            });
+        }
 
         function initEventsCalendar() {
             // Show loading for both calendars
@@ -1012,11 +1015,6 @@ function displayMobileEvents(events) {
 
             // Load and display status legend
             loadFormStatuses();
-
-            setTimeout(() => {
-                if (!miniCalendarLoaded) showMiniCalendarLoading(false);
-                if (!fullCalendarLoaded) showFullCalendarLoading(false);
-            }, 10000);
         }
 
         function showMiniCalendarLoading(show) {
@@ -1026,6 +1024,7 @@ function displayMobileEvents(events) {
             if (show) {
                 overlay.classList.remove('d-none');
                 overlay.style.display = 'flex';
+                overlay.style.opacity = '1';
             } else {
                 overlay.style.opacity = '0';
                 setTimeout(() => {
@@ -1042,6 +1041,7 @@ function displayMobileEvents(events) {
             if (show) {
                 overlay.classList.remove('d-none');
                 overlay.style.display = 'flex';
+                overlay.style.opacity = '1';
             } else {
                 overlay.style.opacity = '0';
                 setTimeout(() => {
@@ -1050,7 +1050,6 @@ function displayMobileEvents(events) {
                 }, 300);
             }
         }
-
         async function loadFormStatuses() {
             try {
                 const response = await fetch('/api/form-statuses');
@@ -1312,64 +1311,64 @@ function displayMobileEvents(events) {
                 const categoryId = `cat-${category.id}-${categoryIndex}`;
 
                 html += `
-                                                            <div class="category-group mb-2">
-                                                                <div class="category-header">
-                                                                    <div class="d-flex align-items-center">
-                                                                        <button class="btn btn-sm btn-link text-decoration-none p-0 me-2" 
-                                                                                type="button" 
-                                                                                data-bs-toggle="collapse" 
-                                                                                data-bs-target="#${categoryId}-subcats"
-                                                                                aria-expanded="true">
-                                                                            <i class="bi bi-chevron-down"></i>
-                                                                        </button>
-                                                                        <div class="form-check flex-grow-1">
-                                                                            <input class="form-check-input category-checkbox" 
-                                                                                   type="checkbox" 
-                                                                                   value="${category.id}"
-                                                                                   id="cat-${category.id}"
-                                                                                   data-category-id="${category.id}"
-                                                                                   checked>
-                                                                            <label class="form-check-label fw-semibold" for="cat-${category.id}">
-                                                                                ${category.name}
-                                                                            </label>
+                                                                <div class="category-group mb-2">
+                                                                    <div class="category-header">
+                                                                        <div class="d-flex align-items-center">
+                                                                            <button class="btn btn-sm btn-link text-decoration-none p-0 me-2" 
+                                                                                    type="button" 
+                                                                                    data-bs-toggle="collapse" 
+                                                                                    data-bs-target="#${categoryId}-subcats"
+                                                                                    aria-expanded="true">
+                                                                                <i class="bi bi-chevron-down"></i>
+                                                                            </button>
+                                                                            <div class="form-check flex-grow-1">
+                                                                                <input class="form-check-input category-checkbox" 
+                                                                                       type="checkbox" 
+                                                                                       value="${category.id}"
+                                                                                       id="cat-${category.id}"
+                                                                                       data-category-id="${category.id}"
+                                                                                       checked>
+                                                                                <label class="form-check-label fw-semibold" for="cat-${category.id}">
+                                                                                    ${category.name}
+                                                                                </label>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
 
-                                                                <div class="collapse show ps-4" id="${categoryId}-subcats">
-                                                        `;
+                                                                    <div class="collapse show ps-4" id="${categoryId}-subcats">
+                                                            `;
 
                 // Add subcategories
                 Object.values(category.subcategories).forEach(subcategory => {
                     const subcatId = `${categoryId}-sub-${subcategory.id}`;
 
                     html += `
-                                                                <div class="subcategory-group mb-2">
-                                                                    <div class="d-flex align-items-center">
-                                                                        <button class="btn btn-sm btn-link text-decoration-none p-0 me-2" 
-                                                                                type="button" 
-                                                                                data-bs-toggle="collapse" 
-                                                                                data-bs-target="#${subcatId}-facilities"
-                                                                                aria-expanded="true">
-                                                                            <i class="bi bi-chevron-down"></i>
-                                                                        </button>
-                                                                        <div class="form-check flex-grow-1">
-                                                                            <input class="form-check-input subcategory-checkbox" 
-                                                                                   type="checkbox" 
-                                                                                   value="${subcategory.id}"
-                                                                                   id="sub-${subcategory.id}"
-                                                                                   data-category-id="${category.id}"
-                                                                                   data-subcategory-id="${subcategory.id}"
-                                                                                   checked>
-                                                                            <label class="form-check-label fw-medium small" for="sub-${subcategory.id}">
-                                                                                ${subcategory.name}
-                                                                            </label>
+                                                                    <div class="subcategory-group mb-2">
+                                                                        <div class="d-flex align-items-center">
+                                                                            <button class="btn btn-sm btn-link text-decoration-none p-0 me-2" 
+                                                                                    type="button" 
+                                                                                    data-bs-toggle="collapse" 
+                                                                                    data-bs-target="#${subcatId}-facilities"
+                                                                                    aria-expanded="true">
+                                                                                <i class="bi bi-chevron-down"></i>
+                                                                            </button>
+                                                                            <div class="form-check flex-grow-1">
+                                                                                <input class="form-check-input subcategory-checkbox" 
+                                                                                       type="checkbox" 
+                                                                                       value="${subcategory.id}"
+                                                                                       id="sub-${subcategory.id}"
+                                                                                       data-category-id="${category.id}"
+                                                                                       data-subcategory-id="${subcategory.id}"
+                                                                                       checked>
+                                                                                <label class="form-check-label fw-medium small" for="sub-${subcategory.id}">
+                                                                                    ${subcategory.name}
+                                                                                </label>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
 
-                                                                    <div class="collapse show ps-4" id="${subcatId}-facilities">
-                                                                        <div class="facilities-list">
-                                                            `;
+                                                                        <div class="collapse show ps-4" id="${subcatId}-facilities">
+                                                                            <div class="facilities-list">
+                                                                `;
 
                     // Add facilities
                     subcategory.facilities.forEach(facility => {
@@ -1379,34 +1378,34 @@ function displayMobileEvents(events) {
                             facilityName.substring(0, 30) + '...' : facilityName;
 
                         html += `
-                                                                    <div class="form-check mb-1">
-                                                                        <input class="form-check-input facility-checkbox individual-facility" 
-                                                                               type="checkbox" 
-                                                                               value="${facilityId}"
-                                                                               id="fac-${facilityId}"
-                                                                               data-category-id="${category.id}"
-                                                                               data-subcategory-id="${subcategory.id}"
-                                                                               data-facility-name="${facilityName}"
-                                                                               checked>
-                                                                        <label class="form-check-label small" for="fac-${facilityId}" 
-                                                                               title="${facilityName}">
-                                                                            ${displayName}
-                                                                        </label>
-                                                                    </div>
-                                                                `;
+                                                                        <div class="form-check mb-1">
+                                                                            <input class="form-check-input facility-checkbox individual-facility" 
+                                                                                   type="checkbox" 
+                                                                                   value="${facilityId}"
+                                                                                   id="fac-${facilityId}"
+                                                                                   data-category-id="${category.id}"
+                                                                                   data-subcategory-id="${subcategory.id}"
+                                                                                   data-facility-name="${facilityName}"
+                                                                                   checked>
+                                                                            <label class="form-check-label small" for="fac-${facilityId}" 
+                                                                                   title="${facilityName}">
+                                                                                ${displayName}
+                                                                            </label>
+                                                                        </div>
+                                                                    `;
                     });
 
                     html += `
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            `;
+                                                                `;
                 });
 
                 html += `
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        `;
+                                                            `;
 
                 categoryIndex++;
             });

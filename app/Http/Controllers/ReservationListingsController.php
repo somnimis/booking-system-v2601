@@ -765,6 +765,7 @@ public function getAvailableForTransaction()
             'formStatus',
             'requestedFacilities.facility',
             'requestedEquipment.equipment',
+            'requestedServices.service',
             'requisitionApprovals',
             'requisitionFees.addedBy',
             'purpose',
