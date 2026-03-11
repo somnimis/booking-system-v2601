@@ -67,12 +67,6 @@
             color: #dc3545;
         }
 
-        .card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
 
         .card-img-container {
             position: relative;
@@ -149,13 +143,6 @@
 
         .selected-facility-item .remove-facility:hover {
             color: #b02a37;
-        }
-
-        .card {
-            border: 0 !important;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            border-radius: 0.75rem;
-            /* optional, for smoother corners */
         }
 
         #department-buttons-container button {

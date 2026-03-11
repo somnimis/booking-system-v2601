@@ -571,147 +571,172 @@ public function createReservation(Request $request)
         }
     }
 
-    public function waiveItems(Request $request, $requestId)
-    {
-        try {
-            \Log::debug('Waive items request received', [
-                'request_id' => $requestId,
-                'waive_all' => $request->waive_all,
-                'waived_facilities' => $request->waived_facilities,
-                'waived_equipment' => $request->waived_equipment
-            ]);
+public function waiveItems(Request $request, $requestId)
+{
+    try {
+        \Log::debug('Waive items request received', [
+            'request_id' => $requestId,
+            'waive_all' => $request->waive_all,
+            'waived_facilities' => $request->waived_facilities,
+            'waived_equipment' => $request->waived_equipment
+        ]);
 
-            // First, let's log all equipment for this request to see what should be valid
-            $validEquipmentIds = RequestedEquipment::where('request_id', $requestId)
-                ->pluck('requested_equipment_id')
-                ->toArray();
+        // First, let's log all equipment for this request to see what should be valid
+        $validEquipmentIds = RequestedEquipment::where('request_id', $requestId)
+            ->pluck('requested_equipment_id')
+            ->toArray();
 
-            $validFacilityIds = RequestedFacility::where('request_id', $requestId)
-                ->pluck('requested_facility_id')
-                ->toArray();
+        $validFacilityIds = RequestedFacility::where('request_id', $requestId)
+            ->pluck('requested_facility_id')
+            ->toArray();
 
-            \Log::debug('Valid IDs for this request', [
+        \Log::debug('Valid IDs for this request', [
+            'valid_equipment_ids' => $validEquipmentIds,
+            'valid_facility_ids' => $validFacilityIds,
+            'requested_equipment' => $request->waived_equipment,
+            'requested_facilities' => $request->waived_facilities
+        ]);
+
+        // Custom validation to check if items belong to this request
+        $validator = Validator::make($request->all(), [
+            'waive_all' => 'sometimes|boolean',
+            'admin_id' => 'required|exists:admins,admin_id', // Add admin validation
+            'waived_facilities' => 'sometimes|array',
+            'waived_facilities.*' => [
+                function ($attribute, $value, $fail) use ($requestId, $validFacilityIds) {
+                    if (!in_array($value, $validFacilityIds)) {
+                        $fail("The selected facility (ID: $value) is invalid for this request. Valid facilities: " . implode(', ', $validFacilityIds));
+                    }
+                }
+            ],
+            'waived_equipment' => 'sometimes|array',
+            'waived_equipment.*' => [
+                function ($attribute, $value, $fail) use ($requestId, $validEquipmentIds) {
+                    if (!in_array($value, $validEquipmentIds)) {
+                        $fail("The selected equipment (ID: $value) is invalid for this request. Valid equipment: " . implode(', ', $validEquipmentIds));
+                    }
+                }
+            ]
+        ]);
+
+        if ($validator->fails()) {
+            \Log::error('Waive items validation failed', [
+                'errors' => $validator->errors()->toArray(),
+                'request_data' => $request->all(),
                 'valid_equipment_ids' => $validEquipmentIds,
-                'valid_facility_ids' => $validFacilityIds,
-                'requested_equipment' => $request->waived_equipment,
-                'requested_facilities' => $request->waived_facilities
+                'valid_facility_ids' => $validFacilityIds
             ]);
 
-            // Custom validation to check if items belong to this request
-            $validator = Validator::make($request->all(), [
-                'waive_all' => 'sometimes|boolean',
-                'waived_facilities' => 'sometimes|array',
-                'waived_facilities.*' => [
-                    function ($attribute, $value, $fail) use ($requestId, $validFacilityIds) {
-                        if (!in_array($value, $validFacilityIds)) {
-                            $fail("The selected facility (ID: $value) is invalid for this request. Valid facilities: " . implode(', ', $validFacilityIds));
-                        }
-                    }
-                ],
-                'waived_equipment' => 'sometimes|array',
-                'waived_equipment.*' => [
-                    function ($attribute, $value, $fail) use ($requestId, $validEquipmentIds) {
-                        if (!in_array($value, $validEquipmentIds)) {
-                            $fail("The selected equipment (ID: $value) is invalid for this request. Valid equipment: " . implode(', ', $validEquipmentIds));
-                        }
-                    }
-                ]
-            ]);
-
-            if ($validator->fails()) {
-                \Log::error('Waive items validation failed', [
-                    'errors' => $validator->errors()->toArray(),
-                    'request_data' => $request->all(),
+            return response()->json([
+                'error' => 'Validation failed',
+                'details' => $validator->errors(),
+                'debug' => [
                     'valid_equipment_ids' => $validEquipmentIds,
                     'valid_facility_ids' => $validFacilityIds
+                ]
+            ], 422);
+        }
+        $validatedData = $validator->validated();
+
+        DB::beginTransaction();
+
+        if (isset($validatedData['waive_all']) && $validatedData['waive_all']) {
+            // Waive all facilities and equipment with waived_by
+            RequestedFacility::where('request_id', $requestId)
+                ->update([
+                    'is_waived' => true,
+                    'waived_by' => $validatedData['admin_id']
                 ]);
 
-                return response()->json([
-                    'error' => 'Validation failed',
-                    'details' => $validator->errors(),
-                    'debug' => [
-                        'valid_equipment_ids' => $validEquipmentIds,
-                        'valid_facility_ids' => $validFacilityIds
-                    ]
-                ], 422);
-            }
-            $validatedData = $validator->validated();
-
-            DB::beginTransaction();
-
-            if (isset($validatedData['waive_all']) && $validatedData['waive_all']) {
-                // Waive all facilities and equipment
+            RequestedEquipment::where('request_id', $requestId)
+                ->update([
+                    'is_waived' => true,
+                    'waived_by' => $validatedData['admin_id']
+                ]);
+        } else {
+            // Only update waivers for specific items
+            // Update facilities based on the provided list
+            if (isset($validatedData['waived_facilities'])) {
+                // Waive the specified facilities with waived_by
                 RequestedFacility::where('request_id', $requestId)
-                    ->update(['is_waived' => true]);
+                    ->whereIn('requested_facility_id', $validatedData['waived_facilities'])
+                    ->update([
+                        'is_waived' => true,
+                        'waived_by' => $validatedData['admin_id']
+                    ]);
 
-                RequestedEquipment::where('request_id', $requestId)
-                    ->update(['is_waived' => true]);
+                // Unwaive facilities not in the list (set waived_by to null)
+                RequestedFacility::where('request_id', $requestId)
+                    ->whereNotIn('requested_facility_id', $validatedData['waived_facilities'])
+                    ->update([
+                        'is_waived' => false,
+                        'waived_by' => null
+                    ]);
             } else {
-                // Only update waivers for specific items
-                // Update facilities based on the provided list
-                if (isset($validatedData['waived_facilities'])) {
-                    // Waive the specified facilities
-                    RequestedFacility::where('request_id', $requestId)
-                        ->whereIn('requested_facility_id', $validatedData['waived_facilities'])
-                        ->update(['is_waived' => true]);
-
-                    // Unwaive facilities not in the list
-                    RequestedFacility::where('request_id', $requestId)
-                        ->whereNotIn('requested_facility_id', $validatedData['waived_facilities'])
-                        ->update(['is_waived' => false]);
-                } else {
-                    // If no facilities specified, unwaive all facilities
-                    RequestedFacility::where('request_id', $requestId)
-                        ->update(['is_waived' => false]);
-                }
-
-                // Update equipment based on the provided list
-                if (isset($validatedData['waived_equipment'])) {
-                    // Waive the specified equipment
-                    RequestedEquipment::where('request_id', $requestId)
-                        ->whereIn('requested_equipment_id', $validatedData['waived_equipment'])
-                        ->update(['is_waived' => true]);
-
-                    // Unwaive equipment not in the list
-                    RequestedEquipment::where('request_id', $requestId)
-                        ->whereNotIn('requested_equipment_id', $validatedData['waived_equipment'])
-                        ->update(['is_waived' => false]);
-                } else {
-                    // If no equipment specified, unwaive all equipment
-                    RequestedEquipment::where('request_id', $requestId)
-                        ->update(['is_waived' => false]);
-                }
+                // If no facilities specified, unwaive all facilities (set waived_by to null)
+                RequestedFacility::where('request_id', $requestId)
+                    ->update([
+                        'is_waived' => false,
+                        'waived_by' => null
+                    ]);
             }
 
-            // Recalculate approved fee
-            $form = RequisitionForm::with(['requestedFacilities', 'requestedEquipment', 'requisitionFees'])
-                ->findOrFail($requestId);
+            // Update equipment based on the provided list
+            if (isset($validatedData['waived_equipment'])) {
+                // Waive the specified equipment with waived_by
+                RequestedEquipment::where('request_id', $requestId)
+                    ->whereIn('requested_equipment_id', $validatedData['waived_equipment'])
+                    ->update([
+                        'is_waived' => true,
+                        'waived_by' => $validatedData['admin_id']
+                    ]);
 
-            // Use getFeeSummary() to get both approved and base fees
-            $feeSummary = $this->feeCalculator->getFeeSummary($form);
-            $form->approved_fee = $feeSummary['approved_fee'];
-            $form->save();
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Items waived successfully',
-                'updated_approved_fee' => $feeSummary['approved_fee'],
-                'tentative_fee' => $feeSummary['base_fee'] + ($form->is_late ? $form->late_penalty_fee : 0) // Calculate tentative fee using base_fee from summary
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Failed to waive items', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'error' => 'Failed to waive items',
-                'details' => $e->getMessage()
-            ], 500);
+                // Unwaive equipment not in the list (set waived_by to null)
+                RequestedEquipment::where('request_id', $requestId)
+                    ->whereNotIn('requested_equipment_id', $validatedData['waived_equipment'])
+                    ->update([
+                        'is_waived' => false,
+                        'waived_by' => null
+                    ]);
+            } else {
+                // If no equipment specified, unwaive all equipment (set waived_by to null)
+                RequestedEquipment::where('request_id', $requestId)
+                    ->update([
+                        'is_waived' => false,
+                        'waived_by' => null
+                    ]);
+            }
         }
+
+        // Recalculate approved fee
+        $form = RequisitionForm::with(['requestedFacilities', 'requestedEquipment', 'requisitionFees'])
+            ->findOrFail($requestId);
+
+        // Use getFeeSummary() to get both approved and base fees
+        $feeSummary = $this->feeCalculator->getFeeSummary($form);
+        $form->approved_fee = $feeSummary['approved_fee'];
+        $form->save();
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Items waived successfully',
+            'updated_approved_fee' => $feeSummary['approved_fee'],
+            'tentative_fee' => $feeSummary['base_fee'] + ($form->is_late ? $form->late_penalty_fee : 0) // Calculate tentative fee using base_fee from summary
+        ]);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Failed to waive items', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'error' => 'Failed to waive items',
+            'details' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Add a new comment to a requisition form

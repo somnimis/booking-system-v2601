@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="{{ asset('css/public/catalog.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/public/public-calendar.css') }}" />
     <style>
+        #itemDetailModal {
+            z-index: 9999 !important;
+        }
         /* Filter dropdown radio button styles */
         #filterDropdownMenu .form-check {
             padding-left: 1.8rem;
@@ -1074,7 +1077,7 @@
 
                     <!-- Item Detail Modal (Shared) -->
                     <div class="modal fade" id="itemDetailModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="itemDetailModalLabel">Details</h5>

@@ -12,6 +12,7 @@ class RequestedFacility extends Model
         'request_id',
         'facility_id',
         'is_waived',
+        'waived_by'
     ];
 
     protected $casts = [
@@ -30,9 +31,13 @@ class RequestedFacility extends Model
         return $this->belongsTo(Facility::class, 'facility_id', 'facility_id');
     }
 
-        public function isWaived()
+    public function isWaived()
     {
         return $this->hasMany(RequisitionFee::class, 'waived_facility', 'requested_facility_id');
+    }
+    public function waivedBy()
+    {
+        return $this->belongsTo(Admin::class, 'waived_by', 'admin_id');
     }
 }
 

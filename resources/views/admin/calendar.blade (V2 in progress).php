@@ -90,11 +90,6 @@
       h6 {
         font-size: 0.9em;
       }
-
-      .card {
-        margin-bottom: 0.5rem;
-      }
-
       .btn,
       .form-control,
       .form-select {
@@ -273,10 +268,6 @@
       font-size: 12px;
     }
 
-    .card {
-      border: 1px #3333331a solid !important;
-      border-radius: 0.75rem;
-    }
 
     .fc .fc-toolbar-chunk .fc-button:focus,
     .fc .fc-toolbar-chunk .fc-button:active {
