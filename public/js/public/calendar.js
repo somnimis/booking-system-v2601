@@ -804,12 +804,9 @@ async initialize() {
         this.initializeMiniCalendar();
         this.initializeFullCalendar();
 
-        // Setup listeners (including search) - MAKE SURE THIS IS CALLED
+        // Setup listeners (including search)
         this.setupGlobalEventListeners();
-        
-        // Explicitly call setupSearch here as well to ensure it's set up
         this.setupSearch();
-        
         this.setupFacilityFilterSync();
 
         // Check mini calendar after a delay
@@ -822,10 +819,10 @@ async initialize() {
             this.forceCalendarProperRender();
         }, 500);
 
-        // Fallback timeout
-        setTimeout(() => {
-            this.hideLoadingOverlay();
-        }, 5000);
+        // Remove the 5-second fallback timeout - this was hiding too early
+        // setTimeout(() => {
+        //     this.hideLoadingOverlay();
+        // }, 5000);
         
         console.log('Calendar initialized with search:', {
             searchInputId: this.searchInputId,
@@ -1146,21 +1143,21 @@ async initialize() {
         }
     }
 
-    checkAllLoaded() {
-        console.log("Loading states:", this.loadingStates);
+checkAllLoaded() {
+    console.log("Loading states:", this.loadingStates);
 
-        const allLoaded = Object.values(this.loadingStates).every(
-            (state) => state === true,
-        );
+    const allLoaded = Object.values(this.loadingStates).every(
+        (state) => state === true
+    );
 
-        if (allLoaded) {
-            console.log("All calendar components loaded");
-            // Small delay to ensure UI settles
-            setTimeout(() => {
-                this.hideLoadingOverlay();
-            }, 300);
-        }
+    if (allLoaded) {
+        console.log("All calendar components loaded");
+        // Add a small delay to ensure UI is completely settled
+        setTimeout(() => {
+            this.hideLoadingOverlay();
+        }, 300);
     }
+}
 
     async loadFacilitiesForCalendar() {
         try {
@@ -1282,21 +1279,31 @@ async initialize() {
             this.loadingStates.facilitiesLoaded = true;
         }
     }
-    hideLoadingOverlay() {
-        if (typeof window.hideCalendarLoadingOverlay === "function") {
-            window.hideCalendarLoadingOverlay();
-        } else {
-            console.log("Manually hiding overlay");
-            const overlay = document.getElementById("loadingOverlay");
-            if (overlay) {
-                overlay.style.opacity = "0";
-                setTimeout(() => {
-                    overlay.classList.add("d-none");
-                }, 300);
-            }
+hideLoadingOverlay() {
+    if (typeof window.hideCalendarLoadingOverlay === 'function') {
+        window.hideCalendarLoadingOverlay();
+    } else {
+        console.log("Manually hiding overlay");
+        const miniOverlay = document.getElementById("miniCalendarLoadingOverlay");
+        const fullOverlay = document.getElementById("fullCalendarLoadingOverlay");
+        
+        if (miniOverlay) {
+            miniOverlay.style.opacity = "0";
+            setTimeout(() => {
+                miniOverlay.classList.add("d-none");
+                miniOverlay.style.display = "none";
+            }, 300);
+        }
+        
+        if (fullOverlay) {
+            fullOverlay.style.opacity = "0";
+            setTimeout(() => {
+                fullOverlay.classList.add("d-none");
+                fullOverlay.style.display = "none";
+            }, 300);
         }
     }
-
+}
     async loadCalendarEvents() {
         try {
             console.log("Loading calendar events...");
@@ -1638,23 +1645,29 @@ transformCalendarEvents(eventsData) {
             displayEventEnd: true,
 
             // Add loading callback
-            loading: (isLoading) => {
-                console.log("FullCalendar loading:", isLoading);
-                if (!isLoading) {
-                    setTimeout(() => {
-                        const hasEvents =
-                            calendarEl.querySelector(".fc-event") !== null;
-                        const hasDays =
-                            calendarEl.querySelector(".fc-daygrid-day") !==
-                            null;
+loading: (isLoading) => {
+    console.log("FullCalendar loading:", isLoading);
+    if (!isLoading) {
+        // Wait a bit for the calendar to fully render
+        setTimeout(() => {
+            const hasEvents = calendarEl.querySelector(".fc-event") !== null;
+            const hasDays = calendarEl.querySelector(".fc-daygrid-day") !== null;
 
-                        if (hasDays) {
-                            this.loadingStates.fullCalendarRendered = true;
-                            this.checkAllLoaded();
-                        }
-                    }, 300);
-                }
-            },
+            if (hasDays) {
+                this.loadingStates.fullCalendarRendered = true;
+                this.checkAllLoaded();
+            } else {
+                // If no days yet, check again in a moment
+                setTimeout(() => {
+                    if (calendarEl.querySelector(".fc-daygrid-day")) {
+                        this.loadingStates.fullCalendarRendered = true;
+                        this.checkAllLoaded();
+                    }
+                }, 500);
+            }
+        }, 300);
+    }
+},
 
             // === UPDATED: Custom event rendering ===
             eventContent: (arg) => {
@@ -2333,14 +2346,20 @@ transformCalendarEvents(eventsData) {
                 }
             },
 
-            viewDidMount: (info) => {
-                setTimeout(() => {
-                    if (this.calendar) {
-                        this.calendar.updateSize();
-                        console.log("Calendar size updated after view mount");
-                    }
-                }, 100);
-            },
+viewDidMount: (info) => {
+    setTimeout(() => {
+        if (this.calendar) {
+            this.calendar.updateSize();
+            console.log("Calendar size updated after view mount");
+            
+            // Mark as rendered if not already
+            if (!this.loadingStates.fullCalendarRendered) {
+                this.loadingStates.fullCalendarRendered = true;
+                this.checkAllLoaded();
+            }
+        }
+    }, 100);
+},
 
             slotMinTime: "00:00:00",
             slotMaxTime: "24:00:00",

@@ -89,6 +89,11 @@ class RequisitionFormatterService
                     'is_waived' => $equipment->is_waived,
                     'total_fee' => $equipment->equipment->external_fee * $equipment->quantity,
                 ])->values(),
+                'services' => $form->requestedServices->map(fn($service) => [
+                    'requested_service_id' => $service->requested_service_id,
+                    'service_id' => $service->service_id,
+                    'name' => $service->service->service_name,
+                ])->values(),
             ],
             'fees' => [
                 'tentative_fee' => $feeSummary['base_fee'] + ($form->is_late ? $form->late_penalty_fee : 0),
@@ -96,12 +101,14 @@ class RequisitionFormatterService
                 'late_penalty_fee' => $form->late_penalty_fee,
                 'is_late' => $form->is_late,
                 'breakdown' => [
-                    'base_fees' => $feeSummary['base_fee'],
-                    'additional_fees' => $feeSummary['additional_fees'],
-                    'discounts' => $feeSummary['discounts'],
-                    'late_penalty' => $feeSummary['late_penalty'],
-                    'facilities' => $feeSummary['breakdown']['facilities'],
-                    'equipment' => $feeSummary['breakdown']['equipment'],
+                    'subtotal' => [
+                        'facilities' => collect($feeSummary['breakdown']['facilities'] ?? [])->sum('fee'),
+                        'equipment' => collect($feeSummary['breakdown']['equipment'] ?? [])->sum('fee')
+                    ],
+                    'additional_fees' => $feeSummary['additional_fees'] ?? 0,
+                    'discounts' => $feeSummary['discounts'] ?? 0,
+                    'late_penalty' => $feeSummary['late_penalty'] ?? 0,
+                    'total' => $feeSummary['base_fee'] ?? 0,
                 ],
                 'requisition_fees' => $requisitionFees,
             ],
