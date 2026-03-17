@@ -11,6 +11,7 @@
         #itemDetailModal {
             z-index: 9999 !important;
         }
+
         /* Filter dropdown radio button styles */
         #filterDropdownMenu .form-check {
             padding-left: 1.8rem;
@@ -416,9 +417,9 @@
         }
 
         /* ============================================
-           MOBILE RESPONSIVE STYLES - Place this at the END of your style section
-           to ensure it overrides previous styles
-           ============================================ */
+               MOBILE RESPONSIVE STYLES - Place this at the END of your style section
+               to ensure it overrides previous styles
+               ============================================ */
 
         /* Tablet and below (up to 991px) */
         @media (max-width: 991px) {
@@ -1079,17 +1080,22 @@
                     <div class="modal fade" id="itemDetailModal" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content">
+
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="itemDetailModalLabel">Details</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
+
                                 <div class="modal-body" id="itemDetailContent">
                                     <!-- Content loaded dynamically -->
                                 </div>
+
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        Close
+                                    </button>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -1297,67 +1303,67 @@
             }
         }
 
-async function fetchData(url, options = {}) {
-    // Get CSRF token from meta tag
-    let csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-    
-    // If not in meta tag, try to get from cookie
-    if (!csrfToken) {
-        csrfToken = getCookie('XSRF-TOKEN');
-    }
-    
-    if (!csrfToken) {
-        console.error('CSRF token not available');
-        // Optionally refresh the page or fetch a new token
-        await refreshCsrfToken();
-        csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-    }
+        async function fetchData(url, options = {}) {
+            // Get CSRF token from meta tag
+            let csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
-    try {
-        const headers = {
-            'X-CSRF-TOKEN': csrfToken,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            ...(options.headers || {})
-        };
+            // If not in meta tag, try to get from cookie
+            if (!csrfToken) {
+                csrfToken = getCookie('XSRF-TOKEN');
+            }
 
-        const response = await fetch(url, {
-            ...options,
-            headers: headers,
-            credentials: 'same-origin', // Important for cookies
-            mode: 'same-origin'
-        });
+            if (!csrfToken) {
+                console.error('CSRF token not available');
+                // Optionally refresh the page or fetch a new token
+                await refreshCsrfToken();
+                csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            }
 
-        if (response.status === 419) {
-            console.error('CSRF token mismatch - attempting to refresh');
-            await refreshCsrfToken();
-            // Retry the request with new token
-            return fetchData(url, options);
+            try {
+                const headers = {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(options.headers || {})
+                };
+
+                const response = await fetch(url, {
+                    ...options,
+                    headers: headers,
+                    credentials: 'same-origin', // Important for cookies
+                    mode: 'same-origin'
+                });
+
+                if (response.status === 419) {
+                    console.error('CSRF token mismatch - attempting to refresh');
+                    await refreshCsrfToken();
+                    // Retry the request with new token
+                    return fetchData(url, options);
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('Fetch error:', {
+                    url: url,
+                    error: error.message,
+                    stack: error.stack
+                });
+                throw error;
+            }
         }
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        // Helper function to get cookie value
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
         }
-
-        return await response.json();
-    } catch (error) {
-        console.error('Fetch error:', {
-            url: url,
-            error: error.message,
-            stack: error.stack
-        });
-        throw error;
-    }
-}
-
-// Helper function to get cookie value
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-}
 
 
         function showToast(message, type = "success", duration = 3000) {
@@ -1381,18 +1387,18 @@ function getCookie(name) {
             toast.style.borderRadius = '0.3rem';
 
             toast.innerHTML = `
-                                                                                                                                                        <div class="d-flex align-items-center px-3 py-1"> 
-                                                                                                                                                            <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                                                                                                                                                            <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                                                                                                                                                            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                                                                                                                                                        </div>
-                                                                                                                                                        <div class="loading-bar" style="
-                                                                                                                                                            height: 3px;
-                                                                                                                                                            background: rgba(255,255,255,0.7);
-                                                                                                                                                            width: 100%;
-                                                                                                                                                            transition: width ${duration}ms linear;
-                                                                                                                                                        "></div>
-                                                                                                                                                    `;
+                                                                                                                                                            <div class="d-flex align-items-center px-3 py-1"> 
+                                                                                                                                                                <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                                                                                                                                                                <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
+                                                                                                                                                                <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                                                                                                                            </div>
+                                                                                                                                                            <div class="loading-bar" style="
+                                                                                                                                                                height: 3px;
+                                                                                                                                                                background: rgba(255,255,255,0.7);
+                                                                                                                                                                width: 100%;
+                                                                                                                                                                transition: width ${duration}ms linear;
+                                                                                                                                                            "></div>
+                                                                                                                                                        `;
 
             document.body.appendChild(toast);
 
@@ -1687,11 +1693,11 @@ function getCookie(name) {
             const allCategoriesItem = document.createElement("div");
             allCategoriesItem.className = "category-item";
             allCategoriesItem.innerHTML = `
-                                                                                                                                <div class="form-check">
-                                                                                                                                    <input class="form-check-input category-filter" type="checkbox" id="allCategories" value="All" checked disabled>
-                                                                                                                                    <label class="form-check-label" for="allCategories">All Categories</label>
-                                                                                                                                </div>
-                                                                                                                            `;
+                                                                                                                                    <div class="form-check">
+                                                                                                                                        <input class="form-check-input category-filter" type="checkbox" id="allCategories" value="All" checked disabled>
+                                                                                                                                        <label class="form-check-label" for="allCategories">All Categories</label>
+                                                                                                                                    </div>
+                                                                                                                                `;
             categoryFilterList.appendChild(allCategoriesItem);
 
             if (CATALOG_TYPE === 'equipment') {
@@ -1710,25 +1716,25 @@ function getCookie(name) {
                 const categoryItem = document.createElement("div");
                 categoryItem.className = "category-item";
                 categoryItem.innerHTML = `
-                                                                                                                                <div class="form-check d-flex justify-content-between align-items-center">
-                                                                                                                                    <div>
-                                                                                                                                        <input class="form-check-input category-filter" type="checkbox" id="category${category.category_id}" value="${category.category_id}">
-                                                                                                                                        <label class="form-check-label" for="category${category.category_id}">${category.category_name}</label>
-                                                                                                                                    </div>
-                                                                                                                                    ${category.subcategories && category.subcategories.length > 0 ?
+                                                                                                                                    <div class="form-check d-flex justify-content-between align-items-center">
+                                                                                                                                        <div>
+                                                                                                                                            <input class="form-check-input category-filter" type="checkbox" id="category${category.category_id}" value="${category.category_id}">
+                                                                                                                                            <label class="form-check-label" for="category${category.category_id}">${category.category_name}</label>
+                                                                                                                                        </div>
+                                                                                                                                        ${category.subcategories && category.subcategories.length > 0 ?
                         '<i class="bi bi-chevron-up toggle-arrow" style="cursor:pointer"></i>' : ''}
-                                                                                                                                </div>
-                                                                                                                                ${category.subcategories && category.subcategories.length > 0 ? `
-                                                                                                                                    <div class="subcategory-list ms-3" style="overflow: hidden; max-height: ${category.subcategories.length * 35}px;">
-                                                                                                                                        ${category.subcategories.map(sub => `
-                                                                                                                                            <div class="form-check">
-                                                                                                                                                <input class="form-check-input subcategory-filter" type="checkbox" id="subcategory${sub.subcategory_id}" value="${sub.subcategory_id}" data-category="${category.category_id}">
-                                                                                                                                                <label class="form-check-label" for="subcategory${sub.subcategory_id}">${sub.subcategory_name}</label>
-                                                                                                                                            </div>
-                                                                                                                                        `).join("")}
                                                                                                                                     </div>
-                                                                                                                                ` : ''}
-                                                                                                                            `;
+                                                                                                                                    ${category.subcategories && category.subcategories.length > 0 ? `
+                                                                                                                                        <div class="subcategory-list ms-3" style="overflow: hidden; max-height: ${category.subcategories.length * 35}px;">
+                                                                                                                                            ${category.subcategories.map(sub => `
+                                                                                                                                                <div class="form-check">
+                                                                                                                                                    <input class="form-check-input subcategory-filter" type="checkbox" id="subcategory${sub.subcategory_id}" value="${sub.subcategory_id}" data-category="${category.category_id}">
+                                                                                                                                                    <label class="form-check-label" for="subcategory${sub.subcategory_id}">${sub.subcategory_name}</label>
+                                                                                                                                                </div>
+                                                                                                                                            `).join("")}
+                                                                                                                                        </div>
+                                                                                                                                    ` : ''}
+                                                                                                                                `;
                 categoryFilterList.appendChild(categoryItem);
 
                 // Add toggle functionality for subcategories
@@ -1755,11 +1761,11 @@ function getCookie(name) {
                 const categoryItem = document.createElement("div");
                 categoryItem.className = "category-item";
                 categoryItem.innerHTML = `
-                                                                                                                                                            <div class="form-check">
-                                                                                                                                                                <input class="form-check-input category-filter" type="checkbox" id="category${category.category_id}" value="${category.category_id}">
-                                                                                                                                                                <label class="form-check-label" for="category${category.category_id}">${category.category_name}</label>
-                                                                                                                                                            </div>
-                                                                                                                                                        `;
+                                                                                                                                                                <div class="form-check">
+                                                                                                                                                                    <input class="form-check-input category-filter" type="checkbox" id="category${category.category_id}" value="${category.category_id}">
+                                                                                                                                                                    <label class="form-check-label" for="category${category.category_id}">${category.category_name}</label>
+                                                                                                                                                                </div>
+                                                                                                                                                            `;
                 categoryFilterList.appendChild(categoryItem);
             });
         }
@@ -1955,11 +1961,11 @@ function getCookie(name) {
                 else if (CATALOG_TYPE === 'equipment') icon = 'bi-box-seam';
 
                 catalogItemsContainer.innerHTML = `
-                                                                                                                                    <div style="grid-column: 1 / -1; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 220px; width: 100%;">
-                                                                                                                                        <i class="bi ${icon} fs-1 text-muted"></i>
-                                                                                                                                        <h4 class="mt-2">No ${CATALOG_TYPE} found</h4>
-                                                                                                                                    </div>
-                                                                                                                                `;
+                                                                                                                                        <div style="grid-column: 1 / -1; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 220px; width: 100%;">
+                                                                                                                                            <i class="bi ${icon} fs-1 text-muted"></i>
+                                                                                                                                            <h4 class="mt-2">No ${CATALOG_TYPE} found</h4>
+                                                                                                                                        </div>
+                                                                                                                                    `;
                 return;
             }
 
@@ -1991,45 +1997,45 @@ function getCookie(name) {
                 const description = truncateText(item.description || 'No description available', 100);
 
                 return `
-                                                                                                                                                            <div class="catalog-card">
-                                                                                                                                                                <!-- Item type badge -->
-                                                                                                                                                                <span class="item-type-badge badge ${isEquipment ? 'bg-info' : 'bg-warning'}">
-                                                                                                                                                                    ${isEquipment ? 'Equipment' : 'Facility'}
-                                                                                                                                                                </span>
-
-                                                                                                                                                                <img src="${primaryImage}" 
-                                                                                                                                                                     alt="${itemName}" 
-                                                                                                                                                                     class="catalog-card-img"
-                                                                                                                                                                     onerror="this.src='https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png'">
-
-                                                                                                                                                                <div class="catalog-card-details">
-                                                                                                                                                                    <h5 data-id="${itemId}" title="${itemName}">${truncatedName}</h5>
-                                                                                                                                                                    <span class="status-banner" style="background-color: ${item.status.color_code}">
-                                                                                                                                                                        ${item.status.status_name}
+                                                                                                                                                                <div class="catalog-card">
+                                                                                                                                                                    <!-- Item type badge -->
+                                                                                                                                                                    <span class="item-type-badge badge ${isEquipment ? 'bg-info' : 'bg-warning'}">
+                                                                                                                                                                        ${isEquipment ? 'Equipment' : 'Facility'}
                                                                                                                                                                     </span>
 
-                                                                                                                                                                    <div class="catalog-card-meta">
-                                                                                                                                                                        ${isEquipment
+                                                                                                                                                                    <img src="${primaryImage}" 
+                                                                                                                                                                         alt="${itemName}" 
+                                                                                                                                                                         class="catalog-card-img"
+                                                                                                                                                                         onerror="this.src='https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png'">
+
+                                                                                                                                                                    <div class="catalog-card-details">
+                                                                                                                                                                        <h5 data-id="${itemId}" title="${itemName}">${truncatedName}</h5>
+                                                                                                                                                                        <span class="status-banner" style="background-color: ${item.status.color_code}">
+                                                                                                                                                                            ${item.status.status_name}
+                                                                                                                                                                        </span>
+
+                                                                                                                                                                        <div class="catalog-card-meta">
+                                                                                                                                                                            ${isEquipment
                         ? `<span><i class="bi bi-tags-fill"></i> ${item.category.category_name}</span>
-                                                                                                                                                                               <span><i class="bi bi-box-seam"></i> ${item.available_quantity}/${item.total_quantity} available</span>`
+                                                                                                                                                                                   <span><i class="bi bi-box-seam"></i> ${item.available_quantity}/${item.total_quantity} available</span>`
                         : `<span><i class="bi bi-people-fill"></i> ${item.capacity || "N/A"}</span>
-                                                                                                                                                                               <span><i class="bi bi-tags-fill"></i> ${item.subcategory?.subcategory_name || item.category.category_name}</span>`
+                                                                                                                                                                                   <span><i class="bi bi-tags-fill"></i> ${item.subcategory?.subcategory_name || item.category.category_name}</span>`
                     }
+                                                                                                                                                                        </div>
+
+                                                                                                                                                                        <p class="facility-description" title="${item.description || ''}">${description}</p>
+
+                                                                                                                                                                        <div class="catalog-card-fee">
+                                                                                                                                                                            <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.external_fee).toLocaleString()} (${item.rate_type})
+                                                                                                                                                                        </div>
                                                                                                                                                                     </div>
 
-                                                                                                                                                                    <p class="facility-description" title="${item.description || ''}">${description}</p>
-
-                                                                                                                                                                    <div class="catalog-card-fee">
-                                                                                                                                                                        <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.external_fee).toLocaleString()} (${item.rate_type})
+                                                                                                                                                                    <div class="catalog-card-actions">
+                                                                                                                                                                        ${isEquipment ? getEquipmentActionsHtml(item) : getFacilityActionsHtml(item)}
+                                                                                                                                                                        ${getCheckAvailabilityButtonHtml(item)}
                                                                                                                                                                     </div>
                                                                                                                                                                 </div>
-
-                                                                                                                                                                <div class="catalog-card-actions">
-                                                                                                                                                                    ${isEquipment ? getEquipmentActionsHtml(item) : getFacilityActionsHtml(item)}
-                                                                                                                                                                    ${getCheckAvailabilityButtonHtml(item)}
-                                                                                                                                                                </div>
-                                                                                                                                                            </div>
-                                                                                                                                                        `;
+                                                                                                                                                            `;
             }).join('');
         }
 
@@ -2043,43 +2049,43 @@ function getCookie(name) {
                 const description = truncateText(item.description || 'No description available', 150);
 
                 return `
-                                                                                                                                                            <div class="catalog-card">
-                                                                                                                                                                <img src="${primaryImage}" 
-                                                                                                                                                                     alt="${itemName}" 
-                                                                                                                                                                     class="catalog-card-img"
-                                                                                                                                                                     onerror="this.src='https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png'">
+                                                                                                                                                                <div class="catalog-card">
+                                                                                                                                                                    <img src="${primaryImage}" 
+                                                                                                                                                                         alt="${itemName}" 
+                                                                                                                                                                         class="catalog-card-img"
+                                                                                                                                                                         onerror="this.src='https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png'">
 
-                                                                                                                                                                <div class="catalog-card-details">
-                                                                                                                                                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                                                                                                                                                        <h5 data-id="${itemId}" title="${itemName}">${truncatedName}</h5>
-                                                                                                                                                                        <span class="status-banner" style="background-color: ${item.status.color_code}">
-                                                                                                                                                                            ${item.status.status_name}
-                                                                                                                                                                        </span>
-                                                                                                                                                                    </div>
+                                                                                                                                                                    <div class="catalog-card-details">
+                                                                                                                                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                                                                                                                            <h5 data-id="${itemId}" title="${itemName}">${truncatedName}</h5>
+                                                                                                                                                                            <span class="status-banner" style="background-color: ${item.status.color_code}">
+                                                                                                                                                                                ${item.status.status_name}
+                                                                                                                                                                            </span>
+                                                                                                                                                                        </div>
 
-                                                                                                                                                                    <div class="catalog-card-meta">
-                                                                                                                                                                        ${isEquipment
+                                                                                                                                                                        <div class="catalog-card-meta">
+                                                                                                                                                                            ${isEquipment
                         ? `<span><i class="bi bi-tags-fill"></i> ${item.category.category_name}</span>
-                                                                                                                                                                               <span><i class="bi bi-box-seam"></i> ${item.available_quantity}/${item.total_quantity} available</span>`
+                                                                                                                                                                                   <span><i class="bi bi-box-seam"></i> ${item.available_quantity}/${item.total_quantity} available</span>`
                         : `<span><i class="bi bi-people-fill"></i> ${item.capacity || "N/A"}</span>
-                                                                                                                                                                               <span><i class="bi bi-tags-fill"></i> ${item.subcategory?.subcategory_name || item.category.category_name}</span>`
+                                                                                                                                                                                   <span><i class="bi bi-tags-fill"></i> ${item.subcategory?.subcategory_name || item.category.category_name}</span>`
                     }
+                                                                                                                                                                        </div>
+
+                                                                                                                                                                        <p class="facility-description" title="${item.description || ''}">${description}</p>
                                                                                                                                                                     </div>
 
-                                                                                                                                                                    <p class="facility-description" title="${item.description || ''}">${description}</p>
-                                                                                                                                                                </div>
+                                                                                                                                                                    <div class="catalog-card-actions">
+                                                                                                                                                                        <div class="catalog-card-fee mb-2 text-center">
+                                                                                                                                                                            <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.external_fee).toLocaleString()} (${item.rate_type})
+                                                                                                                                                                        </div>
 
-                                                                                                                                                                <div class="catalog-card-actions">
-                                                                                                                                                                    <div class="catalog-card-fee mb-2 text-center">
-                                                                                                                                                                        <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.external_fee).toLocaleString()} (${item.rate_type})
+                                                                                                                                                                        ${isEquipment ? getEquipmentActionsHtml(item) : getFacilityActionsHtml(item)}
+
+                                                                                                                                                                        ${getCheckAvailabilityButtonHtml(item)}
                                                                                                                                                                     </div>
-
-                                                                                                                                                                    ${isEquipment ? getEquipmentActionsHtml(item) : getFacilityActionsHtml(item)}
-
-                                                                                                                                                                    ${getCheckAvailabilityButtonHtml(item)}
                                                                                                                                                                 </div>
-                                                                                                                                                            </div>
-                                                                                                                                                        `;
+                                                                                                                                                            `;
             }).join('');
         }
 
@@ -2127,58 +2133,58 @@ function getCookie(name) {
 
             if (isUnavailable) {
                 return `
-                                                                                                                                                            <div class="equipment-actions">
-                                                                                                                                                                <div class="equipment-quantity-selector">
-                                                                                                                                                                    <input type="number" 
-                                                                                                                                                                           class="form-control quantity-input" 
-                                                                                                                                                                           value="${currentQty}" 
-                                                                                                                                                                           min="1" 
-                                                                                                                                                                           max="${maxQty}"
-                                                                                                                                                                           disabled>
-                                                                                                                                                                    <button class="btn btn-secondary add-remove-btn form-action-btn" disabled>
-                                                                                                                                                                        Unavailable
-                                                                                                                                                                    </button>
+                                                                                                                                                                <div class="equipment-actions">
+                                                                                                                                                                    <div class="equipment-quantity-selector">
+                                                                                                                                                                        <input type="number" 
+                                                                                                                                                                               class="form-control quantity-input" 
+                                                                                                                                                                               value="${currentQty}" 
+                                                                                                                                                                               min="1" 
+                                                                                                                                                                               max="${maxQty}"
+                                                                                                                                                                               disabled>
+                                                                                                                                                                        <button class="btn btn-secondary add-remove-btn form-action-btn" disabled>
+                                                                                                                                                                            Unavailable
+                                                                                                                                                                        </button>
+                                                                                                                                                                    </div>
                                                                                                                                                                 </div>
-                                                                                                                                                            </div>
-                                                                                                                                                        `;
+                                                                                                                                                            `;
             }
 
             if (isSelected) {
                 return `
-                                                                                                                                                            <div class="equipment-actions">
-                                                                                                                                                                <div class="equipment-quantity-selector">
-                                                                                                                                                                    <input type="number" 
-                                                                                                                                                                           class="form-control quantity-input" 
-                                                                                                                                                                           value="${currentQty}" 
-                                                                                                                                                                           min="1" 
-                                                                                                                                                                           max="${maxQty}">
-                                                                                                                                                                    <button class="btn btn-danger add-remove-btn form-action-btn" 
-                                                                                                                                                                            data-id="${item.equipment_id}" 
-                                                                                                                                                                            data-type="equipment" 
-                                                                                                                                                                            data-action="remove">
-                                                                                                                                                                        Remove
-                                                                                                                                                                    </button>
+                                                                                                                                                                <div class="equipment-actions">
+                                                                                                                                                                    <div class="equipment-quantity-selector">
+                                                                                                                                                                        <input type="number" 
+                                                                                                                                                                               class="form-control quantity-input" 
+                                                                                                                                                                               value="${currentQty}" 
+                                                                                                                                                                               min="1" 
+                                                                                                                                                                               max="${maxQty}">
+                                                                                                                                                                        <button class="btn btn-danger add-remove-btn form-action-btn" 
+                                                                                                                                                                                data-id="${item.equipment_id}" 
+                                                                                                                                                                                data-type="equipment" 
+                                                                                                                                                                                data-action="remove">
+                                                                                                                                                                            Remove
+                                                                                                                                                                        </button>
+                                                                                                                                                                    </div>
                                                                                                                                                                 </div>
-                                                                                                                                                            </div>
-                                                                                                                                                        `;
+                                                                                                                                                            `;
             } else {
                 return `
-                                                                                                                                                            <div class="equipment-actions">
-                                                                                                                                                                <div class="equipment-quantity-selector">
-                                                                                                                                                                    <input type="number" 
-                                                                                                                                                                           class="form-control quantity-input" 
-                                                                                                                                                                           value="1" 
-                                                                                                                                                                           min="1" 
-                                                                                                                                                                           max="${maxQty}">
-                                                                                                                                                                    <button class="btn btn-primary add-remove-btn form-action-btn" 
-                                                                                                                                                                            data-id="${item.equipment_id}" 
-                                                                                                                                                                            data-type="equipment" 
-                                                                                                                                                                            data-action="add">
-                                                                                                                                                                        Add
-                                                                                                                                                                    </button>
+                                                                                                                                                                <div class="equipment-actions">
+                                                                                                                                                                    <div class="equipment-quantity-selector">
+                                                                                                                                                                        <input type="number" 
+                                                                                                                                                                               class="form-control quantity-input" 
+                                                                                                                                                                               value="1" 
+                                                                                                                                                                               min="1" 
+                                                                                                                                                                               max="${maxQty}">
+                                                                                                                                                                        <button class="btn btn-primary add-remove-btn form-action-btn" 
+                                                                                                                                                                                data-id="${item.equipment_id}" 
+                                                                                                                                                                                data-type="equipment" 
+                                                                                                                                                                                data-action="add">
+                                                                                                                                                                            Add
+                                                                                                                                                                        </button>
+                                                                                                                                                                    </div>
                                                                                                                                                                 </div>
-                                                                                                                                                            </div>
-                                                                                                                                                        `;
+                                                                                                                                                            `;
             }
         }
 
@@ -2191,30 +2197,30 @@ function getCookie(name) {
 
             if (isUnavailable) {
                 return `
-                                                                                                                                                            <button class="btn btn-secondary add-remove-btn form-action-btn" disabled>
-                                                                                                                                                                Unavailable
-                                                                                                                                                            </button>
-                                                                                                                                                        `;
+                                                                                                                                                                <button class="btn btn-secondary add-remove-btn form-action-btn" disabled>
+                                                                                                                                                                    Unavailable
+                                                                                                                                                                </button>
+                                                                                                                                                            `;
             }
 
             if (isSelected) {
                 return `
-                                                                                                                                                            <button class="btn btn-danger add-remove-btn form-action-btn" 
-                                                                                                                                                                    data-id="${item.facility_id}" 
-                                                                                                                                                                    data-type="facility" 
-                                                                                                                                                                    data-action="remove">
-                                                                                                                                                                Remove from form
-                                                                                                                                                            </button>
-                                                                                                                                                        `;
+                                                                                                                                                                <button class="btn btn-danger add-remove-btn form-action-btn" 
+                                                                                                                                                                        data-id="${item.facility_id}" 
+                                                                                                                                                                        data-type="facility" 
+                                                                                                                                                                        data-action="remove">
+                                                                                                                                                                    Remove from form
+                                                                                                                                                                </button>
+                                                                                                                                                            `;
             } else {
                 return `
-                                                                                                                                                            <button class="btn btn-primary add-remove-btn form-action-btn" 
-                                                                                                                                                                    data-id="${item.facility_id}" 
-                                                                                                                                                                    data-type="facility" 
-                                                                                                                                                                    data-action="add">
-                                                                                                                                                                Add to form
-                                                                                                                                                            </button>
-                                                                                                                                                        `;
+                                                                                                                                                                <button class="btn btn-primary add-remove-btn form-action-btn" 
+                                                                                                                                                                        data-id="${item.facility_id}" 
+                                                                                                                                                                        data-type="facility" 
+                                                                                                                                                                        data-action="add">
+                                                                                                                                                                    Add to form
+                                                                                                                                                                </button>
+                                                                                                                                                            `;
             }
         }
 
@@ -2231,88 +2237,88 @@ function getCookie(name) {
                 `data-item-capacity="${item.capacity || 'N/A'}" data-item-fee="${parseFloat(item.external_fee).toLocaleString()}"`;
 
             return `
-                                                                                                                                                        <button class="btn btn-light btn-custom check-availability-btn form-action-btn" 
-                                                                                                                                                                data-item-id="${itemId}"
-                                                                                                                                                                data-item-name="${itemName}"
-                                                                                                                                                                data-item-type="${isEquipment ? 'equipment' : 'facility'}"
-                                                                                                                                                                data-item-image="${primaryImage}"
-                                                                                                                                                                data-item-category="${item.category.category_name}"
-                                                                                                                                                                data-item-status="${item.status.status_name}"
-                                                                                                                                                                data-item-status-color="${item.status.color_code}"
-                                                                                                                                                                ${additionalData}>
-                                                                                                                                                            Check Availability
-                                                                                                                                                        </button>
-                                                                                                                                                    `;
+                                                                                                                                                            <button class="btn btn-light btn-custom check-availability-btn form-action-btn" 
+                                                                                                                                                                    data-item-id="${itemId}"
+                                                                                                                                                                    data-item-name="${itemName}"
+                                                                                                                                                                    data-item-type="${isEquipment ? 'equipment' : 'facility'}"
+                                                                                                                                                                    data-item-image="${primaryImage}"
+                                                                                                                                                                    data-item-category="${item.category.category_name}"
+                                                                                                                                                                    data-item-status="${item.status.status_name}"
+                                                                                                                                                                    data-item-status-color="${item.status.color_code}"
+                                                                                                                                                                    ${additionalData}>
+                                                                                                                                                                Check Availability
+                                                                                                                                                            </button>
+                                                                                                                                                        `;
         }
 
         // ============================================
         // FORM MANAGEMENT
         // ============================================
 
-async function addToForm(id, type, quantity = 1) {
-    try {
-        const requestBody = {
-            type: type,
-            equipment_id: type === 'equipment' ? parseInt(id) : undefined,
-            facility_id: type === 'facility' ? parseInt(id) : undefined,
-            quantity: parseInt(quantity)
-        };
+        async function addToForm(id, type, quantity = 1) {
+            try {
+                const requestBody = {
+                    type: type,
+                    equipment_id: type === 'equipment' ? parseInt(id) : undefined,
+                    facility_id: type === 'facility' ? parseInt(id) : undefined,
+                    quantity: parseInt(quantity)
+                };
 
-        const response = await fetchData("/api/requisition/add-item", {
-            method: "POST",
-            body: JSON.stringify(requestBody)
-        });
+                const response = await fetchData("/api/requisition/add-item", {
+                    method: "POST",
+                    body: JSON.stringify(requestBody)
+                });
 
-        if (!response || !response.success) {
-            throw new Error(response?.message || "Failed to add item");
-        }
+                if (!response || !response.success) {
+                    throw new Error(response?.message || "Failed to add item");
+                }
 
-        selectedItems = response.data?.selected_items || [];
-        showToast(`${type} added to form`, 'success');
-        await updateAllUI();
-        localStorage.setItem('formUpdated', Date.now().toString());
-        
-    } catch (error) {
-        console.error("Add to form error:", error);
-        
-        // Handle specific error types
-        if (error.message.includes('419')) {
-            showToast('Session expired. Please refresh the page.', 'error');
-            // Optionally refresh CSRF token
-            await refreshCsrfToken();
-        } else {
-            showToast(error.message || "Error adding item to form", "error");
-        }
-    }
-}
+                selectedItems = response.data?.selected_items || [];
+                showToast(`${type} added to form`, 'success');
+                await updateAllUI();
+                localStorage.setItem('formUpdated', Date.now().toString());
 
-async function refreshCsrfToken() {
-    try {
-        const response = await fetch('/csrf-token', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'same-origin'
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            // Update meta tag
-            const metaTag = document.querySelector('meta[name="csrf-token"]');
-            if (metaTag) {
-                metaTag.content = data.csrf_token;
+            } catch (error) {
+                console.error("Add to form error:", error);
+
+                // Handle specific error types
+                if (error.message.includes('419')) {
+                    showToast('Session expired. Please refresh the page.', 'error');
+                    // Optionally refresh CSRF token
+                    await refreshCsrfToken();
+                } else {
+                    showToast(error.message || "Error adding item to form", "error");
+                }
             }
-            // Update cookie if needed
-            document.cookie = `XSRF-TOKEN=${data.csrf_token}; path=/`;
-            return data.csrf_token;
         }
-    } catch (error) {
-        console.error('Failed to refresh CSRF token:', error);
-    }
-    return null;
-}
+
+        async function refreshCsrfToken() {
+            try {
+                const response = await fetch('/csrf-token', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Update meta tag
+                    const metaTag = document.querySelector('meta[name="csrf-token"]');
+                    if (metaTag) {
+                        metaTag.content = data.csrf_token;
+                    }
+                    // Update cookie if needed
+                    document.cookie = `XSRF-TOKEN=${data.csrf_token}; path=/`;
+                    return data.csrf_token;
+                }
+            } catch (error) {
+                console.error('Failed to refresh CSRF token:', error);
+            }
+            return null;
+        }
 
         async function removeFromForm(id, type) {
             try {
@@ -2597,35 +2603,35 @@ async function refreshCsrfToken() {
 
 
             document.getElementById("itemDetailContent").innerHTML = `
-                                                                                                                                                        <div class="row">
-                                                                                                                                                            <div class="col-md-6">
-                                                                                                                                                                <img src="${primaryImage}" alt="${isEquipment ? item.equipment_name : item.facility_name}" 
-                                                                                                                                                                     class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
-                                                                                                                                                            </div>
-                                                                                                                                                            <div class="col-md-6">
-                                                                                                                                                                <div class="item-details">
-                                                                                                                                                                    <p><strong>Status:</strong> <span class="badge" style="background-color: ${item.status.color_code}">${item.status.status_name}</span></p>
-                                                                                                                                                                    <p><strong>Category:</strong> ${item.category.category_name}</p>
-                                                                                                                                                                    ${!isEquipment ? `<p><strong>Subcategory:</strong> ${item.subcategory?.subcategory_name || "N/A"}</p>` : ''}
-                                                                                                                                                                    ${!isEquipment ? `<p><strong>Capacity:</strong> ${item.capacity}</p>` :
-                    `<p><strong>Available Quantity:</strong> ${item.available_quantity}/${item.total_quantity}</p>`}
-                                                                                                                                                                    <p><strong>Rate:</strong> ₱${parseFloat(item.external_fee).toLocaleString()} (${item.rate_type})</p>
-                                                                                                                                                                    <p><strong>Description:</strong></p>
-                                                                                                                                                                    <p>${item.description || "No description available."}</p>
+                                                                                                                                                            <div class="row">
+                                                                                                                                                                <div class="col-md-6">
+                                                                                                                                                                    <img src="${primaryImage}" alt="${isEquipment ? item.equipment_name : item.facility_name}" 
+                                                                                                                                                                         class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
                                                                                                                                                                 </div>
-                                                                                                                                                                <div class="mt-3">
-                                                                                                                                                                    ${isUnavailable
+                                                                                                                                                                <div class="col-md-6">
+                                                                                                                                                                    <div class="item-details">
+                                                                                                                                                                        <p><strong>Status:</strong> <span class="badge" style="background-color: ${item.status.color_code}">${item.status.status_name}</span></p>
+                                                                                                                                                                        <p><strong>Category:</strong> ${item.category.category_name}</p>
+                                                                                                                                                                        ${!isEquipment ? `<p><strong>Subcategory:</strong> ${item.subcategory?.subcategory_name || "N/A"}</p>` : ''}
+                                                                                                                                                                        ${!isEquipment ? `<p><strong>Capacity:</strong> ${item.capacity}</p>` :
+                    `<p><strong>Available Quantity:</strong> ${item.available_quantity}/${item.total_quantity}</p>`}
+                                                                                                                                                                        <p><strong>Rate:</strong> ₱${parseFloat(item.external_fee).toLocaleString()} (${item.rate_type})</p>
+                                                                                                                                                                        <p><strong>Description:</strong></p>
+                                                                                                                                                                        <p>${item.description || "No description available."}</p>
+                                                                                                                                                                    </div>
+                                                                                                                                                                    <div class="mt-3">
+                                                                                                                                                                        ${isUnavailable
                     ? `<button class="btn btn-secondary" disabled>Unavailable</button>`
                     : `<button class="btn ${isSelected ? "btn-danger" : "btn-primary"} add-remove-btn" 
-                                                                                                                                                                                        data-id="${itemId}" 
-                                                                                                                                                                                        data-type="${CATALOG_TYPE.slice(0, -1)}" 
-                                                                                                                                                                                        data-action="${isSelected ? "remove" : "add"}">
-                                                                                                                                                                                    ${isSelected ? "Remove from Form" : "Add to Form"}
-                                                                                                                                                                                  </button>`}
+                                                                                                                                                                                            data-id="${itemId}" 
+                                                                                                                                                                                            data-type="${CATALOG_TYPE.slice(0, -1)}" 
+                                                                                                                                                                                            data-action="${isSelected ? "remove" : "add"}">
+                                                                                                                                                                                        ${isSelected ? "Remove from Form" : "Add to Form"}
+                                                                                                                                                                                      </button>`}
+                                                                                                                                                                    </div>
                                                                                                                                                                 </div>
                                                                                                                                                             </div>
-                                                                                                                                                        </div>
-                                                                                                                                                    `;
+                                                                                                                                                        `;
 
             const modal = new bootstrap.Modal(document.getElementById('itemDetailModal'));
             modal.show();
@@ -2640,9 +2646,9 @@ async function refreshCsrfToken() {
                 const modalTitleElement = document.getElementById('singleFacilityAvailabilityModalLabel');
                 if (modalTitleElement) {
                     modalTitleElement.innerHTML = `
-                                                                                                                                                                <i class="bi ${isEquipment ? 'bi-tools' : 'bi-calendar-check'} me-2"></i>
-                                                                                                                                                                <span id="facilityAvailabilityName">${isEquipment ? 'Equipment Availability' : 'Facility Availability'}</span>
-                                                                                                                                                            `;
+                                                                                                                                                                    <i class="bi ${isEquipment ? 'bi-tools' : 'bi-calendar-check'} me-2"></i>
+                                                                                                                                                                    <span id="facilityAvailabilityName">${isEquipment ? 'Equipment Availability' : 'Facility Availability'}</span>
+                                                                                                                                                                `;
                 }
 
                 // Update facility info
@@ -2668,14 +2674,14 @@ async function refreshCsrfToken() {
                 if (imageContainer) {
                     if (itemData.image) {
                         imageContainer.innerHTML = `
-                                                                                                                                                                    <div class="facility-img-wrapper text-center">
-                                                                                                                                                                        <img src="${itemData.image}" 
-                                                                                                                                                                             alt="${itemData.name}" 
-                                                                                                                                                                             class="img-fluid rounded"
-                                                                                                                                                                             style="max-height: 150px; object-fit: ${isEquipment ? 'contain' : 'cover'};"
-                                                                                                                                                                             onerror="this.src='https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png'">
-                                                                                                                                                                    </div>
-                                                                                                                                                                `;
+                                                                                                                                                                        <div class="facility-img-wrapper text-center">
+                                                                                                                                                                            <img src="${itemData.image}" 
+                                                                                                                                                                                 alt="${itemData.name}" 
+                                                                                                                                                                                 class="img-fluid rounded"
+                                                                                                                                                                                 style="max-height: 150px; object-fit: ${isEquipment ? 'contain' : 'cover'};"
+                                                                                                                                                                                 onerror="this.src='https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png'">
+                                                                                                                                                                        </div>
+                                                                                                                                                                    `;
                     } else {
                         imageContainer.innerHTML = `<i class="bi ${isEquipment ? 'bi-tools' : 'bi-building'} fs-1 text-muted"></i>`;
                     }
@@ -2699,9 +2705,9 @@ async function refreshCsrfToken() {
                 const bookNowBtn = document.getElementById('bookNowBtn');
                 if (bookNowBtn) {
                     bookNowBtn.innerHTML = `
-                                                                                                                                                                <i class="bi ${isEquipment ? 'bi-cart-plus' : 'bi-calendar-plus'} me-1"></i> 
-                                                                                                                                                                ${isEquipment ? 'Add to Form' : 'Book This Facility'}
-                                                                                                                                                            `;
+                                                                                                                                                                    <i class="bi ${isEquipment ? 'bi-cart-plus' : 'bi-calendar-plus'} me-1"></i> 
+                                                                                                                                                                    ${isEquipment ? 'Add to Form' : 'Book This Facility'}
+                                                                                                                                                                `;
 
                     bookNowBtn.onclick = function () {
                         if (currentFacilityId) {
@@ -2858,12 +2864,12 @@ async function refreshCsrfToken() {
                                     const calendarEl = document.getElementById('facilityAvailabilityCalendar');
                                     if (calendarEl) {
                                         calendarEl.innerHTML = `
-                                                                                                                                                                                    <div class="text-center py-5">
-                                                                                                                                                                                        <i class="bi bi-calendar-x fs-1 text-muted"></i>
-                                                                                                                                                                                        <p class="mt-2">No bookings found for this equipment</p>
-                                                                                                                                                                                        <p class="text-muted small">This equipment has not been booked yet</p>
-                                                                                                                                                                                    </div>
-                                                                                                                                                                                `;
+                                                                                                                                                                                        <div class="text-center py-5">
+                                                                                                                                                                                            <i class="bi bi-calendar-x fs-1 text-muted"></i>
+                                                                                                                                                                                            <p class="mt-2">No bookings found for this equipment</p>
+                                                                                                                                                                                            <p class="text-muted small">This equipment has not been booked yet</p>
+                                                                                                                                                                                        </div>
+                                                                                                                                                                                    `;
                                     }
                                 }
 
@@ -2903,12 +2909,12 @@ async function refreshCsrfToken() {
                     const calendarEl = document.getElementById('facilityAvailabilityCalendar');
                     if (calendarEl) {
                         calendarEl.innerHTML = `
-                                                                                                                                                                    <div class="text-center py-5">
-                                                                                                                                                                        <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
-                                                                                                                                                                        <p class="mt-2">Failed to load availability</p>
-                                                                                                                                                                        <p class="text-muted small">Please try again later</p>
-                                                                                                                                                                    </div>
-                                                                                                                                                                `;
+                                                                                                                                                                        <div class="text-center py-5">
+                                                                                                                                                                            <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
+                                                                                                                                                                            <p class="mt-2">Failed to load availability</p>
+                                                                                                                                                                            <p class="text-muted small">Please try again later</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                    `;
                     }
 
                     reject(error);
@@ -2931,9 +2937,9 @@ async function refreshCsrfToken() {
                 const legendItem = document.createElement('div');
                 legendItem.className = 'd-flex align-items-center';
                 legendItem.innerHTML = `
-                                                                                                                                                            <div class="color-box me-2" style="background-color: ${colorCode}; width: 16px; height: 16px; border-radius: 3px;"></div>
-                                                                                                                                                            <small>${statusName}</small>
-                                                                                                                                                        `;
+                                                                                                                                                                <div class="color-box me-2" style="background-color: ${colorCode}; width: 16px; height: 16px; border-radius: 3px;"></div>
+                                                                                                                                                                <small>${statusName}</small>
+                                                                                                                                                            `;
                 legendContainer.appendChild(legendItem);
             });
         }
@@ -3090,9 +3096,9 @@ async function refreshCsrfToken() {
                             const legendItem = document.createElement('div');
                             legendItem.className = 'd-flex align-items-center';
                             legendItem.innerHTML = `
-                                                                                                                                                                        <div class="color-box me-2" style="background-color: ${status.color_code};"></div>
-                                                                                                                                                                        <small>${status.status_name}</small>
-                                                                                                                                                                    `;
+                                                                                                                                                                            <div class="color-box me-2" style="background-color: ${status.color_code};"></div>
+                                                                                                                                                                            <small>${status.status_name}</small>
+                                                                                                                                                                        `;
                             legendContainer.appendChild(legendItem);
                         });
                     }

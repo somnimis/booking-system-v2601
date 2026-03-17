@@ -97,7 +97,7 @@
                         class="card-img-top card-img" alt="Conference Room">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">
-                            <a href="{{ url('/facility-catalog') }}" class="text-decoration-none text-dark">
+                            <a href="{{ url('/booking-catalog') }}" class="text-decoration-none text-dark">
                                 Conference & Meeting Rooms
                             </a>
                         </h5>
@@ -111,7 +111,7 @@
                     <img src="{{ asset('assets/frontend-pics/facilities/lecture-hall.jpg') }}" class="card-img-top card-img"
                         alt="Lecture Hall">
                     <div class="card-body">
-                        <a href="{{ url('/facility-catalog') }}" class="text-decoration-none text-dark">
+                        <a href="{{ url('/booking-catalog') }}" class="text-decoration-none text-dark">
                             <h5 class="card-title fw-bold">Lecture & Training Halls
                         </a>
                         </h5>
@@ -126,7 +126,7 @@
                         alt="Auditorium">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">
-                            <a href="{{ url('/facility-catalog') }}" class="text-decoration-none text-dark">
+                            <a href="{{ url('/booking-catalog') }}" class="text-decoration-none text-dark">
                                 Auditoriums
                             </a>
                         </h5>
@@ -141,7 +141,7 @@
                         alt="Gym Court">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">
-                            <a href="{{ url('/facility-catalog') }}" class="text-decoration-none text-dark">
+                            <a href="{{ url('/booking-catalog') }}" class="text-decoration-none text-dark">
                                 Sports & Gym Facilities
                             </a>
                         </h5>
@@ -157,7 +157,7 @@
                         alt="Libraries">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">
-                            <a href="{{ url('/facility-catalog') }}" class="text-decoration-none text-dark">
+                            <a href="{{ url('/booking-catalog') }}" class="text-decoration-none text-dark">
                                 Libraries & Study Areas
                             </a>
                         </h5>
@@ -173,7 +173,7 @@
                         alt="Computer Laboratories">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">
-                            <a href="{{ url('/facility-catalog') }}" class="text-decoration-none text-dark">
+                            <a href="{{ url('/booking-catalog') }}" class="text-decoration-none text-dark">
                                 Computer Laboratories
                             </a>
                         </h5>
