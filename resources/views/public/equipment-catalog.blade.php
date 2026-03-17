@@ -550,12 +550,12 @@
             </button>
             <ul class="dropdown-menu" aria-labelledby="chooseCatalogDropdown">
               <li>
-                <a class="dropdown-item" href="{{ asset('facility-catalog') }}" data-catalog-type="facilities">
+                <a class="dropdown-item" href="{{ asset('booking-catalog') }}" data-catalog-type="facilities">
                   Facilities
                 </a>
               </li>
               <li>
-                <a class="dropdown-item" href="{{ asset('equipment-catalog') }}" data-catalog-type="equipment">
+                <a class="dropdown-item" href="{{ asset('booking-catalog') }}" data-catalog-type="equipment">
                   Equipment
                 </a>
               </li>

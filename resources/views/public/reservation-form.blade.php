@@ -1063,7 +1063,7 @@
             How to book?
             <i class="bi bi-question-circle ms-1" style="font-size: 0.9rem;"></i>
           </span>
-          <a href="{{ url('facility-catalog') }}" class="btn btn-book-now">Back To Catalog</a>
+          <a href="{{ url('booking-catalog') }}" class="btn btn-book-now">Back To Catalog</a>
         </div>
       </div>
     </div>
@@ -1721,7 +1721,7 @@
             Close
           </button>
           <button type="button" class="btn btn-primary"
-            onclick="window.location.href='{{ asset("facility-catalog") }}'">
+            onclick="window.location.href='{{ asset("booking-catalog") }}'">
             View Catalog
           </button>
         </div>
