@@ -985,6 +985,8 @@
   <main id="main">
     <div class="container-fluid">
       <div class="row g-3">
+
+        {{--
         <!-- Left Column: Mini Calendar & Filters -->
         <div class="col-lg-3">
           <!-- Mini Calendar Card -->
@@ -1171,6 +1173,10 @@
             </div>
           </div>
         </div>
+
+        --}}
+
+
         <!-- Admin Reservations Card -->
         <div class="col-12 mt-3">
           <div class="card">
@@ -1672,18 +1678,18 @@
       toast.style.borderRadius = '0.3rem';
 
       toast.innerHTML = `
-                                                                                                <div class="d-flex align-items-center px-3 py-1"> 
-                                                                                                    <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                                                                                                    <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                                                                                                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                                                                                                </div>
-                                                                                                <div class="loading-bar" style="
-                                                                                                    height: 3px;
-                                                                                                    background: rgba(255,255,255,0.7);
-                                                                                                    width: 100%;
-                                                                                                    transition: width ${duration}ms linear;
-                                                                                                "></div>
-                                                                                            `;
+                                                                                                  <div class="d-flex align-items-center px-3 py-1"> 
+                                                                                                      <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                                                                                                      <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
+                                                                                                      <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                                                                  </div>
+                                                                                                  <div class="loading-bar" style="
+                                                                                                      height: 3px;
+                                                                                                      background: rgba(255,255,255,0.7);
+                                                                                                      width: 100%;
+                                                                                                      transition: width ${duration}ms linear;
+                                                                                                  "></div>
+                                                                                              `;
 
       document.body.appendChild(toast);
 
@@ -1906,13 +1912,13 @@
           const selectAllDiv = document.createElement('div');
           selectAllDiv.className = 'col-12 mt-2';
           selectAllDiv.innerHTML = `
-                                                  <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="selectAllServices">
-                                                    <label class="form-check-label fw-medium" for="selectAllServices">
-                                                      Select All Services
-                                                    </label>
-                                                  </div>
-                                                `;
+                                                    <div class="form-check">
+                                                      <input class="form-check-input" type="checkbox" id="selectAllServices">
+                                                      <label class="form-check-label fw-medium" for="selectAllServices">
+                                                        Select All Services
+                                                      </label>
+                                                    </div>
+                                                  `;
           container.appendChild(selectAllDiv);
 
           // Add event listener for Select All
@@ -1983,11 +1989,11 @@
 
         // Show loading state
         facilityFilterList.innerHTML = `
-                                                                                  <div class="text-center py-3 text-muted">
-                                                                                      <div class="spinner-border spinner-border-sm me-2"></div>
-                                                                                      Loading facilities...
-                                                                                  </div>
-                                                                              `;
+                                                                                    <div class="text-center py-3 text-muted">
+                                                                                        <div class="spinner-border spinner-border-sm me-2"></div>
+                                                                                        Loading facilities...
+                                                                                    </div>
+                                                                                `;
 
         const response = await fetch('/api/facilities', {
           headers: {
@@ -2002,11 +2008,11 @@
 
           if (facilities.length === 0) {
             facilityFilterList.innerHTML = `
-                                                                                          <div class="text-center py-3 text-muted">
-                                                                                              <i class="bi bi-building-slash"></i>
-                                                                                              <div class="small mt-1">No facilities found</div>
-                                                                                          </div>
-                                                                                      `;
+                                                                                            <div class="text-center py-3 text-muted">
+                                                                                                <i class="bi bi-building-slash"></i>
+                                                                                                <div class="small mt-1">No facilities found</div>
+                                                                                            </div>
+                                                                                        `;
             return;
           }
 
@@ -2015,19 +2021,19 @@
 
           // Add "All facilities" checkbox as first option
           html += `
-                                                                                      <div class="facility-item">
-                                                                                          <div class="form-check">
-                                                                                              <input class="form-check-input facility-filter-checkbox select-all-facilities" 
-                                                                                                     type="checkbox" 
-                                                                                                     id="filterAllFacilities"
-                                                                                                     checked>
-                                                                                              <label class="form-check-label fw-medium" for="filterAllFacilities">
-                                                                                                  All facilities
-                                                                                              </label>
-                                                                                          </div>
-                                                                                      </div>
-                                                                                      <hr class="my-2">
-                                                                                  `;
+                                                                                        <div class="facility-item">
+                                                                                            <div class="form-check">
+                                                                                                <input class="form-check-input facility-filter-checkbox select-all-facilities" 
+                                                                                                       type="checkbox" 
+                                                                                                       id="filterAllFacilities"
+                                                                                                       checked>
+                                                                                                <label class="form-check-label fw-medium" for="filterAllFacilities">
+                                                                                                    All facilities
+                                                                                                </label>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <hr class="my-2">
+                                                                                    `;
 
           facilities.forEach(facility => {
             const isAvailable = facility.status_id === 1 || facility.status?.status_id === 1;
@@ -2035,24 +2041,24 @@
             const badgeText = isAvailable ? 'Available' : 'Unavailable';
 
             html += `
-                                                                                          <div class="facility-item">
-                                                                                              <div class="form-check">
-                                                                                                  <input class="form-check-input facility-filter-checkbox individual-facility" 
-                                                                                                         type="checkbox" 
-                                                                                                         value="${facility.facility_id}" 
-                                                                                                         id="filterFacility_${facility.facility_id}"
-                                                                                                         data-name="${facility.facility_name}"
-                                                                                                         ${isAvailable ? 'checked' : 'disabled'}>
-                                                                                                  <label class="form-check-label d-flex justify-content-between align-items-center" 
-                                                                                                         for="filterFacility_${facility.facility_id}">
-                                                                                                      <span class="${!isAvailable ? 'text-muted' : ''}">
-                                                                                                          ${facility.facility_name}
-                                                                                                      </span>
-                                                                                                      <span class="facility-badge ${badgeColor} text-white">${badgeText}</span>
-                                                                                                  </label>
-                                                                                              </div>
-                                                                                          </div>
-                                                                                      `;
+                                                                                            <div class="facility-item">
+                                                                                                <div class="form-check">
+                                                                                                    <input class="form-check-input facility-filter-checkbox individual-facility" 
+                                                                                                           type="checkbox" 
+                                                                                                           value="${facility.facility_id}" 
+                                                                                                           id="filterFacility_${facility.facility_id}"
+                                                                                                           data-name="${facility.facility_name}"
+                                                                                                           ${isAvailable ? 'checked' : 'disabled'}>
+                                                                                                    <label class="form-check-label d-flex justify-content-between align-items-center" 
+                                                                                                           for="filterFacility_${facility.facility_id}">
+                                                                                                        <span class="${!isAvailable ? 'text-muted' : ''}">
+                                                                                                            ${facility.facility_name}
+                                                                                                        </span>
+                                                                                                        <span class="facility-badge ${badgeColor} text-white">${badgeText}</span>
+                                                                                                    </label>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        `;
           });
 
           facilityFilterList.innerHTML = html;
@@ -2115,11 +2121,11 @@
         const facilityFilterList = document.getElementById('facilityFilterList');
         if (facilityFilterList) {
           facilityFilterList.innerHTML = `
-                                                                                      <div class="text-center py-3 text-danger">
-                                                                                          <i class="bi bi-exclamation-triangle"></i>
-                                                                                          <div class="small mt-1">Failed to load facilities</div>
-                                                                                      </div>
-                                                                                  `;
+                                                                                        <div class="text-center py-3 text-danger">
+                                                                                            <i class="bi bi-exclamation-triangle"></i>
+                                                                                            <div class="small mt-1">Failed to load facilities</div>
+                                                                                        </div>
+                                                                                    `;
         }
       }
     }
@@ -2356,13 +2362,14 @@
         };
 
         // Initialize calendar
-        await calendarModule.initialize();
+        //await calendarModule.initialize();
 
 
         // Now that calendar is initialized, apply filters once
-        if (calendarModule.calendar) {
+   {{--    if (calendarModule.calendar) {
           console.log("Calendar initialized, applying filters...");
           calendarModule.applyFilters();
+          
 
           // Force a refresh of the calendar display
           setTimeout(() => {
@@ -2371,8 +2378,12 @@
               calendarModule.calendar.render();
             }
           }, 100);
-        }
+        } 
 
+        --}}
+
+        
+{{--
         // Add this debug version of applyFilters right after your calendarModule definition
         calendarModule.applyFilters = function () {
           console.log("=== APPLYING FILTERS ===");
@@ -2495,189 +2506,189 @@
         calendarModule.getModalHtml = function (eventData, isAdmin, eventType) {
           if (eventType === 'calendar') {
             return `
-                                                  <div class="modal-dialog" style="max-width: 600px;">
-                                                      <div class="modal-content">
-                                                          <div class="modal-header ${eventData.all_day ? 'bg-info' : 'bg-success'} text-white">
-                                                              <h5 class="modal-title" id="eventModalTitle">
-                                                                  <i class="bi bi-calendar-event me-2"></i>${eventData.all_day ? 'All-Day ' : ''}School Calendar Event
-                                                              </h5>
-                                                              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                          </div>
-                                                          <div class="modal-body" id="eventModalBody">
-                                                              <div class="card border-0 shadow-none mb-0 py-1 px-3">
-                                                                  <div class="row">
-                                                                      <div class="col-12">
-                                                                          <div class="mb-3">
-                                                                              <label class="form-label fw-bold d-flex align-items-center mb-2">
-                                                                                  <i class="bi bi-tag me-2"></i>Event Title
-                                                                              </label>
-                                                                              <input type="text" class="form-control bg-light" id="modalCalendarTitle" readonly value="${eventData.event_name || eventData.title || 'Untitled Event'}">
-                                                                              ${eventData.all_day ? '<span class="badge bg-info mt-2">All Day Event</span>' : ''}
-                                                                          </div>
+                                                    <div class="modal-dialog" style="max-width: 600px;">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header ${eventData.all_day ? 'bg-info' : 'bg-success'} text-white">
+                                                                <h5 class="modal-title" id="eventModalTitle">
+                                                                    <i class="bi bi-calendar-event me-2"></i>${eventData.all_day ? 'All-Day ' : ''}School Calendar Event
+                                                                </h5>
+                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body" id="eventModalBody">
+                                                                <div class="card border-0 shadow-none mb-0 py-1 px-3">
+                                                                    <div class="row">
+                                                                        <div class="col-12">
+                                                                            <div class="mb-3">
+                                                                                <label class="form-label fw-bold d-flex align-items-center mb-2">
+                                                                                    <i class="bi bi-tag me-2"></i>Event Title
+                                                                                </label>
+                                                                                <input type="text" class="form-control bg-light" id="modalCalendarTitle" readonly value="${eventData.event_name || eventData.title || 'Untitled Event'}">
+                                                                                ${eventData.all_day ? '<span class="badge bg-info mt-2">All Day Event</span>' : ''}
+                                                                            </div>
 
-                                                                          <div class="mb-3">
-                                                                              <label class="form-label fw-bold d-flex align-items-center mb-2">
-                                                                                  <i class="bi bi-file-text me-2"></i>Description
-                                                                              </label>
-                                                                              <textarea class="form-control bg-light" id="modalCalendarDescription" rows="4" readonly>${eventData.description || 'No description provided'}</textarea>
-                                                                          </div>
+                                                                            <div class="mb-3">
+                                                                                <label class="form-label fw-bold d-flex align-items-center mb-2">
+                                                                                    <i class="bi bi-file-text me-2"></i>Description
+                                                                                </label>
+                                                                                <textarea class="form-control bg-light" id="modalCalendarDescription" rows="4" readonly>${eventData.description || 'No description provided'}</textarea>
+                                                                            </div>
 
-                                                                          <div class="mb-3">
-                                                                              <label class="form-label fw-bold d-flex align-items-center mb-2">
-                                                                                  <i class="bi bi-clock me-2"></i>Schedule
-                                                                              </label>
-                                                                              <div class="card bg-light">
-                                                                                  <div class="card-body py-3">
-                                                                                      <div class="d-flex align-items-center mb-2">
-                                                                                          <i class="bi bi-calendar-check me-2 ${eventData.all_day ? 'text-info' : 'text-success'}"></i>
-                                                                                          <span id="modalEventSchedule" class="fw-medium"></span>
-                                                                                      </div>
-                                                                                      <div class="d-flex align-items-center">
-                                                                                          <i class="bi bi-hourglass-split me-2 ${eventData.all_day ? 'text-info' : 'text-success'}"></i>
-                                                                                          <span id="modalEventDuration" class="fw-medium"></span>
-                                                                                      </div>
-                                                                                  </div>
-                                                                              </div>
-                                                                          </div>
-                                                                      </div>
-                                                                  </div>
-                                                              </div>
-                                                          </div>
+                                                                            <div class="mb-3">
+                                                                                <label class="form-label fw-bold d-flex align-items-center mb-2">
+                                                                                    <i class="bi bi-clock me-2"></i>Schedule
+                                                                                </label>
+                                                                                <div class="card bg-light">
+                                                                                    <div class="card-body py-3">
+                                                                                        <div class="d-flex align-items-center mb-2">
+                                                                                            <i class="bi bi-calendar-check me-2 ${eventData.all_day ? 'text-info' : 'text-success'}"></i>
+                                                                                            <span id="modalEventSchedule" class="fw-medium"></span>
+                                                                                        </div>
+                                                                                        <div class="d-flex align-items-center">
+                                                                                            <i class="bi bi-hourglass-split me-2 ${eventData.all_day ? 'text-info' : 'text-success'}"></i>
+                                                                                            <span id="modalEventDuration" class="fw-medium"></span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
 
-                                                          <div class="modal-footer">
-                                                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                                                  <i class="bi bi-x-circle me-1"></i> Close
-                                                              </button>
-                                                          </div>
-                                                      </div>
-                                                  </div>`;
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                                    <i class="bi bi-x-circle me-1"></i> Close
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>`;
           } else {
             return `
-                                                          <div class="modal-dialog" style="max-width: 800px;">
-                                                              <div class="modal-content">
-                                                                  <div class="modal-header bg-gradient-primary text-white">
-                                                                      <h5 class="modal-title" id="eventModalTitle">
-                                                                          <i class="bi bi-file-text me-2"></i>Event Details
-                                                                      </h5>
-                                                                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                                  </div>
-                                                                  <div class="modal-body" id="eventModalBody">
-                                                                      <div class="card border-0 shadow-none mb-0 py-1 px-3">
-                                                                          <div class="row">
-                                                                              <div class="col-12">
-                                                                                  <div class="mb-2">
-                                                                                      <label class="form-label fw-bold d-flex align-items-center mb-2">
-                                                                                          Calendar Title
-                                                                                          ${isAdmin ? `
-                                                                                          <i class="bi bi-pencil text-secondary ms-2" id="editCalendarTitleBtn" style="cursor: pointer;"></i>
-                                                                                          <div class="edit-actions ms-2 d-none" id="calendarTitleActions">
-                                                                                              <button type="button" class="btn btn-sm btn-success me-1" id="saveCalendarTitleBtn">
-                                                                                                  <i class="bi bi-check"></i>
-                                                                                              </button>
-                                                                                              <button type="button" class="btn btn-sm btn-danger" id="cancelCalendarTitleBtn">
-                                                                                                  <i class="bi bi-x"></i>
-                                                                                              </button>
-                                                                                          </div>
-                                                                                          ` : ""}
-                                                                                      </label>
-                                                                                      <input type="text" class="form-control" id="modalCalendarTitle" ${isAdmin ? "" : "readonly"}>
-                                                                                  </div>
+                                                            <div class="modal-dialog" style="max-width: 800px;">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header bg-gradient-primary text-white">
+                                                                        <h5 class="modal-title" id="eventModalTitle">
+                                                                            <i class="bi bi-file-text me-2"></i>Event Details
+                                                                        </h5>
+                                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                    </div>
+                                                                    <div class="modal-body" id="eventModalBody">
+                                                                        <div class="card border-0 shadow-none mb-0 py-1 px-3">
+                                                                            <div class="row">
+                                                                                <div class="col-12">
+                                                                                    <div class="mb-2">
+                                                                                        <label class="form-label fw-bold d-flex align-items-center mb-2">
+                                                                                            Calendar Title
+                                                                                            ${isAdmin ? `
+                                                                                            <i class="bi bi-pencil text-secondary ms-2" id="editCalendarTitleBtn" style="cursor: pointer;"></i>
+                                                                                            <div class="edit-actions ms-2 d-none" id="calendarTitleActions">
+                                                                                                <button type="button" class="btn btn-sm btn-success me-1" id="saveCalendarTitleBtn">
+                                                                                                    <i class="bi bi-check"></i>
+                                                                                                </button>
+                                                                                                <button type="button" class="btn btn-sm btn-danger" id="cancelCalendarTitleBtn">
+                                                                                                    <i class="bi bi-x"></i>
+                                                                                                </button>
+                                                                                            </div>
+                                                                                            ` : ""}
+                                                                                        </label>
+                                                                                        <input type="text" class="form-control" id="modalCalendarTitle" ${isAdmin ? "" : "readonly"}>
+                                                                                    </div>
 
-                                                                                  <div class="mb-0">
-                                                                                      <label class="form-label fw-bold d-flex align-items-center mb-2">
-                                                                                          Calendar Description
-                                                                                          ${isAdmin ? `
-                                                                                          <i class="bi bi-pencil text-secondary ms-2" id="editCalendarDescriptionBtn"
-                                                                                              style="cursor: pointer;"></i>
-                                                                                          <div class="edit-actions ms-2 d-none" id="calendarDescriptionActions">
-                                                                                              <button type="button" class="btn btn-sm btn-success me-1" id="saveCalendarDescriptionBtn">
-                                                                                                  <i class="bi bi-check"></i>
-                                                                                              </button>
-                                                                                              <button type="button" class="btn btn-sm btn-danger" id="cancelCalendarDescriptionBtn">
-                                                                                                  <i class="bi bi-x"></i>
-                                                                                              </button>
-                                                                                          </div>
-                                                                                          ` : ""}
-                                                                                      </label>
-                                                                                      <textarea class="form-control" id="modalCalendarDescription" rows="2"
-                                                                                          ${isAdmin ? "" : "readonly"}></textarea>
-                                                                                  </div>
-                                                                              </div>
-                                                                          </div>
-                                                                      </div>
+                                                                                    <div class="mb-0">
+                                                                                        <label class="form-label fw-bold d-flex align-items-center mb-2">
+                                                                                            Calendar Description
+                                                                                            ${isAdmin ? `
+                                                                                            <i class="bi bi-pencil text-secondary ms-2" id="editCalendarDescriptionBtn"
+                                                                                                style="cursor: pointer;"></i>
+                                                                                            <div class="edit-actions ms-2 d-none" id="calendarDescriptionActions">
+                                                                                                <button type="button" class="btn btn-sm btn-success me-1" id="saveCalendarDescriptionBtn">
+                                                                                                    <i class="bi bi-check"></i>
+                                                                                                </button>
+                                                                                                <button type="button" class="btn btn-sm btn-danger" id="cancelCalendarDescriptionBtn">
+                                                                                                    <i class="bi bi-x"></i>
+                                                                                                </button>
+                                                                                            </div>
+                                                                                            ` : ""}
+                                                                                        </label>
+                                                                                        <textarea class="form-control" id="modalCalendarDescription" rows="2"
+                                                                                            ${isAdmin ? "" : "readonly"}></textarea>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
 
-                                                                      <div class="card border-0 shadow-none mb-3 p-3">
-                                                                          <table class="table table-bordered mb-0 w-100" style="table-layout: fixed; border: 1px solid #dee2e6;">
-                                                                              <thead>
-                                                                                  <tr>
-                                                                                      <th class="bg-light p-2" style="width: 50%; border: 1px solid #dee2e6;">
-                                                                                          Event Information
-                                                                                      </th>
-                                                                                      <th class="bg-light p-2" style="width: 50%; border: 1px solid #dee2e6;">
-                                                                                          Requested Items
-                                                                                      </th>
-                                                                                  </tr>
-                                                                              </thead>
-                                                                              <tbody>
-                                                                                  <tr>
-                                                                                      <td style="border: 1px solid #dee2e6; padding: 0;">
-                                                                                          <table class="table mb-0 w-100" style="border-collapse: collapse;">
-                                                                                              <tbody>
-                                                                                                  <tr>
-                                                                                                      <th class="bg-light text-nowrap p-2"
-                                                                                                          style="width: 40%; border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
-                                                                                                          Requester
-                                                                                                      </th>
-                                                                                                      <td id="modalRequester" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
-                                                                                                  </tr>
-                                                                                                  <tr>
-                                                                                                      <th class="bg-light text-nowrap p-2"
-                                                                                                          style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
-                                                                                                          Purpose
-                                                                                                      </th>
-                                                                                                      <td id="modalPurpose" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
-                                                                                                  </tr>
-                                                                                                  <tr>
-                                                                                                      <th class="bg-light text-nowrap p-2"
-                                                                                                          style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
-                                                                                                          Participants
-                                                                                                      </th>
-                                                                                                      <td id="modalParticipants" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
-                                                                                                  </tr>
-                                                                                                  <tr>
-                                                                                                      <th class="bg-light text-nowrap p-2"
-                                                                                                          style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
-                                                                                                          Status
-                                                                                                      </th>
-                                                                                                      <td id="modalStatus" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
-                                                                                                  </tr>
-                                                                                                  ${isAdmin ? `
-                                                                                                  <tr>
-                                                                                                      <th class="bg-light text-nowrap p-2"
-                                                                                                          style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
-                                                                                                          Approved Fee
-                                                                                                      </th>
-                                                                                                      <td id="modalFee" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
-                                                                                                  </tr>
-                                                                                                  ` : ""}
-                                                                                              </tbody>
-                                                                                          </table>
-                                                                                      </td>
-                                                                                      <td style="border: 1px solid #dee2e6; vertical-align: top; padding: 0;">
-                                                                                          <div id="modalItems" class="p-3" style="min-height: 100%;"></div>
-                                                                                      </td>
-                                                                                  </tr>
-                                                                              </tbody>
-                                                                          </table>
-                                                                      </div>
-                                                                  </div>
+                                                                        <div class="card border-0 shadow-none mb-3 p-3">
+                                                                            <table class="table table-bordered mb-0 w-100" style="table-layout: fixed; border: 1px solid #dee2e6;">
+                                                                                <thead>
+                                                                                    <tr>
+                                                                                        <th class="bg-light p-2" style="width: 50%; border: 1px solid #dee2e6;">
+                                                                                            Event Information
+                                                                                        </th>
+                                                                                        <th class="bg-light p-2" style="width: 50%; border: 1px solid #dee2e6;">
+                                                                                            Requested Items
+                                                                                        </th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                    <tr>
+                                                                                        <td style="border: 1px solid #dee2e6; padding: 0;">
+                                                                                            <table class="table mb-0 w-100" style="border-collapse: collapse;">
+                                                                                                <tbody>
+                                                                                                    <tr>
+                                                                                                        <th class="bg-light text-nowrap p-2"
+                                                                                                            style="width: 40%; border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                                                                                            Requester
+                                                                                                        </th>
+                                                                                                        <td id="modalRequester" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
+                                                                                                    </tr>
+                                                                                                    <tr>
+                                                                                                        <th class="bg-light text-nowrap p-2"
+                                                                                                            style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                                                                                            Purpose
+                                                                                                        </th>
+                                                                                                        <td id="modalPurpose" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
+                                                                                                    </tr>
+                                                                                                    <tr>
+                                                                                                        <th class="bg-light text-nowrap p-2"
+                                                                                                            style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                                                                                            Participants
+                                                                                                        </th>
+                                                                                                        <td id="modalParticipants" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
+                                                                                                    </tr>
+                                                                                                    <tr>
+                                                                                                        <th class="bg-light text-nowrap p-2"
+                                                                                                            style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                                                                                            Status
+                                                                                                        </th>
+                                                                                                        <td id="modalStatus" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
+                                                                                                    </tr>
+                                                                                                    ${isAdmin ? `
+                                                                                                    <tr>
+                                                                                                        <th class="bg-light text-nowrap p-2"
+                                                                                                            style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                                                                                            Approved Fee
+                                                                                                        </th>
+                                                                                                        <td id="modalFee" class="p-2" style="border-bottom: 1px solid #dee2e6;"></td>
+                                                                                                    </tr>
+                                                                                                    ` : ""}
+                                                                                                </tbody>
+                                                                                            </table>
+                                                                                        </td>
+                                                                                        <td style="border: 1px solid #dee2e6; vertical-align: top; padding: 0;">
+                                                                                            <div id="modalItems" class="p-3" style="min-height: 100%;"></div>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    </div>
 
-                                                                  <div class="modal-footer">
-                                                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                                      ${isAdmin ? '<button type="button" class="btn btn-primary" id="modalViewDetails">View Full Details</button>' : ""}
-                                                                  </div>
-                                                              </div>
-                                                          </div>`;
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                                        ${isAdmin ? '<button type="button" class="btn btn-primary" id="modalViewDetails">View Full Details</button>' : ""}
+                                                                    </div>
+                                                                </div>
+                                                            </div>`;
           }
         };
 
@@ -2856,8 +2867,10 @@
           }
         }, 100);
 
+        --}}
+
         // Listen for tab changes to resize calendar when tab becomes visible
-        document.querySelectorAll('#adminDashboardTabs button[data-bs-toggle="tab"]').forEach(tab => {
+       {{-- -  document.querySelectorAll('#adminDashboardTabs button[data-bs-toggle="tab"]').forEach(tab => {
           tab.addEventListener('shown.bs.tab', function (e) {
             if (e.target.id === 'all-reservations-tab') {
               setTimeout(() => {
@@ -2868,7 +2881,11 @@
               }, 200);
             }
           });
+
+          
         });
+
+        --}}
 
         // Load filters in parallel with calendar (non-blocking)
         setTimeout(() => {
@@ -3987,23 +4004,23 @@
             const div = document.createElement('div');
             div.className = 'form-check mb-2';
             div.innerHTML = `
-                                                                                            <input class="form-check-input facility-checkbox" type="checkbox" 
-                                                                                                   id="facility_${facility.facility_id}" 
-                                                                                                   value="${facility.facility_id}"
-                                                                                                   data-name="${facility.facility_name}"
-                                                                                                   data-fee="${facility.external_fee}"
-                                                                                                   data-rate-type="${facility.rate_type}"
-                                                                                                   data-capacity="${facility.capacity}"
-                                                                                                   ${!isAvailable ? 'disabled' : ''}>
-                                                                                            <label class="form-check-label ${!isAvailable ? 'text-muted' : ''}" 
-                                                                                                   for="facility_${facility.facility_id}">
-                                                                                                ${facility.facility_name} 
-                                                                                                (₱${facility.external_fee}${facility.rate_type === 'Per Hour' ? '/hour' : '/event'})
-                                                                                                <br>
-                                                                                                <small class="text-muted">Capacity: ${facility.capacity} people</small>
-                                                                                                ${!isAvailable ? '<span class="badge bg-warning ms-2">Unavailable</span>' : ''}
-                                                                                            </label>
-                                                                                        `;
+                                                                                              <input class="form-check-input facility-checkbox" type="checkbox" 
+                                                                                                     id="facility_${facility.facility_id}" 
+                                                                                                     value="${facility.facility_id}"
+                                                                                                     data-name="${facility.facility_name}"
+                                                                                                     data-fee="${facility.external_fee}"
+                                                                                                     data-rate-type="${facility.rate_type}"
+                                                                                                     data-capacity="${facility.capacity}"
+                                                                                                     ${!isAvailable ? 'disabled' : ''}>
+                                                                                              <label class="form-check-label ${!isAvailable ? 'text-muted' : ''}" 
+                                                                                                     for="facility_${facility.facility_id}">
+                                                                                                  ${facility.facility_name} 
+                                                                                                  (₱${facility.external_fee}${facility.rate_type === 'Per Hour' ? '/hour' : '/event'})
+                                                                                                  <br>
+                                                                                                  <small class="text-muted">Capacity: ${facility.capacity} people</small>
+                                                                                                  ${!isAvailable ? '<span class="badge bg-warning ms-2">Unavailable</span>' : ''}
+                                                                                              </label>
+                                                                                          `;
             facilitiesList.appendChild(div);
           });
 
@@ -4050,20 +4067,20 @@
             const div = document.createElement('div');
             div.className = 'form-check mb-2';
             div.innerHTML = `
-                                                                                            <input class="form-check-input equipment-checkbox" type="checkbox" 
-                                                                                                   id="equipment_${equipment.equipment_id}" 
-                                                                                                   value="${equipment.equipment_id}"
-                                                                                                   data-name="${equipment.equipment_name}"
-                                                                                                   data-fee="${equipment.external_fee}"
-                                                                                                   data-rate-type="${equipment.rate_type}"
-                                                                                                   ${!isAvailable ? 'disabled' : ''}>
-                                                                                            <label class="form-check-label ${!isAvailable ? 'text-muted' : ''}" 
-                                                                                                   for="equipment_${equipment.equipment_id}">
-                                                                                                ${equipment.equipment_name} 
-                                                                                                (₱${equipment.external_fee}${equipment.rate_type === 'Per Hour' ? '/hour' : '/event'})
-                                                                                                ${!isAvailable ? '<span class="badge bg-warning ms-2">Unavailable</span>' : ''}
-                                                                                            </label>
-                                                                                        `;
+                                                                                              <input class="form-check-input equipment-checkbox" type="checkbox" 
+                                                                                                     id="equipment_${equipment.equipment_id}" 
+                                                                                                     value="${equipment.equipment_id}"
+                                                                                                     data-name="${equipment.equipment_name}"
+                                                                                                     data-fee="${equipment.external_fee}"
+                                                                                                     data-rate-type="${equipment.rate_type}"
+                                                                                                     ${!isAvailable ? 'disabled' : ''}>
+                                                                                              <label class="form-check-label ${!isAvailable ? 'text-muted' : ''}" 
+                                                                                                     for="equipment_${equipment.equipment_id}">
+                                                                                                  ${equipment.equipment_name} 
+                                                                                                  (₱${equipment.external_fee}${equipment.rate_type === 'Per Hour' ? '/hour' : '/event'})
+                                                                                                  ${!isAvailable ? '<span class="badge bg-warning ms-2">Unavailable</span>' : ''}
+                                                                                              </label>
+                                                                                          `;
             equipmentList.appendChild(div);
           });
         } else {
@@ -5087,22 +5104,22 @@
 
       // Set loading state
       document.getElementById('approvalsHistoryContent').innerHTML = `
-                                                                        <div class="text-center text-muted py-4">
-                                                                          <div class="spinner-border text-primary" role="status">
-                                                                            <span class="visually-hidden">Loading...</span>
+                                                                          <div class="text-center text-muted py-4">
+                                                                            <div class="spinner-border text-primary" role="status">
+                                                                              <span class="visually-hidden">Loading...</span>
+                                                                            </div>
+                                                                            <p class="mt-2">Loading approvals...</p>
                                                                           </div>
-                                                                          <p class="mt-2">Loading approvals...</p>
-                                                                        </div>
-                                                                      `;
+                                                                        `;
 
       document.getElementById('rejectionsHistoryContent').innerHTML = `
-                                                                        <div class="text-center text-muted py-4">
-                                                                          <div class="spinner-border text-primary" role="status">
-                                                                            <span class="visually-hidden">Loading...</span>
+                                                                          <div class="text-center text-muted py-4">
+                                                                            <div class="spinner-border text-primary" role="status">
+                                                                              <span class="visually-hidden">Loading...</span>
+                                                                            </div>
+                                                                            <p class="mt-2">Loading rejections...</p>
                                                                           </div>
-                                                                          <p class="mt-2">Loading rejections...</p>
-                                                                        </div>
-                                                                      `;
+                                                                        `;
 
       // Reset tab counts
       document.getElementById('approvalsTabCount').textContent = '0';
@@ -5247,9 +5264,9 @@
       } catch (error) {
         console.error('Error loading approval history:', error);
         const errorHtml = `<div class="text-center text-danger py-4">
-                                                                          <i class="bi bi-exclamation-triangle me-2"></i>
-                                                                          Failed to load history: ${error.message}
-                                                                        </div>`;
+                                                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                                                            Failed to load history: ${error.message}
+                                                                          </div>`;
         document.getElementById('approvalsHistoryContent').innerHTML = errorHtml;
         document.getElementById('rejectionsHistoryContent').innerHTML = errorHtml;
       }
@@ -5268,86 +5285,86 @@
         Math.round((currentApprovals / requiredApprovals) * 100) : 0;
 
       return `
-                                                                        <!-- Approval Progress Summary -->
-                                                                        ${requiredApprovals > 0 ? `
-                                                                        <div class="card mb-4 border-0 shadow-sm">
-                                                                          <div class="card-body">
-                                                                            <h6 class="card-title mb-3">Approval Progress</h6>
+                                                                          <!-- Approval Progress Summary -->
+                                                                          ${requiredApprovals > 0 ? `
+                                                                          <div class="card mb-4 border-0 shadow-sm">
+                                                                            <div class="card-body">
+                                                                              <h6 class="card-title mb-3">Approval Progress</h6>
 
-                                                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                                              <div class="d-flex align-items-center">
-                                                                                <i class="fa-solid fa-user-tie text-muted me-2"></i>
-                                                                                <span class="fw-medium ${isFullyApproved ? 'text-success' : 'text-warning'}">
-                                                                                  ${currentApprovals}/${requiredApprovals} heads approved
-                                                                                </span>
-                                                                                ${isFullyApproved ?
+                                                                              <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                                <div class="d-flex align-items-center">
+                                                                                  <i class="fa-solid fa-user-tie text-muted me-2"></i>
+                                                                                  <span class="fw-medium ${isFullyApproved ? 'text-success' : 'text-warning'}">
+                                                                                    ${currentApprovals}/${requiredApprovals} heads approved
+                                                                                  </span>
+                                                                                  ${isFullyApproved ?
             '<span class="badge bg-success ms-2"><i class="bi bi-check-circle"></i> Fully Approved</span>' :
             `<span class="badge bg-warning ms-2"><i class="bi bi-clock"></i> Pending</span>`}
+                                                                                </div>
+                                                                                <span class="text-muted">${approvalPercentage}%</span>
                                                                               </div>
-                                                                              <span class="text-muted">${approvalPercentage}%</span>
-                                                                            </div>
 
-                                                                            <div class="progress mb-3" style="height: 8px;">
-                                                                              <div class="progress-bar ${isFullyApproved ? 'bg-success' : 'bg-primary'}" 
-                                                                                   role="progressbar" 
-                                                                                   style="width: ${approvalPercentage}%"
-                                                                                   aria-valuenow="${approvalPercentage}" 
-                                                                                   aria-valuemin="0" 
-                                                                                   aria-valuemax="100">
+                                                                              <div class="progress mb-3" style="height: 8px;">
+                                                                                <div class="progress-bar ${isFullyApproved ? 'bg-success' : 'bg-primary'}" 
+                                                                                     role="progressbar" 
+                                                                                     style="width: ${approvalPercentage}%"
+                                                                                     aria-valuenow="${approvalPercentage}" 
+                                                                                     aria-valuemin="0" 
+                                                                                     aria-valuemax="100">
+                                                                                </div>
                                                                               </div>
-                                                                            </div>
 
-                                                                            ${requiredAdmins.length > 0 ? `
-                                                                            <div class="mt-3">
-                                                                              <h6 class="card-subtitle mb-2 text-muted">Required Approvers:</h6>
-                                                                              <div class="d-flex flex-wrap gap-2">
-                                                                                ${requiredAdmins.map(admin => `
-                                                                                  <div class="d-flex align-items-center border rounded p-2 ${admin.has_approved ? 'border-success bg-success-light' : 'border-secondary'}">
-                                                                                    <div class="me-2">
-                                                                                      ${admin.has_approved ?
+                                                                              ${requiredAdmins.length > 0 ? `
+                                                                              <div class="mt-3">
+                                                                                <h6 class="card-subtitle mb-2 text-muted">Required Approvers:</h6>
+                                                                                <div class="d-flex flex-wrap gap-2">
+                                                                                  ${requiredAdmins.map(admin => `
+                                                                                    <div class="d-flex align-items-center border rounded p-2 ${admin.has_approved ? 'border-success bg-success-light' : 'border-secondary'}">
+                                                                                      <div class="me-2">
+                                                                                        ${admin.has_approved ?
                 '<i class="bi bi-check-circle-fill text-success"></i>' :
                 '<i class="bi bi-clock text-warning"></i>'}
+                                                                                      </div>
+                                                                                      <div>
+                                                                                        <div class="fw-medium">${admin.name}</div>
+                                                                                        ${admin.title ? `<small class="text-muted">${admin.title}</small>` : ''}
+                                                                                      </div>
                                                                                     </div>
-                                                                                    <div>
-                                                                                      <div class="fw-medium">${admin.name}</div>
-                                                                                      ${admin.title ? `<small class="text-muted">${admin.title}</small>` : ''}
-                                                                                    </div>
-                                                                                  </div>
-                                                                                `).join('')}
+                                                                                  `).join('')}
+                                                                                </div>
                                                                               </div>
+                                                                              ` : ''}
                                                                             </div>
-                                                                            ` : ''}
                                                                           </div>
-                                                                        </div>
-                                                                        ` : ''}
+                                                                          ` : ''}
 
-                                                                        <!-- Approval History List -->
-                                                                        <h6 class="mb-3">Approval History</h6>
-                                                                        ${history.map(item => `
-                                                                          <div class="d-flex align-items-center mb-3 p-3 border rounded">
-                                                                            <div class="me-3 flex-shrink-0">
-                                                                              ${item.admin_photo ?
+                                                                          <!-- Approval History List -->
+                                                                          <h6 class="mb-3">Approval History</h6>
+                                                                          ${history.map(item => `
+                                                                            <div class="d-flex align-items-center mb-3 p-3 border rounded">
+                                                                              <div class="me-3 flex-shrink-0">
+                                                                                ${item.admin_photo ?
                     `<img src="${item.admin_photo}" class="rounded-circle" width="45" height="45" alt="${item.admin_name}" style="object-fit: cover;">` :
                     `<div class="rounded-circle d-flex align-items-center justify-content-center ${item.action === 'approved' ? 'bg-success' : 'bg-danger'} text-white" style="width: 45px; height: 45px;">
-                                                                                  ${item.admin_name.split(' ').map(n => n.charAt(0)).join('')}
-                                                                                </div>`}
-                                                                            </div>
-                                                                            <div class="flex-grow-1">
-                                                                              <div class="d-flex justify-content-between align-items-start">
-                                                                                <div>
-                                                                                  <strong class="d-block">${item.admin_name}</strong>
-                                                                                  <small class="text-muted">
-                                                                                    <i class="bi ${item.action === 'approved' ? 'bi-hand-thumbs-up text-success' : 'bi-hand-thumbs-down text-danger'} me-1"></i>
-                                                                                    ${item.action === 'approved' ? 'Approved' : 'Rejected'} this request
-                                                                                  </small>
-                                                                                  ${item.remarks ? `<div class="mt-2 small p-2 bg-light rounded">"${item.remarks}"</div>` : ''}
+                                                                                    ${item.admin_name.split(' ').map(n => n.charAt(0)).join('')}
+                                                                                  </div>`}
+                                                                              </div>
+                                                                              <div class="flex-grow-1">
+                                                                                <div class="d-flex justify-content-between align-items-start">
+                                                                                  <div>
+                                                                                    <strong class="d-block">${item.admin_name}</strong>
+                                                                                    <small class="text-muted">
+                                                                                      <i class="bi ${item.action === 'approved' ? 'bi-hand-thumbs-up text-success' : 'bi-hand-thumbs-down text-danger'} me-1"></i>
+                                                                                      ${item.action === 'approved' ? 'Approved' : 'Rejected'} this request
+                                                                                    </small>
+                                                                                    ${item.remarks ? `<div class="mt-2 small p-2 bg-light rounded">"${item.remarks}"</div>` : ''}
+                                                                                  </div>
+                                                                                  <small class="text-muted text-end">${item.formatted_date}</small>
                                                                                 </div>
-                                                                                <small class="text-muted text-end">${item.formatted_date}</small>
                                                                               </div>
                                                                             </div>
-                                                                          </div>
-                                                                        `).join('')}
-                                                                      `;
+                                                                          `).join('')}
+                                                                        `;
     }
 
     async function addCalendarEvent(eventData) {
