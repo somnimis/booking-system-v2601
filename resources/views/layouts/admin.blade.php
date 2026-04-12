@@ -603,7 +603,9 @@
                     </div>
                 </a>
             </li>
-            <!-- Equipment Tracking Nav Item -->
+
+            
+            <!-- Equipment Tracking Nav Item 
             <li class="nav-item mb-1" id="asset-tracking-nav-item" style="display: none;">
                 <a class="nav-link py-1 px-2 rounded-2 {{ Request::is('admin/asset-tracking*') ? 'active' : '' }}"
                     href="{{ url('/admin/asset-tracking') }}">
@@ -614,7 +616,7 @@
                         <span>Asset Tracking</span>
                     </div>
                 </a>
-            </li>
+            </li>-->
             <!-- Administrators Nav Item -->
             <li class="nav-item mb-1" id="administrators-nav-item" style="display: none;">
                 <a class="nav-link py-1 px-2 rounded-2 {{ Request::is('admin/admin-roles*') ? 'active' : '' }}"

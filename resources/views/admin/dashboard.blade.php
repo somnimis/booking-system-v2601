@@ -123,7 +123,7 @@
       <!-- Dashboard Header with Wallpaper -->
       <div class="dashboard-header">
         <div class="d-flex justify-content-between align-items-center">
-          <h2 class="fw-bold mb-0">Your Dashboard</h2>
+          <h2 class="mb-0">Your Dashboard</h2>
           <a href="#" id="manageProfileBtn" class="btn btn-light">
             <i class="bi bi-gear me-1"></i> Edit Profile
           </a>
