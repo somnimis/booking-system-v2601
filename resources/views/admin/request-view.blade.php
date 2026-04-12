@@ -2636,41 +2636,79 @@
             // Load comments when page loads
             loadMixedActivity();
 
-            // Function to refresh all fee displays including the total
-            async function refreshAllFeeDisplays() {
-                try {
-                    // Fetch updated request data
-                    const response = await fetch(`/api/admin/requisition-forms/${requestId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${adminToken}`,
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (response.ok) {
-                        const requestData = await response.json();
-
-                        // FIX THIS LINE - use the correct element ID
-                        const totalFee = formatMoney(requestData.fees.approved_fee);
-                        document.getElementById('feeBreakdownTotal').textContent = totalFee; // Changed from 'totalApprovedFee'
-
-                        // Update additional fees display
-                        if (requestData.fees.requisition_fees) {
-                            updateAdditionalFees(requestData.fees.requisition_fees);
-                        }
-
-                        // Update base fees display
-                        if (requestData.requested_items) {
-                            updateBaseFees(requestData.requested_items, requestData.schedule);
-                        }
-
-                        // Refresh activity timeline
-                        await loadMixedActivity();
-                    }
-                } catch (error) {
-                    console.error('Error refreshing fee displays:', error);
-                }
+// Function to refresh ALL fee displays including the total
+async function refreshAllFeeDisplays() {
+    try {
+        // Fetch updated request data from the correct endpoint
+        const response = await fetch(`/api/admin/requisition-forms/${requestId}`, {
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Accept': 'application/json'
             }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch updated request data');
+        }
+
+        const requestData = await response.json();
+        
+        // Update the total approved fee display - IMPORTANT: Use approved_fee from API
+        const approvedFee = requestData.fees?.approved_fee || 0;
+        const totalFee = formatMoney(approvedFee);
+        const feeTotalElement = document.getElementById('feeBreakdownTotal');
+        if (feeTotalElement) {
+            feeTotalElement.textContent = totalFee;
+        }
+        
+        // Update additional fees display if there are requisition fees
+        if (requestData.fees?.requisition_fees) {
+            updateAdditionalFees(requestData.fees.requisition_fees);
+        }
+        
+        // Update base fees display (this shows the items but doesn't affect total)
+        if (requestData.requested_items && requestData.schedule) {
+            updateBaseFees(requestData.requested_items, requestData.schedule);
+        }
+        
+        // Update the main page content with latest data
+        updateMainPageContent(requestData);
+        
+        // Also refresh the timeline to show new fee activities
+        if (typeof loadMixedActivity === 'function') {
+            await loadMixedActivity();
+        }
+        
+        console.log('Fee displays refreshed successfully', {
+            approved_fee: requestData.fees?.approved_fee,
+            requisition_fees_count: requestData.fees?.requisition_fees?.length || 0
+        });
+        
+    } catch (error) {
+        console.error('Error refreshing fee displays:', error);
+        showToast('Failed to refresh fee data: ' + error.message, 'error');
+    }
+}
+
+// Function to update main page content with fresh data
+function updateMainPageContent(requestData) {
+    // Update approval counts
+    if (requestData.approval_info) {
+        const approvalsCountElem = document.getElementById('approvalsCount');
+        const rejectionsCountElem = document.getElementById('rejectionsCount');
+        if (approvalsCountElem) approvalsCountElem.textContent = requestData.approval_info.approval_count || 0;
+        if (rejectionsCountElem) rejectionsCountElem.textContent = requestData.approval_info.rejection_count || 0;
+    }
+    
+    // Update status badge if changed
+    if (requestData.form_details?.status) {
+        const statusBadge = document.getElementById('statusBadge');
+        if (statusBadge && statusBadge.textContent !== requestData.form_details.status.name) {
+            statusBadge.textContent = requestData.form_details.status.name;
+            statusBadge.style.backgroundColor = requestData.form_details.status.color;
+        }
+    }
+}
 
 
             // Function to show status update modal
@@ -3050,163 +3088,176 @@
 
 
 
-            // Handle individual waiver checkbox changes
-            async function handleWaiverChange(checkbox) {
-                const type = checkbox.dataset.type;
-                const id = parseInt(checkbox.dataset.id);
-                const isWaived = checkbox.checked;
+// Handle individual waiver checkbox changes
+async function handleWaiverChange(checkbox) {
+    const type = checkbox.dataset.type;
+    const id = parseInt(checkbox.dataset.id);
+    const isWaived = checkbox.checked;
 
-                // Update UI immediately for better UX
-                const itemRow = checkbox.closest('.item-row');
-                if (itemRow) {
-                    if (isWaived) {
-                        itemRow.classList.add('waived');
-                    } else {
-                        itemRow.classList.remove('waived');
-                    }
-                }
+    // Update UI immediately for better UX
+    const itemRow = checkbox.closest('.item-row');
+    if (itemRow) {
+        if (isWaived) {
+            itemRow.classList.add('waived');
+        } else {
+            itemRow.classList.remove('waived');
+        }
+    }
 
-                // Collect ALL waived items (both checked ones)
-                const waivedFacilities = [];
-                const waivedEquipment = [];
+    // Collect ALL waived items (both checked ones)
+    const waivedFacilities = [];
+    const waivedEquipment = [];
 
-                document.querySelectorAll('.waiver-checkbox').forEach(cb => {
-                    const itemId = parseInt(cb.dataset.id);
-                    const itemType = cb.dataset.type;
+    document.querySelectorAll('.waiver-checkbox').forEach(cb => {
+        const itemId = parseInt(cb.dataset.id);
+        const itemType = cb.dataset.type;
 
-                    if (cb.checked) {
-                        if (itemType === 'facility') {
-                            waivedFacilities.push(itemId);
-                        } else if (itemType === 'equipment') {
-                            waivedEquipment.push(itemId);
-                        }
-                    }
-                });
-
-                try {
-                    const response = await fetch(`/api/admin/requisition/${requestId}/waive`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${adminToken}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            waived_facilities: waivedFacilities,
-                            waived_equipment: waivedEquipment
-                        })
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        let errorMessage = 'Failed to update waiver status';
-                        if (errorData.details) {
-                            if (typeof errorData.details === 'object') {
-                                errorMessage = Object.values(errorData.details).flat().join(', ');
-                            } else {
-                                errorMessage = errorData.details;
-                            }
-                        } else if (errorData.error) {
-                            errorMessage = errorData.error;
-                        }
-                        throw new Error(errorMessage);
-                    }
-
-                    const result = await response.json();
-
-                    // Refresh ALL fee displays including the total
-                    await refreshAllFeeDisplays();
-
-                    // Show appropriate success message based on action
-                    if (type === 'facility') {
-                        const facilityName = itemRow ? itemRow.querySelector('.item-name').textContent : 'Facility';
-                        if (isWaived) {
-                            showToast(`${facilityName} waived successfully.`, 'success');
-                        } else {
-                            showToast(`${facilityName} waiver removed.`, 'success');
-                        }
-                    } else if (type === 'equipment') {
-                        const equipmentName = itemRow ? itemRow.querySelector('.item-name').textContent : 'Equipment';
-                        if (isWaived) {
-                            showToast(`${equipmentName} waived successfully.`, 'success');
-                        } else {
-                            showToast(`${equipmentName} waiver removed.`, 'success');
-                        }
-                    }
-
-                    console.log('Sending waiver request:', {
-                        waived_facilities: waivedFacilities,
-                        waived_equipment: waivedEquipment
-                    });
-
-                } catch (error) {
-                    console.error('Error updating waiver:', error);
-                    // Revert checkbox state on error
-                    checkbox.checked = !isWaived;
-                    if (itemRow) {
-                        itemRow.classList.toggle('waived');
-                    }
-                    showToast('Failed to update waiver: ' + error.message, 'error');
-                }
+        if (cb.checked) {
+            if (itemType === 'facility') {
+                waivedFacilities.push(itemId);
+            } else if (itemType === 'equipment') {
+                waivedEquipment.push(itemId);
             }
+        }
+    });
+
+    try {
+        // Get admin ID from localStorage (stored during login)
+        const adminId = localStorage.getItem('adminId');
+        
+        const response = await fetch(`/api/admin/requisition/${requestId}/waive`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                waived_facilities: waivedFacilities,
+                waived_equipment: waivedEquipment,
+                admin_id: adminId // Add admin_id from localStorage
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            let errorMessage = 'Failed to update waiver status';
+            if (errorData.details) {
+                if (typeof errorData.details === 'object') {
+                    errorMessage = Object.values(errorData.details).flat().join(', ');
+                } else {
+                    errorMessage = errorData.details;
+                }
+            } else if (errorData.error) {
+                errorMessage = errorData.error;
+            }
+            throw new Error(errorMessage);
+        }
+
+        const result = await response.json();
+
+        // Refresh ALL fee displays including the total
+        await refreshAllFeeDisplays();
+
+        // Show appropriate success message based on action
+        if (type === 'facility') {
+            const facilityName = itemRow ? itemRow.querySelector('.item-name').textContent : 'Facility';
+            if (isWaived) {
+                showToast(`${facilityName} waived successfully.`, 'success');
+            } else {
+                showToast(`${facilityName} waiver removed.`, 'success');
+            }
+        } else if (type === 'equipment') {
+            const equipmentName = itemRow ? itemRow.querySelector('.item-name').textContent : 'Equipment';
+            if (isWaived) {
+                showToast(`${equipmentName} waived successfully.`, 'success');
+            } else {
+                showToast(`${equipmentName} waiver removed.`, 'success');
+            }
+        }
+
+    } catch (error) {
+        console.error('Error updating waiver:', error);
+        // Revert checkbox state on error
+        checkbox.checked = !isWaived;
+        if (itemRow) {
+            itemRow.classList.toggle('waived');
+        }
+        showToast('Failed to update waiver: ' + error.message, 'error');
+    }
+}
             document.getElementById('waiveAllSwitch').addEventListener('change', function () {
                 handleWaiveAll(this);
             });
 
-            // Handle "Waive All" toggle switch
-            async function handleWaiveAll(switchElement) {
-                const waiveAll = switchElement.checked;
+// Handle "Waive All" toggle switch
+async function handleWaiveAll(switchElement) {
+    const waiveAll = switchElement.checked;
 
-                try {
-                    const response = await fetch(`/api/admin/requisition/${requestId}/waive`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${adminToken}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            waive_all: waiveAll
-                        })
-                    });
+    try {
+        // Get admin ID from localStorage (stored during login)
+        const adminId = localStorage.getItem('adminId');
+        
+        const response = await fetch(`/api/admin/requisition/${requestId}/waive`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                waive_all: waiveAll,
+                admin_id: adminId // Add admin_id from localStorage
+            })
+        });
 
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.details || 'Failed to update waiver status');
-                    }
+        if (!response.ok) {
+            const errorData = await response.json();
+            let errorMessage = 'Failed to update waiver status';
+            if (errorData.details) {
+                if (typeof errorData.details === 'object') {
+                    errorMessage = Object.values(errorData.details).flat().join(', ');
+                } else {
+                    errorMessage = errorData.details;
+                }
+            } else if (errorData.error) {
+                errorMessage = errorData.error;
+            }
+            throw new Error(errorMessage);
+        }
 
-                    const result = await response.json();
+        const result = await response.json();
 
-                    // Update all checkboxes to match the "waive all" state
-                    document.querySelectorAll('.waiver-checkbox').forEach(checkbox => {
-                        checkbox.checked = waiveAll;
-                        const itemRow = checkbox.closest('.item-row');
-                        if (itemRow) {
-                            if (waiveAll) {
-                                itemRow.classList.add('waived');
-                            } else {
-                                itemRow.classList.remove('waived');
-                            }
-                        }
-                    });
-
-                    // Refresh ALL fee displays including the total
-                    await refreshAllFeeDisplays();
-
-                    // Show success message
-                    if (waiveAll) {
-                        showToast('All items waived successfully.', 'success');
-                    } else {
-                        showToast('All waivers removed.', 'success');
-                    }
-
-                } catch (error) {
-                    console.error('Error updating waive all:', error);
-                    // Revert switch state on error
-                    switchElement.checked = !waiveAll;
-                    showToast('Failed to update waive all: ' + error.message, 'error');
+        // Update all checkboxes to match the "waive all" state
+        document.querySelectorAll('.waiver-checkbox').forEach(checkbox => {
+            checkbox.checked = waiveAll;
+            const itemRow = checkbox.closest('.item-row');
+            if (itemRow) {
+                if (waiveAll) {
+                    itemRow.classList.add('waived');
+                } else {
+                    itemRow.classList.remove('waived');
                 }
             }
+        });
+
+        // Refresh ALL fee displays including the total
+        await refreshAllFeeDisplays();
+
+        // Show success message
+        if (waiveAll) {
+            showToast('All items waived successfully.', 'success');
+        } else {
+            showToast('All waivers removed.', 'success');
+        }
+
+    } catch (error) {
+        console.error('Error updating waive all:', error);
+        // Revert switch state on error
+        switchElement.checked = !waiveAll;
+        showToast('Failed to update waive all: ' + error.message, 'error');
+    }
+}
 
             // A map to get user-friendly names for fee types
             const feeTypeNames = {
@@ -3251,90 +3302,88 @@
             });
 
 
-            // Save Fee button logic
-            saveFeeBtn.addEventListener("click", async function () {
-                const type = feeTypeSelect.value;
-                const value = parseFloat(feeValueInput.value);
-                const label = document.getElementById('feeLabel').value;
-                const discountType = document.getElementById('discountType').value;
-                const accountNum = document.getElementById('accountNum').value.trim(); // Get account number
+// Save Fee button logic
+saveFeeBtn.addEventListener("click", async function () {
+    const type = feeTypeSelect.value;
+    const value = parseFloat(feeValueInput.value);
+    const label = document.getElementById('feeLabel').value;
+    const discountType = document.getElementById('discountType').value;
+    const accountNum = document.getElementById('accountNum').value.trim();
 
-                if (!type || !value || !label) {
-                    showToast("Please fill all required fields.", "error");
-                    return;
-                }
+    if (!type || !value || !label) {
+        showToast("Please fill all required fields.", "error");
+        return;
+    }
 
-                try {
-                    let endpoint = '';
-                    let requestData = {};
+    // Disable button to prevent double submission
+    saveFeeBtn.disabled = true;
+    const originalText = saveFeeBtn.innerHTML;
+    saveFeeBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Adding...';
 
-                    // Determine which API endpoint to call based on fee type
-                    switch (type) {
-                        case 'additional':
-                            endpoint = `/api/admin/requisition/${requestId}/fee`;
-                            requestData = {
-                                label: label,
-                                fee_amount: value,
-                                account_num: accountNum || null // Include account number
-                            };
-                            break;
-                        case 'discount':
-                        case 'vat': // Both discount and vat use the discount API
-                            endpoint = `/api/admin/requisition/${requestId}/discount`;
-                            requestData = {
-                                label: label,
-                                discount_amount: value,
-                                discount_type: discountType,
-                                account_num: accountNum || null // Include account number
-                            };
-                            break;
-                    }
+    try {
+        let endpoint = '';
+        let requestData = {};
 
-                    const response = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${adminToken}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(requestData)
-                    });
+        // Determine which API endpoint to call based on fee type
+        switch (type) {
+            case 'additional':
+                endpoint = `/api/admin/requisition/${requestId}/fee`;
+                requestData = {
+                    label: label,
+                    fee_amount: value,
+                    account_num: accountNum || null
+                };
+                break;
+            case 'discount':
+            case 'vat':
+                endpoint = `/api/admin/requisition/${requestId}/discount`;
+                requestData = {
+                    label: label,
+                    discount_amount: value,
+                    discount_type: discountType,
+                    account_num: accountNum || null
+                };
+                break;
+        }
 
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.details || 'Failed to add fee/discount');
-                    }
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
 
-                    const result = await response.json();
+        const result = await response.json();
 
-                    // Reset and close modal
-                    feeValueInput.value = "";
-                    feeTypeSelect.value = "";
-                    document.getElementById('feeLabel').value = "";
-                    document.getElementById('accountNum').value = ""; // Clear account number
-                    discountTypeSection.style.display = 'none';
-                    feeModal.hide();
+        if (!response.ok) {
+            throw new Error(result.details || result.error || 'Failed to add fee/discount');
+        }
 
-                    // Show success message
-                    showToast('Fee/discount added successfully', 'success');
+        // Reset and close modal
+        feeValueInput.value = "";
+        feeTypeSelect.value = "";
+        document.getElementById('feeLabel').value = "";
+        document.getElementById('accountNum').value = "";
+        discountTypeSection.style.display = 'none';
+        feeModal.hide();
 
-                    // Refresh ALL fee displays including the total
-                    await refreshAllFeeDisplays();
+        showToast('Fee/discount added successfully', 'success');
 
-                } catch (error) {
-                    console.error('Error adding fee/discount:', error);
-                    console.error('Fee addition details:', {
-                        type: type,
-                        value: value,
-                        label: label,
-                        accountNum: accountNum,
-                        discountType: discountType,
-                        error: error.message
-                    });
-                    showToast('Failed to add fee/discount: ' + error.message, 'error');
-                }
-            });
+        // Refresh ALL fee displays including the total
+        await refreshAllFeeDisplays();
 
+    } catch (error) {
+        console.error('Error adding fee/discount:', error);
+        showToast('Failed to add fee/discount: ' + error.message, 'error');
+    } finally {
+        // Re-enable button
+        saveFeeBtn.disabled = false;
+        saveFeeBtn.innerHTML = originalText;
+    }
+});
             // Document preview functionality - clean overlay for PDFs and images
             document.addEventListener('click', function (event) {
                 // Check if the click is on a button that has data-bs-target="#documentModal" 
@@ -4320,115 +4369,104 @@
                 }
             }
 
-            // Function to update additional fees display
-            // Function to update additional fees display
-            function updateAdditionalFees(requisitionFees) {
-                const additionalFeesContainer = document.getElementById('additionalFeesContainer');
+// Function to update additional fees display
+function updateAdditionalFees(requisitionFees) {
+    const additionalFeesContainer = document.getElementById('additionalFeesContainer');
+    
+    if (!additionalFeesContainer) return;
 
-                // Clear existing content
-                additionalFeesContainer.innerHTML = '';
+    // Clear existing content
+    additionalFeesContainer.innerHTML = '';
 
-                if (requisitionFees && requisitionFees.length > 0) {
-                    requisitionFees.forEach((fee, index) => {
-                        const feeElement = document.createElement('div');
-                        feeElement.className = 'fee-item d-flex justify-content-between align-items-center mb-1';
+    if (requisitionFees && requisitionFees.length > 0) {
+        requisitionFees.forEach((fee, index) => {
+            const feeElement = document.createElement('div');
+            feeElement.className = 'fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded';
 
-                        let amountText = '';
-                        if (fee.type === 'fee') {
-                            amountText = `${formatMoney(fee.fee_amount)}`;
-                        } else if (fee.type === 'discount') {
-                            if (fee.discount_type === 'Percentage') {
-                                // Remove .00 for percentage discounts
-                                amountText = `${parseFloat(fee.discount_amount)}%`;
-                            } else {
-                                amountText = `-${formatMoney(fee.discount_amount)}`;
-                            }
-                        } else if (fee.type === 'mixed') {
-                            const feePart = fee.fee_amount > 0 ? `${formatMoney(fee.fee_amount)}` : '';
-                            const discountPart = fee.discount_amount > 0 ?
-                                (fee.discount_type === 'Percentage' ?
-                                    `-${parseFloat(fee.discount_amount)}%` :
-                                    `-₱${parseFloat(fee.discount_amount).toFixed(2)}`) : '';
-                            amountText = `${feePart} ${discountPart}`.trim();
-                        }
-
-                        // Create label with account number if it exists
-                        let labelHtml = fee.label;
-                        if (fee.account_num) {
-                            labelHtml = `${fee.label} <span class="text-muted">(${fee.account_num})</span>`;
-                        }
-
-                        feeElement.innerHTML = `
-                                                                                                                                        <div>
-                                                                                                                                            <span class="item-name">${labelHtml}</span>
-                                                                                                                                        </div>
-                                                                                                                                        <span class="d-flex align-items-center">
-                                                                                                                                            <span class="item-price me-2">${amountText}</span>
-                                                                                                                                            <button class="btn btn-sm btn-danger delete-fee-btn" data-fee-id="${fee.fee_id}" data-fee-type="${fee.type}">
-                                                                                                                                                <i class="fa fa-times"></i>
-                                                                                                                                            </button>
-                                                                                                                                        </span>
-                                                                                                                                    `;
-
-                        additionalFeesContainer.appendChild(feeElement);
-                    });
-
-                    // Handle delete click
-                    additionalFeesContainer.querySelectorAll('.delete-fee-btn').forEach(btn => {
-                        btn.addEventListener('click', async (e) => {
-                            const feeId = e.currentTarget.dataset.feeId;
-                            const feeType = e.currentTarget.dataset.feeType;
-
-                            if (!feeId) {
-                                console.error('No fee ID found for deletion');
-                                showToast('Cannot delete fee that does not exist.', 'error');
-                                return;
-                            }
-
-                            try {
-                                const response = await fetch(`/api/admin/requisition/${requestId}/fee/${feeId}`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                        'Authorization': `Bearer ${adminToken}`,
-                                        'Accept': 'application/json'
-                                    }
-                                });
-
-                                if (!response.ok) {
-                                    const errorData = await response.json();
-                                    throw new Error(errorData.details || 'Failed to delete fee');
-                                }
-
-                                const result = await response.json();
-
-                                // Show success message
-                                showToast('Fee removed successfully', 'success');
-
-                                // Refresh ALL fee displays including the total
-                                await refreshAllFeeDisplays();
-
-                            } catch (error) {
-                                console.error('Error removing fee:', error);
-                                console.error('Fee deletion details:', {
-                                    feeId: feeId,
-                                    feeType: feeType,
-                                    requestId: requestId,
-                                    error: error.message
-                                });
-                                showToast('Failed to remove fee: ' + error.message, 'error');
-                            }
-                        });
-                    });
+            let amountText = '';
+            let isDiscount = false;
+            
+            if (fee.type === 'fee') {
+                amountText = `${formatMoney(fee.fee_amount)}`;
+            } else if (fee.type === 'discount') {
+                isDiscount = true;
+                if (fee.discount_type === 'Percentage') {
+                    amountText = `-${parseFloat(fee.discount_amount)}%`;
                 } else {
-                    // Show empty message
-                    additionalFeesContainer.innerHTML = `
-                                                                                                                                    <div class="text-center text-muted py-4">
-                                                                                                                                        <i class="fa fa-coins fa-2x d-block mb-2"></i>
-                                                                                                                                        <p class="mb-0">No additional fees or discounts</p>
-                                                                                                                                    </div>
-                                                                                                                                `;
+                    amountText = `-${formatMoney(fee.discount_amount)}`;
                 }
+            } else if (fee.type === 'mixed') {
+                const feePart = fee.fee_amount > 0 ? `${formatMoney(fee.fee_amount)}` : '';
+                const discountPart = fee.discount_amount > 0 ?
+                    (fee.discount_type === 'Percentage' ?
+                        `-${parseFloat(fee.discount_amount)}%` :
+                        `-${formatMoney(fee.discount_amount)}`) : '';
+                amountText = `${feePart} ${discountPart}`.trim();
             }
+
+            // Create label with account number if it exists
+            let labelHtml = escapeHtml(fee.label);
+            if (fee.account_num) {
+                labelHtml = `${escapeHtml(fee.label)} <span class="text-muted small">(${escapeHtml(fee.account_num)})</span>`;
+            }
+
+            feeElement.innerHTML = `
+                <div>
+                    <span class="item-name ${isDiscount ? 'text-danger' : ''}">${labelHtml}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="item-price fw-bold ${isDiscount ? 'text-danger' : ''}">${amountText}</span>
+                    <button class="btn btn-sm btn-danger delete-fee-btn" data-fee-id="${fee.fee_id}" data-fee-type="${fee.type}">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            additionalFeesContainer.appendChild(feeElement);
+        });
+
+        // Handle delete click
+        additionalFeesContainer.querySelectorAll('.delete-fee-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const feeId = e.currentTarget.dataset.feeId;
+                
+                if (!feeId) {
+                    showToast('Cannot delete fee that does not exist.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/admin/requisition/${requestId}/fee/${feeId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`,
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.details || 'Failed to delete fee');
+                    }
+
+                    showToast('Fee removed successfully', 'success');
+                    await refreshAllFeeDisplays();
+
+                } catch (error) {
+                    console.error('Error removing fee:', error);
+                    showToast('Failed to remove fee: ' + error.message, 'error');
+                }
+            });
+        });
+    } else {
+        additionalFeesContainer.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="fa fa-coins fa-2x d-block mb-2"></i>
+                <p class="mb-0">No additional fees or discounts</p>
+            </div>
+        `;
+    }
+}
 
             // Update the dropdown menu text dynamically based on current status
             function updateStatusDropdownText() {
@@ -4538,184 +4576,224 @@
                 }
             }
 
-            async function fetchRequestDetails() {
-                try {
-                    // Ensure loading state is visible and content is hidden
-                    document.getElementById('loadingState').style.display = 'block';
-                    document.getElementById('contentState').style.display = 'none';
+async function fetchRequestDetails() {
+    try {
+        // Ensure loading state is visible and content is hidden
+        document.getElementById('loadingState').style.display = 'block';
+        document.getElementById('contentState').style.display = 'none';
 
-                    const response = await fetch(`/api/admin/requisition-forms`, {
-                        headers: {
-                            'Authorization': `Bearer ${adminToken}`,
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) throw new Error('Failed to fetch request details');
-
-                    allRequests = await response.json();
-                    const request = allRequests.find(req => req.request_id == requestId);
-                    if (!request) throw new Error('Request not found');
-
-                    // Update approval counts for the finalize modal
-                    updateApprovalCounts(
-                        request.approval_info.approval_count,
-                        request.approval_info.rejection_count
-                    );
-
-                    // Update request ID in title
-                    document.getElementById('requestIdTitle').textContent = 'RID #' + String(requestId).padStart(4, '0');
-
-
-                    // Update status badge
-                    const statusBadge = document.getElementById('statusBadge');
-                    statusBadge.textContent = request.form_details.status.name;
-                    statusBadge.style.backgroundColor = request.form_details.status.color;
-
-                    // Contact information - simplified grid layout
-
-                    document.getElementById('formDetails').innerHTML = `
-                                                    <div class="d-flex justify-content-between py-1 border-bottom">
-                                                        <span class="text-muted">Requester:</span>
-                                                        <span class="fw-medium">${request.user_details.first_name} ${request.user_details.last_name}</span>
-                                                    </div>
-                                                    <div class="d-flex justify-content-between py-1 border-bottom">
-                                                        <span class="text-muted">School ID:</span>
-                                                        <span class="fw-medium">${request.user_details.school_id || 'N/A'}</span>
-                                                    </div>
-                                                    <div class="d-flex justify-content-between py-1 border-bottom">
-                                                        <span class="text-muted">Email:</span>
-                                                       <span class="fw-medium" style="word-break: break-word;">${request.user_details.email}</span>
-                                                    </div>
-                                                    <div class="d-flex justify-content-between py-1 border-bottom">
-                                                        <span class="text-muted">Organization:</span>
-                                                        <span class="fw-medium">${request.user_details.organization_name || 'N/A'}</span>
-                                                    </div>
-                                                    <div class="d-flex justify-content-between py-1 border-bottom">
-                                                        <span class="text-muted">User Type:</span>
-                                                        <span class="fw-medium">${request.user_details.user_type}</span>
-                                                    </div>
-                                                    <div class="d-flex justify-content-between py-1">
-                                                        <span class="text-muted">Contact #:</span>
-                                                        <span class="fw-medium">${request.user_details.contact_number || 'N/A'}</span>
-                                                    </div>
-                                                `;
-                    // Event details - simplified layout
-                    document.getElementById('eventDetails').innerHTML = `
-                                                                                                                <div class="row g-3">
-                                                                                                                    <div class="col-sm-6">
-                                                                                                                        <div class="mb-3">
-                                                                                                                            <div class="fw-bold text-primary">Endorser</div>
-                                                                                                                            <div>${request.documents.endorser || 'N/A'}</div>
-                                                                                                                        </div>
-                                                                                                                        <div class="mb-3">
-                                                                                                                            <div class="fw-bold text-primary">Rental Purpose</div>
-                                                                                                                            <div>${request.form_details.purpose}</div>
-                                                                                                                        </div>
-                                                                                                                        <div class="mb-3">
-                                                                                                                            <div class="fw-bold text-primary">Number of Tables</div>
-                                                                                                                            <div>${request.form_details.num_tables || 0}</div>
-                                                                                                                        </div>
-                                                                                                                        <div class="mb-3">
-                                                                                                                            <div class="fw-bold text-primary">Start Schedule</div>
-                                                                                                                            <div>${formatStartDateTime(request.schedule)}</div>
-                                                                                                                        </div>
-                                                                                                                    </div>
-                                                                                                                    <div class="col-sm-6">
-                                                                                                                        <div class="mb-3">
-                                                                                                                            <div class="fw-bold text-primary">Date Endorsed</div>
-                                                                                                                            <div>${formatDateEndorsed(request.documents.date_endorsed) || 'N/A'}</div>
-                                                                                                                        </div>
-                                                                                                                        <div class="mb-3">
-                                                                                                                            <div class="fw-bold text-primary">Participants</div>
-                                                                                                                            <div>${request.form_details.num_participants}</div>
-                                                                                                                        </div>
-                                                                                                                        <div class="mb-3">
-                                                                                                                            <div class="fw-bold text-primary">Number of Chairs</div>
-                                                                                                                            <div>${request.form_details.num_chairs || 0}</div>
-                                                                                                                        </div>
-                                                                                                                        <div class="mb-3">
-                                                                                                                            <div class="fw-bold text-primary">End Schedule</div>
-                                                                                                                            <div>${formatEndDateTime(request.schedule)}</div>
-                                                                                                                        </div>
-                                                                                                                    </div>
-                                                                                                                    <div class="col-12">
-                                                                                                                        <div class="fw-bold text-primary">Additional Requests</div>
-                                                                                                                        <div>${request.form_details.additional_requests || 'No additional requests.'}</div>
-                                                                                                                    </div>
-                                                                                                                </div>
-                                                                                                            `;
-                    // Update requested items with fee breakdown
-                    document.getElementById('requestedItems').innerHTML = `
-                                                                                                                <div class="requested-items-list">
-                                                                                                                    ${request.requested_items.facilities.length > 0 ? `
-                                                                                                                        <div class="mb-3">
-                                                                                                                            <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Facilities:</h6>
-                                                                                                                            ${request.requested_items.facilities.map(f => `
-                                                                                                                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
-                                                                                                                                    <span class="item-name">${f.name}</span>
-                                                                                                                                    <span class="item-price fw-bold">${formatMoney(f.fee)}${f.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
-                                                                                                                                </div>
-                                                                                                                            `).join('')}
-                                                                                                                        </div>
-                                                                                                                    ` : ''}
-
-                                                                                                                    ${request.requested_items.equipment.length > 0 ? `
-                                                                                                                        <div>
-                                                                                                                            <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Equipment:</h6>
-                                                                                                                            ${request.requested_items.equipment.map(e => `
-                                                                                                                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
-                                                                                                                                    <span class="item-name">${e.name} × ${e.quantity || 1}</span>
-                                                                                                                                    <span class="item-price fw-bold">${formatMoney(e.fee)}${e.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
-                                                                                                                                </div>
-                                                                                                                            `).join('')}
-                                                                                                                        </div>
-                                                                                                                    ` : ''}
-                                                                                                                </div>
-                                                                                                            `;
-
-                    // Update status cards
-                    document.getElementById('approvalsCount').textContent = request.approval_info.approval_count;
-                    document.getElementById('rejectionsCount').textContent = request.approval_info.rejection_count;
-                    // Update document icons
-                    updateDocumentIcons(request.documents);
-                    // Load additional data and wait for completion
-                    await Promise.all([
-                        loadMixedActivity(),
-                        loadApprovalHistory(),
-                        updateBaseFees(request.requested_items, request.schedule)
-                    ]);
-
-                    // Ensure misc fees are updated
-                    if (request.fees && request.fees.requisition_fees) {
-                        updateAdditionalFees(request.fees.requisition_fees);
-                    }
-
-                    // Update dropdown text
-                    updateStatusDropdownText();
-
-                    // Check admin role and update UI
-                    await checkAdminRoleAndUpdateUI();
-
-
-                    // ONLY NOW show content after everything is properly loaded
-                    document.getElementById('loadingState').style.display = 'none';
-                    document.getElementById('contentState').style.display = 'block';
-
-                } catch (error) {
-                    console.error('Error:', error);
-                    showToast('Failed to load request details', 'error');
-
-                    // Show error state
-                    document.getElementById('loadingState').style.display = 'none';
-                    document.getElementById('contentState').innerHTML = `
-                                                                                                                                                                                <div class="alert alert-danger">
-                                                                                                                                                                                    Failed to load request details. Please try refreshing the page.
-                                                                                                                                                                                </div>
-                                                                                                                                                                            `;
-                    document.getElementById('contentState').style.display = 'block';
-                }
+        // Fetch ALL requisition forms first (for calendar)
+        const allFormsResponse = await fetch(`/api/admin/requisition-forms`, {
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Accept': 'application/json'
             }
+        });
+
+        if (!allFormsResponse.ok) throw new Error('Failed to fetch request details');
+        allRequests = await allFormsResponse.json();
+        
+        // Fetch SPECIFIC request details by ID to get full data including fees
+        const singleRequestResponse = await fetch(`/api/admin/requisition-forms/${requestId}`, {
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!singleRequestResponse.ok) throw new Error('Failed to fetch single request details');
+        const request = await singleRequestResponse.json();
+        
+        // If the request isn't in allRequests, add it or find it
+        let currentRequest = allRequests.find(req => req.request_id == requestId);
+        if (!currentRequest) {
+            currentRequest = request;
+        }
+
+        // Update approval counts for the finalize modal
+        updateApprovalCounts(
+            request.approval_info?.approval_count || 0,
+            request.approval_info?.rejection_count || 0
+        );
+
+        // Update request ID in title
+        document.getElementById('requestIdTitle').textContent = 'RID #' + String(requestId).padStart(4, '0');
+
+        // Update status badge
+        const statusBadge = document.getElementById('statusBadge');
+        statusBadge.textContent = request.form_details.status.name;
+        statusBadge.style.backgroundColor = request.form_details.status.color;
+
+        // Contact information
+        document.getElementById('formDetails').innerHTML = `
+            <div class="d-flex justify-content-between py-1 border-bottom">
+                <span class="text-muted">Requester:</span>
+                <span class="fw-medium">${request.user_details.first_name} ${request.user_details.last_name}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1 border-bottom">
+                <span class="text-muted">School ID:</span>
+                <span class="fw-medium">${request.user_details.school_id || 'N/A'}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1 border-bottom">
+                <span class="text-muted">Email:</span>
+                <span class="fw-medium" style="word-break: break-word;">${request.user_details.email}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1 border-bottom">
+                <span class="text-muted">Organization:</span>
+                <span class="fw-medium">${request.user_details.organization_name || 'N/A'}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1 border-bottom">
+                <span class="text-muted">User Type:</span>
+                <span class="fw-medium">${request.user_details.user_type}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1">
+                <span class="text-muted">Contact #:</span>
+                <span class="fw-medium">${request.user_details.contact_number || 'N/A'}</span>
+            </div>
+        `;
+
+        // Event details
+        document.getElementById('eventDetails').innerHTML = `
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <div class="mb-3">
+                        <div class="fw-bold text-primary">Endorser</div>
+                        <div>${request.documents.endorser || 'N/A'}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold text-primary">Rental Purpose</div>
+                        <div>${request.form_details.purpose}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold text-primary">Number of Tables</div>
+                        <div>${request.form_details.num_tables || 0}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold text-primary">Start Schedule</div>
+                        <div>${formatStartDateTime(request.schedule)}</div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="mb-3">
+                        <div class="fw-bold text-primary">Date Endorsed</div>
+                        <div>${formatDateEndorsed(request.documents.date_endorsed) || 'N/A'}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold text-primary">Participants</div>
+                        <div>${request.form_details.num_participants}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold text-primary">Number of Chairs</div>
+                        <div>${request.form_details.num_chairs || 0}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold text-primary">End Schedule</div>
+                        <div>${formatEndDateTime(request.schedule)}</div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="fw-bold text-primary">Additional Requests</div>
+                    <div>${request.form_details.additional_requests || 'No additional requests.'}</div>
+                </div>
+            </div>
+        `;
+
+        // Update requested items display
+        document.getElementById('requestedItems').innerHTML = `
+            <div class="requested-items-list">
+                ${request.requested_items.facilities.length > 0 ? `
+                    <div class="mb-3">
+                        <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Facilities:</h6>
+                        ${request.requested_items.facilities.map(f => `
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                <span class="item-name">${f.name}</span>
+                                <span class="item-price fw-bold">${formatMoney(f.fee)}${f.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
+                ${request.requested_items.equipment.length > 0 ? `
+                    <div>
+                        <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Equipment:</h6>
+                        ${request.requested_items.equipment.map(e => `
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                <span class="item-name">${e.name} × ${e.quantity || 1}</span>
+                                <span class="item-price fw-bold">${formatMoney(e.fee)}${e.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        // Update status cards
+        document.getElementById('approvalsCount').textContent = request.approval_info.approval_count || 0;
+        document.getElementById('rejectionsCount').textContent = request.approval_info.rejection_count || 0;
+        
+        // Update document icons
+        updateDocumentIcons(request.documents);
+        
+        // Load additional data
+        await Promise.all([
+            loadMixedActivity(),
+            loadApprovalHistory()
+        ]);
+
+        // CRITICAL: Update fee displays with data from API
+        if (request.fees && request.fees.approved_fee !== undefined) {
+            // Update total fee display
+            const feeTotalElement = document.getElementById('feeBreakdownTotal');
+            if (feeTotalElement) {
+                feeTotalElement.textContent = formatMoney(request.fees.approved_fee);
+            }
+            
+            // Update base fees (items)
+            if (request.requested_items && request.schedule) {
+                updateBaseFees(request.requested_items, request.schedule);
+            }
+            
+            // Update additional fees
+            if (request.fees.requisition_fees) {
+                updateAdditionalFees(request.fees.requisition_fees);
+            }
+        } else {
+            // Fallback: Calculate locally if needed
+            console.warn('No fee data from API, using fallback calculation');
+            const fallbackTotal = document.getElementById('feeBreakdownTotal');
+            if (fallbackTotal) {
+                fallbackTotal.textContent = formatMoney(0);
+            }
+        }
+
+        // Update dropdown text
+        updateStatusDropdownText();
+
+        // Check admin role and update UI
+        await checkAdminRoleAndUpdateUI();
+
+        // Initialize calendar after data is loaded
+        initializeCalendar();
+
+        // ONLY NOW show content after everything is properly loaded
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('contentState').style.display = 'block';
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to load request details', 'error');
+
+        // Show error state
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('contentState').innerHTML = `
+            <div class="alert alert-danger">
+                Failed to load request details. Please try refreshing the page.
+                <br><small>Error: ${error.message}</small>
+            </div>
+        `;
+        document.getElementById('contentState').style.display = 'block';
+    }
+}
 
             // Add this function to calculate rental duration
             function calculateRentalDuration(startDate, startTime, endDate, endTime) {
@@ -4738,116 +4816,112 @@
                 };
             }
 
-            // Function to update base fees display
-            function updateBaseFees(requestedItems, schedule) {
-                const facilitiesContainer = document.getElementById('facilitiesFees');
-                const equipmentContainer = document.getElementById('equipmentFees');
+// Function to update base fees display
+function updateBaseFees(requestedItems, schedule) {
+    const facilitiesContainer = document.getElementById('facilitiesFees');
+    const equipmentContainer = document.getElementById('equipmentFees');
 
-                // Clear existing content
-                facilitiesContainer.innerHTML = '';
-                equipmentContainer.innerHTML = '';
+    if (!facilitiesContainer || !equipmentContainer) return;
 
-                // Calculate rental duration for hourly rate calculations
-                const startDateTime = new Date(`${schedule.start_date}T${schedule.start_time}`);
-                const endDateTime = new Date(`${schedule.end_date}T${schedule.end_time}`);
-                const durationHours = Math.max(0, (endDateTime - startDateTime) / (1000 * 60 * 60));
+    // Clear existing content
+    facilitiesContainer.innerHTML = '';
+    equipmentContainer.innerHTML = '';
 
-                let totalBaseFees = 0; // Track total
+    // Calculate rental duration for hourly rate calculations
+    const startDateTime = new Date(`${schedule.start_date}T${schedule.start_time}`);
+    const endDateTime = new Date(`${schedule.end_date}T${schedule.end_time}`);
+    const durationHours = Math.max(0, (endDateTime - startDateTime) / (1000 * 60 * 60));
 
-                // Add facilities with proper rate type logic and waiver checkboxes
-                if (requestedItems.facilities && requestedItems.facilities.length > 0) {
-                    requestedItems.facilities.forEach(facility => {
-                        const facilityElement = document.createElement('div');
-                        facilityElement.className = `fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded ${facility.is_waived ? 'waived' : ''}`;
+    // Add facilities with proper rate type logic and waiver checkboxes
+    if (requestedItems.facilities && requestedItems.facilities.length > 0) {
+        requestedItems.facilities.forEach(facility => {
+            const facilityElement = document.createElement('div');
+            facilityElement.className = `fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded ${facility.is_waived ? 'waived' : ''}`;
 
-                        let feeAmount = parseFloat(facility.fee);
-                        let itemTotal = 0;
-                        let rateDescription = '';
+            let feeAmount = parseFloat(facility.fee);
+            let itemTotal = 0;
+            let rateDescription = '';
 
-                        if (facility.rate_type === 'Per Hour' && durationHours > 0) {
-                            itemTotal = feeAmount * durationHours;
-                            rateDescription = `${formatMoney(feeAmount)}/hr × ${durationHours.toFixed(1)} hrs`;
-                            if (!facility.is_waived) totalBaseFees += itemTotal;
-                        } else {
-                            itemTotal = feeAmount;
-                            rateDescription = `${formatMoney(feeAmount)}/event`;
-                            if (!facility.is_waived) totalBaseFees += itemTotal;
-                        }
-
-                        facilityElement.innerHTML = `
-                                                                        <div class="d-flex align-items-center">
-                                                                            <div class="form-check me-2">
-                                                                                <input class="form-check-input waiver-checkbox" type="checkbox" 
-                                                                                    data-type="facility" 
-                                                                                    data-id="${facility.requested_facility_id}"
-                                                                                    ${facility.is_waived ? 'checked' : ''}>
-                                                                            </div>
-                                                                            <span class="item-name">${facility.name}</span>
-                                                                        </div>
-                                                                        <div class="text-end">
-                                                                            <small>${rateDescription}</small>
-                                                                            <div><strong>${formatMoney(itemTotal)}</strong></div>
-                                                                        </div>
-                                                                    `;
-                        facilitiesContainer.appendChild(facilityElement);
-                    });
-                }
-
-                // Add equipment with proper rate type logic and waiver checkboxes
-                if (requestedItems.equipment && requestedItems.equipment.length > 0) {
-                    requestedItems.equipment.forEach(equipment => {
-                        const equipmentElement = document.createElement('div');
-                        equipmentElement.className = `fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded ${equipment.is_waived ? 'waived' : ''}`;
-
-                        let unitFee = parseFloat(equipment.fee);
-                        const quantity = equipment.quantity || 1;
-                        let itemTotal = 0;
-                        let rateDescription = '';
-
-                        if (equipment.rate_type === 'Per Hour' && durationHours > 0) {
-                            itemTotal = (unitFee * durationHours) * quantity;
-                            rateDescription = `${formatMoney(unitFee)}/hr × ${durationHours.toFixed(1)} hrs × ${quantity}`;
-                            if (!equipment.is_waived) totalBaseFees += itemTotal;
-                        } else {
-                            itemTotal = unitFee * quantity;
-                            rateDescription = `${formatMoney(unitFee)}/event × ${quantity}`;
-                            if (!equipment.is_waived) totalBaseFees += itemTotal;
-                        }
-
-                        equipmentElement.innerHTML = `
-                                                                        <div class="d-flex align-items-center">
-                                                                            <div class="form-check me-2">
-                                                                                <input class="form-check-input waiver-checkbox" type="checkbox" 
-                                                                                    data-type="equipment" 
-                                                                                    data-id="${equipment.requested_equipment_id}"
-                                                                                    ${equipment.is_waived ? 'checked' : ''}>
-                                                                            </div>
-                                                                            <span class="item-name">
-                                                                                ${equipment.name} ${quantity > 1 ? `(×${quantity})` : ''}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="text-end">
-                                                                            <small>${rateDescription}</small>
-                                                                            <div><strong>${formatMoney(itemTotal)}</strong></div>
-                                                                        </div>
-                                                                    `;
-                        equipmentContainer.appendChild(equipmentElement);
-                    });
-                }
-
-                // Add event listeners to waiver checkboxes
-                document.querySelectorAll('#baseFeesContainer .waiver-checkbox').forEach(checkbox => {
-                    checkbox.addEventListener('change', function () {
-                        handleWaiverChange(this);
-                    });
-                });
-
-                // IMPORTANT: Update the footer total with the calculated value
-                document.getElementById('feeBreakdownTotal').textContent = formatMoney(totalBaseFees);
-
-                // Debug logging
-                console.log('Base Fees Total:', totalBaseFees);
+            if (facility.rate_type === 'Per Hour' && durationHours > 0) {
+                itemTotal = feeAmount * durationHours;
+                rateDescription = `${formatMoney(feeAmount)}/hr × ${durationHours.toFixed(1)} hrs`;
+            } else {
+                itemTotal = feeAmount;
+                rateDescription = `${formatMoney(feeAmount)}/event`;
             }
+
+            facilityElement.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="form-check me-2">
+                        <input class="form-check-input waiver-checkbox" type="checkbox" 
+                            data-type="facility" 
+                            data-id="${facility.requested_facility_id}"
+                            ${facility.is_waived ? 'checked' : ''}>
+                    </div>
+                    <span class="item-name">${escapeHtml(facility.name)}</span>
+                </div>
+                <div class="text-end">
+                    <small>${rateDescription}</small>
+                    <div><strong>${formatMoney(itemTotal)}</strong></div>
+                </div>
+            `;
+            facilitiesContainer.appendChild(facilityElement);
+        });
+    } else {
+        facilitiesContainer.innerHTML = '<div class="text-muted small">No facilities requested</div>';
+    }
+
+    // Add equipment with proper rate type logic and waiver checkboxes
+    if (requestedItems.equipment && requestedItems.equipment.length > 0) {
+        requestedItems.equipment.forEach(equipment => {
+            const equipmentElement = document.createElement('div');
+            equipmentElement.className = `fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded ${equipment.is_waived ? 'waived' : ''}`;
+
+            let unitFee = parseFloat(equipment.fee);
+            const quantity = equipment.quantity || 1;
+            let itemTotal = 0;
+            let rateDescription = '';
+
+            if (equipment.rate_type === 'Per Hour' && durationHours > 0) {
+                itemTotal = (unitFee * durationHours) * quantity;
+                rateDescription = `${formatMoney(unitFee)}/hr × ${durationHours.toFixed(1)} hrs × ${quantity}`;
+            } else {
+                itemTotal = unitFee * quantity;
+                rateDescription = `${formatMoney(unitFee)}/event × ${quantity}`;
+            }
+
+            equipmentElement.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="form-check me-2">
+                        <input class="form-check-input waiver-checkbox" type="checkbox" 
+                            data-type="equipment" 
+                            data-id="${equipment.requested_equipment_id}"
+                            ${equipment.is_waived ? 'checked' : ''}>
+                    </div>
+                    <span class="item-name">
+                        ${escapeHtml(equipment.name)} ${quantity > 1 ? `(×${quantity})` : ''}
+                    </span>
+                </div>
+                <div class="text-end">
+                    <small>${rateDescription}</small>
+                    <div><strong>${formatMoney(itemTotal)}</strong></div>
+                </div>
+            `;
+            equipmentContainer.appendChild(equipmentElement);
+        });
+    } else {
+        equipmentContainer.innerHTML = '<div class="text-muted small">No equipment requested</div>';
+    }
+
+    // Add event listeners to waiver checkboxes
+    document.querySelectorAll('#baseFeesContainer .waiver-checkbox').forEach(checkbox => {
+        const newCheckbox = checkbox.cloneNode(true);
+        checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+        newCheckbox.addEventListener('change', function() {
+            handleWaiverChange(this);
+        });
+    });
+}
             function formatDateEndorsed(dateString) {
                 if (!dateString || dateString === 'N/A') return 'N/A';
 
