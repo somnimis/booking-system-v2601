@@ -1834,9 +1834,9 @@
                             const message = document.createElement('div');
                             message.className = 'action-taken-message text-center p-3 dynamic-action-btn';
                             message.innerHTML = `
-                                                                                                <i class="bi bi-info-circle-fill text-secondary fs-4 d-block mb-2"></i>
-                                                                                                <p class="mb-0 small text-muted">No actions available for this status.</p>
-                                                                                            `;
+                                                                                                    <i class="bi bi-info-circle-fill text-secondary fs-4 d-block mb-2"></i>
+                                                                                                    <p class="mb-0 small text-muted">No actions available for this status.</p>
+                                                                                                `;
                             actionsSection.appendChild(message);
                             return;
                         }
@@ -1925,9 +1925,9 @@
                             const message = document.createElement('div');
                             message.className = 'action-taken-message text-center p-3 dynamic-action-btn';
                             message.innerHTML = `
-                                                                                                <i class="bi bi-check-circle-fill text-success fs-4 d-block mb-2"></i>
-                                                                                                <p class="mb-0 small text-muted">You have already taken action for this request.</p>
-                                                                                            `;
+                                                                                                    <i class="bi bi-check-circle-fill text-success fs-4 d-block mb-2"></i>
+                                                                                                    <p class="mb-0 small text-muted">You have already taken action for this request.</p>
+                                                                                                `;
                             actionsSection.appendChild(message);
                         } else {
                             // Show Approve/Reject buttons only for pending statuses (1 or 2)
@@ -1939,9 +1939,9 @@
                                 const message = document.createElement('div');
                                 message.className = 'action-taken-message text-center p-3 dynamic-action-btn';
                                 message.innerHTML = `
-                                                                                                    <i class="bi bi-info-circle-fill text-secondary fs-4 d-block mb-2"></i>
-                                                                                                    <p class="mb-0 small text-muted">No actions available for this request status.</p>
-                                                                                                `;
+                                                                                                        <i class="bi bi-info-circle-fill text-secondary fs-4 d-block mb-2"></i>
+                                                                                                        <p class="mb-0 small text-muted">No actions available for this request status.</p>
+                                                                                                    `;
                                 actionsSection.appendChild(message);
                             }
                         }
@@ -1952,9 +1952,9 @@
                         const message = document.createElement('div');
                         message.className = 'action-taken-message text-center p-3 dynamic-action-btn';
                         message.innerHTML = `
-                                                                                            <i class="bi bi-shield-exclamation fs-4 d-block mb-2 text-muted"></i>
-                                                                                            <p class="mb-0 small text-muted">You don't have permission to take actions.</p>
-                                                                                        `;
+                                                                                                <i class="bi bi-shield-exclamation fs-4 d-block mb-2 text-muted"></i>
+                                                                                                <p class="mb-0 small text-muted">You don't have permission to take actions.</p>
+                                                                                            `;
                         actionsSection.appendChild(message);
                     }
 
@@ -2011,30 +2011,30 @@
                 }
 
                 return history.map(item => `
-                                                                                                                                                                                <div class="d-flex align-items-center mb-3 p-2 border rounded">
-                                                                                                                                                                                    <div class="me-3 flex-shrink-0">
-                                                                                                                                                                                        ${item.admin_photo ?
+                                                                                                                                                                                    <div class="d-flex align-items-center mb-3 p-2 border rounded">
+                                                                                                                                                                                        <div class="me-3 flex-shrink-0">
+                                                                                                                                                                                            ${item.admin_photo ?
                         `<img src="${item.admin_photo}" class="rounded-circle" width="45" height="45" alt="${item.admin_name}" style="object-fit: cover;">` :
                         `<div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white" style="width: 45px; height: 45px;">
-                                                                                                                                                                                                ${item.admin_name.split(' ').map(n => n.charAt(0)).join('')}
-                                                                                                                                                                                            </div>`
+                                                                                                                                                                                                    ${item.admin_name.split(' ').map(n => n.charAt(0)).join('')}
+                                                                                                                                                                                                </div>`
                     }
-                                                                                                                                                                                    </div>
-                                                                                                                                                                                    <div class="flex-grow-1">
-                                                                                                                                                                                        <div class="d-flex justify-content-between align-items-start">
-                                                                                                                                                                                            <div>
-                                                                                                                                                                                                <strong class="d-block">${item.admin_name}</strong>
-                                                                                                                                                                                                <small class="text-muted">
-                                                                                                                                                                                                    <i class="fa ${item.action_icon} ${item.action_class} me-1"></i>
-                                                                                                                                                                                                    ${item.action} this request
-                                                                                                                                                                                                </small>
-                                                                                                                                                                                                ${item.remarks ? `<div class="mt-1 small text-muted">"${item.remarks}"</div>` : ''}
+                                                                                                                                                                                        </div>
+                                                                                                                                                                                        <div class="flex-grow-1">
+                                                                                                                                                                                            <div class="d-flex justify-content-between align-items-start">
+                                                                                                                                                                                                <div>
+                                                                                                                                                                                                    <strong class="d-block">${item.admin_name}</strong>
+                                                                                                                                                                                                    <small class="text-muted">
+                                                                                                                                                                                                        <i class="fa ${item.action_icon} ${item.action_class} me-1"></i>
+                                                                                                                                                                                                        ${item.action} this request
+                                                                                                                                                                                                    </small>
+                                                                                                                                                                                                    ${item.remarks ? `<div class="mt-1 small text-muted">"${item.remarks}"</div>` : ''}
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                <small class="text-muted text-end">${item.formatted_date}</small>
                                                                                                                                                                                             </div>
-                                                                                                                                                                                            <small class="text-muted text-end">${item.formatted_date}</small>
                                                                                                                                                                                         </div>
                                                                                                                                                                                     </div>
-                                                                                                                                                                                </div>
-                                                                                                                                                                            `).join('');
+                                                                                                                                                                                `).join('');
             }
 
 
@@ -2334,12 +2334,12 @@
                     }
 
                     container.innerHTML = `
-                                                                                                        <div class="comment-loading">
-                                                                                                            <div class="spinner-border text-primary" role="status">
-                                                                                                                <span class="visually-hidden">Loading activity...</span>
+                                                                                                            <div class="comment-loading">
+                                                                                                                <div class="spinner-border text-primary" role="status">
+                                                                                                                    <span class="visually-hidden">Loading activity...</span>
+                                                                                                                </div>
                                                                                                             </div>
-                                                                                                        </div>
-                                                                                                    `;
+                                                                                                        `;
 
                     const commentsResponse = await fetch(`/api/admin/requisition/${requestId}/comments`, {
                         headers: {
@@ -2370,11 +2370,11 @@
                     const container = document.getElementById('formRemarks');
                     if (container) {
                         container.innerHTML = `
-                                                                                                            <div class="empty-comments text-danger">
-                                                                                                                <i class="bi bi-exclamation-triangle"></i>
-                                                                                                                <p>Failed to load activity.</p>
-                                                                                                            </div>
-                                                                                                        `;
+                                                                                                                <div class="empty-comments text-danger">
+                                                                                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                                                                                    <p>Failed to load activity.</p>
+                                                                                                                </div>
+                                                                                                            `;
                     }
                 }
             }
@@ -2397,11 +2397,11 @@
 
                 if (comments.length === 0 && fees.length === 0) {
                     container.innerHTML = `
-                                                                                                        <div class="empty-comments">
-                                                                                                            <i class="bi bi-chat"></i>
-                                                                                                            <p>No action has been taken in this form yet.</p>
-                                                                                                        </div>
-                                                                                                    `;
+                                                                                                            <div class="empty-comments">
+                                                                                                                <i class="bi bi-chat"></i>
+                                                                                                                <p>No action has been taken in this form yet.</p>
+                                                                                                            </div>
+                                                                                                        `;
                     return;
                 }
 
@@ -2442,31 +2442,31 @@
             // Function to generate comment HTML
             function generateCommentHTML(comment) {
                 return `
-                                                                                                                                                                                                <div class="comment mb-3">
-                                                                                                                                                                                                    <div class="d-flex align-items-start">
-                                                                                                                                                                                                        <!-- Admin Profile Picture -->
-                                                                                                                                                                                                        <div class="me-2 flex-shrink-0">
-                                                                                                                                                                                                            ${comment.admin.photo_url ?
+                                                                                                                                                                                                    <div class="comment mb-3">
+                                                                                                                                                                                                        <div class="d-flex align-items-start">
+                                                                                                                                                                                                            <!-- Admin Profile Picture -->
+                                                                                                                                                                                                            <div class="me-2 flex-shrink-0">
+                                                                                                                                                                                                                ${comment.admin.photo_url ?
                         `<img src="${comment.admin.photo_url}" class="rounded-circle" width="40" height="40" alt="${comment.admin.first_name}'s profile picture" style="object-fit: cover;">` :
                         `<div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white" style="width: 40px; height: 40px; font-size: 1rem;">
-                                                                                                                                                                                                                    ${comment.admin.first_name.charAt(0)}${comment.admin.last_name.charAt(0)}
-                                                                                                                                                                                                                </div>`
+                                                                                                                                                                                                                        ${comment.admin.first_name.charAt(0)}${comment.admin.last_name.charAt(0)}
+                                                                                                                                                                                                                    </div>`
                     }
-                                                                                                                                                                                                        </div>
-
-                                                                                                                                                                                                        <!-- Message Bubble -->
-                                                                                                                                                                                                        <div class="flex-grow-1">
-                                                                                                                                                                                                            <div class="d-flex align-items-center mb-1">
-                                                                                                                                                                                                                <strong class="me-2" style="font-size: 0.85rem;">${comment.admin.first_name} ${comment.admin.last_name}</strong>
-                                                                                                                                                                                                                <small class="text-muted">${formatTimeAgo(comment.created_at)}</small>
                                                                                                                                                                                                             </div>
-                                                                                                                                                                                                            <div class="message-bubble bg-primary text-white p-3 rounded-3" style="max-width: 80%; border-bottom-left-radius: 4px !important;">
-                                                                                                                                                                                                                <p class="mb-0" style="white-space: pre-wrap; line-height: 1.4;">${escapeHtml(comment.comment)}</p>
+
+                                                                                                                                                                                                            <!-- Message Bubble -->
+                                                                                                                                                                                                            <div class="flex-grow-1">
+                                                                                                                                                                                                                <div class="d-flex align-items-center mb-1">
+                                                                                                                                                                                                                    <strong class="me-2" style="font-size: 0.85rem;">${comment.admin.first_name} ${comment.admin.last_name}</strong>
+                                                                                                                                                                                                                    <small class="text-muted">${formatTimeAgo(comment.created_at)}</small>
+                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                <div class="message-bubble bg-primary text-white p-3 rounded-3" style="max-width: 80%; border-bottom-left-radius: 4px !important;">
+                                                                                                                                                                                                                    <p class="mb-0" style="white-space: pre-wrap; line-height: 1.4;">${escapeHtml(comment.comment)}</p>
+                                                                                                                                                                                                                </div>
                                                                                                                                                                                                             </div>
                                                                                                                                                                                                         </div>
                                                                                                                                                                                                     </div>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                                `;
+                                                                                                                                                                                                    `;
             }
 
 
@@ -2505,31 +2505,31 @@
                 }
 
                 return `
-                                                                                                                                        <div class="comment mb-3">
-                                                                                                                                            <div class="d-flex align-items-start">
-                                                                                                                                                <!-- Icon Circle -->
-                                                                                                                                                <div class="me-2 flex-shrink-0">
-                                                                                                                                                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                                                                                                                                                         style="width: 40px; height: 40px; font-size: 1rem; background-color: #d4edda; color: #28a745;">
-                                                                                                                                                        <i class="fa fa-money-bill"></i>
+                                                                                                                                            <div class="comment mb-3">
+                                                                                                                                                <div class="d-flex align-items-start">
+                                                                                                                                                    <!-- Icon Circle -->
+                                                                                                                                                    <div class="me-2 flex-shrink-0">
+                                                                                                                                                        <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                                                                                                                                             style="width: 40px; height: 40px; font-size: 1rem; background-color: #d4edda; color: #28a745;">
+                                                                                                                                                            <i class="fa fa-money-bill"></i>
+                                                                                                                                                        </div>
                                                                                                                                                     </div>
-                                                                                                                                                </div>
 
-                                                                                                                                                <!-- Action Bubble -->
-                                                                                                                                                <div class="flex-grow-1">
-                                                                                                                                                    <div class="message-bubble bg-info text-white p-3 rounded-3" 
-                                                                                                                                                         style="max-width: 80%; border-bottom-left-radius: 4px !important;">
-                                                                                                                                                        <p class="mb-1" style="white-space: normal; line-height: 1.4;">
-                                                                                                                                                            ${message}
-                                                                                                                                                        </p>
-                                                                                                                                                        <small class="text-dark">
-                                                                                                                                                            ${formatTimeAgo(fee.created_at)}
-                                                                                                                                                        </small>
+                                                                                                                                                    <!-- Action Bubble -->
+                                                                                                                                                    <div class="flex-grow-1">
+                                                                                                                                                        <div class="message-bubble bg-info text-white p-3 rounded-3" 
+                                                                                                                                                             style="max-width: 80%; border-bottom-left-radius: 4px !important;">
+                                                                                                                                                            <p class="mb-1" style="white-space: normal; line-height: 1.4;">
+                                                                                                                                                                ${message}
+                                                                                                                                                            </p>
+                                                                                                                                                            <small class="text-dark">
+                                                                                                                                                                ${formatTimeAgo(fee.created_at)}
+                                                                                                                                                            </small>
+                                                                                                                                                        </div>
                                                                                                                                                     </div>
                                                                                                                                                 </div>
                                                                                                                                             </div>
-                                                                                                                                        </div>
-                                                                                                                                    `;
+                                                                                                                                        `;
             }
 
             // Helper function to format time ago (e.g., "2 minutes ago")
@@ -2586,18 +2586,18 @@
                 toast.style.borderRadius = '0.3rem';
 
                 toast.innerHTML = `
-                                                                                                                                                                                                                                                                                                                <div class="d-flex align-items-center px-3 py-1"> 
-                                                                                                                                                                                                                                                                                                                    <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                                                                                                                                                                                                                                                                                                                    <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                                                                                                                                                                                                                                                                                                                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                                                                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                                                                <div class="loading-bar" style="
-                                                                                                                                                                                                                                                                                                                    height: 3px;
-                                                                                                                                                                                                                                                                                                                    background: rgba(255,255,255,0.7);
-                                                                                                                                                                                                                                                                                                                    width: 100%;
-                                                                                                                                                                                                                                                                                                                    transition: width ${duration}ms linear;
-                                                                                                                                                                                                                                                                                                                "></div>
-                                                                                                                                                                                                                                                                                                            `;
+                                                                                                                                                                                                                                                                                                                    <div class="d-flex align-items-center px-3 py-1"> 
+                                                                                                                                                                                                                                                                                                                        <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                                                                                                                                                                                                                                                                                                                        <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
+                                                                                                                                                                                                                                                                                                                        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                                    <div class="loading-bar" style="
+                                                                                                                                                                                                                                                                                                                        height: 3px;
+                                                                                                                                                                                                                                                                                                                        background: rgba(255,255,255,0.7);
+                                                                                                                                                                                                                                                                                                                        width: 100%;
+                                                                                                                                                                                                                                                                                                                        transition: width ${duration}ms linear;
+                                                                                                                                                                                                                                                                                                                    "></div>
+                                                                                                                                                                                                                                                                                                                `;
 
                 document.body.appendChild(toast);
 
@@ -2636,79 +2636,79 @@
             // Load comments when page loads
             loadMixedActivity();
 
-// Function to refresh ALL fee displays including the total
-async function refreshAllFeeDisplays() {
-    try {
-        // Fetch updated request data from the correct endpoint
-        const response = await fetch(`/api/admin/requisition-forms/${requestId}`, {
-            headers: {
-                'Authorization': `Bearer ${adminToken}`,
-                'Accept': 'application/json'
+            // Function to refresh ALL fee displays including the total
+            async function refreshAllFeeDisplays() {
+                try {
+                    // Fetch updated request data from the correct endpoint
+                    const response = await fetch(`/api/admin/requisition-forms/${requestId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`,
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch updated request data');
+                    }
+
+                    const requestData = await response.json();
+
+                    // Update the total approved fee display - IMPORTANT: Use approved_fee from API
+                    const approvedFee = requestData.fees?.approved_fee || 0;
+                    const totalFee = formatMoney(approvedFee);
+                    const feeTotalElement = document.getElementById('feeBreakdownTotal');
+                    if (feeTotalElement) {
+                        feeTotalElement.textContent = totalFee;
+                    }
+
+                    // Update additional fees display if there are requisition fees
+                    if (requestData.fees?.requisition_fees) {
+                        updateAdditionalFees(requestData.fees.requisition_fees);
+                    }
+
+                    // Update base fees display (this shows the items but doesn't affect total)
+                    if (requestData.requested_items && requestData.schedule) {
+                        updateBaseFees(requestData.requested_items, requestData.schedule);
+                    }
+
+                    // Update the main page content with latest data
+                    updateMainPageContent(requestData);
+
+                    // Also refresh the timeline to show new fee activities
+                    if (typeof loadMixedActivity === 'function') {
+                        await loadMixedActivity();
+                    }
+
+                    console.log('Fee displays refreshed successfully', {
+                        approved_fee: requestData.fees?.approved_fee,
+                        requisition_fees_count: requestData.fees?.requisition_fees?.length || 0
+                    });
+
+                } catch (error) {
+                    console.error('Error refreshing fee displays:', error);
+                    showToast('Failed to refresh fee data: ' + error.message, 'error');
+                }
             }
-        });
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch updated request data');
-        }
+            // Function to update main page content with fresh data
+            function updateMainPageContent(requestData) {
+                // Update approval counts
+                if (requestData.approval_info) {
+                    const approvalsCountElem = document.getElementById('approvalsCount');
+                    const rejectionsCountElem = document.getElementById('rejectionsCount');
+                    if (approvalsCountElem) approvalsCountElem.textContent = requestData.approval_info.approval_count || 0;
+                    if (rejectionsCountElem) rejectionsCountElem.textContent = requestData.approval_info.rejection_count || 0;
+                }
 
-        const requestData = await response.json();
-        
-        // Update the total approved fee display - IMPORTANT: Use approved_fee from API
-        const approvedFee = requestData.fees?.approved_fee || 0;
-        const totalFee = formatMoney(approvedFee);
-        const feeTotalElement = document.getElementById('feeBreakdownTotal');
-        if (feeTotalElement) {
-            feeTotalElement.textContent = totalFee;
-        }
-        
-        // Update additional fees display if there are requisition fees
-        if (requestData.fees?.requisition_fees) {
-            updateAdditionalFees(requestData.fees.requisition_fees);
-        }
-        
-        // Update base fees display (this shows the items but doesn't affect total)
-        if (requestData.requested_items && requestData.schedule) {
-            updateBaseFees(requestData.requested_items, requestData.schedule);
-        }
-        
-        // Update the main page content with latest data
-        updateMainPageContent(requestData);
-        
-        // Also refresh the timeline to show new fee activities
-        if (typeof loadMixedActivity === 'function') {
-            await loadMixedActivity();
-        }
-        
-        console.log('Fee displays refreshed successfully', {
-            approved_fee: requestData.fees?.approved_fee,
-            requisition_fees_count: requestData.fees?.requisition_fees?.length || 0
-        });
-        
-    } catch (error) {
-        console.error('Error refreshing fee displays:', error);
-        showToast('Failed to refresh fee data: ' + error.message, 'error');
-    }
-}
-
-// Function to update main page content with fresh data
-function updateMainPageContent(requestData) {
-    // Update approval counts
-    if (requestData.approval_info) {
-        const approvalsCountElem = document.getElementById('approvalsCount');
-        const rejectionsCountElem = document.getElementById('rejectionsCount');
-        if (approvalsCountElem) approvalsCountElem.textContent = requestData.approval_info.approval_count || 0;
-        if (rejectionsCountElem) rejectionsCountElem.textContent = requestData.approval_info.rejection_count || 0;
-    }
-    
-    // Update status badge if changed
-    if (requestData.form_details?.status) {
-        const statusBadge = document.getElementById('statusBadge');
-        if (statusBadge && statusBadge.textContent !== requestData.form_details.status.name) {
-            statusBadge.textContent = requestData.form_details.status.name;
-            statusBadge.style.backgroundColor = requestData.form_details.status.color;
-        }
-    }
-}
+                // Update status badge if changed
+                if (requestData.form_details?.status) {
+                    const statusBadge = document.getElementById('statusBadge');
+                    if (statusBadge && statusBadge.textContent !== requestData.form_details.status.name) {
+                        statusBadge.textContent = requestData.form_details.status.name;
+                        statusBadge.style.backgroundColor = requestData.form_details.status.color;
+                    }
+                }
+            }
 
 
             // Function to show status update modal
@@ -2726,61 +2726,61 @@ function updateMainPageContent(requestData) {
                 switch (status) {
                     case 'Scheduled':
                         modalContent.innerHTML = `
-                                                                                                                                                                                                <div class="text-center">
-                                                                                                                                                                                                    <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
-                                                                                                                                                                                                    <p>Are you sure? This action cannot be undone.</p>
-                                                                                                                                                                                                    <p class="text-muted small">
-                                                                                                                                                                                                        This will set the form's status to <strong>Scheduled</strong>.
-                                                                                                                                                                                                        The request can still be cancelled if an emergency happens. 
-                                                                                                                                                                                                        If such a situation occurs, make sure to contact the requester about refund details and settle it in the business office on campus before closing the form.
-                                                                                                                                                                                                    </p>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                            `;
+                                                                                                                                                                                                    <div class="text-center">
+                                                                                                                                                                                                        <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                                                                                                                                                                                                        <p>Are you sure? This action cannot be undone.</p>
+                                                                                                                                                                                                        <p class="text-muted small">
+                                                                                                                                                                                                            This will set the form's status to <strong>Scheduled</strong>.
+                                                                                                                                                                                                            The request can still be cancelled if an emergency happens. 
+                                                                                                                                                                                                            If such a situation occurs, make sure to contact the requester about refund details and settle it in the business office on campus before closing the form.
+                                                                                                                                                                                                        </p>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                `;
                         break;
                     case 'Ongoing':
                         modalContent.innerHTML = `
-                                                                                                                                                                                                <div class="text-center">
-                                                                                                                                                                                                    <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
-                                                                                                                                                                                                    <p>Are you sure? This action cannot be undone.</p>
-                                                                                                                                                                                                    <p class="text-muted small">
-                                                                                                                                                                                                        Sets the form status to <strong>Ongoing</strong>. Use this to manually set it if not already done. 
-                                                                                                                                                                                                    </p>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                            `;
+                                                                                                                                                                                                    <div class="text-center">
+                                                                                                                                                                                                        <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                                                                                                                                                                                                        <p>Are you sure? This action cannot be undone.</p>
+                                                                                                                                                                                                        <p class="text-muted small">
+                                                                                                                                                                                                            Sets the form status to <strong>Ongoing</strong>. Use this to manually set it if not already done. 
+                                                                                                                                                                                                        </p>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                `;
                         break;
                     case 'Late':
                         modalContent.innerHTML = `
-                                                                                                                                                                                                <div class="text-center">
-                                                                                                                                                                                                    <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
-                                                                                                                                                                                                    <p>Are you sure? This action cannot be undone.</p>
-                                                                                                                                                                                                    <p class="text-muted small">
-                                                                                                                                                                                                        This will set the form's status to <strong>Late</strong> and mark it as overdue.
-                                                                                                                                                                                                    </p>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                                <div class="mt-4">
-                                                                                                                                                                                                    <div class="mb-3">
-                                                                                                                                                                                                        <label for="latePenaltyAmount" class="form-label">Late Penalty Amount (Optional)</label>
-                                                                                                                                                                                                        <div class="input-group">
-                                                                                                                                                                                                            <span class="input-group-text">₱</span>
-                                                                                                                                                                                                            <input type="number" class="form-control" id="latePenaltyAmount" 
-                                                                                                                                                                                                                   placeholder="Enter penalty amount" step="0.01" min="0" value="0">
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                        <small class="text-muted">Enter the late penalty amount to be added to the fees (leave as 0 for no penalty).</small>
+                                                                                                                                                                                                    <div class="text-center">
+                                                                                                                                                                                                        <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                                                                                                                                                                                                        <p>Are you sure? This action cannot be undone.</p>
+                                                                                                                                                                                                        <p class="text-muted small">
+                                                                                                                                                                                                            This will set the form's status to <strong>Late</strong> and mark it as overdue.
+                                                                                                                                                                                                        </p>
                                                                                                                                                                                                     </div>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                            `;
+                                                                                                                                                                                                    <div class="mt-4">
+                                                                                                                                                                                                        <div class="mb-3">
+                                                                                                                                                                                                            <label for="latePenaltyAmount" class="form-label">Late Penalty Amount (Optional)</label>
+                                                                                                                                                                                                            <div class="input-group">
+                                                                                                                                                                                                                <span class="input-group-text">₱</span>
+                                                                                                                                                                                                                <input type="number" class="form-control" id="latePenaltyAmount" 
+                                                                                                                                                                                                                       placeholder="Enter penalty amount" step="0.01" min="0" value="0">
+                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                            <small class="text-muted">Enter the late penalty amount to be added to the fees (leave as 0 for no penalty).</small>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                `;
                         break;
                     case 'Cancel Form':
                         modalContent.innerHTML = `
-                                                                                                                                                                                                <div class="text-center">
-                                                                                                                                                                                                    <i class="fa fa-exclamation-circle fa-3x text-danger mb-3"></i>
-                                                                                                                                                                                                    <p>Are you sure? This action cannot be undone.</p>
-                                                                                                                                                                                                    <p class="text-muted small">
-                                                                                                                                                                                                        This will <strong class="text-danger">cancel</strong> the form and set its status to <strong>Cancelled</strong>.
-                                                                                                                                                                                                        Note: This action cannot be undone. The requester will be notified about the cancellation.
-                                                                                                                                                                                                    </p>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                            `;
+                                                                                                                                                                                                    <div class="text-center">
+                                                                                                                                                                                                        <i class="fa fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                                                                                                                                                                                                        <p>Are you sure? This action cannot be undone.</p>
+                                                                                                                                                                                                        <p class="text-muted small">
+                                                                                                                                                                                                            This will <strong class="text-danger">cancel</strong> the form and set its status to <strong>Cancelled</strong>.
+                                                                                                                                                                                                            Note: This action cannot be undone. The requester will be notified about the cancellation.
+                                                                                                                                                                                                        </p>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                `;
                         break;
                 }
 
@@ -2882,15 +2882,15 @@ function updateMainPageContent(requestData) {
                 const modalContent = document.getElementById('statusModalContent');
 
                 modalContent.innerHTML = `
-                                                                                                                                                                                        <div class="text-center">
-                                                                                                                                                                                            <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
-                                                                                                                                                                                            <p>Are you sure you want to unmark this form as late/damaged?</p>
-                                                                                                                                                                                            <p class="text-muted small">
-                                                                                                                                                                                                This will set the form's status back to <strong>Ongoing</strong>, remove the late flag, 
-                                                                                                                                                                                                and reset any penalty fees to zero.
-                                                                                                                                                                                            </p>
-                                                                                                                                                                                        </div>
-                                                                                                                                                                                    `;
+                                                                                                                                                                                            <div class="text-center">
+                                                                                                                                                                                                <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                                                                                                                                                                                                <p>Are you sure you want to unmark this form as late/damaged?</p>
+                                                                                                                                                                                                <p class="text-muted small">
+                                                                                                                                                                                                    This will set the form's status back to <strong>Ongoing</strong>, remove the late flag, 
+                                                                                                                                                                                                    and reset any penalty fees to zero.
+                                                                                                                                                                                                </p>
+                                                                                                                                                                                            </div>
+                                                                                                                                                                                        `;
 
                 selectedStatus = 'Ongoing'; // Set to Ongoing to unmark late
                 statusUpdateModal.show();
@@ -3088,176 +3088,176 @@ function updateMainPageContent(requestData) {
 
 
 
-// Handle individual waiver checkbox changes
-async function handleWaiverChange(checkbox) {
-    const type = checkbox.dataset.type;
-    const id = parseInt(checkbox.dataset.id);
-    const isWaived = checkbox.checked;
+            // Handle individual waiver checkbox changes
+            async function handleWaiverChange(checkbox) {
+                const type = checkbox.dataset.type;
+                const id = parseInt(checkbox.dataset.id);
+                const isWaived = checkbox.checked;
 
-    // Update UI immediately for better UX
-    const itemRow = checkbox.closest('.item-row');
-    if (itemRow) {
-        if (isWaived) {
-            itemRow.classList.add('waived');
-        } else {
-            itemRow.classList.remove('waived');
-        }
-    }
-
-    // Collect ALL waived items (both checked ones)
-    const waivedFacilities = [];
-    const waivedEquipment = [];
-
-    document.querySelectorAll('.waiver-checkbox').forEach(cb => {
-        const itemId = parseInt(cb.dataset.id);
-        const itemType = cb.dataset.type;
-
-        if (cb.checked) {
-            if (itemType === 'facility') {
-                waivedFacilities.push(itemId);
-            } else if (itemType === 'equipment') {
-                waivedEquipment.push(itemId);
-            }
-        }
-    });
-
-    try {
-        // Get admin ID from localStorage (stored during login)
-        const adminId = localStorage.getItem('adminId');
-        
-        const response = await fetch(`/api/admin/requisition/${requestId}/waive`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${adminToken}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                waived_facilities: waivedFacilities,
-                waived_equipment: waivedEquipment,
-                admin_id: adminId // Add admin_id from localStorage
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            let errorMessage = 'Failed to update waiver status';
-            if (errorData.details) {
-                if (typeof errorData.details === 'object') {
-                    errorMessage = Object.values(errorData.details).flat().join(', ');
-                } else {
-                    errorMessage = errorData.details;
+                // Update UI immediately for better UX
+                const itemRow = checkbox.closest('.item-row');
+                if (itemRow) {
+                    if (isWaived) {
+                        itemRow.classList.add('waived');
+                    } else {
+                        itemRow.classList.remove('waived');
+                    }
                 }
-            } else if (errorData.error) {
-                errorMessage = errorData.error;
+
+                // Collect ALL waived items (both checked ones)
+                const waivedFacilities = [];
+                const waivedEquipment = [];
+
+                document.querySelectorAll('.waiver-checkbox').forEach(cb => {
+                    const itemId = parseInt(cb.dataset.id);
+                    const itemType = cb.dataset.type;
+
+                    if (cb.checked) {
+                        if (itemType === 'facility') {
+                            waivedFacilities.push(itemId);
+                        } else if (itemType === 'equipment') {
+                            waivedEquipment.push(itemId);
+                        }
+                    }
+                });
+
+                try {
+                    // Get admin ID from localStorage (stored during login)
+                    const adminId = localStorage.getItem('adminId');
+
+                    const response = await fetch(`/api/admin/requisition/${requestId}/waive`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            waived_facilities: waivedFacilities,
+                            waived_equipment: waivedEquipment,
+                            admin_id: adminId // Add admin_id from localStorage
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        let errorMessage = 'Failed to update waiver status';
+                        if (errorData.details) {
+                            if (typeof errorData.details === 'object') {
+                                errorMessage = Object.values(errorData.details).flat().join(', ');
+                            } else {
+                                errorMessage = errorData.details;
+                            }
+                        } else if (errorData.error) {
+                            errorMessage = errorData.error;
+                        }
+                        throw new Error(errorMessage);
+                    }
+
+                    const result = await response.json();
+
+                    // Refresh ALL fee displays including the total
+                    await refreshAllFeeDisplays();
+
+                    // Show appropriate success message based on action
+                    if (type === 'facility') {
+                        const facilityName = itemRow ? itemRow.querySelector('.item-name').textContent : 'Facility';
+                        if (isWaived) {
+                            showToast(`${facilityName} waived successfully.`, 'success');
+                        } else {
+                            showToast(`${facilityName} waiver removed.`, 'success');
+                        }
+                    } else if (type === 'equipment') {
+                        const equipmentName = itemRow ? itemRow.querySelector('.item-name').textContent : 'Equipment';
+                        if (isWaived) {
+                            showToast(`${equipmentName} waived successfully.`, 'success');
+                        } else {
+                            showToast(`${equipmentName} waiver removed.`, 'success');
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Error updating waiver:', error);
+                    // Revert checkbox state on error
+                    checkbox.checked = !isWaived;
+                    if (itemRow) {
+                        itemRow.classList.toggle('waived');
+                    }
+                    showToast('Failed to update waiver: ' + error.message, 'error');
+                }
             }
-            throw new Error(errorMessage);
-        }
-
-        const result = await response.json();
-
-        // Refresh ALL fee displays including the total
-        await refreshAllFeeDisplays();
-
-        // Show appropriate success message based on action
-        if (type === 'facility') {
-            const facilityName = itemRow ? itemRow.querySelector('.item-name').textContent : 'Facility';
-            if (isWaived) {
-                showToast(`${facilityName} waived successfully.`, 'success');
-            } else {
-                showToast(`${facilityName} waiver removed.`, 'success');
-            }
-        } else if (type === 'equipment') {
-            const equipmentName = itemRow ? itemRow.querySelector('.item-name').textContent : 'Equipment';
-            if (isWaived) {
-                showToast(`${equipmentName} waived successfully.`, 'success');
-            } else {
-                showToast(`${equipmentName} waiver removed.`, 'success');
-            }
-        }
-
-    } catch (error) {
-        console.error('Error updating waiver:', error);
-        // Revert checkbox state on error
-        checkbox.checked = !isWaived;
-        if (itemRow) {
-            itemRow.classList.toggle('waived');
-        }
-        showToast('Failed to update waiver: ' + error.message, 'error');
-    }
-}
             document.getElementById('waiveAllSwitch').addEventListener('change', function () {
                 handleWaiveAll(this);
             });
 
-// Handle "Waive All" toggle switch
-async function handleWaiveAll(switchElement) {
-    const waiveAll = switchElement.checked;
+            // Handle "Waive All" toggle switch
+            async function handleWaiveAll(switchElement) {
+                const waiveAll = switchElement.checked;
 
-    try {
-        // Get admin ID from localStorage (stored during login)
-        const adminId = localStorage.getItem('adminId');
-        
-        const response = await fetch(`/api/admin/requisition/${requestId}/waive`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${adminToken}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                waive_all: waiveAll,
-                admin_id: adminId // Add admin_id from localStorage
-            })
-        });
+                try {
+                    // Get admin ID from localStorage (stored during login)
+                    const adminId = localStorage.getItem('adminId');
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            let errorMessage = 'Failed to update waiver status';
-            if (errorData.details) {
-                if (typeof errorData.details === 'object') {
-                    errorMessage = Object.values(errorData.details).flat().join(', ');
-                } else {
-                    errorMessage = errorData.details;
+                    const response = await fetch(`/api/admin/requisition/${requestId}/waive`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            waive_all: waiveAll,
+                            admin_id: adminId // Add admin_id from localStorage
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        let errorMessage = 'Failed to update waiver status';
+                        if (errorData.details) {
+                            if (typeof errorData.details === 'object') {
+                                errorMessage = Object.values(errorData.details).flat().join(', ');
+                            } else {
+                                errorMessage = errorData.details;
+                            }
+                        } else if (errorData.error) {
+                            errorMessage = errorData.error;
+                        }
+                        throw new Error(errorMessage);
+                    }
+
+                    const result = await response.json();
+
+                    // Update all checkboxes to match the "waive all" state
+                    document.querySelectorAll('.waiver-checkbox').forEach(checkbox => {
+                        checkbox.checked = waiveAll;
+                        const itemRow = checkbox.closest('.item-row');
+                        if (itemRow) {
+                            if (waiveAll) {
+                                itemRow.classList.add('waived');
+                            } else {
+                                itemRow.classList.remove('waived');
+                            }
+                        }
+                    });
+
+                    // Refresh ALL fee displays including the total
+                    await refreshAllFeeDisplays();
+
+                    // Show success message
+                    if (waiveAll) {
+                        showToast('All items waived successfully.', 'success');
+                    } else {
+                        showToast('All waivers removed.', 'success');
+                    }
+
+                } catch (error) {
+                    console.error('Error updating waive all:', error);
+                    // Revert switch state on error
+                    switchElement.checked = !waiveAll;
+                    showToast('Failed to update waive all: ' + error.message, 'error');
                 }
-            } else if (errorData.error) {
-                errorMessage = errorData.error;
             }
-            throw new Error(errorMessage);
-        }
-
-        const result = await response.json();
-
-        // Update all checkboxes to match the "waive all" state
-        document.querySelectorAll('.waiver-checkbox').forEach(checkbox => {
-            checkbox.checked = waiveAll;
-            const itemRow = checkbox.closest('.item-row');
-            if (itemRow) {
-                if (waiveAll) {
-                    itemRow.classList.add('waived');
-                } else {
-                    itemRow.classList.remove('waived');
-                }
-            }
-        });
-
-        // Refresh ALL fee displays including the total
-        await refreshAllFeeDisplays();
-
-        // Show success message
-        if (waiveAll) {
-            showToast('All items waived successfully.', 'success');
-        } else {
-            showToast('All waivers removed.', 'success');
-        }
-
-    } catch (error) {
-        console.error('Error updating waive all:', error);
-        // Revert switch state on error
-        switchElement.checked = !waiveAll;
-        showToast('Failed to update waive all: ' + error.message, 'error');
-    }
-}
 
             // A map to get user-friendly names for fee types
             const feeTypeNames = {
@@ -3302,88 +3302,91 @@ async function handleWaiveAll(switchElement) {
             });
 
 
-// Save Fee button logic
-saveFeeBtn.addEventListener("click", async function () {
-    const type = feeTypeSelect.value;
-    const value = parseFloat(feeValueInput.value);
-    const label = document.getElementById('feeLabel').value;
-    const discountType = document.getElementById('discountType').value;
-    const accountNum = document.getElementById('accountNum').value.trim();
+            // Save Fee button logic
+            saveFeeBtn.addEventListener("click", async function () {
+                const type = feeTypeSelect.value;
+                const value = parseFloat(feeValueInput.value);
+                const label = document.getElementById('feeLabel').value;
+                const discountType = document.getElementById('discountType').value;
+                const accountNum = document.getElementById('accountNum').value.trim();
 
-    if (!type || !value || !label) {
-        showToast("Please fill all required fields.", "error");
-        return;
-    }
+                if (!type || !value || !label) {
+                    showToast("Please fill all required fields.", "error");
+                    return;
+                }
 
-    // Disable button to prevent double submission
-    saveFeeBtn.disabled = true;
-    const originalText = saveFeeBtn.innerHTML;
-    saveFeeBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Adding...';
+                // Disable button to prevent double submission
+                saveFeeBtn.disabled = true;
+                const originalText = saveFeeBtn.innerHTML;
+                saveFeeBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Adding...';
 
-    try {
-        let endpoint = '';
-        let requestData = {};
+                try {
+                    let endpoint = '';
+                    let requestData = {};
 
-        // Determine which API endpoint to call based on fee type
-        switch (type) {
-            case 'additional':
-                endpoint = `/api/admin/requisition/${requestId}/fee`;
-                requestData = {
-                    label: label,
-                    fee_amount: value,
-                    account_num: accountNum || null
-                };
-                break;
-            case 'discount':
-            case 'vat':
-                endpoint = `/api/admin/requisition/${requestId}/discount`;
-                requestData = {
-                    label: label,
-                    discount_amount: value,
-                    discount_type: discountType,
-                    account_num: accountNum || null
-                };
-                break;
-        }
+                    // Determine which API endpoint to call based on fee type
+                    switch (type) {
+                        case 'additional':
+                            endpoint = `/api/admin/requisition/${requestId}/fee`;
+                            requestData = {
+                                label: label,
+                                fee_amount: value,
+                                account_num: accountNum || null
+                            };
+                            break;
+                        case 'discount':
+                        case 'vat':
+                            endpoint = `/api/admin/requisition/${requestId}/discount`;
+                            requestData = {
+                                label: label,
+                                discount_amount: value,
+                                discount_type: discountType,
+                                account_num: accountNum || null
+                            };
+                            break;
+                    }
 
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${adminToken}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(requestData)
-        });
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    });
 
-        const result = await response.json();
+                    const result = await response.json();
 
-        if (!response.ok) {
-            throw new Error(result.details || result.error || 'Failed to add fee/discount');
-        }
+                    if (!response.ok) {
+                        throw new Error(result.details || result.error || 'Failed to add fee/discount');
+                    }
 
-        // Reset and close modal
-        feeValueInput.value = "";
-        feeTypeSelect.value = "";
-        document.getElementById('feeLabel').value = "";
-        document.getElementById('accountNum').value = "";
-        discountTypeSection.style.display = 'none';
-        feeModal.hide();
+                    // Reset and close modal
+                    feeValueInput.value = "";
+                    feeTypeSelect.value = "";
+                    document.getElementById('feeLabel').value = "";
+                    document.getElementById('accountNum').value = "";
+                    discountTypeSection.style.display = 'none';
+                    feeModal.hide();
 
-        showToast('Fee/discount added successfully', 'success');
+                    showToast('Fee/discount added successfully', 'success');
 
-        // Refresh ALL fee displays including the total
-        await refreshAllFeeDisplays();
+                    // Refresh ALL fee displays including the total
+                    await refreshAllFeeDisplays();
 
-    } catch (error) {
-        console.error('Error adding fee/discount:', error);
-        showToast('Failed to add fee/discount: ' + error.message, 'error');
-    } finally {
-        // Re-enable button
-        saveFeeBtn.disabled = false;
-        saveFeeBtn.innerHTML = originalText;
-    }
-});
+                    // Refresh the activity timeline
+                    loadTimelineContent();
+
+                } catch (error) {
+                    console.error('Error adding fee/discount:', error);
+                    showToast('Failed to add fee/discount: ' + error.message, 'error');
+                } finally {
+                    // Re-enable button
+                    saveFeeBtn.disabled = false;
+                    saveFeeBtn.innerHTML = originalText;
+                }
+            });
             // Document preview functionality - clean overlay for PDFs and images
             document.addEventListener('click', function (event) {
                 // Check if the click is on a button that has data-bs-target="#documentModal" 
@@ -4086,10 +4089,10 @@ saveFeeBtn.addEventListener("click", async function () {
                 document.getElementById('modalPurpose').textContent = request.form_details.purpose;
                 document.getElementById('modalParticipants').textContent = request.form_details.num_participants;
                 document.getElementById('modalStatus').innerHTML = `
-                                                                                                                                <span class="badge" style="background-color: ${request.form_details.status.color}">
-                                                                                                                                    ${request.form_details.status.name}
-                                                                                                                                </span>
-                                                                                                                                `;
+                                                                                                                                    <span class="badge" style="background-color: ${request.form_details.status.color}">
+                                                                                                                                        ${request.form_details.status.name}
+                                                                                                                                    </span>
+                                                                                                                                    `;
                 document.getElementById('modalFee').textContent = `${formatMoney(request.fees.approved_fee)}`;
                 document.getElementById('modalApprovals').textContent = `${request.approval_info.approval_count}`;
                 document.getElementById('modalRejections').textContent = `${request.approval_info.rejection_count}`;
@@ -4369,104 +4372,104 @@ saveFeeBtn.addEventListener("click", async function () {
                 }
             }
 
-// Function to update additional fees display
-function updateAdditionalFees(requisitionFees) {
-    const additionalFeesContainer = document.getElementById('additionalFeesContainer');
-    
-    if (!additionalFeesContainer) return;
+            // Function to update additional fees display
+            function updateAdditionalFees(requisitionFees) {
+                const additionalFeesContainer = document.getElementById('additionalFeesContainer');
 
-    // Clear existing content
-    additionalFeesContainer.innerHTML = '';
+                if (!additionalFeesContainer) return;
 
-    if (requisitionFees && requisitionFees.length > 0) {
-        requisitionFees.forEach((fee, index) => {
-            const feeElement = document.createElement('div');
-            feeElement.className = 'fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded';
+                // Clear existing content
+                additionalFeesContainer.innerHTML = '';
 
-            let amountText = '';
-            let isDiscount = false;
-            
-            if (fee.type === 'fee') {
-                amountText = `${formatMoney(fee.fee_amount)}`;
-            } else if (fee.type === 'discount') {
-                isDiscount = true;
-                if (fee.discount_type === 'Percentage') {
-                    amountText = `-${parseFloat(fee.discount_amount)}%`;
-                } else {
-                    amountText = `-${formatMoney(fee.discount_amount)}`;
-                }
-            } else if (fee.type === 'mixed') {
-                const feePart = fee.fee_amount > 0 ? `${formatMoney(fee.fee_amount)}` : '';
-                const discountPart = fee.discount_amount > 0 ?
-                    (fee.discount_type === 'Percentage' ?
-                        `-${parseFloat(fee.discount_amount)}%` :
-                        `-${formatMoney(fee.discount_amount)}`) : '';
-                amountText = `${feePart} ${discountPart}`.trim();
-            }
+                if (requisitionFees && requisitionFees.length > 0) {
+                    requisitionFees.forEach((fee, index) => {
+                        const feeElement = document.createElement('div');
+                        feeElement.className = 'fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded';
 
-            // Create label with account number if it exists
-            let labelHtml = escapeHtml(fee.label);
-            if (fee.account_num) {
-                labelHtml = `${escapeHtml(fee.label)} <span class="text-muted small">(${escapeHtml(fee.account_num)})</span>`;
-            }
+                        let amountText = '';
+                        let isDiscount = false;
 
-            feeElement.innerHTML = `
-                <div>
-                    <span class="item-name ${isDiscount ? 'text-danger' : ''}">${labelHtml}</span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="item-price fw-bold ${isDiscount ? 'text-danger' : ''}">${amountText}</span>
-                    <button class="btn btn-sm btn-danger delete-fee-btn" data-fee-id="${fee.fee_id}" data-fee-type="${fee.type}">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
-            `;
-
-            additionalFeesContainer.appendChild(feeElement);
-        });
-
-        // Handle delete click
-        additionalFeesContainer.querySelectorAll('.delete-fee-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const feeId = e.currentTarget.dataset.feeId;
-                
-                if (!feeId) {
-                    showToast('Cannot delete fee that does not exist.', 'error');
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`/api/admin/requisition/${requestId}/fee/${feeId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${adminToken}`,
-                            'Accept': 'application/json'
+                        if (fee.type === 'fee') {
+                            amountText = `${formatMoney(fee.fee_amount)}`;
+                        } else if (fee.type === 'discount') {
+                            isDiscount = true;
+                            if (fee.discount_type === 'Percentage') {
+                                amountText = `-${parseFloat(fee.discount_amount)}%`;
+                            } else {
+                                amountText = `-${formatMoney(fee.discount_amount)}`;
+                            }
+                        } else if (fee.type === 'mixed') {
+                            const feePart = fee.fee_amount > 0 ? `${formatMoney(fee.fee_amount)}` : '';
+                            const discountPart = fee.discount_amount > 0 ?
+                                (fee.discount_type === 'Percentage' ?
+                                    `-${parseFloat(fee.discount_amount)}%` :
+                                    `-${formatMoney(fee.discount_amount)}`) : '';
+                            amountText = `${feePart} ${discountPart}`.trim();
                         }
+
+                        // Create label with account number if it exists
+                        let labelHtml = escapeHtml(fee.label);
+                        if (fee.account_num) {
+                            labelHtml = `${escapeHtml(fee.label)} <span class="text-muted small">(${escapeHtml(fee.account_num)})</span>`;
+                        }
+
+                        feeElement.innerHTML = `
+                    <div>
+                        <span class="item-name ${isDiscount ? 'text-danger' : ''}">${labelHtml}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="item-price fw-bold ${isDiscount ? 'text-danger' : ''}">${amountText}</span>
+                        <button class="btn btn-sm btn-danger delete-fee-btn" data-fee-id="${fee.fee_id}" data-fee-type="${fee.type}">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                `;
+
+                        additionalFeesContainer.appendChild(feeElement);
                     });
 
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.details || 'Failed to delete fee');
-                    }
+                    // Handle delete click
+                    additionalFeesContainer.querySelectorAll('.delete-fee-btn').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            const feeId = e.currentTarget.dataset.feeId;
 
-                    showToast('Fee removed successfully', 'success');
-                    await refreshAllFeeDisplays();
+                            if (!feeId) {
+                                showToast('Cannot delete fee that does not exist.', 'error');
+                                return;
+                            }
 
-                } catch (error) {
-                    console.error('Error removing fee:', error);
-                    showToast('Failed to remove fee: ' + error.message, 'error');
+                            try {
+                                const response = await fetch(`/api/admin/requisition/${requestId}/fee/${feeId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${adminToken}`,
+                                        'Accept': 'application/json'
+                                    }
+                                });
+
+                                if (!response.ok) {
+                                    const errorData = await response.json();
+                                    throw new Error(errorData.details || 'Failed to delete fee');
+                                }
+
+                                showToast('Fee removed successfully', 'success');
+                                await refreshAllFeeDisplays();
+
+                            } catch (error) {
+                                console.error('Error removing fee:', error);
+                                showToast('Failed to remove fee: ' + error.message, 'error');
+                            }
+                        });
+                    });
+                } else {
+                    additionalFeesContainer.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="fa fa-coins fa-2x d-block mb-2"></i>
+                    <p class="mb-0">No additional fees or discounts</p>
+                </div>
+            `;
                 }
-            });
-        });
-    } else {
-        additionalFeesContainer.innerHTML = `
-            <div class="text-center text-muted py-4">
-                <i class="fa fa-coins fa-2x d-block mb-2"></i>
-                <p class="mb-0">No additional fees or discounts</p>
-            </div>
-        `;
-    }
-}
+            }
 
             // Update the dropdown menu text dynamically based on current status
             function updateStatusDropdownText() {
@@ -4576,224 +4579,224 @@ function updateAdditionalFees(requisitionFees) {
                 }
             }
 
-async function fetchRequestDetails() {
-    try {
-        // Ensure loading state is visible and content is hidden
-        document.getElementById('loadingState').style.display = 'block';
-        document.getElementById('contentState').style.display = 'none';
+            async function fetchRequestDetails() {
+                try {
+                    // Ensure loading state is visible and content is hidden
+                    document.getElementById('loadingState').style.display = 'block';
+                    document.getElementById('contentState').style.display = 'none';
 
-        // Fetch ALL requisition forms first (for calendar)
-        const allFormsResponse = await fetch(`/api/admin/requisition-forms`, {
-            headers: {
-                'Authorization': `Bearer ${adminToken}`,
-                'Accept': 'application/json'
-            }
-        });
+                    // Fetch ALL requisition forms first (for calendar)
+                    const allFormsResponse = await fetch(`/api/admin/requisition-forms`, {
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`,
+                            'Accept': 'application/json'
+                        }
+                    });
 
-        if (!allFormsResponse.ok) throw new Error('Failed to fetch request details');
-        allRequests = await allFormsResponse.json();
-        
-        // Fetch SPECIFIC request details by ID to get full data including fees
-        const singleRequestResponse = await fetch(`/api/admin/requisition-forms/${requestId}`, {
-            headers: {
-                'Authorization': `Bearer ${adminToken}`,
-                'Accept': 'application/json'
-            }
-        });
+                    if (!allFormsResponse.ok) throw new Error('Failed to fetch request details');
+                    allRequests = await allFormsResponse.json();
 
-        if (!singleRequestResponse.ok) throw new Error('Failed to fetch single request details');
-        const request = await singleRequestResponse.json();
-        
-        // If the request isn't in allRequests, add it or find it
-        let currentRequest = allRequests.find(req => req.request_id == requestId);
-        if (!currentRequest) {
-            currentRequest = request;
-        }
+                    // Fetch SPECIFIC request details by ID to get full data including fees
+                    const singleRequestResponse = await fetch(`/api/admin/requisition-forms/${requestId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`,
+                            'Accept': 'application/json'
+                        }
+                    });
 
-        // Update approval counts for the finalize modal
-        updateApprovalCounts(
-            request.approval_info?.approval_count || 0,
-            request.approval_info?.rejection_count || 0
-        );
+                    if (!singleRequestResponse.ok) throw new Error('Failed to fetch single request details');
+                    const request = await singleRequestResponse.json();
 
-        // Update request ID in title
-        document.getElementById('requestIdTitle').textContent = 'RID #' + String(requestId).padStart(4, '0');
+                    // If the request isn't in allRequests, add it or find it
+                    let currentRequest = allRequests.find(req => req.request_id == requestId);
+                    if (!currentRequest) {
+                        currentRequest = request;
+                    }
 
-        // Update status badge
-        const statusBadge = document.getElementById('statusBadge');
-        statusBadge.textContent = request.form_details.status.name;
-        statusBadge.style.backgroundColor = request.form_details.status.color;
+                    // Update approval counts for the finalize modal
+                    updateApprovalCounts(
+                        request.approval_info?.approval_count || 0,
+                        request.approval_info?.rejection_count || 0
+                    );
 
-        // Contact information
-        document.getElementById('formDetails').innerHTML = `
-            <div class="d-flex justify-content-between py-1 border-bottom">
-                <span class="text-muted">Requester:</span>
-                <span class="fw-medium">${request.user_details.first_name} ${request.user_details.last_name}</span>
-            </div>
-            <div class="d-flex justify-content-between py-1 border-bottom">
-                <span class="text-muted">School ID:</span>
-                <span class="fw-medium">${request.user_details.school_id || 'N/A'}</span>
-            </div>
-            <div class="d-flex justify-content-between py-1 border-bottom">
-                <span class="text-muted">Email:</span>
-                <span class="fw-medium" style="word-break: break-word;">${request.user_details.email}</span>
-            </div>
-            <div class="d-flex justify-content-between py-1 border-bottom">
-                <span class="text-muted">Organization:</span>
-                <span class="fw-medium">${request.user_details.organization_name || 'N/A'}</span>
-            </div>
-            <div class="d-flex justify-content-between py-1 border-bottom">
-                <span class="text-muted">User Type:</span>
-                <span class="fw-medium">${request.user_details.user_type}</span>
-            </div>
-            <div class="d-flex justify-content-between py-1">
-                <span class="text-muted">Contact #:</span>
-                <span class="fw-medium">${request.user_details.contact_number || 'N/A'}</span>
-            </div>
-        `;
+                    // Update request ID in title
+                    document.getElementById('requestIdTitle').textContent = 'RID #' + String(requestId).padStart(4, '0');
 
-        // Event details
-        document.getElementById('eventDetails').innerHTML = `
-            <div class="row g-3">
-                <div class="col-sm-6">
-                    <div class="mb-3">
-                        <div class="fw-bold text-primary">Endorser</div>
-                        <div>${request.documents.endorser || 'N/A'}</div>
+                    // Update status badge
+                    const statusBadge = document.getElementById('statusBadge');
+                    statusBadge.textContent = request.form_details.status.name;
+                    statusBadge.style.backgroundColor = request.form_details.status.color;
+
+                    // Contact information
+                    document.getElementById('formDetails').innerHTML = `
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span class="text-muted">Requester:</span>
+                    <span class="fw-medium">${request.user_details.first_name} ${request.user_details.last_name}</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span class="text-muted">School ID:</span>
+                    <span class="fw-medium">${request.user_details.school_id || 'N/A'}</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span class="text-muted">Email:</span>
+                    <span class="fw-medium" style="word-break: break-word;">${request.user_details.email}</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span class="text-muted">Organization:</span>
+                    <span class="fw-medium">${request.user_details.organization_name || 'N/A'}</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span class="text-muted">User Type:</span>
+                    <span class="fw-medium">${request.user_details.user_type}</span>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span class="text-muted">Contact #:</span>
+                    <span class="fw-medium">${request.user_details.contact_number || 'N/A'}</span>
+                </div>
+            `;
+
+                    // Event details
+                    document.getElementById('eventDetails').innerHTML = `
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="mb-3">
+                            <div class="fw-bold text-primary">Endorser</div>
+                            <div>${request.documents.endorser || 'N/A'}</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="fw-bold text-primary">Rental Purpose</div>
+                            <div>${request.form_details.purpose}</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="fw-bold text-primary">Number of Tables</div>
+                            <div>${request.form_details.num_tables || 0}</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="fw-bold text-primary">Start Schedule</div>
+                            <div>${formatStartDateTime(request.schedule)}</div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <div class="fw-bold text-primary">Rental Purpose</div>
-                        <div>${request.form_details.purpose}</div>
+                    <div class="col-sm-6">
+                        <div class="mb-3">
+                            <div class="fw-bold text-primary">Date Endorsed</div>
+                            <div>${formatDateEndorsed(request.documents.date_endorsed) || 'N/A'}</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="fw-bold text-primary">Participants</div>
+                            <div>${request.form_details.num_participants}</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="fw-bold text-primary">Number of Chairs</div>
+                            <div>${request.form_details.num_chairs || 0}</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="fw-bold text-primary">End Schedule</div>
+                            <div>${formatEndDateTime(request.schedule)}</div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <div class="fw-bold text-primary">Number of Tables</div>
-                        <div>${request.form_details.num_tables || 0}</div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="fw-bold text-primary">Start Schedule</div>
-                        <div>${formatStartDateTime(request.schedule)}</div>
+                    <div class="col-12">
+                        <div class="fw-bold text-primary">Additional Requests</div>
+                        <div>${request.form_details.additional_requests || 'No additional requests.'}</div>
                     </div>
                 </div>
-                <div class="col-sm-6">
-                    <div class="mb-3">
-                        <div class="fw-bold text-primary">Date Endorsed</div>
-                        <div>${formatDateEndorsed(request.documents.date_endorsed) || 'N/A'}</div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="fw-bold text-primary">Participants</div>
-                        <div>${request.form_details.num_participants}</div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="fw-bold text-primary">Number of Chairs</div>
-                        <div>${request.form_details.num_chairs || 0}</div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="fw-bold text-primary">End Schedule</div>
-                        <div>${formatEndDateTime(request.schedule)}</div>
-                    </div>
+            `;
+
+                    // Update requested items display
+                    document.getElementById('requestedItems').innerHTML = `
+                <div class="requested-items-list">
+                    ${request.requested_items.facilities.length > 0 ? `
+                        <div class="mb-3">
+                            <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Facilities:</h6>
+                            ${request.requested_items.facilities.map(f => `
+                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                    <span class="item-name">${f.name}</span>
+                                    <span class="item-price fw-bold">${formatMoney(f.fee)}${f.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    ${request.requested_items.equipment.length > 0 ? `
+                        <div>
+                            <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Equipment:</h6>
+                            ${request.requested_items.equipment.map(e => `
+                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                    <span class="item-name">${e.name} × ${e.quantity || 1}</span>
+                                    <span class="item-price fw-bold">${formatMoney(e.fee)}${e.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="col-12">
-                    <div class="fw-bold text-primary">Additional Requests</div>
-                    <div>${request.form_details.additional_requests || 'No additional requests.'}</div>
+            `;
+
+                    // Update status cards
+                    document.getElementById('approvalsCount').textContent = request.approval_info.approval_count || 0;
+                    document.getElementById('rejectionsCount').textContent = request.approval_info.rejection_count || 0;
+
+                    // Update document icons
+                    updateDocumentIcons(request.documents);
+
+                    // Load additional data
+                    await Promise.all([
+                        loadMixedActivity(),
+                        loadApprovalHistory()
+                    ]);
+
+                    // CRITICAL: Update fee displays with data from API
+                    if (request.fees && request.fees.approved_fee !== undefined) {
+                        // Update total fee display
+                        const feeTotalElement = document.getElementById('feeBreakdownTotal');
+                        if (feeTotalElement) {
+                            feeTotalElement.textContent = formatMoney(request.fees.approved_fee);
+                        }
+
+                        // Update base fees (items)
+                        if (request.requested_items && request.schedule) {
+                            updateBaseFees(request.requested_items, request.schedule);
+                        }
+
+                        // Update additional fees
+                        if (request.fees.requisition_fees) {
+                            updateAdditionalFees(request.fees.requisition_fees);
+                        }
+                    } else {
+                        // Fallback: Calculate locally if needed
+                        console.warn('No fee data from API, using fallback calculation');
+                        const fallbackTotal = document.getElementById('feeBreakdownTotal');
+                        if (fallbackTotal) {
+                            fallbackTotal.textContent = formatMoney(0);
+                        }
+                    }
+
+                    // Update dropdown text
+                    updateStatusDropdownText();
+
+                    // Check admin role and update UI
+                    await checkAdminRoleAndUpdateUI();
+
+                    // Initialize calendar after data is loaded
+                    initializeCalendar();
+
+                    // ONLY NOW show content after everything is properly loaded
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('contentState').style.display = 'block';
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    showToast('Failed to load request details', 'error');
+
+                    // Show error state
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('contentState').innerHTML = `
+                <div class="alert alert-danger">
+                    Failed to load request details. Please try refreshing the page.
+                    <br><small>Error: ${error.message}</small>
                 </div>
-            </div>
-        `;
-
-        // Update requested items display
-        document.getElementById('requestedItems').innerHTML = `
-            <div class="requested-items-list">
-                ${request.requested_items.facilities.length > 0 ? `
-                    <div class="mb-3">
-                        <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Facilities:</h6>
-                        ${request.requested_items.facilities.map(f => `
-                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
-                                <span class="item-name">${f.name}</span>
-                                <span class="item-price fw-bold">${formatMoney(f.fee)}${f.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
-
-                ${request.requested_items.equipment.length > 0 ? `
-                    <div>
-                        <h6 class="fw-bold mb-2" style="font-size:0.9rem;">Equipment:</h6>
-                        ${request.requested_items.equipment.map(e => `
-                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
-                                <span class="item-name">${e.name} × ${e.quantity || 1}</span>
-                                <span class="item-price fw-bold">${formatMoney(e.fee)}${e.rate_type === 'Per Hour' ? '/hour' : '/event'}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
-            </div>
-        `;
-
-        // Update status cards
-        document.getElementById('approvalsCount').textContent = request.approval_info.approval_count || 0;
-        document.getElementById('rejectionsCount').textContent = request.approval_info.rejection_count || 0;
-        
-        // Update document icons
-        updateDocumentIcons(request.documents);
-        
-        // Load additional data
-        await Promise.all([
-            loadMixedActivity(),
-            loadApprovalHistory()
-        ]);
-
-        // CRITICAL: Update fee displays with data from API
-        if (request.fees && request.fees.approved_fee !== undefined) {
-            // Update total fee display
-            const feeTotalElement = document.getElementById('feeBreakdownTotal');
-            if (feeTotalElement) {
-                feeTotalElement.textContent = formatMoney(request.fees.approved_fee);
+            `;
+                    document.getElementById('contentState').style.display = 'block';
+                }
             }
-            
-            // Update base fees (items)
-            if (request.requested_items && request.schedule) {
-                updateBaseFees(request.requested_items, request.schedule);
-            }
-            
-            // Update additional fees
-            if (request.fees.requisition_fees) {
-                updateAdditionalFees(request.fees.requisition_fees);
-            }
-        } else {
-            // Fallback: Calculate locally if needed
-            console.warn('No fee data from API, using fallback calculation');
-            const fallbackTotal = document.getElementById('feeBreakdownTotal');
-            if (fallbackTotal) {
-                fallbackTotal.textContent = formatMoney(0);
-            }
-        }
-
-        // Update dropdown text
-        updateStatusDropdownText();
-
-        // Check admin role and update UI
-        await checkAdminRoleAndUpdateUI();
-
-        // Initialize calendar after data is loaded
-        initializeCalendar();
-
-        // ONLY NOW show content after everything is properly loaded
-        document.getElementById('loadingState').style.display = 'none';
-        document.getElementById('contentState').style.display = 'block';
-
-    } catch (error) {
-        console.error('Error:', error);
-        showToast('Failed to load request details', 'error');
-
-        // Show error state
-        document.getElementById('loadingState').style.display = 'none';
-        document.getElementById('contentState').innerHTML = `
-            <div class="alert alert-danger">
-                Failed to load request details. Please try refreshing the page.
-                <br><small>Error: ${error.message}</small>
-            </div>
-        `;
-        document.getElementById('contentState').style.display = 'block';
-    }
-}
 
             // Add this function to calculate rental duration
             function calculateRentalDuration(startDate, startTime, endDate, endTime) {
@@ -4816,112 +4819,112 @@ async function fetchRequestDetails() {
                 };
             }
 
-// Function to update base fees display
-function updateBaseFees(requestedItems, schedule) {
-    const facilitiesContainer = document.getElementById('facilitiesFees');
-    const equipmentContainer = document.getElementById('equipmentFees');
+            // Function to update base fees display
+            function updateBaseFees(requestedItems, schedule) {
+                const facilitiesContainer = document.getElementById('facilitiesFees');
+                const equipmentContainer = document.getElementById('equipmentFees');
 
-    if (!facilitiesContainer || !equipmentContainer) return;
+                if (!facilitiesContainer || !equipmentContainer) return;
 
-    // Clear existing content
-    facilitiesContainer.innerHTML = '';
-    equipmentContainer.innerHTML = '';
+                // Clear existing content
+                facilitiesContainer.innerHTML = '';
+                equipmentContainer.innerHTML = '';
 
-    // Calculate rental duration for hourly rate calculations
-    const startDateTime = new Date(`${schedule.start_date}T${schedule.start_time}`);
-    const endDateTime = new Date(`${schedule.end_date}T${schedule.end_time}`);
-    const durationHours = Math.max(0, (endDateTime - startDateTime) / (1000 * 60 * 60));
+                // Calculate rental duration for hourly rate calculations
+                const startDateTime = new Date(`${schedule.start_date}T${schedule.start_time}`);
+                const endDateTime = new Date(`${schedule.end_date}T${schedule.end_time}`);
+                const durationHours = Math.max(0, (endDateTime - startDateTime) / (1000 * 60 * 60));
 
-    // Add facilities with proper rate type logic and waiver checkboxes
-    if (requestedItems.facilities && requestedItems.facilities.length > 0) {
-        requestedItems.facilities.forEach(facility => {
-            const facilityElement = document.createElement('div');
-            facilityElement.className = `fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded ${facility.is_waived ? 'waived' : ''}`;
+                // Add facilities with proper rate type logic and waiver checkboxes
+                if (requestedItems.facilities && requestedItems.facilities.length > 0) {
+                    requestedItems.facilities.forEach(facility => {
+                        const facilityElement = document.createElement('div');
+                        facilityElement.className = `fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded ${facility.is_waived ? 'waived' : ''}`;
 
-            let feeAmount = parseFloat(facility.fee);
-            let itemTotal = 0;
-            let rateDescription = '';
+                        let feeAmount = parseFloat(facility.fee);
+                        let itemTotal = 0;
+                        let rateDescription = '';
 
-            if (facility.rate_type === 'Per Hour' && durationHours > 0) {
-                itemTotal = feeAmount * durationHours;
-                rateDescription = `${formatMoney(feeAmount)}/hr × ${durationHours.toFixed(1)} hrs`;
-            } else {
-                itemTotal = feeAmount;
-                rateDescription = `${formatMoney(feeAmount)}/event`;
-            }
+                        if (facility.rate_type === 'Per Hour' && durationHours > 0) {
+                            itemTotal = feeAmount * durationHours;
+                            rateDescription = `${formatMoney(feeAmount)}/hr × ${durationHours.toFixed(1)} hrs`;
+                        } else {
+                            itemTotal = feeAmount;
+                            rateDescription = `${formatMoney(feeAmount)}/event`;
+                        }
 
-            facilityElement.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <div class="form-check me-2">
-                        <input class="form-check-input waiver-checkbox" type="checkbox" 
-                            data-type="facility" 
-                            data-id="${facility.requested_facility_id}"
-                            ${facility.is_waived ? 'checked' : ''}>
+                        facilityElement.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div class="form-check me-2">
+                            <input class="form-check-input waiver-checkbox" type="checkbox" 
+                                data-type="facility" 
+                                data-id="${facility.requested_facility_id}"
+                                ${facility.is_waived ? 'checked' : ''}>
+                        </div>
+                        <span class="item-name">${escapeHtml(facility.name)}</span>
                     </div>
-                    <span class="item-name">${escapeHtml(facility.name)}</span>
-                </div>
-                <div class="text-end">
-                    <small>${rateDescription}</small>
-                    <div><strong>${formatMoney(itemTotal)}</strong></div>
-                </div>
-            `;
-            facilitiesContainer.appendChild(facilityElement);
-        });
-    } else {
-        facilitiesContainer.innerHTML = '<div class="text-muted small">No facilities requested</div>';
-    }
-
-    // Add equipment with proper rate type logic and waiver checkboxes
-    if (requestedItems.equipment && requestedItems.equipment.length > 0) {
-        requestedItems.equipment.forEach(equipment => {
-            const equipmentElement = document.createElement('div');
-            equipmentElement.className = `fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded ${equipment.is_waived ? 'waived' : ''}`;
-
-            let unitFee = parseFloat(equipment.fee);
-            const quantity = equipment.quantity || 1;
-            let itemTotal = 0;
-            let rateDescription = '';
-
-            if (equipment.rate_type === 'Per Hour' && durationHours > 0) {
-                itemTotal = (unitFee * durationHours) * quantity;
-                rateDescription = `${formatMoney(unitFee)}/hr × ${durationHours.toFixed(1)} hrs × ${quantity}`;
-            } else {
-                itemTotal = unitFee * quantity;
-                rateDescription = `${formatMoney(unitFee)}/event × ${quantity}`;
-            }
-
-            equipmentElement.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <div class="form-check me-2">
-                        <input class="form-check-input waiver-checkbox" type="checkbox" 
-                            data-type="equipment" 
-                            data-id="${equipment.requested_equipment_id}"
-                            ${equipment.is_waived ? 'checked' : ''}>
+                    <div class="text-end">
+                        <small>${rateDescription}</small>
+                        <div><strong>${formatMoney(itemTotal)}</strong></div>
                     </div>
-                    <span class="item-name">
-                        ${escapeHtml(equipment.name)} ${quantity > 1 ? `(×${quantity})` : ''}
-                    </span>
-                </div>
-                <div class="text-end">
-                    <small>${rateDescription}</small>
-                    <div><strong>${formatMoney(itemTotal)}</strong></div>
-                </div>
-            `;
-            equipmentContainer.appendChild(equipmentElement);
-        });
-    } else {
-        equipmentContainer.innerHTML = '<div class="text-muted small">No equipment requested</div>';
-    }
+                `;
+                        facilitiesContainer.appendChild(facilityElement);
+                    });
+                } else {
+                    facilitiesContainer.innerHTML = '<div class="text-muted small">No facilities requested</div>';
+                }
 
-    // Add event listeners to waiver checkboxes
-    document.querySelectorAll('#baseFeesContainer .waiver-checkbox').forEach(checkbox => {
-        const newCheckbox = checkbox.cloneNode(true);
-        checkbox.parentNode.replaceChild(newCheckbox, checkbox);
-        newCheckbox.addEventListener('change', function() {
-            handleWaiverChange(this);
-        });
-    });
-}
+                // Add equipment with proper rate type logic and waiver checkboxes
+                if (requestedItems.equipment && requestedItems.equipment.length > 0) {
+                    requestedItems.equipment.forEach(equipment => {
+                        const equipmentElement = document.createElement('div');
+                        equipmentElement.className = `fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded ${equipment.is_waived ? 'waived' : ''}`;
+
+                        let unitFee = parseFloat(equipment.fee);
+                        const quantity = equipment.quantity || 1;
+                        let itemTotal = 0;
+                        let rateDescription = '';
+
+                        if (equipment.rate_type === 'Per Hour' && durationHours > 0) {
+                            itemTotal = (unitFee * durationHours) * quantity;
+                            rateDescription = `${formatMoney(unitFee)}/hr × ${durationHours.toFixed(1)} hrs × ${quantity}`;
+                        } else {
+                            itemTotal = unitFee * quantity;
+                            rateDescription = `${formatMoney(unitFee)}/event × ${quantity}`;
+                        }
+
+                        equipmentElement.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div class="form-check me-2">
+                            <input class="form-check-input waiver-checkbox" type="checkbox" 
+                                data-type="equipment" 
+                                data-id="${equipment.requested_equipment_id}"
+                                ${equipment.is_waived ? 'checked' : ''}>
+                        </div>
+                        <span class="item-name">
+                            ${escapeHtml(equipment.name)} ${quantity > 1 ? `(×${quantity})` : ''}
+                        </span>
+                    </div>
+                    <div class="text-end">
+                        <small>${rateDescription}</small>
+                        <div><strong>${formatMoney(itemTotal)}</strong></div>
+                    </div>
+                `;
+                        equipmentContainer.appendChild(equipmentElement);
+                    });
+                } else {
+                    equipmentContainer.innerHTML = '<div class="text-muted small">No equipment requested</div>';
+                }
+
+                // Add event listeners to waiver checkboxes
+                document.querySelectorAll('#baseFeesContainer .waiver-checkbox').forEach(checkbox => {
+                    const newCheckbox = checkbox.cloneNode(true);
+                    checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+                    newCheckbox.addEventListener('change', function () {
+                        handleWaiverChange(this);
+                    });
+                });
+            }
             function formatDateEndorsed(dateString) {
                 if (!dateString || dateString === 'N/A') return 'N/A';
 
@@ -5057,27 +5060,27 @@ function updateBaseFees(requestedItems, schedule) {
                 }
 
                 feeItem.innerHTML = `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ${adminPhoto ?
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ${adminPhoto ?
                         `<img src="${adminPhoto}" class="rounded-circle me-3" width="32" height="32" alt="Admin Photo">` :
                         `<i class="bi bi-person-circle fs-5 me-3 text-secondary"></i>`
                     }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <div class="flex-grow-1">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div class="d-flex justify-content-between align-items-center">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <small class="text-muted fst-italic">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ${fee.label} (${typeName}) of ₱${amount.toFixed(2)} added by <strong>${adminName}</strong>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </small>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div class="flex-grow-1">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <small class="text-muted fst-italic">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ${fee.label} (${typeName}) of ₱${amount.toFixed(2)} added by <strong>${adminName}</strong>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </small>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <button class="btn btn-sm remove-btn text-secondary p-0 border-0">
+                                                                                                                                                                                                                                                                                    <i class="bi bi-x-lg"></i>
+                                                                                                                                                                                                                                                                                </button>
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </button>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <button class="btn btn-sm remove-btn text-secondary p-0 border-0">
-                                                                                                                                                                                                                                                                                <i class="bi bi-x-lg"></i>
-                                                                                                                                                                                                                                                                            </button>
-
-
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <small class="text-muted fst-italic">${timestamp}</small>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <small class="text-muted fst-italic">${timestamp}</small>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                `;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    `;
 
                 // Add remove functionality for regular fees
                 feeItem.querySelector(".remove-btn").addEventListener("click", async function () {
@@ -5258,36 +5261,36 @@ function updateBaseFees(requestedItems, schedule) {
             let currentTimelineFilter = 'all';
 
 
-// Toggle timeline modal - Update this section
-stickyTimelineBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    
-    if (timelineModal.classList.contains('show')) {
-        timelineModal.classList.remove('show');
-    } else {
-        timelineModal.classList.add('show');
-        
-        // Lazy load content if not loaded yet
-        if (!isTimelineLoaded) {
-            loadTimelineContent();
-        }
-    }
-});
-// Close timeline button
-if (closeTimelineBtn) {
-    closeTimelineBtn.addEventListener('click', function() {
-        console.log('Close button clicked'); // Debug log
-        timelineModal.classList.remove('show');
-    });
-}
+            // Toggle timeline modal - Update this section
+            stickyTimelineBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
 
-// Also add a backup click handler for any element with class 'close-timeline'
-document.querySelectorAll('.close-timeline').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        timelineModal.classList.remove('show');
-    });
-});
+                if (timelineModal.classList.contains('show')) {
+                    timelineModal.classList.remove('show');
+                } else {
+                    timelineModal.classList.add('show');
+
+                    // Lazy load content if not loaded yet
+                    if (!isTimelineLoaded) {
+                        loadTimelineContent();
+                    }
+                }
+            });
+            // Close timeline button
+            if (closeTimelineBtn) {
+                closeTimelineBtn.addEventListener('click', function () {
+                    console.log('Close button clicked'); // Debug log
+                    timelineModal.classList.remove('show');
+                });
+            }
+
+            // Also add a backup click handler for any element with class 'close-timeline'
+            document.querySelectorAll('.close-timeline').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    timelineModal.classList.remove('show');
+                });
+            });
 
 
             // Close when clicking outside
@@ -5423,28 +5426,28 @@ document.querySelectorAll('.close-timeline').forEach(btn => {
             function generateTimelineCommentHTML(comment) {
                 const timeAgo = formatTimeAgo(comment.created_at);
                 return `
-                            <div class="timeline-item mb-3">
-                                <div class="d-flex align-items-start">
-                                    <div class="me-2 flex-shrink-0">
-                                        ${comment.admin.photo_url ?
+                                <div class="timeline-item mb-3">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-2 flex-shrink-0">
+                                            ${comment.admin.photo_url ?
                         `<img src="${comment.admin.photo_url}" class="rounded-circle" width="32" height="32" style="object-fit: cover;">` :
                         `<div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                                                ${comment.admin.first_name.charAt(0)}${comment.admin.last_name.charAt(0)}
-                                            </div>`
+                                                    ${comment.admin.first_name.charAt(0)}${comment.admin.last_name.charAt(0)}
+                                                </div>`
                     }
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <strong class="small">${comment.admin.first_name} ${comment.admin.last_name}</strong>
-                                            <small class="text-muted">${timeAgo}</small>
                                         </div>
-                                        <div class="bg-light p-2 rounded small">
-                                            ${escapeHtml(comment.comment)}
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <strong class="small">${comment.admin.first_name} ${comment.admin.last_name}</strong>
+                                                <small class="text-muted">${timeAgo}</small>
+                                            </div>
+                                            <div class="bg-light p-2 rounded small">
+                                                ${escapeHtml(comment.comment)}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
             }
 
 
@@ -5467,26 +5470,26 @@ document.querySelectorAll('.close-timeline').forEach(btn => {
                 }
 
                 return `
-                            <div class="timeline-item mb-3">
-                                <div class="d-flex align-items-start">
-                                    <div class="me-2 flex-shrink-0">
-                                        <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                                             style="width: 32px; height: 32px; background-color: #d4edda; color: #28a745;">
-                                            <i class="fas fa-money-bill" style="font-size: 0.9rem;"></i>
+                                <div class="timeline-item mb-3">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-2 flex-shrink-0">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                                 style="width: 32px; height: 32px; background-color: #d4edda; color: #28a745;">
+                                                <i class="fas fa-money-bill" style="font-size: 0.9rem;"></i>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <strong class="small">${adminName}</strong>
-                                            <small class="text-muted">${timeAgo}</small>
-                                        </div>
-                                        <div class="bg-light p-2 rounded small">
-                                            added ${typeName} - ${fee.label}: ${amountDisplay}
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <strong class="small">${adminName}</strong>
+                                                <small class="text-muted">${timeAgo}</small>
+                                            </div>
+                                            <div class="bg-light p-2 rounded small">
+                                                added ${typeName} - ${fee.label}: ${amountDisplay}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
             }
 
 
