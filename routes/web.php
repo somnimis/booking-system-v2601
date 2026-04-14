@@ -113,6 +113,9 @@ Route::get('/csrf-token', function() {
     // Asset Tracking
     Route::view('/admin/asset-tracking', 'admin.asset-tracking');
 
+    // User Feedback
+    Route::view('/admin/user-feedback', 'admin.user-feedback');
+
     // Test calendar event new version
     Route::view('/admin/calendarv2', 'admin.admin-calendar');
 
