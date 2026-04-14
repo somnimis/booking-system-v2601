@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\Feedback;
 use Illuminate\Support\Facades\DB;
@@ -18,16 +19,38 @@ class FeedbackController extends Controller
      */
 
     /**
-     * Get all feedback records
+     * Get all feedback records with pagination and search
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
         try {
-            $feedback = Feedback::with('requisitionForm')
-                ->orderBy('created_at', 'desc')
-                ->get();
+            $perPage = $request->get('per_page', 10);
+            $search = $request->get('search');
+
+            // Limit max per page to 50
+            if ($perPage > 50) {
+                $perPage = 50;
+            }
+
+            $query = Feedback::with('requisitionForm')
+                ->orderBy('created_at', 'desc');
+
+            // Apply search filter if provided
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('email', 'like', "%{$search}%")
+                        ->orWhere('additional_feedback', 'like', "%{$search}%")
+                        ->orWhere('system_performance', 'like', "%{$search}%")
+                        ->orWhere('booking_experience', 'like', "%{$search}%")
+                        ->orWhere('ease_of_use', 'like', "%{$search}%")
+                        ->orWhere('useability', 'like', "%{$search}%");
+                });
+            }
+
+            $feedback = $query->paginate($perPage);
 
             return response()->json($feedback);
 

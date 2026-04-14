@@ -128,6 +128,7 @@
         .mb-0.fw-bold {
             color: #004993 !important;
         }
+
         /* Base Layout */
         body {
             display: flex;
@@ -604,7 +605,7 @@
                 </a>
             </li>
 
-            
+
             <!-- Equipment Tracking Nav Item 
             <li class="nav-item mb-1" id="asset-tracking-nav-item" style="display: none;">
                 <a class="nav-link py-1 px-2 rounded-2 {{ Request::is('admin/asset-tracking*') ? 'active' : '' }}"
@@ -713,6 +714,18 @@
                             <i class="fa-solid fa-cart-shopping me-2"></i>
                         </div>
                         <span>Requisitions</span>
+                    </div>
+                </a>
+            </li>
+            <!-- Feedback Nav Item -->
+            <li class="nav-item mb-1" id="feedback-nav-item" style="display: none;">
+                <a class="nav-link py-1 px-2 rounded-2 {{ Request::is('admin/user-feedback*') ? 'active' : '' }}"
+                    href="{{ url('/admin/user-feedback') }}">
+                    <div class="d-flex align-items-center">
+                        <div class="nav-icon p-1 rounded me-2">
+                            <i class="fa-solid fa-star me-2"></i>
+                        </div>
+                        <span>User Feedback</span>
                     </div>
                 </a>
             </li>
@@ -1029,82 +1042,83 @@
         // And call when navigation happens (for SPAs)
         window.addEventListener('popstate', updateDashboardNavLink);
 
-        
-function hideSidebarItemsBasedOnRole(roleId) {
-    // Hide all skeletons first
-    hideAllSkeletons();
 
-    // Show all sections (Dashboard, Inventories, Transactions are always visible)
-    const sections = [
-        'management-section',
-        'inventories-section',
-        'transactions-section'
-    ];
-    
-    sections.forEach(id => {
-        const section = document.getElementById(id);
-        if (section) section.style.display = 'block';
-    });
+        function hideSidebarItemsBasedOnRole(roleId) {
+            // Hide all skeletons first
+            hideAllSkeletons();
 
-    // Get all nav items
-    const dashboardNavItem = document.getElementById('dashboard-nav-item');
-    const calendarNavItem = document.getElementById('calendar-nav-item');           // Active Bookings
-    const pendingNavItem = document.getElementById('pending-nav-item');             // Pending Approval
-    const equipmentTrackingNavItem = document.getElementById('asset-tracking-nav-item');
-    const administratorsNavItem = document.getElementById('administrators-nav-item');
-    const facilitiesNavItem = document.getElementById('facilities-nav-item');
-    const equipmentNavItem = document.getElementById('equipment-nav-item');
-    const archiveNavItem = document.getElementById('archive-nav-item');             // Requisitions
+            // Show all sections (Dashboard, Inventories, Transactions are always visible)
+            const sections = [
+                'management-section',
+                'inventories-section',
+                'transactions-section'
+            ];
 
-    // First, show all nav items (they'll be hidden based on role below)
-    const allNavItems = [
-        dashboardNavItem,
-        calendarNavItem,
-        pendingNavItem,
-        equipmentTrackingNavItem,
-        administratorsNavItem,
-        facilitiesNavItem,
-        equipmentNavItem,
-        archiveNavItem
-    ];
+            sections.forEach(id => {
+                const section = document.getElementById(id);
+                if (section) section.style.display = 'block';
+            });
 
-    allNavItems.forEach(item => {
-        if (item) item.style.display = 'block';
-    });
+            // Get all nav items
+            const dashboardNavItem = document.getElementById('dashboard-nav-item');
+            const calendarNavItem = document.getElementById('calendar-nav-item');           // Active Bookings
+            const pendingNavItem = document.getElementById('pending-nav-item');             // Pending Approval
+            const equipmentTrackingNavItem = document.getElementById('asset-tracking-nav-item');
+            const administratorsNavItem = document.getElementById('administrators-nav-item');
+            const facilitiesNavItem = document.getElementById('facilities-nav-item');
+            const equipmentNavItem = document.getElementById('equipment-nav-item');
+            const archiveNavItem = document.getElementById('archive-nav-item');             // Requisitions
+            const feedbackNavItem = document.getElementById('feedback-nav-item'); 
+            // First, show all nav items (they'll be hidden based on role below)
+            const allNavItems = [
+                dashboardNavItem,
+                calendarNavItem,
+                pendingNavItem,
+                equipmentTrackingNavItem,
+                administratorsNavItem,
+                facilitiesNavItem,
+                equipmentNavItem,
+                archiveNavItem,
+                feedbackNavItem
+            ];
 
-    // Apply role-based visibility rules based on role_id from updated seeder
-    switch (Number(roleId)) {
-        case 1: // Head Admin (role_id = 1)
-            // SHOW ALL - no items to hide
-            break;
+            allNavItems.forEach(item => {
+                if (item) item.style.display = 'block';
+            });
 
-        case 2: // Chief Approving Officer (role_id = 2)
-        case 3: // Approving Officer (role_id = 3)
-            // Both role 2 and 3: Hide only Administrators
-            if (administratorsNavItem) administratorsNavItem.style.display = 'none';
-            break;
+            // Apply role-based visibility rules based on role_id from updated seeder
+            switch (Number(roleId)) {
+                case 1: // Head Admin (role_id = 1)
+                    // SHOW ALL - no items to hide
+                    break;
 
-        case 4: // Inventory Manager (role_id = 4)
-            // Hide Administrators, Active Bookings, Pending Approval
-            if (administratorsNavItem) administratorsNavItem.style.display = 'none';
-            if (calendarNavItem) calendarNavItem.style.display = 'none';           // Active Bookings
-            if (pendingNavItem) pendingNavItem.style.display = 'none';             // Pending Approval
-            break;
+                case 2: // Chief Approving Officer (role_id = 2)
+                case 3: // Approving Officer (role_id = 3)
+                    // Both role 2 and 3: Hide only Administrators
+                    if (administratorsNavItem) administratorsNavItem.style.display = 'none';
+                    break;
 
-        default:
-            // For any undefined roles, show all items
-            break;
-    }
+                case 4: // Inventory Manager (role_id = 4)
+                    // Hide Administrators, Active Bookings, Pending Approval
+                    if (administratorsNavItem) administratorsNavItem.style.display = 'none';
+                    if (calendarNavItem) calendarNavItem.style.display = 'none';           // Active Bookings
+                    if (pendingNavItem) pendingNavItem.style.display = 'none';             // Pending Approval
+                    break;
 
-    // Hide entire Management section if all its items are hidden
-    const managementItems = [calendarNavItem, pendingNavItem, equipmentTrackingNavItem, administratorsNavItem];
-    const anyManagementVisible = managementItems.some(item => item && item.style.display !== 'none');
-    const managementSection = document.getElementById('management-section');
-    
-    if (managementSection) {
-        managementSection.style.display = anyManagementVisible ? 'block' : 'none';
-    }
-}
+                default:
+                    // For any undefined roles, show all items
+                    break;
+            }
+
+            // Hide entire Management section if all its items are hidden
+            const managementItems = [calendarNavItem, pendingNavItem, equipmentTrackingNavItem, administratorsNavItem];
+            const anyManagementVisible = managementItems.some(item => item && item.style.display !== 'none');
+            const managementSection = document.getElementById('management-section');
+
+            if (managementSection) {
+                managementSection.style.display = anyManagementVisible ? 'block' : 'none';
+            }
+        }
 
         function hideAllSkeletons() {
             const skeletons = [

@@ -1,308 +1,363 @@
+{{-- resources/views/public/events-calendar.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Events Calendar')
+@section('title', 'Schedule Availability')
 
-@section('body_class', 'events-calendar-page')
+@section('body_class', 'availability-page')
 
 @section('content')
-    <link rel="stylesheet" href="{{ asset('css/public/public-calendar.css') }}" />
     <style>
+        /* ============================================
+           AVAILABILITY MATRIX VIEW - MAIN STYLES
+           ============================================ */
+
+        :root {
+            --status-available: #28a745;
+            --status-available-bg: #d4edda;
+            --status-pending: #ffc107;
+            --status-pending-bg: #fff3cd;
+            --status-booked: #dc3545;
+            --status-booked-bg: #f8d7da;
+            --status-event: #6f42c1;
+            --status-event-bg: #e2d9f3;
+            --primary-color: #0a336c;
+            --border-color: #dee2e6;
+        }
+
         main {
             background-image: url("{{ asset('assets/cpu-pic1.jpg') }}");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            height: 80vh;
-            /* Full viewport height */
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
-        .top-header-bar {
-            position: relative;
-            z-index: 1030 !important;
-            /* Higher than loading overlay */
-        }
-
-        .main-navbar {
-            position: relative;
-            z-index: 1025 !important;
-            /* Between header and loading overlay */
-        }
-
-        /* Make the page take full available height */
-        .events-calendar-page {
+        .availability-page {
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-
-            /* Reduced padding */
-            box-sizing: border-box;
-            min-height: 0;
-            /* Critical for flex children */
-        }
-
-        /* Main content wrapper fills remaining space */
-        .calendar-content-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-height: 0;
-            padding: 0 15px 15px 15px;
-        }
-
-        /* Container fills wrapper */
-        .calendar-content-wrapper .container-fluid {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-height: 0;
             padding: 0;
-            height: 100%;
-            border-bottom-left-radius: 12px;
-            /* Add bottom left radius */
-            border-bottom-right-radius: 12px;
-            /* Add bottom right radius */
         }
 
-        /* Row fills container */
-        .calendar-content-wrapper .row {
-            flex: 1;
+        .availability-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            margin: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Navigation Bar */
+        .nav-header {
             display: flex;
-            overflow: hidden;
-            min-height: 0;
-            margin: 0 -0.5rem;
-            height: 100%;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
-        /* Left column - fixed width, scrollable content */
-        .col-lg-3.col-md-12 {
+        .date-nav {
             display: flex;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-            width: auto;
-            /* Change from 25% to auto */
-            min-width: 280px;
-            /* Minimum width to ensure readability */
-            max-width: 300px;
-            /* Maximum width to keep it compact */
-            padding-right: 0.5rem;
-            flex-shrink: 0;
-            /* Prevent column from shrinking */
+            align-items: center;
+            gap: 12px;
+            background: #f8f9fa;
+            padding: 8px 16px;
+            border-radius: 50px;
         }
 
-
-        /* Right column - takes remaining width */
-        .col-lg-9.col-md-12 {
+        .date-nav-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
             display: flex;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-            width: auto;
-            /* Change from 75% to auto */
-            flex: 1;
-            /* Take remaining space */
-            min-width: 0;
-            /* Allow flex item to shrink below content size */
-            padding-left: 0.5rem;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 18px;
         }
 
-
-        /* Hero section - compact */
-        .events-calendar-header {
-            flex-shrink: 0;
-            padding: 0.75rem 1rem;
-            /* Reduced padding */
-            text-align: center;
-            background: url('{{ asset("assets/cpu-pic1.jpg") }}') center center / cover no-repeat;
-            position: relative;
+        .date-nav-btn:hover {
+            background: var(--primary-color);
             color: white;
-            border-radius: 8px;
-            margin-bottom: 0.75rem;
-            /* Reduced margin */
+            border-color: var(--primary-color);
         }
 
-        .events-calendar-header::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 8px;
+        .current-date {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            min-width: 200px;
+            text-align: center;
         }
 
-        .events-calendar-header * {
-            position: relative;
-            z-index: 1;
+        .today-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
         }
 
-        .events-calendar-header h1 {
-            font-size: 1.5rem;
-            /* Smaller font */
-            margin-bottom: 0.1rem;
-            line-height: 1.2;
+        .today-btn:hover {
+            opacity: 0.9;
         }
 
-        .events-calendar-header p {
+        /* Time Range Selector */
+        .time-range-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .time-range-btn {
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+            padding: 8px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .time-range-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Legend */
+        .legend-bar {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-color.available {
+            background: var(--status-available-bg);
+            border: 1px solid var(--status-available);
+        }
+
+        .legend-color.pending {
+            background: var(--status-pending-bg);
+            border: 1px solid var(--status-pending);
+        }
+
+        .legend-color.booked {
+            background: var(--status-booked-bg);
+            border: 1px solid var(--status-booked);
+        }
+
+        .legend-color.event {
+            background: var(--status-event-bg);
+            border: 1px solid var(--status-event);
+        }
+
+        /* Facility Filters */
+        .filters-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .facility-filter-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .facility-filter-badge {
+            background: #f8f9fa;
+            padding: 6px 12px;
+            border-radius: 50px;
             font-size: 0.8rem;
-            margin-bottom: 0;
-            line-height: 1.2;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border-color);
         }
 
-        /* Left column scrollable area */
-        .scrollable-left-column {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            min-height: 0;
-            padding-right: 4px;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            /* Reduced gap */
+        .facility-filter-badge:hover {
+            background: #e9ecef;
         }
 
-        /* Cards with minimal padding */
-        .scrollable-left-column .card {
-            margin-bottom: 0;
-            flex-shrink: 0;
+        .facility-filter-badge.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
         }
 
-        .scrollable-left-column .card-body {
-            padding: 0.75rem;
-            /* Reduced padding */
+        .search-box {
+            position: relative;
+            min-width: 250px;
         }
 
-        /* Mini calendar compact */
-        .mini-calendar .d-flex.justify-content-between {
-            margin-bottom: 0.5rem !important;
+        .search-box input {
+            width: 100%;
+            padding: 8px 16px;
+            padding-right: 35px;
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            outline: none;
         }
 
-        .mini-calendar .btn-sm {
-            padding: 0.2rem 0.5rem;
+        .search-box i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        /* Main Matrix Table */
+        .matrix-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+        }
+
+        .availability-matrix {
+            min-width: 800px;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .matrix-table th {
+            background: #f8f9fa;
+            padding: 14px 8px;
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+        }
+
+        .matrix-table th:last-child {
+            border-right: none;
+        }
+
+        .matrix-table td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .matrix-table td:last-child {
+            border-right: none;
+        }
+
+        .matrix-table .facility-cell {
+            background: #f8f9fa;
+            font-weight: 600;
+            text-align: left;
+            position: sticky;
+            left: 0;
+            background: #f8f9fa;
+            min-width: 180px;
+        }
+
+        /* Status Cards */
+        .status-card {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 8px;
             font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            width: 100%;
+            max-width: 100px;
         }
 
-        .mini-calendar .month-year {
-            font-size: 0.9rem;
+        .status-card.available {
+            background: var(--status-available-bg);
+            color: #155724;
+            border: 1px solid var(--status-available);
         }
 
-        .calendar-header .day-header {
-            font-size: 0.7rem;
-            padding: 0.2rem 0;
+        .status-card.available:hover {
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
         }
 
-        .calendar-day {
-            font-size: 0.75rem;
-            padding: 0.25rem !important;
+        .status-card.pending {
+            background: var(--status-pending-bg);
+            color: #856404;
+            border: 1px solid var(--status-pending);
+            cursor: default;
         }
 
-        /* Filter card */
-        #facilityFilterList {
-            max-height: 180px;
-            /* Slightly reduced */
-            overflow-y: auto;
+        .status-card.booked {
+            background: var(--status-booked-bg);
+            color: #721c24;
+            border: 1px solid var(--status-booked);
+            cursor: default;
         }
 
-        /* Legend + Search Row - compact */
-        .legend-search-row {
-            margin-bottom: 0.5rem !important;
-            flex-shrink: 0;
+        .status-card.event {
+            background: var(--status-event-bg);
+            color: #4a148c;
+            border: 1px solid var(--status-event);
+            cursor: default;
         }
 
-        /* Legend card compact */
-        .legend-search-row .card {
-            margin-bottom: 0;
-        }
-
-        .legend-search-row .card-body {
-            padding: 0.5rem 0.75rem;
-        }
-
-        /* Search bar compact */
-        .legend-search-row .input-group-sm {
-            transform: scale(0.95);
-        }
-
-        /* Main calendar card */
-        .col-lg-9.col-md-12 .card.flex-grow-1 {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            overflow: hidden;
-            margin-bottom: 0;
-            /* Remove bottom margin */
-        }
-
-        .col-lg-9.col-md-12 .card.flex-grow-1 .card-body {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            overflow: hidden;
-            padding: 0.75rem;
-            /* Reduced padding */
-        }
-
-        /* Calendar takes full space */
-        #userFullCalendar {
-            flex: 1;
-            min-height: 0;
-            height: 100% !important;
-            width: 100% !important;
-        }
-
-        /* FullCalendar fixes - make it truly fill space */
-        .fc {
-            height: 100% !important;
-            width: 100% !important;
-        }
-
-        .fc-view-harness {
-            flex: 1 !important;
-            min-height: 0 !important;
-            height: 100% !important;
-        }
-
-        .fc-view {
-            height: 100% !important;
-        }
-
-        /* Loading overlays */
-        .calendar-loading-overlay {
+        /* Loading States */
+        .loading-overlay {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgb(255, 255, 255);
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
-            z-index: 30 !important;
-            /* Lowered from 10 to ensure it's below header/navbar */
-            border-radius: 8px;
-            pointer-events: none;
-            /* Allow clicks to pass through when hidden */
+            justify-content: center;
+            border-radius: 12px;
+            z-index: 10;
         }
 
-
-        .calendar-loading-overlay:not(.d-none) {
-            pointer-events: auto;
-            /* Re-enable clicks when visible */
-        }
-
-        .calendar-loading-spinner {
+        .loading-spinner {
             width: 40px;
             height: 40px;
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #0a336c;
+            border-top: 4px solid var(--primary-color);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -317,1358 +372,709 @@
             }
         }
 
-        /* Mobile-specific styles */
-        @media (max-width: 992px) {
-
-            /* Hide the original right column on mobile */
-            .col-lg-9.col-md-12 {
-                display: none !important;
-            }
-
-            /* Style the mobile toggle */
-            .mobile-calendar-toggle {
-                display: block !important;
-                margin-top: 10px;
-            }
-
-            .mobile-calendar-toggle .btn-group {
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-
-            .mobile-calendar-toggle .btn {
-                padding: 12px 0;
-                font-weight: 500;
-            }
-
-            /* Mobile events list */
-            .mobile-events-list {
-                margin-top: 10px;
-            }
-
-            .mobile-events-list .card {
-                border-radius: 12px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            }
-
-            .mobile-events-list .card-header {
-                background-color: #f8f9fa;
-                border-bottom: 1px solid #dee2e6;
-                padding: 12px 15px;
-            }
-
-            .mobile-events-list .card-header h6 {
-                margin: 0;
-                font-weight: 600;
-            }
-
-            .mobile-event-item {
-                transition: transform 0.2s;
-                border-left: 4px solid transparent;
-            }
-
-            .mobile-event-item:active {
-                transform: scale(0.98);
-                background-color: #f8f9fa;
-            }
-
-            /* Calendar event type indicator */
-            .mobile-event-item[data-event-type="calendar_event"] {
-                border-left-color: #28a745;
-            }
-
-            .mobile-event-item[data-event-type="requisition"] {
-                border-left-color: var(--event-color, #007bff);
-            }
+        /* Modal Styles */
+        .event-modal .modal-dialog {
+            max-width: 600px;
         }
 
-        /* Very small screens */
-        @media (max-width: 480px) {
-            .mobile-events-list .card-body {
-                max-height: 350px !important;
-            }
-
-            .mobile-event-item .card-body {
-                padding: 10px !important;
-            }
-
-            .mobile-event-item h6 {
-                font-size: 0.9rem;
-            }
-
-            .mobile-event-item .small {
-                font-size: 0.75rem;
-            }
-        }
-
-        /* Mini calendar day styles */
-
-        .calendar-day.today {
-            background-color: #0a336c;
+        .event-modal .modal-header {
+            background: var(--primary-color);
             color: white;
-            border-radius: 50%;
         }
 
-        /* SEARCHBAR STYLES */
-        .search-result-item {
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .event-modal .btn-close-white {
+            filter: brightness(0) invert(1);
         }
 
-        .search-result-item:hover {
-            background-color: #f8f9fa;
-            transform: translateX(5px);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        .event-detail-row {
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        #searchResultsContainer {
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+        .event-detail-label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 4px;
         }
 
-        #searchResultsContainer .border-bottom {
-            border-color: #dee2e6 !important;
+        .event-detail-value {
+            font-size: 1rem;
         }
 
-        #backToCalendarBtn:hover {
-            background-color: #f1f1f1 !important;
+        /* Responsive */
+        @media (max-width: 768px) {
+            .availability-container {
+                margin: 10px;
+                padding: 15px;
+            }
+
+            .facility-cell {
+                min-width: 140px !important;
+            }
+
+            .status-card {
+                padding: 6px 8px;
+                font-size: 0.7rem;
+            }
+
+            .time-range-btn {
+                padding: 6px 14px;
+                font-size: 0.8rem;
+            }
+
+            .current-date {
+                font-size: 0.9rem;
+                min-width: 150px;
+            }
         }
 
-        #dynamicLegend {
-            scrollbar-width: none;
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
         }
 
-        #dynamicLegend::-webkit-scrollbar {
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        /* Tooltip */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+
+        [data-tooltip]:before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 10px;
+            background: #333;
+            color: white;
+            font-size: 0.7rem;
+            border-radius: 4px;
+            white-space: nowrap;
             display: none;
+            z-index: 100;
         }
 
-        #scrollLeftBtn:hover,
-        #scrollRightBtn:hover {
-            background-color: #f8f9fa !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+        [data-tooltip]:hover:before {
+            display: block;
         }
 
-        #eventSearchInput:focus,
-        #eventSearchInput:focus-visible,
-        .input-group:focus-within {
-            outline: none !important;
-            box-shadow: none !important;
+        /* Date Picker Styles - Minimal, just for alignment */
+        .date-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        /* Simple padding adjustment - no negative margins needed */
-        .col-lg-3.col-md-12 {
-            padding-right: 0.25rem !important;
-            /* Reduce from 0.5rem to 0.25rem */
+        .date-picker-input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color, #dee2e6);
+            border-radius: 50px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            background: white;
         }
 
-        .col-lg-9.col-md-12 {
-            padding-left: 0.25rem !important;
-            /* Reduce from 0.5rem to 0.25rem */
+        .date-picker-input:focus {
+            outline: none;
+            border-color: var(--primary-color, #0a336c);
         }
     </style>
+
     <main>
-        <div class="events-calendar-page">
-            <div class="calendar-content-wrapper">
-                <div class="container-fluid h-100">
-                    <div class="row g-3 h-100 custom-gutter-row">
-                        <!-- Left Column: Hero, Mini Calendar & Filters -->
-                        <div class="col-lg-3 col-md-12 d-flex flex-column h-100">
-                            <!-- HERO SECTION -->
-                            <div class="events-calendar-header mb-2 rounded flex-shrink-0">
-                                <h1>Events Calendar</h1>
-                                <p>View all scheduled events and availability across facilities</p>
-                            </div>
+        <div class="availability-container">
+            <!-- Navigation Header -->
+            <div class="nav-header">
+                <div class="date-nav">
+                    <button class="date-nav-btn" id="prevDayBtn">←</button>
+                    <span class="current-date" id="currentDateDisplay"></span>
+                    <button class="date-nav-btn" id="nextDayBtn">→</button>
+                </div>
+                <div class="date-actions">
+                    <input type="date" id="datePicker" class="date-picker-input">
+                    <button class="today-btn" id="todayBtn">Today</button>
+                </div>
+            </div>
+            <!-- Time Range Selector -->
+            <div class="time-range-bar">
+                <button class="time-range-btn active" data-range="8-12">Morning (8 AM - 12 PM)</button>
+                <button class="time-range-btn" data-range="13-17">Afternoon (1 PM - 5 PM)</button>
+                <button class="time-range-btn" data-range="8-17">Full Day (8 AM - 5 PM)</button>
+                <button class="time-range-btn" data-range="0-24">All Day (24h)</button>
+            </div>
 
-                            <!-- Scrollable content area -->
-                            <div class="scrollable-left-column flex-grow-1 d-flex flex-column position-relative">
-                                <!-- Mini Calendar Card with Loading Overlay -->
-                                <div class="card mb-0 position-relative flex-shrink-0">
-                                    <!-- Mini Calendar Loading Overlay - INSIDE the card -->
-                                    <div id="miniCalendarLoadingOverlay" class="calendar-loading-overlay d-none">
-                                        <div class="calendar-loading-spinner"></div>
-                                        <div class="loading-text">Loading mini calendar...</div>
-                                    </div>
+            <!-- Legend -->
+            <div class="legend-bar">
+                <div class="legend-item">
+                    <div class="legend-color available"></div><span>Available</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color pending"></div><span>Pending Approval</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color booked"></div><span>Booked/Approved</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color event"></div><span>System Event</span>
+                </div>
+            </div>
 
-                                    <div class="card-body">
-                                        <div class="calendar-content">
-                                            <div class="mini-calendar">
-                                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                                    <button class="btn btn-light border-muted text-dark prev-month"
-                                                        type="button">
-                                                        <i class="bi bi-chevron-left"></i>
-                                                    </button>
-                                                    <h6 class="mb-0 month-year" id="currentMonthYear"></h6>
-                                                    <button class="btn btn-light border-muted text-dark next-month"
-                                                        type="button">
-                                                        <i class="bi bi-chevron-right"></i>
-                                                    </button>
-                                                </div>
-                                                <div class="calendar-header d-flex mb-2">
-                                                    <div class="day-header text-center flex-fill small text-muted">
-                                                        S
-                                                    </div>
-                                                    <div class="day-header text-center flex-fill small text-muted">
-                                                        M
-                                                    </div>
-                                                    <div class="day-header text-center flex-fill small text-muted">
-                                                        T
-                                                    </div>
-                                                    <div class="day-header text-center flex-fill small text-muted">
-                                                        W
-                                                    </div>
-                                                    <div class="day-header text-center flex-fill small text-muted">
-                                                        T
-                                                    </div>
-                                                    <div class="day-header text-center flex-fill small text-muted">
-                                                        F
-                                                    </div>
-                                                    <div class="day-header text-center flex-fill small text-muted">
-                                                        S
-                                                    </div>
-                                                </div>
-                                                <div class="calendar-days" id="miniCalendarDays">
-                                                    <!-- Days populated by CalendarModule -->
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+            <!-- Filters Bar -->
+            <div class="filters-bar">
+                <div class="facility-filter-group" id="facilityFilters">
+                    <span class="facility-filter-badge active" data-facility="all">All Facilities</span>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search facility or event...">
+                    <i class="bi bi-search"></i>
+                </div>
+            </div>
 
-                                <!-- Events Filter Card -->
-                                <div class="card flex-grow-1">
-                                    <div class="card-body d-flex flex-column h-100">
-                                        <div class="calendar-content flex-grow-1 d-flex flex-column">
-                                            <h6 class="fw-bold mb-3 flex-shrink-0">Event Filters</h6>
-                                            <!-- Accordion Container -->
-                                            <div class="accordion" id="eventFiltersAccordion">
-
-                                                <!-- Filter by Facility Section -->
-                                                <div class="accordion-item border-0">
-                                                    <h2 class="accordion-header">
-                                                        <button class="accordion-button py-2 px-2" type="button"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#filterFacilityCollapse" aria-expanded="true"
-                                                            aria-controls="filterFacilityCollapse">
-                                                            <span class="fw-semibold">Filter by Facility</span>
-                                                        </button>
-                                                    </h2>
-                                                    <div id="filterFacilityCollapse"
-                                                        class="accordion-collapse collapse show">
-                                                        <div class="accordion-body p-2 pt-1 d-flex flex-column">
-                                                            <div class="mb-2 small text-muted flex-shrink-0">
-                                                                Select facilities to show events:
-                                                            </div>
-
-                                                            <!-- "All Facilities" checkbox -->
-                                                            <div class="form-check mb-2 flex-shrink-0">
-                                                                <input class="form-check-input facility-filter-checkbox"
-                                                                    type="checkbox" value="all" id="filterAllFacilities"
-                                                                    checked>
-                                                                <label class="form-check-label fw-medium"
-                                                                    for="filterAllFacilities">All
-                                                                    Facilities</label>
-                                                            </div>
-
-                                                            <!-- Category/Subcategory Filter Container -->
-                                                            <div id="facilityFilterList" class="overflow-auto"
-                                                                style="max-height: 350px;">
-                                                                <!-- Will be populated by JavaScript with nested structure -->
-                                                                <div class="text-center py-3 text-muted">
-                                                                    <div class="spinner-border spinner-border-sm me-2">
-                                                                    </div>
-                                                                    Loading facilities...
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Mobile Toggle View (visible only on mobile) -->
-                        <div class="mobile-calendar-toggle d-none d-lg-none mb-3">
-                            <div class="btn-group w-100" role="group">
-                                <button type="button" class="btn btn-outline-primary active" id="showMiniCalendarBtn">
-                                    <i class="bi bi-calendar3"></i> Calendar
-                                </button>
-                                <button type="button" class="btn btn-outline-primary" id="showEventsListBtn">
-                                    <i class="bi bi-list-check"></i> Events
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Mobile Events List (visible only on mobile, hidden by default) -->
-                        <div class="mobile-events-list d-none d-lg-none" id="mobileEventsList">
-                            <div class="card">
-                                <div class="card-header bg-light">
-                                    <h6 class="mb-0">Events for <span id="mobileSelectedDate">today</span></h6>
-                                </div>
-                                <div class="card-body p-2" id="mobileEventsListContainer"
-                                    style="max-height: 400px; overflow-y: auto;">
-                                    <div class="text-center py-4 text-muted">
-                                        <i class="bi bi-calendar-event display-4"></i>
-                                        <p class="mt-2">Select a date to view events</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Column: Legend and FullCalendar -->
-                        <div class="col-lg-9 col-md-12 d-flex flex-column">
-                            <!-- FullCalendar Loading Overlay -->
-                            <div id="fullCalendarLoadingOverlay" class="calendar-loading-overlay d-none">
-                                <div class="calendar-loading-spinner"></div>
-                                <div class="loading-text">Loading calendar events...</div>
-                            </div>
-
-                            <!-- Legend + Search Row Wrapper -->
-                            <div class="d-flex align-items-center gap-2 mb-1">
-
-                                <!-- Legend Card -->
-                                <div class="card flex-grow-1" style="margin-bottom: 0;">
-                                    <!-- Remove mb-1 class, use inline style to ensure no margin -->
-                                    <div class="card-body py-1">
-                                        <div class="d-flex align-items-center">
-                                            <span class="text-muted small flex-shrink-0">
-                                                <!-- Added me-3 back for spacing -->
-                                                Filter by status:
-                                            </span>
-
-                                            <div class="position-relative flex-grow-1" style="min-width: 0;">
-                                                <!-- Legend container - make it actually scrollable with hidden scrollbar -->
-                                                <div class="d-flex gap-2 flex-nowrap px-2" id="dynamicLegend"
-                                                    style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none; min-width: 0;">
-                                                    <!-- Legend items will be rendered here -->
-                                                </div>
-
-                                                <!-- Left scroll button with Font Awesome icon -->
-                                                <button id="scrollLeftBtn"
-                                                    class="btn btn-sm btn-light border shadow-sm position-absolute top-50 start-0 translate-middle-y"
-                                                    style="z-index: 10; display: none; margin-left: -12px; width: 24px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                                                    <i class="fas fa-chevron-left"></i>
-                                                </button>
-
-                                                <!-- Right scroll button with Font Awesome icon -->
-                                                <button id="scrollRightBtn"
-                                                    class="btn btn-sm btn-light border shadow-sm position-absolute top-50 end-0 translate-middle-y"
-                                                    style="z-index: 10; display: none; margin-right: -12px; width: 24px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                                                    <i class="fas fa-chevron-right"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Search Bar -->
-                                <div class="flex-shrink-0" style="width: 250px;">
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text bg-white border-end-0">
-                                            <i class="bi bi-search"></i>
-                                        </span>
-                                        <input type="text" id="eventSearchInput" class="form-control border-start-0 ps-0"
-                                            placeholder="Search by title or date..." autocomplete="off">
-                                        <button class="btn btn-light border-0 text-secondary" type="button"
-                                            id="clearSearchBtn" title="Clear search">
-                                            <i class="bi bi-x-lg"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            <!-- Main Calendar Card - SIMPLIFIED -->
-                            <div class="card flex-grow-1 d-flex flex-column">
-                                <div class="card-body p-3 d-flex flex-column position-relative">
-                                    <!-- Search Results Container (initially hidden) -->
-                                    <div id="searchResultsContainer"
-                                        class="position-absolute top-0 start-0 w-100 h-100 bg-white p-4 d-none"
-                                        style="z-index: 1000; overflow-y: auto;">
-                                        <div
-                                            class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                                            <button class="btn btn-sm border-0 bg-transparent" id="backToCalendarBtn">
-                                                <i class="fa-solid fa-arrow-left me-1"></i>
-                                                Back to Calendar
-                                            </button>
-                                            <p class="mb-0">
-                                                <i class="bi bi-search"></i>
-                                                Search Results
-                                            </p>
-
-                                        </div>
-                                        <div id="searchResultsList" class="mt-3">
-                                            <!-- Results will be populated here -->
-                                        </div>
-                                    </div>
-
-                                    <!-- Calendar Container -->
-                                    <div id="userFullCalendar" class="flex-grow-1"></div>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Main Matrix View -->
+            <div class="matrix-wrapper" id="matrixWrapper">
+                <div class="availability-matrix" id="availabilityMatrix">
+                    <div class="loading-overlay">
+                        <div class="loading-spinner"></div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Calendar Event Modal (will be dynamically injected by CalendarModule) -->
-        <div id="calendarEventModalContainer"></div>
     </main>
-@endsection
 
-@section('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-    <script src="{{ asset('js/public/calendar.js') }}"></script>
+    <!-- Event Modal -->
+    <div class="modal fade event-modal" id="eventModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eventModalTitle">Event Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="eventModalBody">
+                    <!-- Dynamic content -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Global variables
-        let eventCalendarInstance = null;
-        let eventCalendarInitialized = false;
-        let facilitiesLoaded = false;
-        let miniCalendarLoaded = false;
-        let fullCalendarLoaded = false;
-        let activeStatusFilters = [];
+        // ============================================
+        // AVAILABILITY MATRIX CONTROLLER
+        // ============================================
 
-        function updateScrollButtons() {
-            const legend = document.getElementById('dynamicLegend');
-            const scrollLeftBtn = document.getElementById('scrollLeftBtn');
-            const scrollRightBtn = document.getElementById('scrollRightBtn');
+        class AvailabilityMatrix {
+            constructor() {
+                this.currentDate = new Date();
+                this.timeRange = '8-17'; // Default: 8 AM - 5 PM
+                this.facilities = [];
+                this.requisitions = [];
+                this.calendarEvents = [];
+                this.selectedFacility = 'all';
+                this.searchQuery = '';
+                this.isLoading = false;
 
-            // Guard clause - if any element is missing, exit
-            if (!legend || !scrollLeftBtn || !scrollRightBtn) return;
+                // Remove seconds from time strings for consistency
+                this.timeFormat = 'H:i';
 
-            scrollLeftBtn.style.display = legend.scrollLeft > 0 ? 'flex' : 'none';
-            scrollRightBtn.style.display = legend.scrollLeft + legend.clientWidth < legend.scrollWidth ? 'flex' : 'none';
-        }
+                this.init();
+            }
 
-        function setupScrollButtons() {
-            const legend = document.getElementById('dynamicLegend');
-            const scrollLeftBtn = document.getElementById('scrollLeftBtn');
-            const scrollRightBtn = document.getElementById('scrollRightBtn');
+            async init() {
+                this.showLoading(true);
+                await this.loadData();
+                this.renderFacilityFilters();
+                this.renderMatrix();
+                this.attachEvents();
+                this.showLoading(false);
+            }
 
-            if (!legend || !scrollLeftBtn || !scrollRightBtn) return;
 
-            // Remove any existing event listeners by cloning and replacing
-            const newLeftBtn = scrollLeftBtn.cloneNode(true);
-            const newRightBtn = scrollRightBtn.cloneNode(true);
-            scrollLeftBtn.parentNode.replaceChild(newLeftBtn, scrollLeftBtn);
-            scrollRightBtn.parentNode.replaceChild(newRightBtn, scrollRightBtn);
 
-            // Add click handlers
-            newLeftBtn.addEventListener('click', function () {
-                // Scroll by 80% of the visible width
-                const scrollAmount = legend.clientWidth * 0.8;
-                legend.scrollBy({
-                    left: -scrollAmount,
-                    behavior: 'smooth'
-                });
+            async loadData() {
+                try {
+                    const dateStr = this.formatDate(this.currentDate);
 
-                // Update button states after scrolling
-                setTimeout(updateScrollButtons, 300);
-            });
+                    // Fetch facilities, requisitions, and calendar events in parallel
+                    const [facilitiesRes, requisitionsRes, calendarEventsRes] = await Promise.all([
+                        fetch('/api/facilities'),
+                        fetch(`/api/requisition-forms/calendar-events`),
+                        fetch('/api/calendar-events/all')
+                    ]);
 
-            newRightBtn.addEventListener('click', function () {
-                // Scroll by 80% of the visible width
-                const scrollAmount = legend.clientWidth * 0.8;
-                legend.scrollBy({
-                    left: scrollAmount,
-                    behavior: 'smooth'
-                });
+                    const facilitiesData = await facilitiesRes.json();
+                    const requisitionsData = await requisitionsRes.json();
+                    const calendarEventsData = await calendarEventsRes.json();
 
-                // Update button states after scrolling
-                setTimeout(updateScrollButtons, 300);
-            });
+                    // Process facilities
+                    this.facilities = facilitiesData.data || facilitiesData || [];
 
-            // Mouse wheel scrolling WITHOUT shift key requirement
-            legend.addEventListener('wheel', function (e) {
-                // Check if there's horizontal scrollable content
-                const canScrollLeft = this.scrollLeft > 0;
-                const canScrollRight = this.scrollLeft + this.clientWidth < this.scrollWidth;
-
-                // Only handle horizontal scrolling if content can scroll in that direction
-                if ((e.deltaY > 0 && canScrollRight) || (e.deltaY < 0 && canScrollLeft)) {
-                    e.preventDefault(); // Prevent page from scrolling vertically
-
-                    // Scroll horizontally based on wheel movement
-                    this.scrollBy({
-                        left: e.deltaY > 0 ? 100 : -100,
-                        behavior: 'auto'
+                    // Process requisitions (filter for current date and active statuses)
+                    const requisitions = requisitionsData.data || requisitionsData || [];
+                    this.requisitions = requisitions.filter(req => {
+                        const startDate = req.start?.split('T')[0] || req.extendedProps?.start_date;
+                        const endDate = req.end?.split('T')[0] || req.extendedProps?.end_date;
+                        const currentDateStr = this.formatDate(this.currentDate);
+                        return currentDateStr >= startDate && currentDateStr <= endDate;
                     });
 
-                    // Update button states after wheel scroll
-                    updateScrollButtons();
+                    // Process calendar events
+                    const calendarEvents = calendarEventsData.data || calendarEventsData || [];
+                    this.calendarEvents = calendarEvents.filter(event => {
+                        const startDate = event.schedule?.start_date;
+                        const endDate = event.schedule?.end_date;
+                        const currentDateStr = this.formatDate(this.currentDate);
+                        return currentDateStr >= startDate && currentDateStr <= endDate;
+                    });
+
+                    console.log(`Loaded: ${this.facilities.length} facilities, ${this.requisitions.length} requisitions, ${this.calendarEvents.length} calendar events`);
+
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    this.showError('Failed to load availability data');
                 }
-            }, { passive: false }); // passive: false allows preventDefault()
-        }
-
-
-        document.addEventListener("DOMContentLoaded", function () {
-
-            const legend = document.getElementById('dynamicLegend');
-
-            // Only set up event listener if legend exists
-            if (legend) {
-                legend.addEventListener('scroll', updateScrollButtons);
-                updateScrollButtons(); // Initial call to set correct button states
-
-                // Setup the scroll buttons click handlers
-                setupScrollButtons();
-
-                // Add a small delay to ensure content is rendered
-                setTimeout(updateScrollButtons, 500);
             }
 
-            // Initialize the calendar
-            initEventsCalendar();
+            setupDatePicker() {
+                const datePicker = document.getElementById('datePicker');
+                if (!datePicker) return;
 
-            // Single resize handler with proper throttling
-            let resizeTimer;
-            window.addEventListener('resize', function () {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(function () {
-                    if (eventCalendarInstance && eventCalendarInstance.calendar) {
-                        eventCalendarInstance.calendar.updateSize();
+                // Set initial value to current date in YYYY-MM-DD format
+                datePicker.value = this.formatDate(this.currentDate);
+
+                // Add change event listener
+                datePicker.addEventListener('change', (e) => {
+                    const selectedDate = new Date(e.target.value);
+                    if (!isNaN(selectedDate.getTime())) {
+                        this.currentDate = selectedDate;
+                        this.refresh();
                     }
-                    // Also update scroll buttons on resize
-                    updateScrollButtons();
-                }, 100);
-            });
-        });
-
-        function loadMobileEventsList() {
-            const container = document.getElementById('mobileEventsListContainer');
-            const selectedDateSpan = document.getElementById('mobileSelectedDate');
-
-            if (!eventCalendarInstance || !eventCalendarInstance.filteredEvents) {
-                container.innerHTML = '<div class="text-center py-4 text-muted">No events loaded</div>';
-                return;
+                });
             }
 
-            // Get today's date or currently selected date
-            const today = new Date();
-            const events = getEventsForDate(today);
+            getTimeSlots() {
+                const slots = [];
+                const [startHour, endHour] = this.timeRange.split('-').map(Number);
 
-            selectedDateSpan.textContent = today.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric'
-            });
+                // Generate 30-minute intervals
+                for (let hour = startHour; hour < endHour; hour++) {
+                    slots.push(`${hour.toString().padStart(2, '0')}:00`);
+                    slots.push(`${hour.toString().padStart(2, '0')}:30`);
+                }
 
-            displayMobileEvents(events);
-        }
-
-        function loadMobileEventsForDate(day, monthYear) {
-            const container = document.getElementById('mobileEventsListContainer');
-            const selectedDateSpan = document.getElementById('mobileSelectedDate');
-
-            // Parse the selected date
-            const [month, year] = monthYear.split(' ');
-            const dateStr = `${month} ${day}, ${year}`;
-            const selectedDate = new Date(dateStr);
-
-            selectedDateSpan.textContent = dateStr;
-
-            const events = getEventsForDate(selectedDate);
-            displayMobileEvents(events);
-        }
-
-        function getEventsForDate(date) {
-            if (!eventCalendarInstance || !eventCalendarInstance.filteredEvents) return [];
-
-            const dateStr = date.toISOString().split('T')[0];
-
-            return eventCalendarInstance.filteredEvents.filter(event => {
-                if (!event || !event.start) return false;
-
-                const eventStart = new Date(event.start);
-                const eventStartStr = eventStart.toISOString().split('T')[0];
-                const eventEndStr = event.end ? new Date(event.end).toISOString().split('T')[0] : eventStartStr;
-
-                return dateStr >= eventStartStr && dateStr <= eventEndStr;
-            });
-        }
-
-        function displayMobileEvents(events) {
-            const container = document.getElementById('mobileEventsListContainer');
-
-            if (events.length === 0) {
-                container.innerHTML = `
-                <div class="text-center py-5">
-                    <i class="bi bi-calendar-x display-4 text-muted"></i>
-                    <p class="mt-2 text-muted">No events scheduled</p>
-                </div>
-            `;
-                return;
+                return slots;
             }
 
-            // Sort events by time
-            events.sort((a, b) => new Date(a.start) - new Date(b.start));
+            getStatusForTimeSlot(facilityId, timeSlot) {
+                // Check system events first (these override everything)
+                const eventAtSlot = this.calendarEvents.find(event => {
+                    const eventStartTime = event.schedule?.start_time?.substring(0, 5);
+                    const eventEndTime = event.schedule?.end_time?.substring(0, 5);
+                    return eventStartTime <= timeSlot && eventEndTime > timeSlot;
+                });
 
-            let html = '';
-            events.forEach(event => {
-                const eventType = event.extendedProps?.eventType || 'requisition';
-                const startTime = event.start ? new Date(event.start).toLocaleTimeString([], {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                }) : 'All day';
+                if (eventAtSlot) {
+                    return {
+                        status: 'event',
+                        text: '📅 Event',
+                        event: eventAtSlot,
+                        tooltip: eventAtSlot.event_name
+                    };
+                }
 
-                const endTime = event.end ? new Date(event.end).toLocaleTimeString([], {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                }) : '';
+                // Check requisitions for this facility
+                const requisitionAtSlot = this.requisitions.find(req => {
+                    const reqFacilities = req.extendedProps?.facilities || [];
+                    const matchesFacility = reqFacilities.some(f =>
+                        String(f.facility_id) === String(facilityId)
+                    );
 
-                const facilities = event.extendedProps?.facilities || [];
-                const facilityNames = facilities.map(f => f.name).join(', ');
+                    if (!matchesFacility) return false;
 
-                html += `
-                <div class="card mb-2 mobile-event-item" data-event-id="${event.id}" style="cursor: pointer;">
-                    <div class="card-body p-2">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1">${event.title || 'Untitled'}</h6>
-                                <div class="small">
-                                    <span class="badge ${eventType === 'calendar_event' ? 'bg-success' : ''}" 
-                                          style="${eventType !== 'calendar_event' ? 'background-color: ' + (event.color || '#007bff') : ''}">
-                                        ${eventType === 'calendar_event' ? 'Calendar' : (event.extendedProps?.status || 'Event')}
-                                    </span>
-                                    <span class="ms-2">
-                                        <i class="bi bi-clock"></i> ${startTime} ${endTime ? '- ' + endTime : ''}
-                                    </span>
-                                </div>
-                                ${facilityNames ? `
-                                    <div class="small text-muted mt-1">
-                                        <i class="bi bi-building"></i> ${facilityNames}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
+                    const reqStartTime = req.start?.substring(11, 16) || req.extendedProps?.start_time?.substring(0, 5);
+                    const reqEndTime = req.end?.substring(11, 16) || req.extendedProps?.end_time?.substring(0, 5);
+
+                    return reqStartTime <= timeSlot && reqEndTime > timeSlot;
+                });
+
+                if (requisitionAtSlot) {
+                    const statusName = requisitionAtSlot.extendedProps?.status || 'Pending';
+                    const isApproved = statusName === 'Approved';
+                    const isPending = ['Pending', 'For Approval', 'Under Review'].includes(statusName);
+
+                    if (isApproved) {
+                        return {
+                            status: 'booked',
+                            text: '🔴 Booked',
+                            event: requisitionAtSlot,
+                            tooltip: requisitionAtSlot.title
+                        };
+                    } else if (isPending) {
+                        return {
+                            status: 'pending',
+                            text: '🟡 Pending',
+                            event: requisitionAtSlot,
+                            tooltip: `${requisitionAtSlot.title} (Pending Approval)`
+                        };
+                    }
+                }
+
+                return {
+                    status: 'available',
+                    text: '✅ Available',
+                    event: null,
+                    tooltip: 'Click to book this slot'
+                };
+            }
+
+            renderMatrix() {
+                const container = document.getElementById('availabilityMatrix');
+                const timeSlots = this.getTimeSlots();
+
+                if (this.facilities.length === 0) {
+                    container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-building"></i>
+                        <p>No facilities available</p>
                     </div>
-                </div>
-            `;
-            });
-
-            container.innerHTML = html;
-
-            // Add click handlers
-            document.querySelectorAll('.mobile-event-item').forEach(item => {
-                item.addEventListener('click', function () {
-                    const eventId = this.dataset.eventId;
-                    const event = eventCalendarInstance.filteredEvents.find(e => e.id === eventId);
-                    if (event && eventCalendarInstance) {
-                        eventCalendarInstance.showEventModal({ extendedProps: event.extendedProps, ...event });
-                    }
-                });
-            });
-        }
-
-        function initEventsCalendar() {
-            // Show loading for both calendars
-            showMiniCalendarLoading(true);
-            showFullCalendarLoading(true);
-
-            // Reset loaded flags
-            miniCalendarLoaded = false;
-            fullCalendarLoaded = false;
-
-            // Initialize CalendarModule for public view
-            eventCalendarInstance = new CalendarModule({
-                isAdmin: false,
-                apiEndpoint: '/api/requisition-forms/calendar-events',
-                calendarEventsEndpoint: '/api/calendar-events',
-                containerId: 'userFullCalendar',
-                miniCalendarContainerId: 'miniCalendarDays',
-                monthYearId: 'currentMonthYear',
-                eventModalId: 'calendarEventModal',
-                searchResultsContainerId: 'searchResultsContainer',
-                searchResultsListId: 'searchResultsList',
-                searchInputId: 'eventSearchInput',
-                onMiniCalendarInitialized: function () {
-                    miniCalendarLoaded = true;
-                    showMiniCalendarLoading(false);
-                },
-                onFullCalendarInitialized: function () {
-                    fullCalendarLoaded = true;
-                    showFullCalendarLoading(false);
-                }
-            });
-
-            // Load facilities for the filter
-            loadFacilitiesForCalendar().then(() => {
-                return eventCalendarInstance.initialize();
-            }).then(() => {
-                eventCalendarInitialized = true;
-
-                if (window.innerWidth < 992 && eventCalendarInstance && eventCalendarInstance.calendar) {
-                    setTimeout(() => {
-                        eventCalendarInstance.calendar.updateSize();
-                    }, 300);
-                }
-            }).catch(error => {
-                console.error('Error:', error);
-                eventCalendarInstance.initialize().catch(initError => {
-                    console.error('Calendar initialization failed:', initError);
-                });
-            });
-
-            // Load and display status legend
-            loadFormStatuses();
-        }
-
-        function showMiniCalendarLoading(show) {
-            const overlay = document.getElementById('miniCalendarLoadingOverlay');
-            if (!overlay) return;
-
-            if (show) {
-                overlay.classList.remove('d-none');
-                overlay.style.display = 'flex';
-                overlay.style.opacity = '1';
-            } else {
-                overlay.style.opacity = '0';
-                setTimeout(() => {
-                    overlay.classList.add('d-none');
-                    overlay.style.display = 'none';
-                }, 300);
-            }
-        }
-
-        function showFullCalendarLoading(show) {
-            const overlay = document.getElementById('fullCalendarLoadingOverlay');
-            if (!overlay) return;
-
-            if (show) {
-                overlay.classList.remove('d-none');
-                overlay.style.display = 'flex';
-                overlay.style.opacity = '1';
-            } else {
-                overlay.style.opacity = '0';
-                setTimeout(() => {
-                    overlay.classList.add('d-none');
-                    overlay.style.display = 'none';
-                }, 300);
-            }
-        }
-        async function loadFormStatuses() {
-            try {
-                const response = await fetch('/api/form-statuses');
-                if (response.ok) {
-                    const statuses = await response.json();
-                    if (Array.isArray(statuses)) {
-                        const activeStatuses = statuses.filter(status => status.status_id <= 6);
-                        renderDynamicLegend(activeStatuses);
-                        updateScrollButtons();
-                        activeStatusFilters = activeStatuses.map(s => s.status_name);
-                        syncFilterCheckboxes();
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to load form statuses:', error);
-            }
-        }
-
-        function renderDynamicLegend(activeStatuses) {
-            const legendContainer = document.getElementById('dynamicLegend');
-            if (!legendContainer || !activeStatuses || activeStatuses.length === 0) return;
-
-            legendContainer.innerHTML = '';
-
-            activeStatuses.forEach(status => {
-                const pill = document.createElement('span');
-                pill.className = 'badge rounded-pill d-inline-flex align-items-center px-2 py-1 small';
-                pill.style.cursor = 'pointer';
-                pill.style.backgroundColor = status.color_code;
-                pill.style.color = '#fff';
-                pill.style.opacity = '1';
-                pill.style.transition = 'opacity 0.2s ease';
-                pill.setAttribute('data-status', status.status_name);
-                pill.setAttribute('role', 'button');
-                pill.setAttribute('aria-pressed', 'true');
-                pill.innerHTML = `${status.status_name}<span class="ms-2 small opacity-75">✓</span>`;
-
-                pill.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const statusName = this.getAttribute('data-status');
-                    const isActive = this.getAttribute('aria-pressed') === 'true';
-
-                    if (isActive) {
-                        this.style.opacity = '0.4';
-                        this.setAttribute('aria-pressed', 'false');
-                        this.querySelector('span').innerHTML = '✕';
-                        activeStatusFilters = activeStatusFilters.filter(s => s !== statusName);
-                    } else {
-                        this.style.opacity = '1';
-                        this.setAttribute('aria-pressed', 'true');
-                        this.querySelector('span').innerHTML = '✓';
-                        if (!activeStatusFilters.includes(statusName)) {
-                            activeStatusFilters.push(statusName);
-                        }
-                    }
-
-                    updateFilterCheckboxes(statusName, !isActive);
-                    if (eventCalendarInstance && eventCalendarInstance.calendar) {
-                        applyStatusFilters();
-                    }
-                });
-
-                legendContainer.appendChild(pill);
-                updateScrollButtons();
-            });
-        }
-
-        function updateFilterCheckboxes(statusName, checked) {
-            const checkboxes = document.querySelectorAll('.event-filter-checkbox');
-            checkboxes.forEach(cb => {
-                if (cb.value === statusName) {
-                    cb.checked = checked;
-                    const event = new Event('change', { bubbles: true });
-                    cb.dispatchEvent(event);
-                }
-            });
-        }
-
-        function syncFilterCheckboxes() {
-            const checkboxes = document.querySelectorAll('.event-filter-checkbox');
-            checkboxes.forEach(cb => {
-                cb.checked = true;
-            });
-        }
-
-        /**
-         * Update applyStatusFilters to work with the new structure
-         * Now properly handles "no facilities selected" vs "all facilities selected"
-         */
-        function applyStatusFilters() {
-            if (!eventCalendarInstance) return;
-
-            const selectedStatuses = activeStatusFilters;
-            const allFacilitiesCheckbox = document.getElementById('filterAllFacilities');
-
-            // Get selected facility IDs from checked facility checkboxes
-            let selectedFacilityIds = [];
-            let filterMode = 'all'; // 'all', 'none', or 'specific'
-
-            if (allFacilitiesCheckbox?.checked) {
-                // "All Facilities" is checked - show ALL events (no facility filtering)
-                filterMode = 'all';
-                selectedFacilityIds = [];
-            } else {
-                // Get all checked facility checkboxes
-                selectedFacilityIds = Array.from(document.querySelectorAll('.facility-checkbox:checked'))
-                    .map(cb => cb.value);
-
-                // If no facilities are checked, show NO events
-                if (selectedFacilityIds.length === 0) {
-                    filterMode = 'none';
-                } else {
-                    // Some facilities are checked - show only those
-                    filterMode = 'specific';
-                }
-            }
-
-            if (eventCalendarInstance.allEvents) {
-                const validEvents = eventCalendarInstance.allEvents.filter(e => e != null);
-
-                eventCalendarInstance.filteredEvents = validEvents.filter(event => {
-                    if (!event) return false;
-
-                    const eventType = event.extendedProps?.eventType || event.eventType || "requisition";
-
-                    // Calendar events are always shown regardless of facility filters
-                    if (eventType === "calendar_event") return true;
-
-                    // Apply status filter
-                    const eventStatus = event.extendedProps?.status;
-                    if (!selectedStatuses.includes(eventStatus)) return false;
-
-                    // Apply facility filter based on mode
-                    if (filterMode === 'none') {
-                        // No facilities selected - hide all requisition events
-                        return false;
-                    }
-
-                    if (filterMode === 'specific') {
-                        // Specific facilities selected - only show events matching those facilities
-                        const eventFacilities = event.extendedProps?.facilities || [];
-                        const hasSelectedFacility = eventFacilities.some(f =>
-                            selectedFacilityIds.includes(String(f.facility_id))
-                        );
-                        if (!hasSelectedFacility) return false;
-                    }
-
-                    // filterMode === 'all' - show all events (no facility filtering)
-                    return true;
-                });
-
-                eventCalendarInstance.updateCalendarDisplay();
-
-                // Optional: Show a message when no facilities are selected
-                if (filterMode === 'none') {
-                    console.log('No facilities selected - hiding all requisition events');
-                    // You could also show a toast notification here
-                }
-            }
-        }
-
-
-        /**
-         * Load and organize facilities by category and subcategory
-         */
-        async function loadFacilitiesForCalendar() {
-            try {
-                const response = await fetch('/api/facilities');
-                const result = await response.json();
-
-                // Get facilities array from response
-                const facilities = result.data || result;
-
-                const facilityFilterList = document.getElementById('facilityFilterList');
-                if (!facilityFilterList) return;
-
-                if (!Array.isArray(facilities) || facilities.length === 0) {
-                    facilityFilterList.innerHTML = '<div class="text-muted small p-2">No facilities available</div>';
+                `;
                     return;
                 }
 
-                // Organize facilities by category and subcategory
-                const categorizedData = organizeFacilitiesByCategory(facilities);
-
-                // Render the categorized filter list
-                renderCategorizedFilters(categorizedData, facilityFilterList);
-
-                // Setup event listeners for the new structure
-                setupCategorizedFilterListeners();
-
-                // Initialize all checkboxes to checked state
-                initializeFilterCheckboxes();
-
-                facilitiesLoaded = true;
-
-            } catch (error) {
-                console.error('Error loading facilities for calendar:', error);
-                const facilityFilterList = document.getElementById('facilityFilterList');
-                if (facilityFilterList) {
-                    facilityFilterList.innerHTML = '<div class="text-danger small p-2">Failed to load facilities</div>';
-                }
-                throw error;
-            }
-        }
-
-        /**
-         * Organize facilities into category → subcategory → facilities structure
-         */
-        function organizeFacilitiesByCategory(facilities) {
-            const categorized = {};
-
-            facilities.forEach(facility => {
-                const category = facility.category || {};
-                const subcategory = facility.subcategory || {};
-
-                const categoryId = category.category_id || 'uncategorized';
-                const categoryName = category.category_name || 'Uncategorized';
-                const subcategoryId = subcategory.subcategory_id || 'no-subcategory';
-                const subcategoryName = subcategory.subcategory_name || 'General';
-
-                // Initialize category if not exists
-                if (!categorized[categoryId]) {
-                    categorized[categoryId] = {
-                        id: categoryId,
-                        name: categoryName,
-                        subcategories: {}
-                    };
+                // Filter facilities by search
+                let filteredFacilities = this.facilities;
+                if (this.searchQuery) {
+                    const query = this.searchQuery.toLowerCase();
+                    filteredFacilities = this.facilities.filter(f =>
+                        (f.facility_name || f.name).toLowerCase().includes(query)
+                    );
                 }
 
-                // Initialize subcategory if not exists
-                if (!categorized[categoryId].subcategories[subcategoryId]) {
-                    categorized[categoryId].subcategories[subcategoryId] = {
-                        id: subcategoryId,
-                        name: subcategoryName,
-                        facilities: []
-                    };
+                // Filter by selected facility
+                if (this.selectedFacility !== 'all') {
+                    filteredFacilities = filteredFacilities.filter(f =>
+                        String(f.facility_id || f.id) === this.selectedFacility
+                    );
                 }
 
-                // Add facility to subcategory
-                categorized[categoryId].subcategories[subcategoryId].facilities.push({
-                    id: facility.facility_id || facility.id,
-                    name: facility.facility_name || facility.name,
-                    original: facility
-                });
-            });
+                if (filteredFacilities.length === 0) {
+                    container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-search"></i>
+                        <p>No facilities match your search</p>
+                    </div>
+                `;
+                    return;
+                }
 
-            return categorized;
-        }
+                let html = `
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th>Facility / Time</th>
+                            ${timeSlots.map(slot => `<th>${this.formatTime(slot)}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
+                filteredFacilities.forEach(facility => {
+                    const facilityId = facility.facility_id || facility.id;
+                    const facilityName = facility.facility_name || facility.name;
 
-        /**
-         * Render the categorized filter list with Bootstrap accordion
-         */
-        function renderCategorizedFilters(categorizedData, container) {
-            let html = '';
-            let categoryIndex = 0;
+                    html += `<tr>
+                            <td class="facility-cell" data-tooltip="${facilityName}">
+                                <strong>${this.truncate(facilityName, 25)}</strong>
+                            </td>`;
 
-            Object.values(categorizedData).forEach(category => {
-                const categoryId = `cat-${category.id}-${categoryIndex}`;
+                    timeSlots.forEach(slot => {
+                        const { status, text, event, tooltip } = this.getStatusForTimeSlot(facilityId, slot);
+                        const eventId = event?.extendedProps?.request_id || event?.event_id || '';
 
-                html += `
-                                                                <div class="category-group mb-2">
-                                                                    <div class="category-header">
-                                                                        <div class="d-flex align-items-center">
-                                                                            <button class="btn btn-sm btn-link text-decoration-none p-0 me-2" 
-                                                                                    type="button" 
-                                                                                    data-bs-toggle="collapse" 
-                                                                                    data-bs-target="#${categoryId}-subcats"
-                                                                                    aria-expanded="true">
-                                                                                <i class="bi bi-chevron-down"></i>
-                                                                            </button>
-                                                                            <div class="form-check flex-grow-1">
-                                                                                <input class="form-check-input category-checkbox" 
-                                                                                       type="checkbox" 
-                                                                                       value="${category.id}"
-                                                                                       id="cat-${category.id}"
-                                                                                       data-category-id="${category.id}"
-                                                                                       checked>
-                                                                                <label class="form-check-label fw-semibold" for="cat-${category.id}">
-                                                                                    ${category.name}
-                                                                                </label>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div class="collapse show ps-4" id="${categoryId}-subcats">
-                                                            `;
-
-                // Add subcategories
-                Object.values(category.subcategories).forEach(subcategory => {
-                    const subcatId = `${categoryId}-sub-${subcategory.id}`;
-
-                    html += `
-                                                                    <div class="subcategory-group mb-2">
-                                                                        <div class="d-flex align-items-center">
-                                                                            <button class="btn btn-sm btn-link text-decoration-none p-0 me-2" 
-                                                                                    type="button" 
-                                                                                    data-bs-toggle="collapse" 
-                                                                                    data-bs-target="#${subcatId}-facilities"
-                                                                                    aria-expanded="true">
-                                                                                <i class="bi bi-chevron-down"></i>
-                                                                            </button>
-                                                                            <div class="form-check flex-grow-1">
-                                                                                <input class="form-check-input subcategory-checkbox" 
-                                                                                       type="checkbox" 
-                                                                                       value="${subcategory.id}"
-                                                                                       id="sub-${subcategory.id}"
-                                                                                       data-category-id="${category.id}"
-                                                                                       data-subcategory-id="${subcategory.id}"
-                                                                                       checked>
-                                                                                <label class="form-check-label fw-medium small" for="sub-${subcategory.id}">
-                                                                                    ${subcategory.name}
-                                                                                </label>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <div class="collapse show ps-4" id="${subcatId}-facilities">
-                                                                            <div class="facilities-list">
-                                                                `;
-
-                    // Add facilities
-                    subcategory.facilities.forEach(facility => {
-                        const facilityId = facility.id;
-                        const facilityName = facility.name;
-                        const displayName = facilityName.length > 30 ?
-                            facilityName.substring(0, 30) + '...' : facilityName;
-
-                        html += `
-                                                                        <div class="form-check mb-1">
-                                                                            <input class="form-check-input facility-checkbox individual-facility" 
-                                                                                   type="checkbox" 
-                                                                                   value="${facilityId}"
-                                                                                   id="fac-${facilityId}"
-                                                                                   data-category-id="${category.id}"
-                                                                                   data-subcategory-id="${subcategory.id}"
-                                                                                   data-facility-name="${facilityName}"
-                                                                                   checked>
-                                                                            <label class="form-check-label small" for="fac-${facilityId}" 
-                                                                                   title="${facilityName}">
-                                                                                ${displayName}
-                                                                            </label>
-                                                                        </div>
-                                                                    `;
+                        html += `<td>
+                                <div class="status-card ${status}" 
+                                     data-status="${status}"
+                                     data-facility="${facilityId}"
+                                     data-time="${slot}"
+                                     data-event-id="${eventId}"
+                                     data-event-type="${event?.extendedProps?.eventType || 'requisition'}"
+                                     data-tooltip="${tooltip}">
+                                    ${text}
+                                </div>
+                             </td>`;
                     });
 
-                    html += `
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                `;
+                    html += `</tr>`;
                 });
 
-                html += `
-                                                                    </div>
-                                                                </div>
-                                                            `;
+                html += `</tbody></table>`;
+                container.innerHTML = html;
 
-                categoryIndex++;
-            });
+                this.updateDateDisplay();
+                this.attachSlotClickHandlers();
+            }
 
-            container.innerHTML = html;
-        }
+            attachSlotClickHandlers() {
+                const container = document.getElementById('availabilityMatrix');
 
-        /**
-         * Initialize all checkboxes to checked state
-         */
-        function initializeFilterCheckboxes() {
-            // Check all facility checkboxes
-            document.querySelectorAll('.facility-checkbox').forEach(cb => {
-                cb.checked = true;
-            });
+                container.querySelectorAll('.status-card.available').forEach(card => {
+                    card.removeEventListener('click', this.handleSlotClick);
+                    card.addEventListener('click', this.handleSlotClick.bind(this));
+                });
 
-            // Update subcategory states
-            document.querySelectorAll('.subcategory-checkbox').forEach(cb => {
-                const subcategoryId = cb.dataset.subcategoryId;
-                updateSubcategoryCheckboxState(subcategoryId);
-            });
+                container.querySelectorAll('.status-card.booked, .status-card.pending, .status-card.event').forEach(card => {
+                    card.removeEventListener('click', this.handleEventClick);
+                    card.addEventListener('click', this.handleEventClick.bind(this));
+                });
+            }
 
-            // Update category states
-            document.querySelectorAll('.category-checkbox').forEach(cb => {
-                const categoryId = cb.dataset.categoryId;
-                updateCategoryCheckboxState(categoryId);
-            });
+            handleSlotClick(e) {
+                const card = e.currentTarget;
+                const facilityId = card.dataset.facility;
+                const timeSlot = card.dataset.time;
+                const facility = this.facilities.find(f => (f.facility_id || f.id) == facilityId);
 
-            // Update All Facilities checkbox
-            updateAllFacilitiesCheckbox();
-        }
+                this.showBookingModal({
+                    facilityId: facilityId,
+                    facilityName: facility?.facility_name || facility?.name,
+                    date: this.currentDate,
+                    time: timeSlot
+                });
+            }
 
-        /**
-         * Setup event listeners for categorized filters
-         */
-        function setupCategorizedFilterListeners() {
-            const allFacilitiesCheckbox = document.getElementById('filterAllFacilities');
+            handleEventClick(e) {
+                const card = e.currentTarget;
+                const eventId = card.dataset.eventId;
+                const eventType = card.dataset.eventType;
 
-            // Category checkboxes
-            document.querySelectorAll('.category-checkbox').forEach(cb => {
-                // Remove existing listeners by cloning
-                const newCb = cb.cloneNode(true);
-                cb.parentNode.replaceChild(newCb, cb);
+                if (eventId) {
+                    this.showEventDetails(eventId, eventType);
+                }
+            }
 
-                newCb.addEventListener('change', function (e) {
-                    e.stopPropagation(); // Prevent event bubbling
-                    const categoryId = this.dataset.categoryId;
-                    const isChecked = this.checked;
+            async showEventDetails(eventId, eventType) {
+                let eventData = null;
 
-                    // Check/uncheck all subcategories in this category
-                    document.querySelectorAll(`.subcategory-checkbox[data-category-id="${categoryId}"]`).forEach(subCb => {
-                        subCb.checked = isChecked;
-                        // Update facilities under this subcategory
-                        const subcategoryId = subCb.dataset.subcategoryId;
-                        document.querySelectorAll(`.facility-checkbox[data-subcategory-id="${subcategoryId}"]`).forEach(facCb => {
-                            facCb.checked = isChecked;
-                        });
+                if (eventType === 'calendar_event') {
+                    eventData = this.calendarEvents.find(e => e.event_id == eventId);
+                } else {
+                    eventData = this.requisitions.find(r =>
+                        r.extendedProps?.request_id == eventId || r.request_id == eventId
+                    );
+                }
+
+                if (!eventData) return;
+
+                const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+                const modalBody = document.getElementById('eventModalBody');
+                const modalTitle = document.getElementById('eventModalTitle');
+
+                if (eventType === 'calendar_event') {
+                    modalTitle.textContent = eventData.event_name || 'Calendar Event';
+                    modalBody.innerHTML = `
+                    <div class="event-detail-row">
+                        <div class="event-detail-label">Description</div>
+                        <div class="event-detail-value">${eventData.description || 'No description'}</div>
+                    </div>
+                    <div class="event-detail-row">
+                        <div class="event-detail-label">Schedule</div>
+                        <div class="event-detail-value">${eventData.schedule?.display || 'N/A'}</div>
+                    </div>
+                    <div class="event-detail-row">
+                        <div class="event-detail-label">Type</div>
+                        <div class="event-detail-value">${eventData.display_name || eventData.event_type}</div>
+                    </div>
+                `;
+                } else {
+                    modalTitle.textContent = eventData.title || 'Event Details';
+                    const props = eventData.extendedProps || eventData;
+                    modalBody.innerHTML = `
+                    <div class="event-detail-row">
+                        <div class="event-detail-label">Requester</div>
+                        <div class="event-detail-value">${props.requester || 'N/A'}</div>
+                    </div>
+                    <div class="event-detail-row">
+                        <div class="event-detail-label">Purpose</div>
+                        <div class="event-detail-value">${props.purpose || 'N/A'}</div>
+                    </div>
+                    <div class="event-detail-row">
+                        <div class="event-detail-label">Status</div>
+                        <div class="event-detail-value">
+                            <span class="badge" style="background-color: ${eventData.color || '#007bff'}">
+                                ${props.status || 'Unknown'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="event-detail-row">
+                        <div class="event-detail-label">Participants</div>
+                        <div class="event-detail-value">${props.num_participants || 0}</div>
+                    </div>
+                    <div class="event-detail-row">
+                        <div class="event-detail-label">Facilities</div>
+                        <div class="event-detail-value">${(props.facilities || []).map(f => f.name).join(', ') || 'N/A'}</div>
+                    </div>
+                `;
+                }
+
+                modal.show();
+            }
+
+            showBookingModal(data) {
+                // Implement booking modal logic here
+                // This would open a form to submit a requisition
+                console.log('Booking slot:', data);
+                alert(`Booking request for ${data.facilityName}\nDate: ${this.formatDisplayDate(data.date)}\nTime: ${this.formatTime(data.time)}\n\nThis feature will open the requisition form.`);
+            }
+
+            renderFacilityFilters() {
+                const container = document.getElementById('facilityFilters');
+
+                // Keep the "All Facilities" option
+                let html = `<span class="facility-filter-badge active" data-facility="all">All Facilities</span>`;
+
+                // Add top 10 facilities (to avoid overwhelming the UI)
+                const topFacilities = this.facilities.slice(0, 12);
+                topFacilities.forEach(facility => {
+                    const facilityId = facility.facility_id || facility.id;
+                    const facilityName = facility.facility_name || facility.name;
+                    html += `<span class="facility-filter-badge" data-facility="${facilityId}">${this.truncate(facilityName, 20)}</span>`;
+                });
+
+                container.innerHTML = html;
+
+                // Attach click handlers
+                container.querySelectorAll('.facility-filter-badge').forEach(badge => {
+                    badge.addEventListener('click', () => {
+                        container.querySelectorAll('.facility-filter-badge').forEach(b => b.classList.remove('active'));
+                        badge.classList.add('active');
+                        this.selectedFacility = badge.dataset.facility;
+                        this.renderMatrix();
                     });
-
-                    // Reset indeterminate state
-                    this.indeterminate = false;
-
-                    updateAllFacilitiesCheckbox();
-                    if (eventCalendarInstance) {
-                        eventCalendarInstance.handleFacilityFilterChange();
-                    }
                 });
-            });
+            }
 
-            // Subcategory checkboxes
-            document.querySelectorAll('.subcategory-checkbox').forEach(cb => {
-                // Remove existing listeners by cloning
-                const newCb = cb.cloneNode(true);
-                cb.parentNode.replaceChild(newCb, cb);
+            attachEvents() {
+                // Date navigation
+                document.getElementById('prevDayBtn')?.addEventListener('click', () => {
+                    this.currentDate.setDate(this.currentDate.getDate() - 1);
+                    this.refresh();
+                });
 
-                newCb.addEventListener('change', function (e) {
-                    e.stopPropagation(); // Prevent event bubbling
-                    const subcategoryId = this.dataset.subcategoryId;
-                    const categoryId = this.dataset.categoryId;
-                    const isChecked = this.checked;
+                document.getElementById('nextDayBtn')?.addEventListener('click', () => {
+                    this.currentDate.setDate(this.currentDate.getDate() + 1);
+                    this.refresh();
+                });
 
-                    // Check/uncheck all facilities in this subcategory
-                    document.querySelectorAll(`.facility-checkbox[data-subcategory-id="${subcategoryId}"]`).forEach(facCb => {
-                        facCb.checked = isChecked;
+                document.getElementById('todayBtn')?.addEventListener('click', () => {
+                    this.currentDate = new Date();
+                    this.refresh();
+                });
+
+                // Setup date picker
+                this.setupDatePicker();
+
+                // Time range selector
+                document.querySelectorAll('.time-range-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.timeRange = btn.dataset.range;
+                        this.refresh();
                     });
-
-                    // Reset indeterminate state
-                    this.indeterminate = false;
-
-                    // Update parent category checkbox state
-                    updateCategoryCheckboxState(categoryId);
-                    updateAllFacilitiesCheckbox();
-
-                    if (eventCalendarInstance) {
-                        eventCalendarInstance.handleFacilityFilterChange();
-                    }
                 });
-            });
 
-            // Facility checkboxes
-            document.querySelectorAll('.facility-checkbox').forEach(cb => {
-                // Remove existing listeners by cloning
-                const newCb = cb.cloneNode(true);
-                cb.parentNode.replaceChild(newCb, cb);
-
-                newCb.addEventListener('change', function (e) {
-                    e.stopPropagation(); // Prevent event bubbling
-                    const subcategoryId = this.dataset.subcategoryId;
-                    const categoryId = this.dataset.categoryId;
-
-                    // Update subcategory checkbox state
-                    updateSubcategoryCheckboxState(subcategoryId);
-                    // Update category checkbox state
-                    updateCategoryCheckboxState(categoryId);
-                    updateAllFacilitiesCheckbox();
-
-                    if (eventCalendarInstance) {
-                        eventCalendarInstance.handleFacilityFilterChange();
-                    }
+                // Search input
+                const searchInput = document.getElementById('searchInput');
+                let searchTimeout;
+                searchInput?.addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        this.searchQuery = e.target.value;
+                        this.renderMatrix();
+                    }, 300);
                 });
-            });
+            }
 
-            // All Facilities checkbox
-            if (allFacilitiesCheckbox) {
-                // Remove existing listeners by cloning
-                const newAllCb = allFacilitiesCheckbox.cloneNode(true);
-                allFacilitiesCheckbox.parentNode.replaceChild(newAllCb, allFacilitiesCheckbox);
+async refresh() {
+    this.showLoading(true);
+    await this.loadData();
+    this.renderMatrix();
+    this.showLoading(false);
+    
+    // Update date picker value
+    const datePicker = document.getElementById('datePicker');
+    if (datePicker) {
+        datePicker.value = this.formatDate(this.currentDate);
+    }
+}
 
-                newAllCb.addEventListener('change', function () {
-                    const isChecked = this.checked;
+            showLoading(show) {
+                const container = document.getElementById('availabilityMatrix');
+                if (show) {
+                    container.innerHTML = `
+                    <div class="loading-overlay">
+                        <div class="loading-spinner"></div>
+                    </div>
+                `;
+                }
+            }
 
-                    if (isChecked) {
-                        // Check ALL checkboxes when "All Facilities" is checked
-                        document.querySelectorAll('.category-checkbox, .subcategory-checkbox, .facility-checkbox').forEach(cb => {
-                            cb.checked = true;
-                            cb.indeterminate = false;
-                        });
-                    } else {
-                        // Uncheck ALL checkboxes when "All Facilities" is unchecked
-                        document.querySelectorAll('.category-checkbox, .subcategory-checkbox, .facility-checkbox').forEach(cb => {
-                            cb.checked = false;
-                            cb.indeterminate = false;
-                        });
-                    }
+            showError(message) {
+                const container = document.getElementById('availabilityMatrix');
+                container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <p>${message}</p>
+                    <button class="btn btn-primary btn-sm mt-3" onclick="location.reload()">Retry</button>
+                </div>
+            `;
+            }
 
-                    if (eventCalendarInstance) {
-                        eventCalendarInstance.handleFacilityFilterChange();
-                    }
-                });
+            updateDateDisplay() {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById('currentDateDisplay').textContent =
+                    this.currentDate.toLocaleDateString('en-US', options);
+            }
+
+            formatDate(date) {
+                return date.toISOString().split('T')[0];
+            }
+
+            formatDisplayDate(date) {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+
+            formatTime(timeStr) {
+                const [hour, minute] = timeStr.split(':');
+                const hour12 = hour % 12 || 12;
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                return minute === '00' ? `${hour12}${ampm}` : `${hour12}:${minute}${ampm}`;
+            }
+
+            truncate(str, maxLen) {
+                if (!str) return '';
+                return str.length > maxLen ? str.substring(0, maxLen - 3) + '...' : str;
             }
         }
 
-        /**
-         * Update category checkbox based on its subcategories state
-         */
-        function updateCategoryCheckboxState(categoryId) {
-            const subcategoryCheckboxes = document.querySelectorAll(`.subcategory-checkbox[data-category-id="${categoryId}"]`);
-            const categoryCheckbox = document.querySelector(`.category-checkbox[data-category-id="${categoryId}"]`);
-
-            if (!categoryCheckbox || subcategoryCheckboxes.length === 0) return;
-
-            const allChecked = Array.from(subcategoryCheckboxes).every(cb => cb.checked);
-            const someChecked = Array.from(subcategoryCheckboxes).some(cb => cb.checked);
-
-            categoryCheckbox.checked = allChecked;
-            categoryCheckbox.indeterminate = !allChecked && someChecked;
-        }
-
-        /**
-         * Update subcategory checkbox based on its facilities state
-         */
-        function updateSubcategoryCheckboxState(subcategoryId) {
-            const facilityCheckboxes = document.querySelectorAll(`.facility-checkbox[data-subcategory-id="${subcategoryId}"]`);
-            const subcategoryCheckbox = document.querySelector(`.subcategory-checkbox[data-subcategory-id="${subcategoryId}"]`);
-
-            if (!subcategoryCheckbox || facilityCheckboxes.length === 0) return;
-
-            const allChecked = Array.from(facilityCheckboxes).every(cb => cb.checked);
-            const someChecked = Array.from(facilityCheckboxes).some(cb => cb.checked);
-
-            subcategoryCheckbox.checked = allChecked;
-            subcategoryCheckbox.indeterminate = !allChecked && someChecked;
-        }
-
-        /**
-         * Update All Facilities checkbox based on individual selections
-         */
-        function updateAllFacilitiesCheckbox() {
-            const allFacilitiesCheckbox = document.getElementById('filterAllFacilities');
-            const facilityCheckboxes = document.querySelectorAll('.facility-checkbox');
-
-            if (!allFacilitiesCheckbox || facilityCheckboxes.length === 0) return;
-
-            const allChecked = Array.from(facilityCheckboxes).every(cb => cb.checked);
-            const anyChecked = Array.from(facilityCheckboxes).some(cb => cb.checked);
-
-            if (allChecked) {
-                // All facilities are checked -> check "All Facilities"
-                allFacilitiesCheckbox.checked = true;
-                allFacilitiesCheckbox.indeterminate = false;
-            } else if (!anyChecked) {
-                // No facilities are checked -> uncheck "All Facilities"
-                allFacilitiesCheckbox.checked = false;
-                allFacilitiesCheckbox.indeterminate = false;
-            } else {
-                // Some facilities are checked -> indeterminate state
-                allFacilitiesCheckbox.checked = false;
-                allFacilitiesCheckbox.indeterminate = true;
-            }
-        }
-        // Fallback function for legacy compatibility
-        window.hideCalendarLoadingOverlay = function () {
-            showMiniCalendarLoading(false);
-            showFullCalendarLoading(false);
-        };
-
-        // Add this after your existing JavaScript
-        function adjustCalendarHeight() {
-            const mainElement = document.querySelector('main');
-            const header = document.querySelector('.top-header-bar');
-            const navbar = document.querySelector('.main-navbar');
-            const footer = document.querySelector('.footer-container');
-            const eventsCalendarPage = document.querySelector('.events-calendar-page');
-
-            if (!mainElement || !eventsCalendarPage) return;
-
-            // Calculate total header height (top header + navbar)
-            const headerHeight = (header?.offsetHeight || 0) + (navbar?.offsetHeight || 0);
-            const footerHeight = footer?.offsetHeight || 0;
-
-            // Set main to fill viewport minus header and footer
-            const viewportHeight = window.innerHeight;
-            const availableHeight = viewportHeight - headerHeight - footerHeight;
-
-            mainElement.style.height = availableHeight + 'px';
-            mainElement.style.minHeight = availableHeight + 'px';
-            mainElement.style.maxHeight = availableHeight + 'px';
-
-            // Force calendar to update its size
-            if (eventCalendarInstance && eventCalendarInstance.calendar) {
-                setTimeout(() => {
-                    eventCalendarInstance.calendar.updateSize();
-                }, 50);
-            }
-        }
-
-        // Call on load and resize
-        window.addEventListener('load', function () {
-            adjustCalendarHeight();
-
-            // Small delay for any dynamic content
-            setTimeout(adjustCalendarHeight, 100);
-            setTimeout(adjustCalendarHeight, 300);
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            window.availabilityMatrix = new AvailabilityMatrix();
         });
-
-        window.addEventListener('resize', function () {
-            // Debounce resize events
-            clearTimeout(window.resizeTimer);
-            window.resizeTimer = setTimeout(adjustCalendarHeight, 100);
-        });
-
-        // Also call when filters expand/collapse (they might change height)
-        document.addEventListener('shown.bs.collapse', adjustCalendarHeight);
-        document.addEventListener('hidden.bs.collapse', adjustCalendarHeight);
     </script>
+@endsection
+
+@section('scripts')
+    <!-- No external dependencies needed - pure vanilla JS -->
 @endsection
