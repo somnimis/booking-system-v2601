@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             AdminDepartmentSeeder::class,
             FacilityCategorySeeder::class,
             FacilitySubcategorySeeder::class,
+            ParentFacilitySeeder::class,
             FacilitySeeder::class,
             AdminExtraServiceSeeder::class,
             AdminFacilitySeeder::class,

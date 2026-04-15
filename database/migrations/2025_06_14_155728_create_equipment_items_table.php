@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id('item_id');
             $table->unsignedBigInteger('equipment_id');
             $table->string('item_name', 50);
+            $table->string('brand', 80)->default('Not applicable.');
             $table->string('image_url')->default('https://res.cloudinary.com/dn98ntlkd/image/upload/v1750895337/oxvsxogzu9koqhctnf7s.webp');
             $table->string('cloudinary_public_id')->default('oxvsxogzu9koqhctnf7s');
             $table->unsignedTinyInteger('status_id');
