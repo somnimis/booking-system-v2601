@@ -28,7 +28,7 @@ public function getFacilitiesBreakdown($form): array
     $duration = $this->getDurationDetails($form);
     
     return $form->requestedFacilities->map(function ($facility) use ($duration) {
-        $unitPrice = $facility->facility->external_fee;
+        $unitPrice = $facility->facility->base_fee;
         $fee = $this->calculateFacilityFee(
             $unitPrice,
             $facility->facility->rate_type,
@@ -55,7 +55,7 @@ public function getEquipmentBreakdown($form): array
     $duration = $this->getDurationDetails($form);
     
     return $form->requestedEquipment->map(function ($equipment) use ($duration) {
-        $unitPrice = $equipment->equipment->external_fee;
+        $unitPrice = $equipment->equipment->base_fee;
         $fee = $this->calculateEquipmentFee(
             $unitPrice,
             $equipment->equipment->rate_type,
@@ -122,7 +122,7 @@ public function getEquipmentBreakdown($form): array
     {
         return $form->requestedFacilities->sum(function ($facility) use ($durationHours) {
             return $this->calculateFacilityFee(
-                $facility->facility->external_fee,
+                $facility->facility->base_fee,
                 $facility->facility->rate_type,
                 $durationHours,
                 $facility->is_waived
@@ -134,7 +134,7 @@ public function getEquipmentBreakdown($form): array
     {
         return $form->requestedEquipment->sum(function ($equipment) use ($durationHours) {
             return $this->calculateEquipmentFee(
-                $equipment->equipment->external_fee,
+                $equipment->equipment->base_fee,
                 $equipment->equipment->rate_type,
                 $equipment->quantity,
                 $durationHours,

@@ -977,16 +977,15 @@
                         // Store original values for comparison
                         window.originalFacilityData = {
                             facility_name: facility.facility_name || '',
-                            building_code: facility.building_code || '',
+                            facility_code: facility.facility_code || '',
                             description: facility.description || '',
                             location_note: facility.location_note || '',
                             capacity: facility.capacity || 1,
                             location_type: facility.location_type || 'Indoors',
                             floor_level: facility.floor_level || '',
-                            external_fee: facility.external_fee || '0.00',
+                            base_fee: facility.base_fee || '0.00',
                             rate_type: facility.rate_type || 'Per Hour',
                             total_levels: facility.total_levels || '',
-                            total_rooms: facility.total_rooms || '',
                             category_id: facility.category_id || '',
                             subcategory_id: facility.subcategory_id || '',
                             department_ids: facility.departments ? facility.departments.map(d => d.department_id) : (facility.department_id ? [facility.department_id] : []),
@@ -997,16 +996,15 @@
 
                         // Populate form fields with facility data
                         document.getElementById('facilityName').value = facility.facility_name || '';
-                        document.getElementById('buildingCode').value = facility.building_code || '';
+                        document.getElementById('buildingCode').value = facility.facility_code || '';
                         document.getElementById('description').value = facility.description || '';
                         document.getElementById('locationNote').value = facility.location_note || '';
                         document.getElementById('capacity').value = facility.capacity || 1;
                         document.getElementById('locationType').value = facility.location_type || 'Indoors';
                         document.getElementById('floorLevel').value = facility.floor_level || '';
-                        document.getElementById('rentalFee').value = facility.external_fee || '0.00';
+                        document.getElementById('rentalFee').value = facility.base_fee || '0.00';
                         document.getElementById('rateType').value = facility.rate_type || 'Per Hour';
                         document.getElementById('totalLevels').value = facility.total_levels || '';
-                        document.getElementById('totalRooms').value = facility.total_rooms || '';
 
                         // Update word count display
                         if (descriptionWordCount) {
@@ -1256,7 +1254,7 @@
 
                         const formData = {
                             facility_name: document.getElementById('facilityName').value,
-                            building_code: document.getElementById('buildingCode').value,
+                            facility_code: document.getElementById('buildingCode').value,
                             description: document.getElementById('description').value.trim() || 'No description provided for this facility.',
                             location_note: document.getElementById('locationNote').value,
                             category_id: document.getElementById('category').value,
@@ -1264,10 +1262,9 @@
                             capacity: parseInt(document.getElementById('capacity').value),
                             location_type: document.getElementById('locationType').value,
                             floor_level: document.getElementById('floorLevel').value ? parseInt(document.getElementById('floorLevel').value) : null,
-                            external_fee: parseFloat(document.getElementById('rentalFee').value),
+                            base_fee: parseFloat(document.getElementById('rentalFee').value),
                             rate_type: document.getElementById('rateType').value,
                             total_levels: document.getElementById('totalLevels').value ? parseInt(document.getElementById('totalLevels').value) : null,
-                            total_rooms: document.getElementById('totalRooms').value ? parseInt(document.getElementById('totalRooms').value) : null,
                             departments: selectedDepartments, // Send array of department IDs
                             status_id: document.getElementById('availabilityStatus').value
                         };
@@ -1276,7 +1273,7 @@
                         // Validate required fields
                         const requiredFields = [
                             'facility_name', 'location_note', 'capacity', 'category_id', 'subcategory_id',
-                            'departments', 'location_type', 'external_fee', 'rate_type', 'status_id'
+                            'departments', 'location_type', 'base_fee', 'rate_type', 'status_id'
                         ];
 
                         for (const field of requiredFields) {

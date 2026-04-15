@@ -362,7 +362,7 @@ function renderEquipmentGrid(equipment) {
                     }${item.description?.length > 100 ? "..." : ""}</p>
                     <div class="catalog-card-fee">
                         <i class="bi bi-cash-stack"></i> ₱${parseFloat(
-                            item.external_fee
+                            item.base_fee
                         ).toLocaleString()} (${item.rate_type})
                     </div>
                 </div>
@@ -412,7 +412,7 @@ function renderEquipmentList(equipment) {
                     }</p>
                     <div class="catalog-card-fee">
                         <i class="bi bi-cash-stack"></i> ₱${parseFloat(
-                            item.external_fee
+                            item.base_fee
                         ).toLocaleString()} (${item.rate_type})
                     </div>
                 </div>

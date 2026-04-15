@@ -20,9 +20,8 @@ return new class extends Migration
             $table->unsignedTinyInteger('floor_level')->default(1)->nullable();
 
             // for buildings 
-            $table->string('building_code', 20)->nullable();
-            $table->unsignedTinyInteger('total_levels')->default(1)->nullable(); 
-            $table->unsignedTinyInteger('total_rooms')->default(1)->nullable();
+            $table->string('facility_code', 20)->nullable();
+            $table->unsignedTinyInteger('total_levels')->default(1)->nullable();
 
             // general details
             $table->string('facility_name', 50);
@@ -36,7 +35,7 @@ return new class extends Migration
             $table->enum('location_type', ['Indoors', 'Outdoors']);
 
             // fees and rates
-            $table->decimal('external_fee', 10, 2);
+            $table->decimal('base_fee', 10, 2);
             $table->enum('rate_type', ['Per Hour', 'Per Event'])->default('Per Hour');
             $table->unsignedTinyInteger('status_id');
 

@@ -654,8 +654,8 @@ public function getAvailableForTransaction()
         try {
             $form = RequisitionForm::with([
                 'formStatus:status_id,status_name,color_code',
-                'requestedFacilities.facility:facility_id,facility_name,external_fee,rate_type',
-                'requestedEquipment.equipment:equipment_id,equipment_name,external_fee,rate_type',
+                'requestedFacilities.facility:facility_id,facility_name,base_fee,rate_type',
+                'requestedEquipment.equipment:equipment_id,equipment_name,base_fee,rate_type',
                 'purpose:purpose_id,purpose_name',
                 'requisitionFees',
             ])->where('access_code', $accessCode)->firstOrFail();

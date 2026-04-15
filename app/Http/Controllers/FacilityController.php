@@ -78,7 +78,7 @@ class FacilityController extends Controller
                 'department_name' => $facility->department->department_name,
             ],
             'location_type' => $facility->location_type,
-            'external_fee' => $facility->external_fee,
+            'base_fee' => $facility->base_fee,
             'rate_type' => $facility->rate_type,
             'status' => [
                 'status_id' => $facility->status_id,
@@ -87,9 +87,8 @@ class FacilityController extends Controller
             ],
             'parent_facility_id' => $facility->parent_facility_id,
             'floor_level' => $facility->floor_level,
-            'building_code' => $facility->building_code,
+            'facility_code' => $facility->facility_code,
             'total_levels' => $facility->total_levels,
-            'total_rooms' => $facility->total_rooms,
             'images' => $facility->images,
         ];
     }
@@ -122,14 +121,13 @@ class FacilityController extends Controller
                 'departments' => 'required|array|min:1',
                 'departments.*' => 'exists:departments,department_id',
                 'location_type' => 'required|in:Indoors,Outdoors',
-                'external_fee' => 'required|numeric|min:0',
+                'base_fee' => 'required|numeric|min:0',
                 'rate_type' => 'required|in:Per Hour,Per Event',
                 'status_id' => 'required|exists:availability_statuses,status_id',
                 'parent_facility_id' => 'nullable|exists:facilities,facility_id',
                 'floor_level' => 'nullable|integer|min:1',
-                'building_code' => 'nullable|string|max:20',
+                'facility_code' => 'nullable|string|max:20',
                 'total_levels' => 'nullable|integer|min:1',
-                'total_rooms' => 'nullable|integer|min:1',
                 'created_by' => 'required|exists:admins,admin_id'
             ]);
 
@@ -144,14 +142,13 @@ class FacilityController extends Controller
                 'subcategory_id' => $data['subcategory_id'] ?? null,
                 'department_id' => $data['departments'][0], // Keep first department for backward compatibility
                 'location_type' => $data['location_type'],
-                'external_fee' => $data['external_fee'],
+                'base_fee' => $data['base_fee'],
                 'rate_type' => $data['rate_type'],
                 'status_id' => $data['status_id'],
                 'parent_facility_id' => $data['parent_facility_id'] ?? null,
                 'floor_level' => $data['floor_level'] ?? null,
-                'building_code' => $data['building_code'] ?? null,
+                'facility_code' => $data['facility_code'] ?? null,
                 'total_levels' => $data['total_levels'] ?? null,
-                'total_rooms' => $data['total_rooms'] ?? null,
                 'created_by' => $user->admin_id
             ]);
 
@@ -216,14 +213,13 @@ class FacilityController extends Controller
             'departments' => 'required|array|min:1',
             'departments.*' => 'exists:departments,department_id',
             'location_type' => 'required|in:Indoors,Outdoors',
-            'external_fee' => 'required|numeric|min:0',
+            'base_fee' => 'required|numeric|min:0',
             'rate_type' => 'required|in:Per Hour,Per Event',
             'status_id' => 'required|exists:availability_statuses,status_id',
             'parent_facility_id' => 'nullable|exists:facilities,facility_id',
             'floor_level' => 'nullable|integer|min:1',
-            'building_code' => 'nullable|string|max:20',
+            'facility_code' => 'nullable|string|max:20',
             'total_levels' => 'nullable|integer|min:1',
-            'total_rooms' => 'nullable|integer|min:1',
         ]);
 
         $user = auth()->user();
@@ -237,14 +233,13 @@ class FacilityController extends Controller
             'subcategory_id' => $data['subcategory_id'] ?? null,
             'department_id' => $data['departments'][0], // Keep first department for backward compatibility
             'location_type' => $data['location_type'],
-            'external_fee' => $data['external_fee'],
+            'base_fee' => $data['base_fee'],
             'rate_type' => $data['rate_type'],
             'status_id' => $data['status_id'],
             'parent_facility_id' => $data['parent_facility_id'] ?? null,
             'floor_level' => $data['floor_level'] ?? null,
-            'building_code' => $data['building_code'] ?? null,
+            'facility_code' => $data['facility_code'] ?? null,
             'total_levels' => $data['total_levels'] ?? null,
-            'total_rooms' => $data['total_rooms'] ?? null,
             'updated_by' => $user->admin_id,
         ]);
 

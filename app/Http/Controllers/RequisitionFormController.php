@@ -162,7 +162,7 @@ class RequisitionFormController extends Controller
                 if ($type === 'equipment') {
                     $selectedItems[$existingIndex]['quantity'] = $quantity;
                     // Recalculate total fee for equipment
-                    $selectedItems[$existingIndex]['total_fee'] = $selectedItems[$existingIndex]['external_fee'] * $quantity;
+                    $selectedItems[$existingIndex]['total_fee'] = $selectedItems[$existingIndex]['base_fee'] * $quantity;
                     Session::put('selected_items', $selectedItems);
                     return response()->json([
                         'success' => true,
@@ -206,8 +206,8 @@ class RequisitionFormController extends Controller
                 'quantity' => $quantity,
                 'name' => $type === 'facility' ? $item->facility_name : $item->equipment_name,
                 'description' => $item->description,
-                'external_fee' => $item->external_fee,
-                'total_fee' => $type === 'equipment' ? $item->external_fee * $quantity : $item->external_fee,
+                'base_fee' => $item->base_fee,
+                'total_fee' => $type === 'equipment' ? $item->base_fee * $quantity : $item->base_fee,
                 'rate_type' => $item->rate_type,
                 'images' => $item->images->toArray(),
                 'added_at' => now()->toDateTimeString()
@@ -295,7 +295,7 @@ private function createTempFormObject(array $selectedItems, array $requestInfo):
         if ($item['type'] === 'facility') {
             $facilities[] = (object)[
                 'facility' => (object)[
-                    'external_fee' => $item['external_fee'],
+                    'base_fee' => $item['base_fee'],
                     'facility_name' => $item['name'],
                     'rate_type' => $item['rate_type']
                 ],
@@ -304,7 +304,7 @@ private function createTempFormObject(array $selectedItems, array $requestInfo):
         } else {
             $equipment[] = (object)[
                 'equipment' => (object)[
-                    'external_fee' => $item['external_fee'],
+                    'base_fee' => $item['base_fee'],
                     'equipment_name' => $item['name'],
                     'rate_type' => $item['rate_type']
                 ],
@@ -429,7 +429,7 @@ private function transformBreakdownForResponse(array $breakdown): array
                 'type' => $item['type'],
                 'name' => $item['name'],
                 'description' => $item['description'],
-                'external_fee' => $item['external_fee'],
+                'base_fee' => $item['base_fee'],
                 'rate_type' => $item['rate_type'],
                 'images' => $item['images'],
             ];

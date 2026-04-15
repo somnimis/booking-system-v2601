@@ -95,7 +95,7 @@ public function store(Request $request): JsonResponse
         'brand' => 'nullable|string|max:80',
         'storage_location' => 'required|string|max:50',
         'category_id' => 'required|exists:equipment_categories,category_id',
-        'external_fee' => 'required|numeric|min:0',
+        'base_fee' => 'required|numeric|min:0',
         'rate_type' => 'required|in:Per Hour,Per Event',
         'status_id' => 'required|exists:availability_statuses,status_id',
         'departments' => 'required|array|min:1',
@@ -122,7 +122,7 @@ public function store(Request $request): JsonResponse
         'brand' => $data['brand'] ?? null,
         'storage_location' => $data['storage_location'],
         'category_id' => $data['category_id'],
-        'external_fee' => $data['external_fee'],
+        'base_fee' => $data['base_fee'],
         'rate_type' => $data['rate_type'],
         'status_id' => $data['status_id'],
         'department_id' => $data['departments'][0], // Keep first department for backward compatibility
@@ -189,7 +189,7 @@ public function update(Request $request, $id)
             'brand' => 'nullable|string|max:255',
             'storage_location' => 'required|string|max:255',
             'category_id' => 'required|exists:equipment_categories,category_id',
-            'external_fee' => 'required|numeric|min:0',
+            'base_fee' => 'required|numeric|min:0',
             'rate_type' => 'required|in:Per Hour,Per Event',
             'status_id' => 'required|exists:availability_statuses,status_id',
             'departments' => 'required|array|min:1',
@@ -206,7 +206,7 @@ public function update(Request $request, $id)
             'brand' => $validated['brand'],
             'storage_location' => $validated['storage_location'],
             'category_id' => $validated['category_id'],
-            'external_fee' => $validated['external_fee'],
+            'base_fee' => $validated['base_fee'],
             'rate_type' => $validated['rate_type'],
             'status_id' => $validated['status_id'],
             'department_id' => $validated['departments'][0], // Keep first department for backward compatibility
@@ -730,7 +730,7 @@ private function getMassAssignmentMessage(array $results, string $action, string
                 'category_id' => $equipment->category_id,
                 'category_name' => $equipment->category->category_name,
             ],
-            'external_fee' => $equipment->external_fee,
+            'base_fee' => $equipment->base_fee,
             'rate_type' => $equipment->rate_type,
             'status' => [
                 'status_id' => $equipment->status_id,
@@ -763,7 +763,7 @@ private function getMassAssignmentMessage(array $results, string $action, string
                 'category_id' => $equipment->category_id,
                 'category_name' => $equipment->category->category_name,
             ],
-            'external_fee' => $equipment->external_fee,
+            'base_fee' => $equipment->base_fee,
             'rate_type' => $equipment->rate_type,
             'status' => [
                 'status_id' => $equipment->status_id,

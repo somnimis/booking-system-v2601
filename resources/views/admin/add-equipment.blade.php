@@ -1724,7 +1724,7 @@
                             brand: document.getElementById('brand').value,
                             storage_location: document.getElementById('storageLocation').value,
                             category_id: document.getElementById('category').value,
-                            external_fee: document.getElementById('companyFee').value,
+                            base_fee: document.getElementById('companyFee').value,
                             rate_type: document.getElementById('rateType').value,
                             status_id: document.getElementById('availabilityStatus').value,
                             department_id: document.getElementById('department').value,

@@ -1143,7 +1143,7 @@
         </div>
         <p class="facility-description" title="${item.description || ''}">${description}</p>
         <div class="catalog-card-fee">
-          <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.external_fee).toLocaleString()} (${item.rate_type})
+          <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.base_fee).toLocaleString()} (${item.rate_type})
         </div>
       </div>
       <div class="catalog-card-actions">
@@ -1193,7 +1193,7 @@
       </div>
       <div class="catalog-card-actions">
         <div class="catalog-card-fee mb-2 text-center">
-          <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.external_fee).toLocaleString()} (${item.rate_type})
+          <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.base_fee).toLocaleString()} (${item.rate_type})
         </div>
         ${getEquipmentButtonHtml(item)}
         <button class="btn btn-outline-secondary">Check Availability</button>

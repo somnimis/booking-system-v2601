@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.innerHTML = `
                     <div class="selected-item-details">
                         <h6>${itemDetails[`${type}_name`]}</h6>
-                        <div class="fee">₱${parseFloat(itemDetails.external_fee).toLocaleString('en-US', {minimumFractionDigits: 2})} per ${itemDetails.rate_type || 'booking'}</div>
+                        <div class="fee">₱${parseFloat(itemDetails.base_fee).toLocaleString('en-US', {minimumFractionDigits: 2})} per ${itemDetails.rate_type || 'booking'}</div>
                         ${type === 'equipment' ? `
                             <div class="quantity-control">
                                 <span class="text-muted">Quantity: ${item.quantity || 1}</span>
@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     htmlContent += `
                         <div class="fee-item d-flex justify-content-between mb-2">
                             <span>${facilityDetails.facility_name}</span>
-                            <span>₱${parseFloat(facilityDetails.external_fee).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                            <span>₱${parseFloat(facilityDetails.base_fee).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
                         </div>
                     `;
                 });
@@ -385,12 +385,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     const equipDetails = equipmentMap.get(parseInt(equip.id));
                     if (!equipDetails) return;
 
-                    const itemTotal = parseFloat(equipDetails.external_fee) * (equip.quantity || 1);
+                    const itemTotal = parseFloat(equipDetails.base_fee) * (equip.quantity || 1);
                     htmlContent += `
                         <div class="fee-item d-flex justify-content-between mb-2">
                             <span>${equipDetails.equipment_name} ${equip.quantity ? `(x${equip.quantity})` : ''}</span>
                             <div class="text-end">
-                                <div>₱${parseFloat(equipDetails.external_fee).toLocaleString('en-US', {minimumFractionDigits: 2})} × ${equip.quantity || 1}</div>
+                                <div>₱${parseFloat(equipDetails.base_fee).toLocaleString('en-US', {minimumFractionDigits: 2})} × ${equip.quantity || 1}</div>
                                 <strong>₱${itemTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
                             </div>
                         </div>

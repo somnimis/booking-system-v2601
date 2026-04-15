@@ -314,7 +314,7 @@
                     eqStatus.textContent = item.availability_status?.status_name || "Unavailable";
                     eqStatus.className = "badge-status " + getStatusClass(item.availability_status?.status_name || "");
                     eqStock.textContent = data.available_stock + " / " + data.total_stock;
-                    eqPrice.textContent = equipment.external_fee || "0.00";
+                    eqPrice.textContent = equipment.base_fee || "0.00";
                     eqDescription.textContent = equipment.description || "No description";
 
                     // Show current bookings if any

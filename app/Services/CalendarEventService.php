@@ -81,7 +81,7 @@ class CalendarEventService
             return [
                 'facility_id' => $requestedFacility->facility_id,
                 'name' => $facility->facility_name ?? 'Unknown Facility',
-                'fee' => $facility->external_fee ?? 0,
+                'fee' => $facility->base_fee ?? 0,
                 'rate_type' => $facility->rate_type ?? 'Per Event',
                 'is_waived' => $requestedFacility->is_waived ?? false,
                 'category_id' => $categoryId,
@@ -97,7 +97,7 @@ class CalendarEventService
                 'equipment_id' => $requestedEquipment->equipment_id,
                 'name' => $requestedEquipment->equipment->equipment_name ?? 'Unknown Equipment',
                 'quantity' => $requestedEquipment->quantity,
-                'fee' => $requestedEquipment->equipment->external_fee ?? 0,
+                'fee' => $requestedEquipment->equipment->base_fee ?? 0,
                 'rate_type' => $requestedEquipment->equipment->rate_type ?? 'Per Event',
                 'is_waived' => $requestedEquipment->is_waived ?? false
             ];

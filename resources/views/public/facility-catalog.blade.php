@@ -1022,7 +1022,7 @@
                 </div>
                 <p class="facility-description" title="${facility.description || ''}">${description}</p>
                 <div class="catalog-card-fee">
-                  <i class="bi bi-cash-stack"></i> ₱${parseFloat(facility.external_fee).toLocaleString()} (${facility.rate_type})
+                  <i class="bi bi-cash-stack"></i> ₱${parseFloat(facility.base_fee).toLocaleString()} (${facility.rate_type})
                 </div>
               </div>
               <div class="catalog-card-actions">
@@ -1070,7 +1070,7 @@
               </div>
               <div class="catalog-card-actions">
                 <div class="catalog-card-fee mb-2 text-center">
-                  <i class="bi bi-cash-stack"></i> ₱${parseFloat(facility.external_fee).toLocaleString()} (${facility.rate_type})
+                  <i class="bi bi-cash-stack"></i> ₱${parseFloat(facility.base_fee).toLocaleString()} (${facility.rate_type})
                 </div>
                 ${getFacilityButtonHtml(facility)}
                 ${getCheckAvailabilityButtonHtml(facility)}
@@ -1117,7 +1117,7 @@
                 data-facility-name="${facility.facility_name}"
                 data-facility-image="${facility.images?.find(img => img.image_type === "Primary")?.image_url || 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png'}"
                 data-facility-capacity="${facility.capacity || 'N/A'}"
-                data-facility-fee="${parseFloat(facility.external_fee).toLocaleString()}"
+                data-facility-fee="${parseFloat(facility.base_fee).toLocaleString()}"
                 data-facility-category="${facility.category.category_name}"
                 data-facility-status="${facility.status.status_name}"
                 data-facility-status-color="${facility.status.color_code}">
@@ -1251,7 +1251,7 @@
                 <p><strong>Category:</strong> ${facility.category.category_name}</p>
                 <p><strong>Subcategory:</strong> ${facility.subcategory?.subcategory_name || "N/A"}</p>
                 <p><strong>Capacity:</strong> ${facility.capacity}</p>
-                <p><strong>Rate:</strong> ₱${parseFloat(facility.external_fee).toLocaleString()} (${facility.rate_type})</p>
+                <p><strong>Rate:</strong> ₱${parseFloat(facility.base_fee).toLocaleString()} (${facility.rate_type})</p>
                 <p><strong>Description:</strong></p>
                 <p>${facility.description || "No description available."}</p>
               </div>
