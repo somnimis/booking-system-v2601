@@ -445,7 +445,7 @@ function renderFacilitiesGrid(facilities) {
                     }${facility.description?.length > 100 ? "..." : ""}</p>
                     <div class="catalog-card-fee">
                         <i class="bi bi-cash-stack"></i> ₱${parseFloat(
-                            facility.external_fee
+                            facility.base_fee
                         ).toLocaleString()} (${facility.rate_type})
                     </div>
                 </div>
@@ -496,7 +496,7 @@ function renderFacilitiesList(facilities) {
                     }</p>
                     <div class="catalog-card-fee">
                         <i class="bi bi-cash-stack"></i> ₱${parseFloat(
-                            facility.external_fee
+                            facility.base_fee
                         ).toLocaleString()} (${facility.rate_type})
                     </div>
                 </div>
@@ -644,7 +644,7 @@ async function showFacilityDetails(facilityId) {
                         }</p>
                         <p><strong>Capacity:</strong> ${facility.capacity}</p>
                         <p><strong>Rate:</strong> ₱${parseFloat(
-                            facility.external_fee
+                            facility.base_fee
                         ).toLocaleString()} (${facility.rate_type})</p>
                         <p><strong>Description:</strong></p>
                         <p>${

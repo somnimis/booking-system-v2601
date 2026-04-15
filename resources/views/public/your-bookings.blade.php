@@ -773,14 +773,14 @@
             // Fallback: Calculate manually (this won't work for requester API since fee data is missing)
             let totalFee = 0;
 
-            // Calculate facility fees - this requires external_fee data which isn't in requester API
+            // Calculate facility fees - this requires base_fee data which isn't in requester API
             if (form.requested_facilities && form.requested_facilities.length > 0) {
-                console.warn('Cannot calculate facility fees - external_fee data missing');
+                console.warn('Cannot calculate facility fees - base_fee data missing');
             }
 
-            // Calculate equipment fees - this requires external_fee data which isn't in requester API
+            // Calculate equipment fees - this requires base_fee data which isn't in requester API
             if (form.requested_equipment && form.requested_equipment.length > 0) {
-                console.warn('Cannot calculate equipment fees - external_fee data missing');
+                console.warn('Cannot calculate equipment fees - base_fee data missing');
             }
 
             // Add late penalty if applicable
@@ -861,14 +861,14 @@
             if (facilityItems.length > 0) {
                 htmlContent += '<div class="fee-section"><h6 class="text-primary">Facilities</h6>';
                 facilityItems.forEach(item => {
-                    let fee = parseFloat(item.external_fee || 0);
+                    let fee = parseFloat(item.base_fee || 0);
                     if (item.rate_type === 'Per Hour' && durationHours > 0) {
                         fee = fee * durationHours;
                         htmlContent += `
                                 <div class="fee-item">
                                     <span>${item.facility_name} (${durationHours.toFixed(1)} hrs)</span>
                                     <div class="text-end">
-                                        <small>₱${parseFloat(item.external_fee).toLocaleString()}/hr</small>
+                                        <small>₱${parseFloat(item.base_fee).toLocaleString()}/hr</small>
                                         <div><strong>₱${fee.toLocaleString()}</strong></div>
                                     </div>
                                 </div>
@@ -896,7 +896,7 @@
             if (equipmentItems.length > 0) {
                 htmlContent += '<div class="fee-section mt-3"><h6 class="text-primary">Equipment</h6>';
                 equipmentItems.forEach(item => {
-                    let unitFee = parseFloat(item.external_fee || 0);
+                    let unitFee = parseFloat(item.base_fee || 0);
                     const quantity = item.quantity || 1;
                     let itemTotal = unitFee * quantity;
                     if (item.rate_type === 'Per Hour' && durationHours > 0) {

@@ -105,7 +105,7 @@ class EquipmentRequestController extends Controller
                         $q->select('equipment_id', 'equipment_name');
                     },
                     'facility' => function($q) {
-                        $q->select('facility_id', 'facility_name', 'building_code');
+                        $q->select('facility_id', 'facility_name', 'facility_code');
                     },
                     'condition'
                 ])

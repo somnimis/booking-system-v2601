@@ -256,7 +256,7 @@ private function transformCalendarEvent($requisition, $isAdmin = false)
         return [
             'facility_id' => $requestedFacility->facility_id,
             'name' => $facility->facility_name ?? 'Unknown Facility',
-            'fee' => $facility->external_fee ?? 0,
+            'fee' => $facility->base_fee ?? 0,
             'rate_type' => $facility->rate_type ?? 'Per Event',
             'is_waived' => $requestedFacility->is_waived ?? false,
             // Add category and subcategory information for filtering
@@ -273,7 +273,7 @@ private function transformCalendarEvent($requisition, $isAdmin = false)
             'equipment_id' => $requestedEquipment->equipment_id,
             'name' => $requestedEquipment->equipment->equipment_name ?? 'Unknown Equipment',
             'quantity' => $requestedEquipment->quantity,
-            'fee' => $requestedEquipment->equipment->external_fee ?? 0,
+            'fee' => $requestedEquipment->equipment->base_fee ?? 0,
             'rate_type' => $requestedEquipment->equipment->rate_type ?? 'Per Event',
             'is_waived' => $requestedEquipment->is_waived ?? false
         ];
@@ -445,11 +445,11 @@ private function darkenColor($color)
             ->map(function ($form) {
                 // Calculate tentative fee from facilities and equipment
                 $facilityFees = $form->requestedFacilities->sum(function ($facility) {
-                    return $facility->is_waived ? 0 : $facility->facility->external_fee;
+                    return $facility->is_waived ? 0 : $facility->facility->base_fee;
                 });
 
                 $equipmentFees = $form->requestedEquipment->sum(function ($equipment) {
-                    return $equipment->is_waived ? 0 : ($equipment->equipment->external_fee * $equipment->quantity);
+                    return $equipment->is_waived ? 0 : ($equipment->equipment->base_fee * $equipment->quantity);
                 });
 
                 $totalTentativeFee = $facilityFees + $equipmentFees;
@@ -554,7 +554,7 @@ private function darkenColor($color)
                             'requested_facility_id' => $facility->requested_facility_id,
                             'facility_id' => $facility->facility_id,
                             'name' => $facility->facility->facility_name,
-                            'fee' => $facility->facility->external_fee,
+                            'fee' => $facility->facility->base_fee,
                             'rate_type' => $facility->facility->rate_type,
                             'is_waived' => $facility->is_waived
                         ];
@@ -564,10 +564,10 @@ private function darkenColor($color)
                             'requested_equipment_id' => $equipment->requested_equipment_id,
                             'name' => $equipment->equipment->equipment_name,
                             'quantity' => $equipment->quantity,
-                            'fee' => $equipment->equipment->external_fee,
+                            'fee' => $equipment->equipment->base_fee,
                             'rate_type' => $equipment->equipment->rate_type,
                             'is_waived' => $equipment->is_waived,
-                            'total_fee' => $equipment->equipment->external_fee * $equipment->quantity
+                            'total_fee' => $equipment->equipment->base_fee * $equipment->quantity
                         ];
                     })
                     ],
@@ -675,11 +675,11 @@ private function darkenColor($color)
         $mappedForms = $forms->map(function ($form) {
             // Calculate tentative fee from facilities and equipment
             $facilityFees = $form->requestedFacilities->sum(function ($facility) {
-                return $facility->is_waived ? 0 : $facility->facility->external_fee;
+                return $facility->is_waived ? 0 : $facility->facility->base_fee;
             });
 
             $equipmentFees = $form->requestedEquipment->sum(function ($equipment) {
-                return $equipment->is_waived ? 0 : ($equipment->equipment->external_fee * $equipment->quantity);
+                return $equipment->is_waived ? 0 : ($equipment->equipment->base_fee * $equipment->quantity);
             });
 
             $totalTentativeFee = $facilityFees + $equipmentFees;
@@ -785,7 +785,7 @@ private function darkenColor($color)
                             'requested_facility_id' => $facility->requested_facility_id,
                             'facility_id' => $facility->facility_id,
                             'name' => $facility->facility->facility_name,
-                            'fee' => $facility->facility->external_fee,
+                            'fee' => $facility->facility->base_fee,
                             'rate_type' => $facility->facility->rate_type,
                             'is_waived' => $facility->is_waived
                         ];
@@ -795,10 +795,10 @@ private function darkenColor($color)
                             'requested_equipment_id' => $equipment->requested_equipment_id,
                             'name' => $equipment->equipment->equipment_name,
                             'quantity' => $equipment->quantity,
-                            'fee' => $equipment->equipment->external_fee,
+                            'fee' => $equipment->equipment->base_fee,
                             'rate_type' => $equipment->equipment->rate_type,
                             'is_waived' => $equipment->is_waived,
-                            'total_fee' => $equipment->equipment->external_fee * $equipment->quantity
+                            'total_fee' => $equipment->equipment->base_fee * $equipment->quantity
                         ];
                     })
                 ],
@@ -1054,11 +1054,11 @@ private function darkenColor($color)
 
             // Calculate tentative fee from facilities and equipment
             $facilityFees = $form->requestedFacilities->sum(function ($facility) {
-                return $facility->is_waived ? 0 : $facility->facility->external_fee;
+                return $facility->is_waived ? 0 : $facility->facility->base_fee;
             });
 
             $equipmentFees = $form->requestedEquipment->sum(function ($equipment) {
-                return $equipment->is_waived ? 0 : ($equipment->equipment->external_fee * $equipment->quantity);
+                return $equipment->is_waived ? 0 : ($equipment->equipment->base_fee * $equipment->quantity);
             });
 
             $totalTentativeFee = $facilityFees + $equipmentFees;
@@ -1138,7 +1138,7 @@ private function darkenColor($color)
                         return [
                             'requested_facility_id' => $facility->requested_facility_id,
                             'name' => $facility->facility->facility_name,
-                            'fee' => $facility->facility->external_fee,
+                            'fee' => $facility->facility->base_fee,
                             'rate_type' => $facility->facility->rate_type,
                             'is_waived' => $facility->is_waived
                         ];
@@ -1151,10 +1151,10 @@ private function darkenColor($color)
                             'requested_equipment_ids' => $group->pluck('requested_equipment_id')->toArray(),
                             'name' => $firstItem->equipment->equipment_name,
                             'quantity' => $totalQuantity,
-                            'fee' => $firstItem->equipment->external_fee,
+                            'fee' => $firstItem->equipment->base_fee,
                             'rate_type' => $firstItem->equipment->rate_type,
                             'is_waived' => $firstItem->is_waived,
-                            'total_fee' => $firstItem->equipment->external_fee * $totalQuantity
+                            'total_fee' => $firstItem->equipment->base_fee * $totalQuantity
                         ];
                     })->values()
                 ],
@@ -1387,11 +1387,11 @@ private function darkenColor($color)
             ->map(function ($form) {
                 // Calculate tentative fee
                 $facilityFees = $form->requestedFacilities->sum(function ($facility) {
-                    return $facility->is_waived ? 0 : $facility->facility->external_fee;
+                    return $facility->is_waived ? 0 : $facility->facility->base_fee;
                 });
 
                 $equipmentFees = $form->requestedEquipment->sum(function ($equipment) {
-                    return $equipment->is_waived ? 0 : ($equipment->equipment->external_fee * $equipment->quantity);
+                    return $equipment->is_waived ? 0 : ($equipment->equipment->base_fee * $equipment->quantity);
                 });
 
                 $totalTentativeFee = $facilityFees + $equipmentFees + ($form->is_late ? $form->late_penalty_fee : 0);
@@ -2021,7 +2021,7 @@ private function formatScheduleForDisplay($form)
 private function getFacilitiesBreakdown($form, $bookingDurationHours, &$baseFee)
 {
     return $form->requestedFacilities->map(function ($facility) use ($bookingDurationHours, &$baseFee) {
-        $unitFee = $facility->facility->external_fee;
+        $unitFee = $facility->facility->base_fee;
         $totalFee = $facility->facility->rate_type === 'Per Hour' 
             ? $unitFee * $bookingDurationHours 
             : $unitFee;
@@ -2046,7 +2046,7 @@ private function getFacilitiesBreakdown($form, $bookingDurationHours, &$baseFee)
 private function getEquipmentBreakdown($form, $bookingDurationHours, &$baseFee)
 {
     return $form->requestedEquipment->map(function ($equipment) use ($bookingDurationHours, &$baseFee) {
-        $unitFee = $equipment->equipment->external_fee;
+        $unitFee = $equipment->equipment->base_fee;
         $quantity = $equipment->quantity;
         
         $totalFee = $equipment->equipment->rate_type === 'Per Hour'
@@ -2705,7 +2705,7 @@ private function calculateBaseFees($form)
                 return 0;
             }
 
-            $fee = $facility->facility->external_fee;
+            $fee = $facility->facility->base_fee;
 
             // Check if rate_type is "Per Hour" and calculate based on duration
             if ($facility->facility->rate_type === 'Per Hour') {
@@ -2740,7 +2740,7 @@ private function calculateBaseFees($form)
                 return 0;
             }
 
-            $fee = $equipment->equipment->external_fee;
+            $fee = $equipment->equipment->base_fee;
 
             // Check if rate_type is "Per Hour" and calculate based on duration
             if ($equipment->equipment->rate_type === 'Per Hour') {
@@ -2860,7 +2860,7 @@ private function calculateTentativeFee($requestId)
             return $carry + 0;
         }
 
-        $fee = $facility->facility->external_fee;
+        $fee = $facility->facility->base_fee;
 
         // Apply hourly rate if applicable
         if ($facility->facility->rate_type === 'Per Hour') {
@@ -2879,7 +2879,7 @@ private function calculateTentativeFee($requestId)
             return $carry + 0;
         }
 
-        $fee = $equipment->equipment->external_fee;
+        $fee = $equipment->equipment->base_fee;
         $quantity = $equipment->quantity;
 
         // Apply hourly rate if applicable
@@ -3260,7 +3260,7 @@ public function generateOfficialReceipt($requestId)
             if (!$facility->is_waived) {
                 $breakdown[] = [
                     'description' => $facility->facility->facility_name . ' Rental',
-                    'amount' => $facility->facility->external_fee
+                    'amount' => $facility->facility->base_fee
                 ];
             }
         }
@@ -3271,7 +3271,7 @@ public function generateOfficialReceipt($requestId)
                 $breakdown[] = [
                     'description' => $equipment->equipment->equipment_name . ' Rental' .
                         ($equipment->quantity > 1 ? ' (×' . $equipment->quantity . ')' : ''),
-                    'amount' => $equipment->equipment->external_fee * $equipment->quantity
+                    'amount' => $equipment->equipment->base_fee * $equipment->quantity
                 ];
             }
         }
@@ -3405,14 +3405,14 @@ public function completedRequests()
                 if ($facility->is_waived) {
                     return $carry + 0;
                 }
-                return $carry + $facility->facility->external_fee;
+                return $carry + $facility->facility->base_fee;
             }, 0);
 
             $equipmentFees = $form->requestedEquipment->reduce(function ($carry, $equipment) {
                 if ($equipment->is_waived) {
                     return $carry + 0;
                 }
-                return $carry + ($equipment->equipment->external_fee * $equipment->quantity);
+                return $carry + ($equipment->equipment->base_fee * $equipment->quantity);
             }, 0);
 
             $totalTentativeFee = $facilityFees + $equipmentFees;
@@ -3478,7 +3478,7 @@ public function completedRequests()
                             'requested_facility_id' => $facility->requested_facility_id,
                             'facility_id' => $facility->facility_id,
                             'name' => $facility->facility->facility_name,
-                            'fee' => $facility->facility->external_fee,
+                            'fee' => $facility->facility->base_fee,
                             'rate_type' => $facility->facility->rate_type,
                             'is_waived' => $facility->is_waived
                         ];
@@ -3489,10 +3489,10 @@ public function completedRequests()
                             'equipment_id' => $equipment->equipment_id,
                             'name' => $equipment->equipment->equipment_name,
                             'quantity' => $equipment->quantity,
-                            'fee' => $equipment->equipment->external_fee,
+                            'fee' => $equipment->equipment->base_fee,
                             'rate_type' => $equipment->equipment->rate_type,
                             'is_waived' => $equipment->is_waived,
-                            'total_fee' => $equipment->equipment->external_fee * $equipment->quantity
+                            'total_fee' => $equipment->equipment->base_fee * $equipment->quantity
                         ];
                     })->values()
                 ],
@@ -3562,8 +3562,8 @@ public function getFormByAccessCode($accessCode)
     try {
         $form = RequisitionForm::with([
             'formStatus:status_id,status_name,color_code',
-            'requestedFacilities.facility:facility_id,facility_name,external_fee,rate_type',
-            'requestedEquipment.equipment:equipment_id,equipment_name,external_fee,rate_type',
+            'requestedFacilities.facility:facility_id,facility_name,base_fee,rate_type',
+            'requestedEquipment.equipment:equipment_id,equipment_name,base_fee,rate_type',
             'purpose:purpose_id,purpose_name',
             'requisitionFees'
         ])->where('access_code', $accessCode)->firstOrFail();
@@ -3573,14 +3573,14 @@ public function getFormByAccessCode($accessCode)
             if ($facility->is_waived) {
                 return $carry + 0;
             }
-            return $carry + $facility->facility->external_fee;
+            return $carry + $facility->facility->base_fee;
         }, 0);
 
         $equipmentFees = $form->requestedEquipment->reduce(function ($carry, $equipment) {
             if ($equipment->is_waived) {
                 return $carry + 0;
             }
-            return $carry + ($equipment->equipment->external_fee * $equipment->quantity);
+            return $carry + ($equipment->equipment->base_fee * $equipment->quantity);
         }, 0);
 
         $totalTentativeFee = $facilityFees + $equipmentFees;
@@ -3643,7 +3643,7 @@ public function getFormByAccessCode($accessCode)
                 'requested_facility_id' => $rf->requested_facility_id,
                 'facility_id' => $rf->facility_id,
                 'facility_name' => $rf->facility->facility_name,
-                'external_fee' => $rf->facility->external_fee,
+                'base_fee' => $rf->facility->base_fee,
                 'rate_type' => $rf->facility->rate_type,
                 'is_waived' => $rf->is_waived
             ])->values(),
@@ -3652,11 +3652,11 @@ public function getFormByAccessCode($accessCode)
                 'requested_equipment_id' => $re->requested_equipment_id,
                 'equipment_id' => $re->equipment_id,
                 'equipment_name' => $re->equipment->equipment_name,
-                'external_fee' => $re->equipment->external_fee,
+                'base_fee' => $re->equipment->base_fee,
                 'rate_type' => $re->equipment->rate_type,
                 'quantity' => $re->quantity,
                 'is_waived' => $re->is_waived,
-                'total_fee' => $re->equipment->external_fee * $re->quantity
+                'total_fee' => $re->equipment->base_fee * $re->quantity
             ])->values(),
 
             'form_status' => $form->formStatus,

@@ -3153,14 +3153,14 @@
         if (facilityItems.length > 0) {
           htmlContent += '<div class="fee-section"><p class="mb-3 text-primary">Facilities</p>';
           facilityItems.forEach(item => {
-            let fee = parseFloat(item.external_fee);
+            let fee = parseFloat(item.base_fee);
             if (item.rate_type === 'Per Hour' && durationHours > 0) {
               fee = fee * durationHours;
               htmlContent += `
                 <div class="fee-item d-flex justify-content-between mb-2">
                     <span>${item.name} (${durationHours.toFixed(1)} hrs)</span>
                     <div class="text-end">
-                        <small>₱${parseFloat(item.external_fee).toLocaleString()}/hr</small>
+                        <small>₱${parseFloat(item.base_fee).toLocaleString()}/hr</small>
                         <div><strong>₱${fee.toLocaleString()}</strong></div>
                     </div>
                 </div>
@@ -3188,7 +3188,7 @@
         if (equipmentItems.length > 0) {
           htmlContent += '<div class="fee-section mt-3"><p class="mb-3 text-primary">Equipment</p>';
           equipmentItems.forEach(item => {
-            let unitFee = parseFloat(item.external_fee);
+            let unitFee = parseFloat(item.base_fee);
             const quantity = item.quantity || 1;
             let itemTotal = unitFee * quantity;
             if (item.rate_type === 'Per Hour' && durationHours > 0) {
@@ -3305,7 +3305,7 @@
               </div>
               <div class="text-end">
                 <div class="fw-bold text-success">
-                  ₱${parseFloat(item.external_fee * (type === 'equipment' ? (item.quantity || 1) : 1)).toLocaleString()}
+                  ₱${parseFloat(item.base_fee * (type === 'equipment' ? (item.quantity || 1) : 1)).toLocaleString()}
                 </div>
               </div>
             </div>
@@ -3434,14 +3434,14 @@
         if (facilityItems.length > 0) {
           htmlContent += '<div class="fee-section"><h6 class="mb-3">Facilities</h6>';
           facilityItems.forEach(item => {
-            let fee = parseFloat(item.external_fee);
+            let fee = parseFloat(item.base_fee);
             if (item.rate_type === 'Per Hour' && durationHours > 0) {
               fee = fee * durationHours;
               htmlContent += `
                             <div class="fee-item d-flex justify-content-between mb-2">
                                 <span>${item.name} (${durationHours.toFixed(1)} hrs)</span>
                                 <div class="text-end">
-                                    <small>₱${parseFloat(item.external_fee).toLocaleString()}/hr</small>
+                                    <small>₱${parseFloat(item.base_fee).toLocaleString()}/hr</small>
                                     <div><strong>₱${fee.toLocaleString()}</strong></div>
                                 </div>
                             </div>
@@ -3469,7 +3469,7 @@
         if (equipmentItems.length > 0) {
           htmlContent += '<div class="fee-section mt-3"><h6 class="mb-3">Equipment</h6>';
           equipmentItems.forEach(item => {
-            let unitFee = parseFloat(item.external_fee);
+            let unitFee = parseFloat(item.base_fee);
             const quantity = item.quantity || 1;
             let itemTotal = unitFee * quantity;
             if (item.rate_type === 'Per Hour' && durationHours > 0) {

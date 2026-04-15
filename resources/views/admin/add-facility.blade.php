@@ -1015,16 +1015,15 @@ document.getElementById('addFacilityForm').addEventListener('submit', async func
         // 1. First create the facility record
         const formData = {
             facility_name: facilityName,
-            building_code: buildingCode || null,
+            facility_code: buildingCode || null,
             location_type: document.getElementById('locationType').value,
             category_id: document.getElementById('category').value,
             subcategory_id: document.getElementById('subcategory').value || null,
             capacity: parseInt(document.getElementById('capacity').value),
             floor_level: document.getElementById('floorLevel').value ? parseInt(document.getElementById('floorLevel').value) : null,
-            external_fee: parseFloat(document.getElementById('rentalFee').value),
+            base_fee: parseFloat(document.getElementById('rentalFee').value),
             rate_type: document.getElementById('rateType').value,
             total_levels: document.getElementById('totalLevels').value ? parseInt(document.getElementById('totalLevels').value) : null,
-            total_rooms: document.getElementById('totalRooms').value ? parseInt(document.getElementById('totalRooms').value) : null,
             department_id: document.getElementById('department').value,
             status_id: document.getElementById('availabilityStatus').value,
             created_by: adminId,

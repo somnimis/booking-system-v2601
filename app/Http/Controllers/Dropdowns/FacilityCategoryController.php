@@ -147,7 +147,7 @@ public function getVenues(Request $request)
     {
         $buildings = Facility::whereIn('category_id', [1, 4, 5])
             ->whereNull('parent_facility_id')
-            ->select('facility_id', 'facility_name', 'building_code')
+            ->select('facility_id', 'facility_name', 'facility_code')
             ->orderBy('facility_name')
             ->get();
 

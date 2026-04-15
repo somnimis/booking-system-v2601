@@ -31,7 +31,7 @@ public function getFacilitiesHierarchy(Request $request)
         $search = $request->input('search');
         
         // Get all active facilities
-        $query = Facility::select('facility_id', 'facility_name', 'capacity', 'external_fee', 'parent_facility_id')
+        $query = Facility::select('facility_id', 'facility_name', 'capacity', 'base_fee', 'parent_facility_id')
             ->where('status_id', 1);
         
         if ($search) {
@@ -62,7 +62,7 @@ public function getFacilitiesHierarchy(Request $request)
                 'facility_id' => $parent->facility_id,
                 'facility_name' => $parent->facility_name,
                 'capacity' => $parent->capacity,
-                'external_fee' => $parent->external_fee,
+                'base_fee' => $parent->base_fee,
                 'is_parent' => true,
                 'children' => isset($children[$parent->facility_id]) 
                     ? array_map(function($child) {
@@ -70,7 +70,7 @@ public function getFacilitiesHierarchy(Request $request)
                             'facility_id' => $child->facility_id,
                             'facility_name' => $child->facility_name,
                             'capacity' => $child->capacity,
-                            'external_fee' => $child->external_fee,
+                            'base_fee' => $child->base_fee,
                             'is_parent' => false,
                             'parent_facility_id' => $child->parent_facility_id
                         ];
@@ -88,7 +88,7 @@ public function getFacilitiesHierarchy(Request $request)
                     'facility_id' => $facility->facility_id,
                     'facility_name' => $facility->facility_name,
                     'capacity' => $facility->capacity,
-                    'external_fee' => $facility->external_fee,
+                    'base_fee' => $facility->base_fee,
                     'is_parent' => false,
                     'parent_facility_id' => $facility->parent_facility_id
                 ];
@@ -118,7 +118,7 @@ public function getFacilitiesHierarchy(Request $request)
             $perPage = $request->input('per_page', 20);
             $search = $request->input('search');
             
-            $query = Facility::select('facility_id', 'facility_name', 'capacity', 'external_fee')
+            $query = Facility::select('facility_id', 'facility_name', 'capacity', 'base_fee')
                 ->where('status_id', 1); // Only active facilities
             
             if ($search) {

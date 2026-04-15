@@ -1908,7 +1908,7 @@
                     document.getElementById('brand').value = equipment.brand || '';
                     document.getElementById('storageLocation').value = equipment.storage_location;
 
-                    document.getElementById('companyFee').value = equipment.external_fee;
+                    document.getElementById('companyFee').value = equipment.base_fee;
                     document.getElementById('minRentalHours').value = equipment.maximum_rental_hour || 1;
 
                     // Update word count
@@ -2330,7 +2330,7 @@
                         brand: document.getElementById('brand').value,
                         storage_location: document.getElementById('storageLocation').value,
                         category_id: document.getElementById('category').value,
-                        external_fee: document.getElementById('companyFee').value,
+                        base_fee: document.getElementById('companyFee').value,
                         rate_type: document.getElementById('rateType').value,
                         status_id: document.getElementById('availabilityStatus').value,
                         departments: selectedDepartments, // Send array of department IDs

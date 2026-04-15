@@ -2915,14 +2915,14 @@
                                                                            id="facility_${facility.facility_id}" 
                                                                            value="${facility.facility_id}"
                                                                            data-name="${facility.facility_name}"
-                                                                           data-fee="${facility.external_fee}"
+                                                                           data-fee="${facility.base_fee}"
                                                                            data-rate-type="${facility.rate_type}"
                                                                            data-capacity="${facility.capacity}"
                                                                            ${!isAvailable ? 'disabled' : ''}>
                                                                     <label class="form-check-label ${!isAvailable ? 'text-muted' : ''}" 
                                                                            for="facility_${facility.facility_id}">
                                                                         ${facility.facility_name} 
-                                                                        (₱${facility.external_fee}${facility.rate_type === 'Per Hour' ? '/hour' : '/event'})
+                                                                        (₱${facility.base_fee}${facility.rate_type === 'Per Hour' ? '/hour' : '/event'})
                                                                         <br>
                                                                         <small class="text-muted">Capacity: ${facility.capacity} people</small>
                                                                         ${!isAvailable ? '<span class="badge bg-warning ms-2">Unavailable</span>' : ''}
@@ -2978,13 +2978,13 @@
                                                                            id="equipment_${equipment.equipment_id}" 
                                                                            value="${equipment.equipment_id}"
                                                                            data-name="${equipment.equipment_name}"
-                                                                           data-fee="${equipment.external_fee}"
+                                                                           data-fee="${equipment.base_fee}"
                                                                            data-rate-type="${equipment.rate_type}"
                                                                            ${!isAvailable ? 'disabled' : ''}>
                                                                     <label class="form-check-label ${!isAvailable ? 'text-muted' : ''}" 
                                                                            for="equipment_${equipment.equipment_id}">
                                                                         ${equipment.equipment_name} 
-                                                                        (₱${equipment.external_fee}${equipment.rate_type === 'Per Hour' ? '/hour' : '/event'})
+                                                                        (₱${equipment.base_fee}${equipment.rate_type === 'Per Hour' ? '/hour' : '/event'})
                                                                         ${!isAvailable ? '<span class="badge bg-warning ms-2">Unavailable</span>' : ''}
                                                                     </label>
                                                                 `;

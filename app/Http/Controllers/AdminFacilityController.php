@@ -107,7 +107,7 @@ class AdminFacilityController extends Controller
                     'facility' => [
                         'facility_id' => $facility->facility_id,
                         'facility_name' => $facility->facility_name,
-                        'building_code' => $facility->building_code,
+                        'facility_code' => $facility->facility_code,
                         'floor_level' => $facility->floor_level
                     ]
                 ]
@@ -246,7 +246,7 @@ public function getAdminFacilities($adminId): JsonResponse
     // Get admin facilities with facility details
     $adminFacilities = AdminFacility::where('admin_id', $adminId)
         ->with(['facility' => function ($query) {
-            $query->select('facility_id', 'facility_name', 'building_code', 'floor_level', 'status_id')
+            $query->select('facility_id', 'facility_name', 'facility_code', 'floor_level', 'status_id')
                 ->with(['status', 'department']);
         }])
         ->get();

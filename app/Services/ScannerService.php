@@ -215,7 +215,7 @@ class ScannerService
                     'description' => $item->equipment->description,
                     'brand' => $item->equipment->brand,
                     'storage_location' => $item->equipment->storage_location,
-                    'external_fee' => $item->equipment->external_fee,
+                    'base_fee' => $item->equipment->base_fee,
                     'rate_type' => $item->equipment->rate_type,
                     'department_id' => $item->equipment->department->department_name ?? 'N/A',
                     'category' => $item->equipment->category->category_name ?? 'N/A',

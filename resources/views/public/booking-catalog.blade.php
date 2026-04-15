@@ -2026,7 +2026,7 @@
                                                                                                                                                                         <p class="facility-description" title="${item.description || ''}">${description}</p>
 
                                                                                                                                                                         <div class="catalog-card-fee">
-                                                                                                                                                                            <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.external_fee).toLocaleString()} (${item.rate_type})
+                                                                                                                                                                            <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.base_fee).toLocaleString()} (${item.rate_type})
                                                                                                                                                                         </div>
                                                                                                                                                                     </div>
 
@@ -2077,7 +2077,7 @@
 
                                                                                                                                                                     <div class="catalog-card-actions">
                                                                                                                                                                         <div class="catalog-card-fee mb-2 text-center">
-                                                                                                                                                                            <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.external_fee).toLocaleString()} (${item.rate_type})
+                                                                                                                                                                            <i class="bi bi-cash-stack"></i> ₱${parseFloat(item.base_fee).toLocaleString()} (${item.rate_type})
                                                                                                                                                                         </div>
 
                                                                                                                                                                         ${isEquipment ? getEquipmentActionsHtml(item) : getFacilityActionsHtml(item)}
@@ -2234,7 +2234,7 @@
             // For equipment, we need to pass the available quantity
             const additionalData = isEquipment ?
                 `data-item-available-qty="${availableQty}" data-item-total-qty="${item.total_quantity}"` :
-                `data-item-capacity="${item.capacity || 'N/A'}" data-item-fee="${parseFloat(item.external_fee).toLocaleString()}"`;
+                `data-item-capacity="${item.capacity || 'N/A'}" data-item-fee="${parseFloat(item.base_fee).toLocaleString()}"`;
 
             return `
                                                                                                                                                             <button class="btn btn-light btn-custom check-availability-btn form-action-btn" 
@@ -2615,7 +2615,7 @@
                                                                                                                                                                         ${!isEquipment ? `<p><strong>Subcategory:</strong> ${item.subcategory?.subcategory_name || "N/A"}</p>` : ''}
                                                                                                                                                                         ${!isEquipment ? `<p><strong>Capacity:</strong> ${item.capacity}</p>` :
                     `<p><strong>Available Quantity:</strong> ${item.available_quantity}/${item.total_quantity}</p>`}
-                                                                                                                                                                        <p><strong>Rate:</strong> ₱${parseFloat(item.external_fee).toLocaleString()} (${item.rate_type})</p>
+                                                                                                                                                                        <p><strong>Rate:</strong> ₱${parseFloat(item.base_fee).toLocaleString()} (${item.rate_type})</p>
                                                                                                                                                                         <p><strong>Description:</strong></p>
                                                                                                                                                                         <p>${item.description || "No description available."}</p>
                                                                                                                                                                     </div>
