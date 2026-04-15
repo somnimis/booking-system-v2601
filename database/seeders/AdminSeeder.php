@@ -44,7 +44,7 @@ class AdminSeeder extends Seeder
                 'signature_public_id' => null,
                 'role_id' => 2,
                 'school_id' => null,
-                'email' => 'vpa@example.test',
+                'email' => 'opa@example.test',
                 'contact_number' => null,
                 'hashed_password' => Hash::make('password123'),
                 'created_at' => now(),
