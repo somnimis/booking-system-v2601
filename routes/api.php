@@ -30,6 +30,7 @@ use App\Http\Controllers\CalendarEventsController;
 use App\Http\Controllers\ExtraServicesController;
 use App\Http\Controllers\ReservationListingsController;
 use App\Http\Controllers\EquipmentTransactionController;
+use App\Http\Controllers\AvailabilityController;
 use Illuminate\Support\Facades\Log;
 
 // ==================== PUBLIC ROUTES ==================== //
@@ -91,6 +92,12 @@ Route::get('/calendar-events', [CalendarEventsController::class, 'index']);
 Route::post('/calendar-events', [CalendarEventsController::class, 'store']);
 Route::delete('/calendar-events/{id}', [CalendarEventsController::class, 'destroy']);
 Route::get('/calendar-events/types', [CalendarEventsController::class, 'getEventTypes']);
+
+// ==================== OPTIMIZED AVAILABILITY ENDPOINTS ==================== //
+Route::get('/availability/facilities', [AvailabilityController::class, 'getFacilitiesList']);
+Route::get('/availability/events', [AvailabilityController::class, 'getEventsForDate']);
+Route::get('/availability/facility/{facilityId}/schedule', [AvailabilityController::class, 'getFacilitySchedule']);
+Route::get('/availability/facilities/hierarchy', [AvailabilityController::class, 'getFacilitiesHierarchy']);
 
 // ---------------- Lookup Tables ---------------- //
 Route::get('/admin-role', [AdminController::class, 'adminRoles']);
