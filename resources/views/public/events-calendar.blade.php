@@ -178,10 +178,10 @@
             border: 1px solid var(--status-event);
         }
 
-        /* Facility Filters */
+        /* Facility Filters - Enhanced with Dropdowns */
         .filters-bar {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 16px;
             margin-bottom: 24px;
             flex-wrap: wrap;
@@ -195,6 +195,12 @@
             flex: 1;
         }
 
+        /* Parent Facility Button Styles */
+        .facility-filter-parent {
+            position: relative;
+            display: inline-block;
+        }
+
         .facility-filter-badge {
             background: #f8f9fa;
             padding: 6px 12px;
@@ -203,6 +209,19 @@
             cursor: pointer;
             transition: all 0.2s;
             border: 1px solid var(--border-color);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .facility-filter-badge.has-children {
+            padding-right: 8px;
+        }
+
+        .facility-filter-badge.has-children::after {
+            content: '▼';
+            font-size: 0.7rem;
+            margin-left: 4px;
         }
 
         .facility-filter-badge:hover {
@@ -213,6 +232,76 @@
             background: var(--primary-color);
             color: white;
             border-color: var(--primary-color);
+        }
+
+        /* Dropdown Menu for Child Facilities */
+        .facility-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .facility-dropdown.show {
+            display: block;
+        }
+
+        .facility-dropdown-header {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .facility-dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .facility-dropdown-item:hover {
+            background: #f0f0f0;
+        }
+
+        .facility-dropdown-item.selected {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .facility-dropdown-item .facility-capacity {
+            font-size: 0.7rem;
+            color: #999;
+            margin-left: auto;
+        }
+
+        .facility-dropdown-item.selected .facility-capacity {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Child facility indicator in matrix */
+        .facility-cell.child-facility {
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .facility-cell.child-facility::before {
+            content: '↳';
+            position: absolute;
+            left: 8px;
+            color: #999;
         }
 
         .search-box {
@@ -237,12 +326,30 @@
             color: #999;
         }
 
+        /* Clear Filters Button */
+        .clear-filters-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .clear-filters-btn:hover {
+            background: #5a6268;
+        }
+
         /* Main Matrix Table */
         .matrix-wrapper {
             overflow-x: auto;
             border-radius: 12px;
             border: 1px solid var(--border-color);
             background: white;
+            position: relative;
+            min-height: 400px;
         }
 
         .availability-matrix {
@@ -469,7 +576,7 @@
             display: block;
         }
 
-        /* Date Picker Styles - Minimal, just for alignment */
+        /* Date Picker Styles */
         .date-actions {
             display: flex;
             align-items: center;
@@ -489,6 +596,27 @@
             outline: none;
             border-color: var(--primary-color, #0a336c);
         }
+
+        /* Facility Group Toggle */
+        .facility-group-toggle {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .facility-group-toggle:hover {
+            background: #f8f9fa;
+        }
+
+        .facility-group-toggle.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
     </style>
 
     <main>
@@ -505,6 +633,7 @@
                     <button class="today-btn" id="todayBtn">Today</button>
                 </div>
             </div>
+
             <!-- Time Range Selector -->
             <div class="time-range-bar">
                 <button class="time-range-btn active" data-range="8-12">Morning (8 AM - 12 PM)</button>
@@ -529,15 +658,28 @@
                 </div>
             </div>
 
-            <!-- Filters Bar -->
+            <!-- Enhanced Filters Bar -->
             <div class="filters-bar">
                 <div class="facility-filter-group" id="facilityFilters">
-                    <span class="facility-filter-badge active" data-facility="all">All Facilities</span>
+                    <!-- Will be populated dynamically with hierarchical structure -->
                 </div>
                 <div class="search-box">
                     <input type="text" id="searchInput" placeholder="Search facility or event...">
                     <i class="bi bi-search"></i>
                 </div>
+                <button class="clear-filters-btn" id="clearFiltersBtn">
+                    <i class="bi bi-x-circle"></i> Clear Filters
+                </button>
+            </div>
+
+            <!-- View Toggle for Hierarchical View -->
+            <div class="time-range-bar" style="margin-top: -12px;">
+                <button class="facility-group-toggle active" id="flatViewBtn">
+                    <i class="bi bi-list-ul"></i> Flat View
+                </button>
+                <button class="facility-group-toggle" id="hierarchicalViewBtn">
+                    <i class="bi bi-diagram-3"></i> Group by Building
+                </button>
             </div>
 
             <!-- Main Matrix View -->
@@ -568,513 +710,8 @@
             </div>
         </div>
     </div>
-
-    <script>
-        // ============================================
-        // AVAILABILITY MATRIX CONTROLLER
-        // ============================================
-
-        class AvailabilityMatrix {
-            constructor() {
-                this.currentDate = new Date();
-                this.timeRange = '8-17'; // Default: 8 AM - 5 PM
-                this.facilities = [];
-                this.requisitions = [];
-                this.calendarEvents = [];
-                this.selectedFacility = 'all';
-                this.searchQuery = '';
-                this.isLoading = false;
-
-                // Remove seconds from time strings for consistency
-                this.timeFormat = 'H:i';
-
-                this.init();
-            }
-
-            async init() {
-                this.showLoading(true);
-                await this.loadData();
-                this.renderFacilityFilters();
-                this.renderMatrix();
-                this.attachEvents();
-                this.showLoading(false);
-            }
-
-
-
-            async loadData() {
-                try {
-                    const dateStr = this.formatDate(this.currentDate);
-
-                    // Fetch facilities, requisitions, and calendar events in parallel
-                    const [facilitiesRes, requisitionsRes, calendarEventsRes] = await Promise.all([
-                        fetch('/api/facilities'),
-                        fetch(`/api/requisition-forms/calendar-events`),
-                        fetch('/api/calendar-events/all')
-                    ]);
-
-                    const facilitiesData = await facilitiesRes.json();
-                    const requisitionsData = await requisitionsRes.json();
-                    const calendarEventsData = await calendarEventsRes.json();
-
-                    // Process facilities
-                    this.facilities = facilitiesData.data || facilitiesData || [];
-
-                    // Process requisitions (filter for current date and active statuses)
-                    const requisitions = requisitionsData.data || requisitionsData || [];
-                    this.requisitions = requisitions.filter(req => {
-                        const startDate = req.start?.split('T')[0] || req.extendedProps?.start_date;
-                        const endDate = req.end?.split('T')[0] || req.extendedProps?.end_date;
-                        const currentDateStr = this.formatDate(this.currentDate);
-                        return currentDateStr >= startDate && currentDateStr <= endDate;
-                    });
-
-                    // Process calendar events
-                    const calendarEvents = calendarEventsData.data || calendarEventsData || [];
-                    this.calendarEvents = calendarEvents.filter(event => {
-                        const startDate = event.schedule?.start_date;
-                        const endDate = event.schedule?.end_date;
-                        const currentDateStr = this.formatDate(this.currentDate);
-                        return currentDateStr >= startDate && currentDateStr <= endDate;
-                    });
-
-                    console.log(`Loaded: ${this.facilities.length} facilities, ${this.requisitions.length} requisitions, ${this.calendarEvents.length} calendar events`);
-
-                } catch (error) {
-                    console.error('Error loading data:', error);
-                    this.showError('Failed to load availability data');
-                }
-            }
-
-            setupDatePicker() {
-                const datePicker = document.getElementById('datePicker');
-                if (!datePicker) return;
-
-                // Set initial value to current date in YYYY-MM-DD format
-                datePicker.value = this.formatDate(this.currentDate);
-
-                // Add change event listener
-                datePicker.addEventListener('change', (e) => {
-                    const selectedDate = new Date(e.target.value);
-                    if (!isNaN(selectedDate.getTime())) {
-                        this.currentDate = selectedDate;
-                        this.refresh();
-                    }
-                });
-            }
-
-            getTimeSlots() {
-                const slots = [];
-                const [startHour, endHour] = this.timeRange.split('-').map(Number);
-
-                // Generate 30-minute intervals
-                for (let hour = startHour; hour < endHour; hour++) {
-                    slots.push(`${hour.toString().padStart(2, '0')}:00`);
-                    slots.push(`${hour.toString().padStart(2, '0')}:30`);
-                }
-
-                return slots;
-            }
-
-            getStatusForTimeSlot(facilityId, timeSlot) {
-                // Check system events first (these override everything)
-                const eventAtSlot = this.calendarEvents.find(event => {
-                    const eventStartTime = event.schedule?.start_time?.substring(0, 5);
-                    const eventEndTime = event.schedule?.end_time?.substring(0, 5);
-                    return eventStartTime <= timeSlot && eventEndTime > timeSlot;
-                });
-
-                if (eventAtSlot) {
-                    return {
-                        status: 'event',
-                        text: '📅 Event',
-                        event: eventAtSlot,
-                        tooltip: eventAtSlot.event_name
-                    };
-                }
-
-                // Check requisitions for this facility
-                const requisitionAtSlot = this.requisitions.find(req => {
-                    const reqFacilities = req.extendedProps?.facilities || [];
-                    const matchesFacility = reqFacilities.some(f =>
-                        String(f.facility_id) === String(facilityId)
-                    );
-
-                    if (!matchesFacility) return false;
-
-                    const reqStartTime = req.start?.substring(11, 16) || req.extendedProps?.start_time?.substring(0, 5);
-                    const reqEndTime = req.end?.substring(11, 16) || req.extendedProps?.end_time?.substring(0, 5);
-
-                    return reqStartTime <= timeSlot && reqEndTime > timeSlot;
-                });
-
-                if (requisitionAtSlot) {
-                    const statusName = requisitionAtSlot.extendedProps?.status || 'Pending';
-                    const isApproved = statusName === 'Approved';
-                    const isPending = ['Pending', 'For Approval', 'Under Review'].includes(statusName);
-
-                    if (isApproved) {
-                        return {
-                            status: 'booked',
-                            text: '🔴 Booked',
-                            event: requisitionAtSlot,
-                            tooltip: requisitionAtSlot.title
-                        };
-                    } else if (isPending) {
-                        return {
-                            status: 'pending',
-                            text: '🟡 Pending',
-                            event: requisitionAtSlot,
-                            tooltip: `${requisitionAtSlot.title} (Pending Approval)`
-                        };
-                    }
-                }
-
-                return {
-                    status: 'available',
-                    text: '✅ Available',
-                    event: null,
-                    tooltip: 'Click to book this slot'
-                };
-            }
-
-            renderMatrix() {
-                const container = document.getElementById('availabilityMatrix');
-                const timeSlots = this.getTimeSlots();
-
-                if (this.facilities.length === 0) {
-                    container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="bi bi-building"></i>
-                        <p>No facilities available</p>
-                    </div>
-                `;
-                    return;
-                }
-
-                // Filter facilities by search
-                let filteredFacilities = this.facilities;
-                if (this.searchQuery) {
-                    const query = this.searchQuery.toLowerCase();
-                    filteredFacilities = this.facilities.filter(f =>
-                        (f.facility_name || f.name).toLowerCase().includes(query)
-                    );
-                }
-
-                // Filter by selected facility
-                if (this.selectedFacility !== 'all') {
-                    filteredFacilities = filteredFacilities.filter(f =>
-                        String(f.facility_id || f.id) === this.selectedFacility
-                    );
-                }
-
-                if (filteredFacilities.length === 0) {
-                    container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="bi bi-search"></i>
-                        <p>No facilities match your search</p>
-                    </div>
-                `;
-                    return;
-                }
-
-                let html = `
-                <table class="matrix-table">
-                    <thead>
-                        <tr>
-                            <th>Facility / Time</th>
-                            ${timeSlots.map(slot => `<th>${this.formatTime(slot)}</th>`).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-                filteredFacilities.forEach(facility => {
-                    const facilityId = facility.facility_id || facility.id;
-                    const facilityName = facility.facility_name || facility.name;
-
-                    html += `<tr>
-                            <td class="facility-cell" data-tooltip="${facilityName}">
-                                <strong>${this.truncate(facilityName, 25)}</strong>
-                            </td>`;
-
-                    timeSlots.forEach(slot => {
-                        const { status, text, event, tooltip } = this.getStatusForTimeSlot(facilityId, slot);
-                        const eventId = event?.extendedProps?.request_id || event?.event_id || '';
-
-                        html += `<td>
-                                <div class="status-card ${status}" 
-                                     data-status="${status}"
-                                     data-facility="${facilityId}"
-                                     data-time="${slot}"
-                                     data-event-id="${eventId}"
-                                     data-event-type="${event?.extendedProps?.eventType || 'requisition'}"
-                                     data-tooltip="${tooltip}">
-                                    ${text}
-                                </div>
-                             </td>`;
-                    });
-
-                    html += `</tr>`;
-                });
-
-                html += `</tbody></table>`;
-                container.innerHTML = html;
-
-                this.updateDateDisplay();
-                this.attachSlotClickHandlers();
-            }
-
-            attachSlotClickHandlers() {
-                const container = document.getElementById('availabilityMatrix');
-
-                container.querySelectorAll('.status-card.available').forEach(card => {
-                    card.removeEventListener('click', this.handleSlotClick);
-                    card.addEventListener('click', this.handleSlotClick.bind(this));
-                });
-
-                container.querySelectorAll('.status-card.booked, .status-card.pending, .status-card.event').forEach(card => {
-                    card.removeEventListener('click', this.handleEventClick);
-                    card.addEventListener('click', this.handleEventClick.bind(this));
-                });
-            }
-
-            handleSlotClick(e) {
-                const card = e.currentTarget;
-                const facilityId = card.dataset.facility;
-                const timeSlot = card.dataset.time;
-                const facility = this.facilities.find(f => (f.facility_id || f.id) == facilityId);
-
-                this.showBookingModal({
-                    facilityId: facilityId,
-                    facilityName: facility?.facility_name || facility?.name,
-                    date: this.currentDate,
-                    time: timeSlot
-                });
-            }
-
-            handleEventClick(e) {
-                const card = e.currentTarget;
-                const eventId = card.dataset.eventId;
-                const eventType = card.dataset.eventType;
-
-                if (eventId) {
-                    this.showEventDetails(eventId, eventType);
-                }
-            }
-
-            async showEventDetails(eventId, eventType) {
-                let eventData = null;
-
-                if (eventType === 'calendar_event') {
-                    eventData = this.calendarEvents.find(e => e.event_id == eventId);
-                } else {
-                    eventData = this.requisitions.find(r =>
-                        r.extendedProps?.request_id == eventId || r.request_id == eventId
-                    );
-                }
-
-                if (!eventData) return;
-
-                const modal = new bootstrap.Modal(document.getElementById('eventModal'));
-                const modalBody = document.getElementById('eventModalBody');
-                const modalTitle = document.getElementById('eventModalTitle');
-
-                if (eventType === 'calendar_event') {
-                    modalTitle.textContent = eventData.event_name || 'Calendar Event';
-                    modalBody.innerHTML = `
-                    <div class="event-detail-row">
-                        <div class="event-detail-label">Description</div>
-                        <div class="event-detail-value">${eventData.description || 'No description'}</div>
-                    </div>
-                    <div class="event-detail-row">
-                        <div class="event-detail-label">Schedule</div>
-                        <div class="event-detail-value">${eventData.schedule?.display || 'N/A'}</div>
-                    </div>
-                    <div class="event-detail-row">
-                        <div class="event-detail-label">Type</div>
-                        <div class="event-detail-value">${eventData.display_name || eventData.event_type}</div>
-                    </div>
-                `;
-                } else {
-                    modalTitle.textContent = eventData.title || 'Event Details';
-                    const props = eventData.extendedProps || eventData;
-                    modalBody.innerHTML = `
-                    <div class="event-detail-row">
-                        <div class="event-detail-label">Requester</div>
-                        <div class="event-detail-value">${props.requester || 'N/A'}</div>
-                    </div>
-                    <div class="event-detail-row">
-                        <div class="event-detail-label">Purpose</div>
-                        <div class="event-detail-value">${props.purpose || 'N/A'}</div>
-                    </div>
-                    <div class="event-detail-row">
-                        <div class="event-detail-label">Status</div>
-                        <div class="event-detail-value">
-                            <span class="badge" style="background-color: ${eventData.color || '#007bff'}">
-                                ${props.status || 'Unknown'}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="event-detail-row">
-                        <div class="event-detail-label">Participants</div>
-                        <div class="event-detail-value">${props.num_participants || 0}</div>
-                    </div>
-                    <div class="event-detail-row">
-                        <div class="event-detail-label">Facilities</div>
-                        <div class="event-detail-value">${(props.facilities || []).map(f => f.name).join(', ') || 'N/A'}</div>
-                    </div>
-                `;
-                }
-
-                modal.show();
-            }
-
-            showBookingModal(data) {
-                // Implement booking modal logic here
-                // This would open a form to submit a requisition
-                console.log('Booking slot:', data);
-                alert(`Booking request for ${data.facilityName}\nDate: ${this.formatDisplayDate(data.date)}\nTime: ${this.formatTime(data.time)}\n\nThis feature will open the requisition form.`);
-            }
-
-            renderFacilityFilters() {
-                const container = document.getElementById('facilityFilters');
-
-                // Keep the "All Facilities" option
-                let html = `<span class="facility-filter-badge active" data-facility="all">All Facilities</span>`;
-
-                // Add top 10 facilities (to avoid overwhelming the UI)
-                const topFacilities = this.facilities.slice(0, 12);
-                topFacilities.forEach(facility => {
-                    const facilityId = facility.facility_id || facility.id;
-                    const facilityName = facility.facility_name || facility.name;
-                    html += `<span class="facility-filter-badge" data-facility="${facilityId}">${this.truncate(facilityName, 20)}</span>`;
-                });
-
-                container.innerHTML = html;
-
-                // Attach click handlers
-                container.querySelectorAll('.facility-filter-badge').forEach(badge => {
-                    badge.addEventListener('click', () => {
-                        container.querySelectorAll('.facility-filter-badge').forEach(b => b.classList.remove('active'));
-                        badge.classList.add('active');
-                        this.selectedFacility = badge.dataset.facility;
-                        this.renderMatrix();
-                    });
-                });
-            }
-
-            attachEvents() {
-                // Date navigation
-                document.getElementById('prevDayBtn')?.addEventListener('click', () => {
-                    this.currentDate.setDate(this.currentDate.getDate() - 1);
-                    this.refresh();
-                });
-
-                document.getElementById('nextDayBtn')?.addEventListener('click', () => {
-                    this.currentDate.setDate(this.currentDate.getDate() + 1);
-                    this.refresh();
-                });
-
-                document.getElementById('todayBtn')?.addEventListener('click', () => {
-                    this.currentDate = new Date();
-                    this.refresh();
-                });
-
-                // Setup date picker
-                this.setupDatePicker();
-
-                // Time range selector
-                document.querySelectorAll('.time-range-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        this.timeRange = btn.dataset.range;
-                        this.refresh();
-                    });
-                });
-
-                // Search input
-                const searchInput = document.getElementById('searchInput');
-                let searchTimeout;
-                searchInput?.addEventListener('input', (e) => {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => {
-                        this.searchQuery = e.target.value;
-                        this.renderMatrix();
-                    }, 300);
-                });
-            }
-
-async refresh() {
-    this.showLoading(true);
-    await this.loadData();
-    this.renderMatrix();
-    this.showLoading(false);
-    
-    // Update date picker value
-    const datePicker = document.getElementById('datePicker');
-    if (datePicker) {
-        datePicker.value = this.formatDate(this.currentDate);
-    }
-}
-
-            showLoading(show) {
-                const container = document.getElementById('availabilityMatrix');
-                if (show) {
-                    container.innerHTML = `
-                    <div class="loading-overlay">
-                        <div class="loading-spinner"></div>
-                    </div>
-                `;
-                }
-            }
-
-            showError(message) {
-                const container = document.getElementById('availabilityMatrix');
-                container.innerHTML = `
-                <div class="empty-state">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <p>${message}</p>
-                    <button class="btn btn-primary btn-sm mt-3" onclick="location.reload()">Retry</button>
-                </div>
-            `;
-            }
-
-            updateDateDisplay() {
-                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                document.getElementById('currentDateDisplay').textContent =
-                    this.currentDate.toLocaleDateString('en-US', options);
-            }
-
-            formatDate(date) {
-                return date.toISOString().split('T')[0];
-            }
-
-            formatDisplayDate(date) {
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            }
-
-            formatTime(timeStr) {
-                const [hour, minute] = timeStr.split(':');
-                const hour12 = hour % 12 || 12;
-                const ampm = hour >= 12 ? 'PM' : 'AM';
-                return minute === '00' ? `${hour12}${ampm}` : `${hour12}:${minute}${ampm}`;
-            }
-
-            truncate(str, maxLen) {
-                if (!str) return '';
-                return str.length > maxLen ? str.substring(0, maxLen - 3) + '...' : str;
-            }
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            window.availabilityMatrix = new AvailabilityMatrix();
-        });
-    </script>
 @endsection
 
 @section('scripts')
-    <!-- No external dependencies needed - pure vanilla JS -->
+    <script src="{{ asset('js/public/availability.js') }}"></script>
 @endsection
