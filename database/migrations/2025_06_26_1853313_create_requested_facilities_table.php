@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->id('requested_facility_id');
             $table->unsignedBigInteger('request_id')->index();
             $table->unsignedBigInteger('facility_id')->index();
+            $table->string('venue_details', 100)->nullable(); // To specify the location within the requested facility if needed.
             $table->boolean('is_waived')->default(false);
             $table->unsignedBigInteger('waived_by')->nullable();
             $table->datetime('waived_at')->nullable();
