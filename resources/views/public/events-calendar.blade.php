@@ -8,8 +8,8 @@
 @section('content')
     <style>
         /* ============================================
-           AVAILABILITY MATRIX VIEW - MAIN STYLES
-           ============================================ */
+                   AVAILABILITY MATRIX VIEW - MAIN STYLES
+                   ============================================ */
 
         :root {
             --status-available: #28a745;
@@ -617,6 +617,98 @@
             color: white;
             border-color: var(--primary-color);
         }
+
+        /* Parent Row Styles */
+        .parent-row .facility-cell {
+            cursor: pointer;
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .parent-row .facility-cell:hover {
+            background-color: #e9ecef;
+        }
+
+        .expand-icon {
+            display: inline-block;
+            width: 20px;
+            font-size: 12px;
+            margin-right: 4px;
+            color: #666;
+        }
+
+        .child-count {
+            margin-left: 6px;
+            color: #666;
+            font-weight: normal;
+        }
+
+        .child-row .facility-cell {
+            padding-left: 28px;
+            background-color: #fff;
+        }
+
+        .child-indent {
+            display: inline-block;
+            width: 20px;
+            color: #999;
+            margin-right: 4px;
+        }
+
+        /* Parent placeholder cards */
+        .status-card.parent-placeholder {
+            background: #f0f0f0;
+            color: #999;
+            border: 1px dashed #ccc;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 8px 0;
+        }
+
+        .status-card.parent-placeholder:hover {
+            background: #e8e8e8;
+        }
+
+        /* Facility Select Dropdown */
+        .facility-select {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            background: white;
+            font-size: 0.85rem;
+            min-width: 250px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .facility-select:focus {
+            border-color: var(--primary-color);
+        }
+
+        .facility-select option.parent-option {
+            font-weight: 600;
+            background-color: #f8f9fa;
+        }
+
+        .facility-select option.child-option {
+            padding-left: 20px;
+            color: #555;
+        }
+
+        /* Non-bookable cells */
+        .status-card[data-bookable="false"] {
+            cursor: default;
+            opacity: 0.8;
+        }
+
+        /* Filters bar adjustments */
+        .filters-bar {
+            align-items: center;
+        }
+
+        .facility-filter-group {
+            flex: 0 0 auto;
+        }
     </style>
 
     <main>
@@ -658,10 +750,10 @@
                 </div>
             </div>
 
-            <!-- Enhanced Filters Bar -->
+            <!-- Filters Bar -->
             <div class="filters-bar">
                 <div class="facility-filter-group" id="facilityFilters">
-                    <!-- Will be populated dynamically with hierarchical structure -->
+                    <!-- Will be populated with select dropdown -->
                 </div>
                 <div class="search-box">
                     <input type="text" id="searchInput" placeholder="Search facility or event...">
@@ -671,17 +763,7 @@
                     <i class="bi bi-x-circle"></i> Clear Filters
                 </button>
             </div>
-
-            <!-- View Toggle for Hierarchical View -->
-            <div class="time-range-bar" style="margin-top: -12px;">
-                <button class="facility-group-toggle active" id="flatViewBtn">
-                    <i class="bi bi-list-ul"></i> Flat View
-                </button>
-                <button class="facility-group-toggle" id="hierarchicalViewBtn">
-                    <i class="bi bi-diagram-3"></i> Group by Building
-                </button>
-            </div>
-
+            
             <!-- Main Matrix View -->
             <div class="matrix-wrapper" id="matrixWrapper">
                 <div class="availability-matrix" id="availabilityMatrix">
