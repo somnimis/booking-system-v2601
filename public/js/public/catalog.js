@@ -365,36 +365,58 @@ class BookingCatalog {
         this.loadCatalogData();
     }
 
-    /**
-     * Load catalog data from API with pagination support
-     */
-    async loadCatalogData() {
-        try {
-            const api = this.config.apiEndpoints[this.catalogType];
+/**
+ * Load catalog data from API with pagination support
+ */
+async loadCatalogData() {
+    try {
+        const api = this.config.apiEndpoints[this.catalogType];
 
-            // Build URL with pagination and search parameters
-            let itemsUrl = api.items;
-            const params = new URLSearchParams();
+        // Build URL with pagination and search parameters
+        let itemsUrl = api.items;
+        const params = new URLSearchParams();
 
-            params.append("page", this.currentPage);
-            params.append("per_page", this.config.itemsPerPage);
+        params.append("page", this.currentPage);
+        params.append("per_page", this.config.itemsPerPage);
 
-            if (this.searchQuery && this.searchQuery.trim() !== "") {
-                params.append("search", this.searchQuery);
+        if (this.searchQuery && this.searchQuery.trim() !== "") {
+            params.append("search", this.searchQuery);
+        }
+
+        // === GET SELECTED FILTERS ===
+        const selectedCategories = this.getSelectedCategories();
+        const selectedSubcategories = this.getSelectedSubcategories();
+        
+        // Apply category filter (only send ONE - your backend accepts single values)
+        if (selectedCategories.length > 0) {
+            params.append("category", selectedCategories[0]);
+        }
+        
+        // Apply subcategory filter (only send ONE - your backend accepts single values)
+        if (selectedSubcategories.length > 0) {
+            params.append("subcategory", selectedSubcategories[0]);
+        }
+
+        // Add status filter
+        if (this.statusFilter !== "All") {
+            const statusMap = { Available: 1, Unavailable: 2 };
+            if (statusMap[this.statusFilter]) {
+                params.append("status", statusMap[this.statusFilter]);
             }
+        }
 
-            // Add status filter if any
-            if (this.statusFilter !== "All") {
-                const statusMap = { Available: 1, Unavailable: 2 };
-                if (statusMap[this.statusFilter]) {
-                    params.append("status", statusMap[this.statusFilter]);
-                }
+        // Add building filter for rooms
+        if (this.catalogType === "rooms") {
+            const selectedBuildings = this.getSelectedParentBuildings();
+            if (selectedBuildings.length > 0) {
+                params.append("building", selectedBuildings[0]);
             }
+        }
 
-            const queryString = params.toString();
-            if (queryString) {
-                itemsUrl += `?${queryString}`;
-            }
+        const queryString = params.toString();
+        if (queryString) {
+            itemsUrl += `?${queryString}`;
+        }
 
             // Show loading indicator
             if (this.elements.loadingIndicator) {
@@ -484,22 +506,28 @@ class BookingCatalog {
         }
     }
 
-    /**
-     * Get selected categories for filtering
-     */
-    getSelectedCategories() {
-        const categoryCheckboxes = Array.from(
-            document.querySelectorAll(".category-filter"),
-        ).filter((cb) => cb.id !== "allCategories" && cb.checked);
-        const subcategoryCheckboxes = Array.from(
-            document.querySelectorAll(".subcategory-filter"),
-        ).filter((cb) => cb.checked);
+    
+/**
+ * Get selected categories for filtering
+ */
+getSelectedCategories() {
+    const categoryCheckboxes = Array.from(
+        document.querySelectorAll(".category-filter")
+    ).filter((cb) => cb.id !== "allCategories" && cb.checked);
+    
+    return categoryCheckboxes.map((cb) => cb.value);
+}
 
-        return [
-            ...categoryCheckboxes.map((cb) => cb.value),
-            ...subcategoryCheckboxes.map((cb) => cb.value),
-        ];
-    }
+/**
+ * Get selected subcategories for filtering
+ */
+getSelectedSubcategories() {
+    const subcategoryCheckboxes = Array.from(
+        document.querySelectorAll(".subcategory-filter")
+    ).filter((cb) => cb.checked);
+    
+    return subcategoryCheckboxes.map((cb) => cb.value);
+}
 
     /**
      * Apply catalog type specific filtering
@@ -888,6 +916,14 @@ async fetchSelectedItems() {
 renderCategoryFilters() {
     if (!this.elements.categoryFilterList) return;
 
+    // === STORE CURRENTLY CHECKED FILTERS BEFORE RE-RENDERING ===
+    const checkedCategoryIds = Array.from(document.querySelectorAll(".category-filter:checked"))
+        .map(cb => cb.id);
+    const checkedSubcategoryIds = Array.from(document.querySelectorAll(".subcategory-filter:checked"))
+        .map(cb => cb.id);
+    const checkedParentBuildingIds = Array.from(document.querySelectorAll(".parent-building-filter:checked"))
+        .map(cb => cb.id);
+
     this.elements.categoryFilterList.innerHTML = "";
 
     const allCategoriesItem = document.createElement("div");
@@ -907,6 +943,22 @@ renderCategoryFilters() {
     } else {
         this.renderFacilityCategories();
     }
+
+    // === RESTORE CHECKED STATES ===
+    setTimeout(() => {
+        checkedCategoryIds.forEach(id => {
+            const cb = document.getElementById(id);
+            if (cb) cb.checked = true;
+        });
+        checkedSubcategoryIds.forEach(id => {
+            const cb = document.getElementById(id);
+            if (cb) cb.checked = true;
+        });
+        checkedParentBuildingIds.forEach(id => {
+            const cb = document.getElementById(id);
+            if (cb) cb.checked = true;
+        });
+    }, 50);
 
     this.setupCategoryFilterEvents();
 }
@@ -1357,17 +1409,34 @@ filterItems() {
         );
     }
 
-    /**
-     * Filter and render items (updated for server-side pagination)
-     */
-    filterAndRenderItems() {
-        // Reset to first page when filters change
-        if (this.currentPage !== 1) {
-            this.currentPage = 1;
-        }
-        // Reload data with current filters from server
-        this.loadCatalogData();
+/**
+ * Filter and render items (updated for server-side pagination)
+ */
+filterAndRenderItems() {
+    // Store current filter state before reload
+    const currentCategoryValue = document.querySelector(".category-filter:checked")?.value;
+    const currentSubcategoryValue = document.querySelector(".subcategory-filter:checked")?.value;
+    
+    // Reset to first page when filters change
+    if (this.currentPage !== 1) {
+        this.currentPage = 1;
     }
+    
+    // Reload data with current filters from server
+    this.loadCatalogData();
+    
+    // Restore checkbox states after DOM update
+    setTimeout(() => {
+        if (currentCategoryValue) {
+            const cb = document.querySelector(`.category-filter[value="${currentCategoryValue}"]`);
+            if (cb) cb.checked = true;
+        }
+        if (currentSubcategoryValue) {
+            const cb = document.querySelector(`.subcategory-filter[value="${currentSubcategoryValue}"]`);
+            if (cb) cb.checked = true;
+        }
+    }, 100);
+}
     /**
      * Render items (no need for client-side pagination since server handles it)
      */
