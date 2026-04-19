@@ -709,8 +709,98 @@
         .facility-filter-group {
             flex: 0 0 auto;
         }
-    </style>
+                /* ============================================
+           SMOOTH DROPDOWN & EXPAND ANIMATIONS
+           ============================================ */
 
+        /* Child row slide down animation */
+        .child-row {
+            animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Expand icon rotation */
+        .expand-icon {
+            transition: transform 0.2s ease;
+            display: inline-block;
+        }
+
+        .parent-row[data-expanded="true"] .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        /* Facility dropdown fade in animation */
+        .facility-dropdown {
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+        }
+
+        .facility-dropdown.show {
+            display: block;
+            animation: dropdownFadeIn 0.15s ease-out;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Modal slide animation */
+        .event-modal .modal-dialog {
+            animation: modalSlideIn 0.2s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Event details fade in */
+        .event-detail-row {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Tooltip - remove cursor:help to fix ? cursor bug */
+        [data-tooltip] {
+            position: relative;
+            cursor: default;
+        }
+
+        /* Parent row expand/collapse cursor */
+        .parent-row .facility-cell {
+            cursor: pointer;
+        }
+    </style>
     <main>
         <div class="availability-container">
             <!-- Navigation Header -->
@@ -775,13 +865,13 @@
         </div>
     </main>
 
-    <!-- Event Modal -->
-    <div class="modal fade event-modal" id="eventModal" tabindex="-1">
-        <div class="modal-dialog">
+    <!-- Event Modal - Centered -->
+    <div class="modal fade event-modal" id="eventModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="eventModalTitle">Event Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="eventModalBody">
                     <!-- Dynamic content -->
