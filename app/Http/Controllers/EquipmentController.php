@@ -15,61 +15,85 @@ class EquipmentController extends Controller
 
     // ----- Indexes ----- //
 
-    public function publicIndex(Request $request): JsonResponse
-    {
-        try {
-            $query = Equipment::with([
-                'category',
-                'status',
-                'department',
-                'items' => function ($query) {
-                    $query->where('status_id', '!=', 5);
-                },
-                'items.condition',
-                'images'
-            ]);
+public function publicIndex(Request $request): JsonResponse
+{
+    try {
+        $query = Equipment::with([
+            'category',
+            'status',
+            'department',
+            'items' => function ($query) {
+                $query->where('status_id', '!=', 5);
+            },
+            'items.condition',
+            'images'
+        ]);
 
-            // Apply search filter on equipment items
-            if ($request->has('search') && !empty($request->search)) {
-                $search = $request->search;
-                $query->whereHas('items', function ($q) use ($search) {
-                    $q->where('item_name', 'LIKE', "%{$search}%");
-                });
-            }
-
-            $equipment = $query->orderBy('equipment_name')->get();
-
-            $formatted = $equipment->map(function ($item) use ($request) {
-                $availableCount = $item->items
-                    ->filter(function ($item) {
-                        return $item->status_id == 1 && in_array($item->condition_id, [1, 2, 3]);
-                    })
-                    ->count();
-
-                $totalCount = $item->items->count();
-
-                return array_merge(
-                    $this->formatPublicEquipment($item),
-                    [
-                        'images' => $item->images,
-                        'available_quantity' => $availableCount,
-                        'total_quantity' => $totalCount
-                    ]
-                );
+        // Apply search filter on equipment items
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->whereHas('items', function ($q) use ($search) {
+                $q->where('item_name', 'LIKE', "%{$search}%");
             });
-
-            return response()->json(['data' => $formatted]);
-        } catch (\Exception $e) {
-            \Log::error('Error fetching public equipment', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json([
-                'message' => 'Failed to fetch equipment data',
-                'error' => $e->getMessage()
-            ], 500);
         }
+
+        // Apply status filter
+        if ($request->has('status') && !empty($request->status)) {
+            $statusId = $request->status;
+            $query->whereHas('status', function ($q) use ($statusId) {
+                $q->where('status_id', $statusId);
+            });
+        }
+
+        // Apply category filters
+        if ($request->has('categories') && !empty($request->categories)) {
+            $categories = $request->categories;
+            $query->whereHas('category', function ($q) use ($categories) {
+                $q->whereIn('category_id', $categories);
+            });
+        }
+
+        // Apply pagination
+        $perPage = $request->input('per_page', 6);
+        $equipment = $query->orderBy('equipment_name')->paginate($perPage);
+
+        $formatted = $equipment->getCollection()->map(function ($item) {
+            $availableCount = $item->items
+                ->filter(function ($item) {
+                    return $item->status_id == 1 && in_array($item->condition_id, [1, 2, 3]);
+                })
+                ->count();
+
+            $totalCount = $item->items->count();
+
+            return array_merge(
+                $this->formatPublicEquipment($item),
+                [
+                    'images' => $item->images,
+                    'available_quantity' => $availableCount,
+                    'total_quantity' => $totalCount
+                ]
+            );
+        });
+
+        return response()->json([
+            'data' => $formatted,
+            'current_page' => $equipment->currentPage(),
+            'last_page' => $equipment->lastPage(),
+            'total' => $equipment->total(),
+            'per_page' => $equipment->perPage()
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Error fetching public equipment', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json([
+            'message' => 'Failed to fetch equipment data',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
 
 

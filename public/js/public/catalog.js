@@ -353,64 +353,76 @@ class BookingCatalog {
         return { categories, subcategories, buildings };
     }
 
-    async loadCatalogData() {
-        try {
-            // Show loading indicator
-            if (this.elements.loadingIndicator) {
-                this.elements.loadingIndicator.style.display = "block";
-            }
-            if (this.elements.catalogItemsContainer) {
-                this.elements.catalogItemsContainer.classList.add("d-none");
-            }
 
-            const api = this.config.apiEndpoints[this.catalogType];
-            const { categories, subcategories, buildings } = this.getSelectedFilters();
-            
-            const params = new URLSearchParams({
-                page: this.currentPage,
-                per_page: this.config.itemsPerPage
-            });
-            
-            if (this.searchQuery) params.append("search", this.searchQuery);
-            if (this.statusFilter !== "All") params.append("status", this.statusFilter === "Available" ? 1 : 2);
-            
-            categories.forEach(c => params.append("categories[]", c));
-            subcategories.forEach(s => params.append("subcategories[]", s));
-            if (this.catalogType === "rooms") buildings.forEach(b => params.append("buildings[]", b));
-            
-            const response = await this.fetchData(`${api.items}?${params.toString()}`);
-            
-            if (response?.success) {
-                this.allItems = response.data || [];
-                this.paginationMeta = {
-                    current_page: response.current_page || 1,
-                    last_page: response.last_page || 1,
-                    total: response.total || 0,
-                };
-            } else {
-                this.allItems = [];
-                this.paginationMeta = { current_page: 1, last_page: 1, total: 0 };
-            }
-            
-            this.renderItems();
-            this.renderPagination();
-            await this.fetchSelectedItems();
-            
-            // Hide loading indicator
-            if (this.elements.catalogItemsContainer) {
-                this.elements.catalogItemsContainer.classList.remove("d-none");
-            }
-            if (this.elements.loadingIndicator) {
-                this.elements.loadingIndicator.style.display = "none";
-            }
-        } catch (error) {
-            console.error("Error loading data:", error);
-            if (this.elements.loadingIndicator) {
-                this.elements.loadingIndicator.style.display = "none";
-            }
-            if (this.config.onError) this.config.onError(error);
+async loadCatalogData() 
+{
+    try {
+        // Show loading indicator
+        if (this.elements.loadingIndicator) {
+            this.elements.loadingIndicator.style.display = "block";
         }
+        if (this.elements.catalogItemsContainer) {
+            this.elements.catalogItemsContainer.classList.add("d-none");
+        }
+
+        const api = this.config.apiEndpoints[this.catalogType];
+        const { categories, subcategories, buildings } = this.getSelectedFilters();
+        
+        const params = new URLSearchParams({
+            page: this.currentPage,
+            per_page: this.config.itemsPerPage
+        });
+        
+        if (this.searchQuery) params.append("search", this.searchQuery);
+        if (this.statusFilter !== "All") params.append("status", this.statusFilter === "Available" ? 1 : 2);
+        
+        categories.forEach(c => params.append("categories[]", c));
+        subcategories.forEach(s => params.append("subcategories[]", s));
+        if (this.catalogType === "rooms") buildings.forEach(b => params.append("buildings[]", b));
+        
+        const response = await this.fetchData(`${api.items}?${params.toString()}`);
+        
+        // Handle paginated response (equipment) and non-paginated (venues/rooms)
+        if (response && response.data) {
+            this.allItems = Array.isArray(response.data) ? response.data : [];
+            this.paginationMeta = {
+                current_page: response.current_page || 1,
+                last_page: response.last_page || 1,
+                total: response.total || this.allItems.length,
+                per_page: response.per_page || this.config.itemsPerPage
+            };
+        } else if (Array.isArray(response)) {
+            this.allItems = response;
+            this.paginationMeta = {
+                current_page: 1,
+                last_page: 1,
+                total: response.length,
+                per_page: response.length
+            };
+        } else {
+            this.allItems = [];
+            this.paginationMeta = { current_page: 1, last_page: 1, total: 0, per_page: this.config.itemsPerPage };
+        }
+        
+        this.renderItems();
+        this.renderPagination();
+        await this.fetchSelectedItems();
+        
+        // Hide loading indicator
+        if (this.elements.catalogItemsContainer) {
+            this.elements.catalogItemsContainer.classList.remove("d-none");
+        }
+        if (this.elements.loadingIndicator) {
+            this.elements.loadingIndicator.style.display = "none";
+        }
+    } catch (error) {
+        console.error("Error loading data:", error);
+        if (this.elements.loadingIndicator) {
+            this.elements.loadingIndicator.style.display = "none";
+        }
+        if (this.config.onError) this.config.onError(error);
     }
+}
 
     filterAndRenderItems() {
         this.currentPage = 1;
