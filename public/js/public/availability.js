@@ -6,9 +6,9 @@
 class AvailabilityMatrix {
     constructor() {
         this.currentDate = new Date();
-        this.timeRange = '8-17';
+        this.timeRange = '8-12';
         this.facilityHierarchy = [];
-        this.expandedParents = new Set(); // Track expanded parent IDs
+        this.expandedParents = new Set();
         this.eventsCache = new Map();
         this.selectedFacility = 'all';
         this.searchQuery = '';
@@ -91,49 +91,51 @@ class AvailabilityMatrix {
         }
     }
 
-    async loadChildFacilities(parentId) {
-        const parent = this.facilityHierarchy.find(p => p.facility_id == parentId);
-        if (parent && parent.children.length > 0 && !parent.childrenLoaded) {
-            parent.childrenLoaded = true;
-            // Children data is already loaded from hierarchy, just mark as loaded
-        }
-        this.renderMatrix(); // Re-render with expanded parent
-    }
-
-    getTimeSlots() {
-        const slots = [];
-        const [startHour, endHour] = this.timeRange.split('-').map(Number);
-        
-        for (let hour = startHour; hour < endHour; hour++) {
-            slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    /**
+     * FIXED: Get time slots that properly span the selected range
+     * Now includes 8:00 AM to 11:30 AM for morning (8-12)
+     * and 1:00 PM to 4:30 PM for afternoon (13-17)
+     */
+getTimeSlots() {
+    const slots = [];
+    const [startHour, endHour] = this.timeRange.split('-').map(Number);
+    
+    // Include slots up to and including the end hour
+    for (let hour = startHour; hour <= endHour; hour++) {
+        slots.push(`${hour.toString().padStart(2, '0')}:00`);
+        if (hour !== endHour) {
             slots.push(`${hour.toString().padStart(2, '0')}:30`);
         }
-        
-        return slots;
     }
+    
+    return slots;
+}
 
+    /**
+     * FIXED: Get status for a specific time slot
+     */
     getStatusForTimeSlot(facilityId, timeSlot) {
         // Check calendar events first
-        const eventAtSlot = this.calendarEvents.find(event => {
+        const eventAtSlot = this.calendarEvents?.find(event => {
             if (event.all_day) return true;
             const eventStart = event.start_time?.substring(0, 5);
             const eventEnd = event.end_time?.substring(0, 5);
             return eventStart <= timeSlot && eventEnd > timeSlot;
         });
         
-        if (eventAtSlot) {
-            return {
-                status: 'event',
-                text: '📅 Event',
-                event: eventAtSlot,
-                tooltip: eventAtSlot.event_name,
-                bookable: false
-            };
-        }
+if (eventAtSlot) {
+    return {
+        status: 'event',
+        text: `📅 ${eventAtSlot.event_name || 'Event'}`,
+        event: eventAtSlot,
+        tooltip: eventAtSlot.event_name,
+        bookable: false
+    };
+}
         
         // Check requisitions
-        const requisitionAtSlot = this.requisitions.find(req => {
-            const matchesFacility = req.facilities.some(f => 
+        const requisitionAtSlot = this.requisitions?.find(req => {
+            const matchesFacility = req.facilities?.some(f => 
                 String(f.facility_id) === String(facilityId)
             );
             
@@ -186,14 +188,11 @@ class AvailabilityMatrix {
         let filteredHierarchy = [...this.facilityHierarchy];
         
         if (this.selectedFacility !== 'all') {
-            // Find if selected is a parent or child
             const isParent = this.facilityHierarchy.some(p => p.facility_id == this.selectedFacility);
             
             if (isParent) {
-                // Show only this parent and its children
                 filteredHierarchy = this.facilityHierarchy.filter(p => p.facility_id == this.selectedFacility);
             } else {
-                // Selected is a child - find which parent contains it
                 filteredHierarchy = this.facilityHierarchy.filter(parent => 
                     parent.children.some(child => child.facility_id == this.selectedFacility)
                 ).map(parent => ({
@@ -201,7 +200,6 @@ class AvailabilityMatrix {
                     children: parent.children.filter(child => child.facility_id == this.selectedFacility),
                     childrenLoaded: true
                 }));
-                // Auto-expand the parent containing the selected child
                 if (filteredHierarchy.length > 0) {
                     this.expandedParents.add(filteredHierarchy[0].facility_id);
                 }
@@ -221,10 +219,9 @@ class AvailabilityMatrix {
                 children: parent.children.filter(child => 
                     child.facility_name.toLowerCase().includes(query)
                 ),
-                childrenLoaded: true // Auto-expand when searching
+                childrenLoaded: true
             }));
             
-            // Auto-expand parents when searching
             filteredHierarchy.forEach(parent => {
                 if (parent.children.length > 0) {
                     this.expandedParents.add(parent.facility_id);
@@ -256,12 +253,10 @@ class AvailabilityMatrix {
         for (const parent of filteredHierarchy) {
             const hasChildren = parent.children && parent.children.length > 0;
             const isExpanded = this.expandedParents.has(parent.facility_id);
-            const isBookable = !hasChildren; // Parent without children is bookable
+            const isBookable = !hasChildren;
             
-            // Render parent row
             html += this.renderParentRow(parent, timeSlots, hasChildren, isExpanded, isBookable);
             
-            // Render children if expanded
             if (hasChildren && isExpanded) {
                 for (const child of parent.children) {
                     html += this.renderChildRow(child, timeSlots);
@@ -279,12 +274,11 @@ class AvailabilityMatrix {
     
     renderParentRow(parent, timeSlots, hasChildren, isExpanded, isBookable) {
         const expandIcon = hasChildren ? (isExpanded ? '▼' : '▶') : '';
-        const cursorClass = hasChildren ? 'cursor-pointer' : '';
-        const bookableClass = isBookable ? 'bookable' : 'non-bookable';
+        const expandedAttr = isExpanded ? 'true' : 'false';
         
         let row = `
-            <tr class="parent-row ${cursorClass}" data-parent-id="${parent.facility_id}" data-has-children="${hasChildren}" data-bookable="${isBookable}">
-                <td class="facility-cell parent-cell ${bookableClass}" data-tooltip="${parent.facility_name}">
+            <tr class="parent-row" data-parent-id="${parent.facility_id}" data-has-children="${hasChildren}" data-bookable="${isBookable}" data-expanded="${expandedAttr}">
+                <td class="facility-cell parent-cell" data-tooltip="${parent.facility_name}">
                     <span class="expand-icon">${expandIcon}</span>
                     <strong>${this.truncate(parent.facility_name, 25)}</strong>
                     ${parent.capacity ? `<small>(${parent.capacity} pax)</small>` : ''}
@@ -296,10 +290,8 @@ class AvailabilityMatrix {
             let statusData;
             
             if (isBookable) {
-                // Parent without children - bookable
                 statusData = this.getStatusForTimeSlot(parent.facility_id, slot);
             } else {
-                // Parent with children - not bookable, just show placeholder
                 statusData = {
                     status: 'parent-placeholder',
                     text: '📁',
@@ -339,7 +331,7 @@ class AvailabilityMatrix {
                     <span class="child-indent">↳</span>
                     <strong>${this.truncate(child.facility_name, 25)}</strong>
                     ${child.capacity ? `<small>(${child.capacity} pax)</small>` : ''}
-                 </td>
+                </td>
         `;
         
         for (const slot of timeSlots) {
@@ -375,14 +367,16 @@ class AvailabilityMatrix {
     }
     
     handleExpandCollapse(e) {
-        const cell = e.currentTarget;
-        const row = cell.closest('.parent-row');
+        e.stopPropagation();
+        const row = e.currentTarget.closest('.parent-row');
         const parentId = parseInt(row.dataset.parentId);
         
         if (this.expandedParents.has(parentId)) {
             this.expandedParents.delete(parentId);
+            row.dataset.expanded = 'false';
         } else {
             this.expandedParents.add(parentId);
+            row.dataset.expanded = 'true';
         }
         
         this.renderMatrix();
@@ -391,13 +385,11 @@ class AvailabilityMatrix {
     attachRowClickHandlers() {
         const container = document.getElementById('availabilityMatrix');
         
-        // Available slots (bookable)
         container.querySelectorAll('.status-card.available[data-bookable="true"]').forEach(card => {
             card.removeEventListener('click', this.handleSlotClick);
             card.addEventListener('click', this.handleSlotClick.bind(this));
         });
         
-        // Booked/Pending/Event slots (non-bookable)
         container.querySelectorAll('.status-card.booked, .status-card.pending, .status-card.event, .status-card.parent-placeholder').forEach(card => {
             card.removeEventListener('click', this.handleNonBookableClick);
             card.addEventListener('click', this.handleNonBookableClick.bind(this));
@@ -410,7 +402,6 @@ class AvailabilityMatrix {
         const facilityId = card.dataset.facility;
         const timeSlot = card.dataset.time;
         
-        // Find facility name
         let facilityName = '';
         for (const parent of this.facilityHierarchy) {
             if (parent.facility_id == facilityId) {
@@ -440,12 +431,16 @@ class AvailabilityMatrix {
         const status = card.dataset.status;
         
         if (status === 'parent-placeholder') {
-            // This is a parent with children - do nothing or show tooltip message
-            const tooltip = card.dataset.tooltip;
-            if (tooltip) {
-                // Optional: Show a temporary toast message
-                console.log(tooltip);
+            // Trigger expand/collapse for parent
+            const row = card.closest('.parent-row');
+            const parentId = parseInt(row.dataset.parentId);
+            
+            if (this.expandedParents.has(parentId)) {
+                this.expandedParents.delete(parentId);
+            } else {
+                this.expandedParents.add(parentId);
             }
+            this.renderMatrix();
         } else if (eventId) {
             this.showEventDetails(eventId, eventType);
         }
@@ -455,23 +450,26 @@ class AvailabilityMatrix {
         let eventData = null;
         
         if (eventType === 'calendar_event') {
-            eventData = this.calendarEvents.find(e => e.event_id == eventId);
+            eventData = this.calendarEvents?.find(e => e.event_id == eventId);
         } else {
-            eventData = this.requisitions.find(r => r.request_id == eventId);
+            eventData = this.requisitions?.find(r => r.request_id == eventId);
         }
         
         if (!eventData) return;
         
         const modalHtml = `
-            <div class="modal fade" id="eventModal" tabindex="-1">
+            <div class="modal fade event-modal" id="eventModal" tabindex="-1">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">${eventData.title || eventData.event_name}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             ${this.renderEventDetails(eventData, eventType)}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
@@ -486,7 +484,7 @@ class AvailabilityMatrix {
         modal.show();
         
         document.getElementById('eventModal').addEventListener('hidden.bs.modal', () => {
-            document.getElementById('eventModal').remove();
+            document.getElementById('eventModal')?.remove();
         });
     }
     
@@ -511,46 +509,60 @@ class AvailabilityMatrix {
                 <div class="event-detail-row">
                     <div class="event-detail-label">Status</div>
                     <div class="event-detail-value">
-                        <span class="badge" style="background-color: ${eventData.status_color}">${eventData.status}</span>
+                        <span class="badge" style="background-color: ${eventData.status_color || '#6c757d'}">${eventData.status}</span>
                     </div>
                 </div>
                 <div class="event-detail-row">
                     <div class="event-detail-label">Schedule</div>
-                    <div class="event-detail-value">${eventData.schedule_display}</div>
+                    <div class="event-detail-value">${eventData.schedule_display || eventData.start_time + ' - ' + eventData.end_time}</div>
                 </div>
             `;
         }
     }
 
     showBookingModal(data) {
-        alert(`Booking request for ${data.facilityName}\nDate: ${this.formatDisplayDate(data.date)}\nTime: ${this.formatTime(data.time)}\n\nThis feature will open the requisition form.`);
+        const formattedDate = this.formatDisplayDate(data.date);
+        const formattedTime = this.formatTime(data.time);
+        
+        // You can replace this with a proper modal or redirect to requisition form
+        const confirmBooking = confirm(
+            `Book ${data.facilityName}\n\n` +
+            `Date: ${formattedDate}\n` +
+            `Time: ${formattedTime}\n\n` +
+            `Click OK to proceed with booking request.`
+        );
+        
+        if (confirmBooking) {
+            // Redirect to requisition form or open booking modal
+            window.location.href = `/requisition/create?facility=${data.facilityId}&date=${this.formatDate(data.date)}&time=${data.time}`;
+        }
     }
 
-renderFacilityFilter() {
-    const container = document.getElementById('facilityFilters');
-    
-    // Build dropdown options - only parent facilities
-    let options = `<option value="all">🏢 All Facilities</option>`;
-    
-    for (const parent of this.facilityHierarchy) {
-        options += `<option value="${parent.facility_id}">${parent.children.length > 0 ? '📁' : '📌'} ${this.truncate(parent.facility_name, 40)}</option>`;
+    renderFacilityFilter() {
+        const container = document.getElementById('facilityFilters');
+        
+        let options = `<option value="all">🏢 All Facilities</option>`;
+        
+        for (const parent of this.facilityHierarchy) {
+            options += `<option value="${parent.facility_id}">${parent.children.length > 0 ? '📁' : '📌'} ${this.truncate(parent.facility_name, 40)}</option>`;
+        }
+        
+        container.innerHTML = `
+            <select id="facilitySelect" class="facility-select">
+                ${options}
+            </select>
+        `;
+        
+        const select = document.getElementById('facilitySelect');
+        select.value = this.selectedFacility;
+        
+        select.addEventListener('change', async (e) => {
+            this.selectedFacility = e.target.value;
+            await this.loadEventsForCurrentDate();
+            this.renderMatrix();
+        });
     }
     
-    container.innerHTML = `
-        <select id="facilitySelect" class="facility-select">
-            ${options}
-        </select>
-    `;
-    
-    const select = document.getElementById('facilitySelect');
-    select.value = this.selectedFacility;
-    
-    select.addEventListener('change', async (e) => {
-        this.selectedFacility = e.target.value;
-        await this.loadEventsForCurrentDate();
-        this.renderMatrix();
-    });
-}
     attachEvents() {
         document.getElementById('prevDayBtn')?.addEventListener('click', async () => {
             this.currentDate.setDate(this.currentDate.getDate() - 1);
@@ -588,7 +600,6 @@ renderFacilityFilter() {
             }, 300);
         });
         
-        // Clear filters button
         const clearBtn = document.getElementById('clearFiltersBtn');
         clearBtn?.addEventListener('click', async () => {
             this.searchQuery = '';
@@ -636,9 +647,12 @@ renderFacilityFilter() {
             container.innerHTML = `
                 <div class="loading-overlay">
                     <div class="loading-spinner"></div>
-                    <p>Loading availability data...</p>
+                    <p style="margin-top: 10px;">Loading availability data...</p>
                 </div>
             `;
+        } else if (!show) {
+            const overlay = container.querySelector('.loading-overlay');
+            if (overlay) overlay.remove();
         }
     }
 
@@ -669,12 +683,13 @@ renderFacilityFilter() {
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
-    formatTime(timeStr) {
-        const [hour, minute] = timeStr.split(':');
-        const hour12 = hour % 12 || 12;
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        return minute === '00' ? `${hour12}${ampm}` : `${hour12}:${minute}${ampm}`;
-    }
+formatTime(timeStr) {
+    const [hour, minute] = timeStr.split(':');
+    const hourNum = parseInt(hour);
+    const hour12 = hourNum % 12 || 12;
+    const ampm = hourNum >= 12 ? 'pm' : 'am';
+    return `${hour12}:${minute}${ampm}`;
+}
 
     truncate(str, maxLen) {
         if (!str) return '';
