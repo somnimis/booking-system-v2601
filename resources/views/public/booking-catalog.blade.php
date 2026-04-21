@@ -411,7 +411,7 @@
 @endsection
 
 @section('scripts')
-    <script src="{{ asset('js/public/calendar.js') }}"></script>
+    <script src="{{ asset('js/public/availability-calendar-v1.js') }}"></script>
     <script src="{{ asset('js/public/catalog.js') }}"></script>
     <script src="{{ asset('js/admin/toast.js') }}"></script>
     <script>

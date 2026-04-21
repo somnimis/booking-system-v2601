@@ -1,4 +1,4 @@
-// calendar.js (jQuery-free version)
+// availability-calendar-v1.js (jQuery-free version)
 document.addEventListener('DOMContentLoaded', function() {
     const calendarElement = document.getElementById('calendar');
     

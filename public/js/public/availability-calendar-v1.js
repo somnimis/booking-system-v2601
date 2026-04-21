@@ -1,4 +1,4 @@
-// calendar.js - REFACTORED VERSION WITH REFINED INSTITUTIONAL THEME
+// availability-calendar-v1.js - REFACTORED VERSION WITH REFINED INSTITUTIONAL THEME
 // Clean, compact calendar with static display
 
 class FullCalendarStyle {
