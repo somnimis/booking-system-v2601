@@ -2,6 +2,19 @@
  * BookingCatalog Module - Simplified Version
  */
 
+console.log("Catalog.js loaded successfully");
+window.addEventListener("error", function (e) {
+    console.error(
+        "Global error caught:",
+        e.message,
+        "at",
+        e.filename,
+        "line",
+        e.lineno,
+    );
+    return false;
+});
+
 class BookingCatalog {
     constructor(config = {}) {
         this.config = {
@@ -975,111 +988,134 @@ ${
         }
     }
 
-showFacilityAvailability(button) {
-    const itemId = button.dataset.itemId;
-    const itemType = button.dataset.itemType;
-    const itemName = button.dataset.itemName;
-    const itemImage = button.dataset.itemImage;
-    const itemCategory = button.dataset.itemCategory;
-    const itemStatus = button.dataset.itemStatus;
-    const itemStatusColor = button.dataset.itemStatusColor;
+    showFacilityAvailability(button) {
+        const itemId = button.dataset.itemId;
+        const itemType = button.dataset.itemType;
+        const itemName = button.dataset.itemName;
+        const itemImage = button.dataset.itemImage;
+        const itemCategory = button.dataset.itemCategory;
+        const itemStatus = button.dataset.itemStatus;
+        const itemStatusColor = button.dataset.itemStatusColor;
 
-    // Prepare facility data for the calendar
-    let facilityData = {
-        id: itemId,
-        name: itemName,
-        image: itemImage,
-        category: itemCategory,
-        status: itemStatus,
-        statusColor: itemStatusColor,
-        type: itemType,
-    };
-
-    // Add additional data based on type
-    if (itemType === "equipment") {
-        facilityData.totalQuantity = button.dataset.itemAvailableQty;
-        facilityData.availableQuantity = button.dataset.itemAvailableQty;
-    } else {
-        facilityData.capacity = button.dataset.itemCapacity;
-        facilityData.fee = button.dataset.itemFee;
-        if (button.dataset.itemBuilding) {
-            facilityData.building = button.dataset.itemBuilding;
-        }
-    }
-
-    // Store original button content and show loading state
-    const originalHtml = button.innerHTML;
-    button.classList.add('btn-loading');
-    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading Calendar...';
-    button.disabled = true;
-
-    // Function to remove loading state
-    const removeLoadingState = () => {
-        button.classList.remove('btn-loading');
-        button.innerHTML = originalHtml;
-        button.disabled = false;
-    };
-
-    // Listen for modal shown event to remove loading state
-    const modal = document.getElementById('singleFacilityAvailabilityModal');
-    const handleModalShown = () => {
-        removeLoadingState();
-        modal.removeEventListener('shown.bs.modal', handleModalShown);
-    };
-    
-    if (modal) {
-        modal.addEventListener('shown.bs.modal', handleModalShown);
-    }
-
-    // Check if calendar is available and use it
-    if (typeof window.showAvailabilityCalendar === "function") {
-        window.showAvailabilityCalendar(facilityData);
-        
-        // Fallback timeout in case modal doesn't trigger shown event
-        setTimeout(() => {
-            if (button.classList.contains('btn-loading')) {
-                removeLoadingState();
-                modal?.removeEventListener('shown.bs.modal', handleModalShown);
-            }
-        }, 3000);
-    } else {
-        // Fallback: dispatch event for calendar to initialize
-        console.warn("Calendar not ready, retrying...");
-        
-        // Set up a one-time listener for when calendar becomes available
-        const calendarReadyHandler = () => {
-            if (typeof window.showAvailabilityCalendar === "function") {
-                window.showAvailabilityCalendar(facilityData);
-                document.removeEventListener("calendarReady", calendarReadyHandler);
-            }
+        // Prepare facility data for the calendar
+        let facilityData = {
+            id: itemId,
+            name: itemName,
+            image: itemImage,
+            category: itemCategory,
+            status: itemStatus,
+            statusColor: itemStatusColor,
+            type: itemType,
         };
-        
-        document.addEventListener("calendarReady", calendarReadyHandler);
-        
-        // Dispatch event to trigger calendar initialization
-        const event = new CustomEvent("facilityAvailabilityRequested", {
-            detail: { facilityData },
-        });
-        document.dispatchEvent(event);
-        
-        // Timeout fallback
-        setTimeout(() => {
-            document.removeEventListener("calendarReady", calendarReadyHandler);
-            if (button.classList.contains('btn-loading')) {
-                removeLoadingState();
-                modal?.removeEventListener('shown.bs.modal', handleModalShown);
+
+        // Add additional data based on type
+        if (itemType === "equipment") {
+            facilityData.totalQuantity = button.dataset.itemAvailableQty;
+            facilityData.availableQuantity = button.dataset.itemAvailableQty;
+        } else {
+            facilityData.capacity = button.dataset.itemCapacity;
+            facilityData.fee = button.dataset.itemFee;
+            if (button.dataset.itemBuilding) {
+                facilityData.building = button.dataset.itemBuilding;
             }
+        }
+
+        // Store original button content and show loading state
+        const originalHtml = button.innerHTML;
+        button.classList.add("btn-loading");
+        button.innerHTML =
+            '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading Calendar...';
+        button.disabled = true;
+
+        // Function to remove loading state
+        const removeLoadingState = () => {
+            button.classList.remove("btn-loading");
+            button.innerHTML = originalHtml;
+            button.disabled = false;
+        };
+
+        // Listen for modal shown event to remove loading state
+        const modal = document.getElementById(
+            "singleFacilityAvailabilityModal",
+        );
+        const handleModalShown = () => {
+            removeLoadingState();
+            modal.removeEventListener("shown.bs.modal", handleModalShown);
+        };
+
+        if (modal) {
+            modal.addEventListener("shown.bs.modal", handleModalShown);
+        }
+
+        // Check if calendar is available and use it
+        if (typeof window.showAvailabilityCalendar === "function") {
+            window.showAvailabilityCalendar(facilityData);
+
+            // Fallback timeout in case modal doesn't trigger shown event
+            setTimeout(() => {
+                if (button.classList.contains("btn-loading")) {
+                    removeLoadingState();
+                    modal?.removeEventListener(
+                        "shown.bs.modal",
+                        handleModalShown,
+                    );
+                }
+            }, 3000);
+        } else {
+            // Fallback: dispatch event for calendar to initialize
+            console.warn("Calendar not ready, retrying...");
+
+            // Set up a one-time listener for when calendar becomes available
+            const calendarReadyHandler = () => {
+                if (typeof window.showAvailabilityCalendar === "function") {
+                    window.showAvailabilityCalendar(facilityData);
+                    document.removeEventListener(
+                        "calendarReady",
+                        calendarReadyHandler,
+                    );
+                }
+            };
+
+            document.addEventListener("calendarReady", calendarReadyHandler);
+
+            // Dispatch event to trigger calendar initialization
+            const event = new CustomEvent("facilityAvailabilityRequested", {
+                detail: { facilityData },
+            });
+            document.dispatchEvent(event);
+
+            // Timeout fallback
+            setTimeout(() => {
+                document.removeEventListener(
+                    "calendarReady",
+                    calendarReadyHandler,
+                );
+                if (button.classList.contains("btn-loading")) {
+                    removeLoadingState();
+                    modal?.removeEventListener(
+                        "shown.bs.modal",
+                        handleModalShown,
+                    );
+                }
+                if (typeof window.showToast === "function") {
+                    window.showToast(
+                        "Calendar is loading, please try again in a moment.",
+                        "info",
+                        3000,
+                    );
+                }
+            }, 5000);
+
+            // Show a temporary loading message
             if (typeof window.showToast === "function") {
-                window.showToast("Calendar is loading, please try again in a moment.", "info", 3000);
+                window.showToast(
+                    "Loading availability calendar...",
+                    "info",
+                    2000,
+                );
             }
-        }, 5000);
-        
-        // Show a temporary loading message
-        if (typeof window.showToast === "function") {
-            window.showToast("Loading availability calendar...", "info", 2000);
         }
     }
-}
 
     // Helper method to escape HTML
     escapeHtml(text) {
