@@ -38,7 +38,7 @@ use Illuminate\Support\Facades\Log;
 Route::post('/log-client-error', function (Request $request) {
     Log::error('Client error:', $request->all());
     return response()->json(['status' => 'logged']);
-})->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); 
+})->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 
 // ---------------- Authentication ---------------- //
@@ -66,15 +66,21 @@ Route::get('/admins/departments', [AdminController::class, 'getAdminDepartments'
 Route::get('/facilities/dropdown', [FacilityController::class, 'getFacilitiesForDropdown']);
 
 
-// ---------------- Booking Listings ---------------- //
+// ---------------- Booking Listings ---------------- //    
 Route::get('/equipment', [EquipmentController::class, 'publicIndex']);
 Route::get('/facilities', [FacilityController::class, 'publicIndex']);
+Route::get('/parent-facilities', [FacilityController::class, 'publicParentFacilities']);
+Route::get('/facility-details/{id}', [FacilityController::class, 'getFacilityDetails']);
+Route::get('/equipment-details/{id}', [EquipmentController::class, 'getEquipmentDetails']);
 
 // Public catalog endpoints
 Route::prefix('facilities')->group(function () {
+    // === PUT SPECIFIC ROUTES BEFORE PARAMETERIZED ROUTES ===
+    Route::get('/parent-buildings-for-rooms', [FacilityCategoryController::class, 'getParentBuildingsForRooms']);
+    Route::get('/buildings', [FacilityCategoryController::class, 'getBuildings']);
+    Route::get('/venue-count', [FacilityCategoryController::class, 'getVenuesCount']);
     Route::get('/venues', [FacilityCategoryController::class, 'getVenues']);
     Route::get('/rooms', [FacilityCategoryController::class, 'getRooms']);
-    Route::get('/buildings', [FacilityCategoryController::class, 'getBuildings']);
     Route::get('/{id}', [FacilityCategoryController::class, 'show']);
 });
 
@@ -155,7 +161,7 @@ Route::prefix('admin')->group(function () {
 // Admin equipment tracking routes
 Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
     // Existing routes...
-    
+
     // New routes for equipment tracking
     Route::get('/equipment/to-release', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'getToRelease']);
     Route::get('/equipment/to-return', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'getToReturn']);
@@ -276,8 +282,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ---------------- Requisition Management ---------------- //
 
+    Route::get('/admin/requisition/{requestId}/view-data', [ReservationListingsController::class, 'getRequestViewData']);
     Route::get('/admin/requisition-forms', [ReservationListingsController::class, 'pendingRequests']); // not used
-
     Route::get('/admin/active-requests', [ReservationListingsController::class, 'getAvailableForTransaction']);
     Route::get('/admin/pending-requests', [ReservationListingsController::class, 'paginatedPendingRequests']);
     Route::get('/admin/ongoing-requests', [ReservationListingsController::class, 'paginatedOngoingRequests']);

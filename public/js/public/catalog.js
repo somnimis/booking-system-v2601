@@ -705,20 +705,24 @@ ${
         const isEquipment = this.catalogType === "equipment";
         let additionalData = "";
         if (isEquipment) {
-            additionalData = `data-item-available-qty="${item.available_quantity}" data-item-total-qty="${item.total_quantity}"`;
+            additionalData = `data-item-available-qty="${item.available_quantity || 0}" data-item-total-qty="${item.total_quantity || 0}"`;
         } else {
             additionalData = `data-item-capacity="${item.capacity || "N/A"}" data-item-fee="${parseFloat(item.base_fee).toLocaleString()}"`;
             if (this.catalogType === "rooms" && item.parent_facility) {
-                additionalData += ` data-item-building="${item.parent_facility.facility_name}"`;
+                additionalData += ` data-item-building="${this.escapeHtml(item.parent_facility.facility_name)}"`;
             }
         }
 
         return `<button class="btn btn-light btn-custom check-availability-btn form-action-btn" 
-                    data-item-id="${id}" data-item-name="${name}" data-item-type="${isEquipment ? "equipment" : "facility"}"
-                    data-item-image="${image}" data-item-category="${item.category.category_name}"
-                    data-item-status="${item.status.status_name}" data-item-status-color="${item.status.color_code}"
+                    data-item-id="${id}" 
+                    data-item-name="${this.escapeHtml(name)}" 
+                    data-item-type="${isEquipment ? "equipment" : "facility"}"
+                    data-item-image="${image}" 
+                    data-item-category="${this.escapeHtml(item.category.category_name)}"
+                    data-item-status="${item.status.status_name}" 
+                    data-item-status-color="${item.status.color_code}"
                     ${additionalData}>
-                    Check Availability
+                    <i class="bi bi-calendar-check me-1"></i> Check Availability
                 </button>`;
     }
 
@@ -962,80 +966,128 @@ ${
         if (!item) return;
 
         const isEquipment = this.catalogType === "equipment";
-        const primaryImage = this.getPrimaryImage(item);
-        const isUnavailable = item.status.status_id === 2;
-        const itemType = isEquipment ? "equipment" : "facility";
-        const isSelected = this.selectedItems.some(
-            (s) =>
-                s.type === itemType && parseInt(s[`${itemType}_id`]) == itemId,
-        );
 
-        document.getElementById("itemDetailModalLabel").textContent =
-            isEquipment ? item.equipment_name : item.facility_name;
-        document.getElementById("itemDetailContent").innerHTML = `
-            <div class="row">
-                <div class="col-md-6">
-                    <img src="${primaryImage}" class="img-fluid rounded" style="max-height:300px; object-fit:cover;">
-                </div>
-                <div class="col-md-6">
-                    <p><strong>Status:</strong> <span class="badge" style="background-color:${item.status.color_code}">${item.status.status_name}</span></p>
-                    <p><strong>Category:</strong> ${item.category.category_name}</p>
-                    ${!isEquipment ? `<p><strong>Subcategory:</strong> ${item.subcategory?.subcategory_name || "N/A"}</p>` : ""}
-                    ${!isEquipment ? `<p><strong>Capacity:</strong> ${item.capacity}</p>` : `<p><strong>Available Quantity:</strong> ${item.available_quantity}/${item.total_quantity}</p>`}
-                    <p><strong>Rate:</strong> ₱${parseFloat(item.base_fee).toLocaleString()} (${item.rate_type})</p>
-                    <p><strong>Description:</strong> ${item.description || "No description available."}</p>
-                    <div class="mt-3">
-                        ${
-                            isUnavailable
-                                ? `<button class="btn btn-secondary" disabled>Unavailable</button>`
-                                : `<button class="btn ${isSelected ? "btn-danger" : "btn-primary"} add-remove-btn" 
-                            data-id="${itemId}" data-type="${itemType}" data-action="${isSelected ? "remove" : "add"}">
-                            ${isSelected ? "Remove from Form" : "Add to Form"}
-                          </button>`
-                        }
-                    </div>
-                </div>
-            </div>
-        `;
-
-        const modal = new bootstrap.Modal(
-            document.getElementById("itemDetailModal"),
-        );
-        modal.show();
-
-        // Re-attach event listener for the modal button
-        const modalBtn = document.querySelector(
-            "#itemDetailContent .add-remove-btn",
-        );
-        if (modalBtn) {
-            modalBtn.addEventListener("click", async (e) => {
-                modal.hide();
-                await this.handleAddRemoveAction(modalBtn);
-            });
-        }
-    }
-
-    showFacilityAvailability(button) {
-        const facilityData = {
-            id: button.dataset.itemId,
-            name: button.dataset.itemName,
-            image: button.dataset.itemImage,
-            category: button.dataset.itemCategory,
-            status: button.dataset.itemStatus,
-            statusColor: button.dataset.itemStatusColor,
-            capacity: button.dataset.itemCapacity || null,
-            fee: button.dataset.itemFee || null,
-            building: button.dataset.itemBuilding || null,
-        };
-
-        if (typeof window.showAvailabilityCalendar === "function") {
-            window.showAvailabilityCalendar(facilityData);
+        // Redirect based on item type
+        if (isEquipment) {
+            window.location.href = `/equipment-details/${itemId}`;
         } else {
-            console.error("Calendar module not loaded");
-            this.showToast("Calendar module not available", "error");
+            window.location.href = `/facility/${itemId}`;
         }
     }
 
+showFacilityAvailability(button) {
+    const itemId = button.dataset.itemId;
+    const itemType = button.dataset.itemType;
+    const itemName = button.dataset.itemName;
+    const itemImage = button.dataset.itemImage;
+    const itemCategory = button.dataset.itemCategory;
+    const itemStatus = button.dataset.itemStatus;
+    const itemStatusColor = button.dataset.itemStatusColor;
+
+    // Prepare facility data for the calendar
+    let facilityData = {
+        id: itemId,
+        name: itemName,
+        image: itemImage,
+        category: itemCategory,
+        status: itemStatus,
+        statusColor: itemStatusColor,
+        type: itemType,
+    };
+
+    // Add additional data based on type
+    if (itemType === "equipment") {
+        facilityData.totalQuantity = button.dataset.itemAvailableQty;
+        facilityData.availableQuantity = button.dataset.itemAvailableQty;
+    } else {
+        facilityData.capacity = button.dataset.itemCapacity;
+        facilityData.fee = button.dataset.itemFee;
+        if (button.dataset.itemBuilding) {
+            facilityData.building = button.dataset.itemBuilding;
+        }
+    }
+
+    // Store original button content and show loading state
+    const originalHtml = button.innerHTML;
+    button.classList.add('btn-loading');
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading Calendar...';
+    button.disabled = true;
+
+    // Function to remove loading state
+    const removeLoadingState = () => {
+        button.classList.remove('btn-loading');
+        button.innerHTML = originalHtml;
+        button.disabled = false;
+    };
+
+    // Listen for modal shown event to remove loading state
+    const modal = document.getElementById('singleFacilityAvailabilityModal');
+    const handleModalShown = () => {
+        removeLoadingState();
+        modal.removeEventListener('shown.bs.modal', handleModalShown);
+    };
+    
+    if (modal) {
+        modal.addEventListener('shown.bs.modal', handleModalShown);
+    }
+
+    // Check if calendar is available and use it
+    if (typeof window.showAvailabilityCalendar === "function") {
+        window.showAvailabilityCalendar(facilityData);
+        
+        // Fallback timeout in case modal doesn't trigger shown event
+        setTimeout(() => {
+            if (button.classList.contains('btn-loading')) {
+                removeLoadingState();
+                modal?.removeEventListener('shown.bs.modal', handleModalShown);
+            }
+        }, 3000);
+    } else {
+        // Fallback: dispatch event for calendar to initialize
+        console.warn("Calendar not ready, retrying...");
+        
+        // Set up a one-time listener for when calendar becomes available
+        const calendarReadyHandler = () => {
+            if (typeof window.showAvailabilityCalendar === "function") {
+                window.showAvailabilityCalendar(facilityData);
+                document.removeEventListener("calendarReady", calendarReadyHandler);
+            }
+        };
+        
+        document.addEventListener("calendarReady", calendarReadyHandler);
+        
+        // Dispatch event to trigger calendar initialization
+        const event = new CustomEvent("facilityAvailabilityRequested", {
+            detail: { facilityData },
+        });
+        document.dispatchEvent(event);
+        
+        // Timeout fallback
+        setTimeout(() => {
+            document.removeEventListener("calendarReady", calendarReadyHandler);
+            if (button.classList.contains('btn-loading')) {
+                removeLoadingState();
+                modal?.removeEventListener('shown.bs.modal', handleModalShown);
+            }
+            if (typeof window.showToast === "function") {
+                window.showToast("Calendar is loading, please try again in a moment.", "info", 3000);
+            }
+        }, 5000);
+        
+        // Show a temporary loading message
+        if (typeof window.showToast === "function") {
+            window.showToast("Loading availability calendar...", "info", 2000);
+        }
+    }
+}
+
+    // Helper method to escape HTML
+    escapeHtml(text) {
+        if (!text) return "";
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+    }
     getPrimaryImage(item) {
         return (
             item.images?.find((img) => img.image_type === "Primary")
@@ -1104,3 +1156,23 @@ ${
 
 if (typeof module !== "undefined" && module.exports)
     module.exports = BookingCatalog;
+
+// Ensure calendar is loaded before using it
+if (typeof window.showAvailabilityCalendar !== "function") {
+    console.log("Waiting for calendar to load...");
+    // Wait for calendar to load
+    const checkCalendar = setInterval(() => {
+        if (typeof window.showAvailabilityCalendar === "function") {
+            console.log("Calendar loaded successfully");
+            clearInterval(checkCalendar);
+        }
+    }, 100);
+
+    // Timeout after 5 seconds
+    setTimeout(() => {
+        clearInterval(checkCalendar);
+        if (typeof window.showAvailabilityCalendar !== "function") {
+            console.error("Calendar failed to load");
+        }
+    }, 5000);
+}

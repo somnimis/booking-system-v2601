@@ -29,13 +29,28 @@ Route::middleware('web')->group(function () {
     | Public Routes
     |--------------------------------------------------------------------------
     */
+
+
+    // Venue Picker Page - shows all parent facilities
+    Route::get('/pick-a-venue', function () {
+        return view('public.pick-a-venue');
+    })->name('pick-a-venue');
+
+    Route::get('/equipment-details/{id}', function ($id) {
+        return view('public.equipment-details');
+    })->name('equipment.details');
+    // Facility Details Page
+    Route::get('/facility/{facilityId}', function ($facilityId) {
+        return view('public.facility-details', ['facilityId' => $facilityId]);
+    })->name('facility.details');
+
     // Catalogs
     Route::view('/booking-catalog', 'public.booking-catalog');
-Route::get('/csrf-token', function() {
-    return response()->json([
-        'csrf_token' => csrf_token()
-    ]);
-})->middleware('web');
+    Route::get('/csrf-token', function () {
+        return response()->json([
+            'csrf_token' => csrf_token()
+        ]);
+    })->middleware('web');
 
     // About Pages
     Route::view('/about-equipment', 'public.about-equipment');

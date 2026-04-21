@@ -189,7 +189,8 @@
             /* Allow details section to take remaining space */
         }
     </style>
-        <main>
+        <main id="main">
+            <div class="container-fluid px-4">
             <div class="card-body">
                 <form id="addEquipmentForm">
                     <!-- Equipment Photos and Inventory Items Section -->
@@ -374,6 +375,7 @@
                     </div>
 
                 </form>
+            </div>
 
         </main>
         <!-- Event Modal -->

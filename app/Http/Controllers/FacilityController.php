@@ -54,45 +54,152 @@ class FacilityController extends Controller
         }
     }
 
-    // ----- Formatting ----- //
-    private function formatPublicFacility($facility): array
-    {
-        $facility->load(['category', 'subcategory', 'status', 'department', 'images']);
 
+    // === PARENT FACILITIES API ENDPOINT (UPDATED) === //
+    public function publicParentFacilities(Request $request): JsonResponse
+    {
+        try {
+            // Remove 'department' from eager loading since it's legacy
+            $query = Facility::with([
+                'category',
+                'subcategory',
+                'status',
+                'images',
+                'childFacilities'
+            ])->whereNull('parent_facility_id');
+
+            // Apply search filter
+            if ($request->has('search') && !empty($request->search)) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('facility_name', 'LIKE', "%{$search}%")
+                        ->orWhere('location_note', 'LIKE', "%{$search}%");
+                });
+            }
+
+            // Apply pagination
+            $perPage = $request->input('per_page', 12);
+            $facilities = $query->orderBy('facility_name')->paginate($perPage);
+
+            $formatted = $facilities->getCollection()->map(function ($facility) {
+                $formattedFacility = $this->formatPublicFacility($facility);
+                $formattedFacility['has_children'] = $facility->childFacilities->count() > 0;
+                return $formattedFacility;
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $formatted,
+                'pagination' => [
+                    'current_page' => $facilities->currentPage(),
+                    'last_page' => $facilities->lastPage(),
+                    'per_page' => $facilities->perPage(),
+                    'total' => $facilities->total(),
+                    'from' => $facilities->firstItem(),
+                    'to' => $facilities->lastItem()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching parent facilities', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch facilities data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // === FACILITY DETAILS API ENDPOINT === //
+public function getFacilityDetails($id): JsonResponse
+{
+    try {
+        if (!$id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Facility ID is required'
+            ], 400);
+        }
+        
+        $facility = Facility::with([
+            'category',
+            'subcategory',
+            'status',
+            'department',
+            'images',
+            'amenities',
+            'parentFacility',
+            'childFacilities'
+        ])->find($id);
+        
+        if (!$facility) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Facility not found'
+            ], 404);
+        }
+        
+        $formattedFacility = $this->formatPublicFacility($facility);
+        $formattedFacility['has_children'] = $facility->childFacilities->count() > 0;
+        $formattedFacility['parent_facility_name'] = $facility->parentFacility?->facility_name;
+        $formattedFacility['amenities'] = $facility->amenities->map(function($amenity) {
+            return [
+                'amenity_id' => $amenity->amenity_id,
+                'amenity_name' => $amenity->amenity_name
+            ];
+        });
+        
+        return response()->json([
+            'success' => true,
+            'data' => $formattedFacility
+        ]);
+        
+    } catch (\Exception $e) {
+        \Log::error('Error fetching facility details', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch facility details',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+    // === FORMAT PUBLIC FACILITY (NO DEPARTMENT) === //
+    private function formatPublicFacility($facility)
+    {
         return [
             'facility_id' => $facility->facility_id,
+            'parent_facility_id' => $facility->parent_facility_id,
             'facility_name' => $facility->facility_name,
             'description' => $facility->description,
-            'location_note' => $facility->location_note,
+            'location_note' => $facility->location_note ?? 'Location TBA',
             'capacity' => $facility->capacity,
-            'category' => [
-                'category_id' => $facility->category_id,
-                'category_name' => $facility->category->category_name,
-            ],
-            'subcategory' => $facility->subcategory ? [
-                'subcategory_id' => $facility->subcategory_id,
-                'subcategory_name' => $facility->subcategory->subcategory_name,
-            ] : null,
-            'department' => [
-                'department_id' => $facility->department_id,
-                'department_name' => $facility->department->department_name,
-            ],
             'location_type' => $facility->location_type,
             'base_fee' => $facility->base_fee,
             'rate_type' => $facility->rate_type,
-            'status' => [
-                'status_id' => $facility->status_id,
-                'status_name' => $facility->status->status_name,
-                'color_code' => $facility->status->color_code,
-            ],
-            'parent_facility_id' => $facility->parent_facility_id,
             'floor_level' => $facility->floor_level,
-            'facility_code' => $facility->facility_code,
             'total_levels' => $facility->total_levels,
-            'images' => $facility->images,
+            'facility_code' => $facility->facility_code,
+            'maximum_rental_hour' => $facility->maximum_rental_hour,
+
+            // Safely handle relationships using nullsafe operator
+            'category_name' => $facility->category?->category_name ?? 'Uncategorized',
+            'subcategory_name' => $facility->subcategory?->subcategory_name,
+            'status_name' => $facility->status?->status_name,
+
+            // Images
+            'images' => $facility->images->map(fn($image) => [
+                'image_url' => $image->image_url,
+                'is_primary' => $image->is_primary ?? false
+            ])->values()->toArray(),
         ];
     }
-
     // ----- Create - Show add facility form ----- //
     public function create()
     {
@@ -262,78 +369,78 @@ class FacilityController extends Controller
     /**
      * Mass assign departments to multiple facilities
      */
-public function massAssignDepartments(Request $request): JsonResponse
-{
-    try {
-        $validated = $request->validate([
-            'facility_ids' => 'required|array|min:1',
-            'facility_ids.*' => 'exists:facilities,facility_id',
-            'department_ids' => 'required|array|min:1',
-            'department_ids.*' => 'exists:departments,department_id',
-        ]);
+    public function massAssignDepartments(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'facility_ids' => 'required|array|min:1',
+                'facility_ids.*' => 'exists:facilities,facility_id',
+                'department_ids' => 'required|array|min:1',
+                'department_ids.*' => 'exists:departments,department_id',
+            ]);
 
-        $facilityIds = $validated['facility_ids'];
-        $departmentIds = $validated['department_ids'];
+            $facilityIds = $validated['facility_ids'];
+            $departmentIds = $validated['department_ids'];
 
-        $results = [
-            'success' => [],
-            'failed' => []
-        ];
+            $results = [
+                'success' => [],
+                'failed' => []
+            ];
 
-        foreach ($facilityIds as $facilityId) {
-            try {
-                $facility = Facility::findOrFail($facilityId);
-                
-                // Replace all existing departments with the new ones
-                $facility->departments()->sync($departmentIds);
+            foreach ($facilityIds as $facilityId) {
+                try {
+                    $facility = Facility::findOrFail($facilityId);
 
-                $results['success'][] = [
-                    'facility_id' => $facilityId,
-                    'facility_name' => $facility->facility_name
-                ];
+                    // Replace all existing departments with the new ones
+                    $facility->departments()->sync($departmentIds);
 
-            } catch (\Exception $e) {
-                \Log::error('Failed to mass assign departments to facility', [
-                    'facility_id' => $facilityId,
-                    'error' => $e->getMessage()
-                ]);
+                    $results['success'][] = [
+                        'facility_id' => $facilityId,
+                        'facility_name' => $facility->facility_name
+                    ];
 
-                $results['failed'][] = [
-                    'facility_id' => $facilityId,
-                    'error' => $e->getMessage()
-                ];
+                } catch (\Exception $e) {
+                    \Log::error('Failed to mass assign departments to facility', [
+                        'facility_id' => $facilityId,
+                        'error' => $e->getMessage()
+                    ]);
+
+                    $results['failed'][] = [
+                        'facility_id' => $facilityId,
+                        'error' => $e->getMessage()
+                    ];
+                }
             }
+
+            $successCount = count($results['success']);
+            $failedCount = count($results['failed']);
+
+            if ($successCount === 0) {
+                $message = "Failed to assign departments to any facilities.";
+            } else if ($failedCount === 0) {
+                $message = "Successfully assigned departments to " . ($successCount === 1 ? "1 facility" : "{$successCount} facilities");
+            } else {
+                $message = "Assigned departments to {$successCount} " . ($successCount === 1 ? "facility" : "facilities") .
+                    ", failed for {$failedCount} " . ($failedCount === 1 ? "facility" : "facilities");
+            }
+
+            return response()->json([
+                'message' => $message,
+                'results' => $results
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in mass department assignment for facilities', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to process mass department assignment',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $successCount = count($results['success']);
-        $failedCount = count($results['failed']);
-
-        if ($successCount === 0) {
-            $message = "Failed to assign departments to any facilities.";
-        } else if ($failedCount === 0) {
-            $message = "Successfully assigned departments to " . ($successCount === 1 ? "1 facility" : "{$successCount} facilities");
-        } else {
-            $message = "Assigned departments to {$successCount} " . ($successCount === 1 ? "facility" : "facilities") . 
-                       ", failed for {$failedCount} " . ($failedCount === 1 ? "facility" : "facilities");
-        }
-
-        return response()->json([
-            'message' => $message,
-            'results' => $results
-        ]);
-
-    } catch (\Exception $e) {
-        \Log::error('Error in mass department assignment for facilities', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-
-        return response()->json([
-            'message' => 'Failed to process mass department assignment',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 
     /**
      * Helper method to generate appropriate message for mass assignment

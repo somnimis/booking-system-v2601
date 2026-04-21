@@ -3601,7 +3601,7 @@ class FacilitySeeder extends Seeder
 
             // LHB Classrooms (parent ID: 212)
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 1,
                 'facility_code' => 'LHB 101',
                 'total_levels' => null,
@@ -3623,7 +3623,7 @@ class FacilitySeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 1,
                 'facility_code' => 'LHB 102',
                 'total_levels' => null,
@@ -3645,7 +3645,7 @@ class FacilitySeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 1,
                 'facility_code' => 'LHB 103',
                 'total_levels' => null,
@@ -3667,7 +3667,7 @@ class FacilitySeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 1,
                 'facility_code' => 'LHB 104',
                 'total_levels' => null,
@@ -3689,7 +3689,7 @@ class FacilitySeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 1,
                 'facility_code' => 'LHB 105',
                 'total_levels' => null,
@@ -3711,7 +3711,7 @@ class FacilitySeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 2,
                 'facility_code' => 'LHB 201',
                 'total_levels' => null,
@@ -3733,7 +3733,7 @@ class FacilitySeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 2,
                 'facility_code' => 'LHB 202',
                 'total_levels' => null,
@@ -3755,7 +3755,7 @@ class FacilitySeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 3,
                 'facility_code' => 'LHB 301',
                 'total_levels' => null,
@@ -3777,7 +3777,7 @@ class FacilitySeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 3,
                 'facility_code' => 'LHB 302',
                 'total_levels' => null,
@@ -3799,7 +3799,7 @@ class FacilitySeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 3,
                 'facility_code' => 'LHB 303',
                 'total_levels' => null,
@@ -3821,7 +3821,7 @@ class FacilitySeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 3,
                 'facility_code' => 'LHB 304',
                 'total_levels' => null,
@@ -3843,7 +3843,7 @@ class FacilitySeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'parent_facility_id' => 39,
+                'parent_facility_id' => 33,
                 'floor_level' => 3,
                 'facility_code' => 'LHB 305',
                 'total_levels' => null,

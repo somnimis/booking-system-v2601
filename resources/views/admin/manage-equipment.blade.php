@@ -4,6 +4,11 @@
 
 @section('content')
   <style>
+    /* Pagination stays at bottom */
+    .d-flex.justify-content-center.mt-auto.pt-3 {
+      flex-shrink: 0;
+    }
+
     /* Target the equipment dropdown menu in both states (open and closed) */
     #equipmentDropdownToggle+.dropdown-menu,
     #equipmentDropdownToggle+.dropdown-menu.show {
@@ -81,221 +86,195 @@
       border-color: #dee2e6;
     }
 
-
-    html,
-    body {
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      /* prevent the whole page from scrolling */
+    /* Fix button group corner rounding */
+    .btn-group>.btn:first-child {
+      border-top-right-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
     }
 
-    #equipmentContainer {
-      flex: 1;
-      overflow-y: auto;
-      min-height: 400px;
-      padding-right: 8px;
-    }
-
-    /* Custom thin scrollbar */
-    #equipmentContainer::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    #equipmentContainer::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
-
-    #equipmentContainer::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 3px;
-    }
-
-    #equipmentContainer::-webkit-scrollbar-thumb:hover {
-      background: #555;
-    }
-
-    /* Firefox */
-    #equipmentContainer {
-      scrollbar-width: thin;
-      scrollbar-color: #888 #f1f1f1;
+    .btn-group>.dropdown-toggle-split {
+      border-top-left-radius: 0 !important;
+      border-bottom-left-radius: 0 !important;
     }
   </style>
 
   <!-- Main Content -->
-  <main>
-    <!-- Header & Controls -->
-    <div>
-      <!-- Page Header -->
-      <div class="d-flex justify-content-between align-items-center">
-        <h2 class="card-title m-0 fw-bold"></h2>
-      </div>
-
-      <!-- Filters, Search Bar & Buttons (single scrollable row) -->
-      <div class="row mb-3 g-2 align-items-center filters-row">
-        <div class="col-auto flex-shrink-0">
-          <select id="layoutSelect" class="form-select">
-            <option value="grid">Grid Layout</option>
-            <option value="list">List Layout</option>
-          </select>
+  <main id="main">
+    <div class="container-fluid px-4">
+      <!-- Header & Controls -->
+      <div>
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center">
+          <h2 class="card-title m-0 fw-bold"></h2>
         </div>
 
-        <div class="col-auto flex-shrink-0">
-          <select id="statusFilter" class="form-select">
-            <option value="all">All Statuses</option>
-          </select>
-        </div>
-
-        <div class="col-auto flex-shrink-0">
-          <select id="categoryFilter" class="form-select">
-            <option value="all">All Categories</option>
-          </select>
-        </div>
-
-        <div class="col flex-grow-1">
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" id="searchInput" class="form-control" placeholder="Search Equipment...">
+        <!-- Filters, Search Bar & Buttons (single scrollable row) -->
+        <div class="row mb-3 g-2 align-items-center filters-row">
+          <div class="col-auto flex-shrink-0">
+            <select id="layoutSelect" class="form-select">
+              <option value="grid">Grid Layout</option>
+              <option value="list">List Layout</option>
+            </select>
           </div>
-        </div>
 
-        <div class="col-auto text-nowrap">
-          <div class="btn-group" role="group">
-            <a href="{{ url('/admin/add-equipment') }}" class="btn btn-primary">
-              <i class="bi bi-plus-circle-fill me-2"></i>Add New
-            </a>
-            <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"
-              id="equipmentDropdownToggle" data-bs-toggle="dropdown" aria-expanded="false">
-              <span class="visually-hidden">Toggle Dropdown</span>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="equipmentDropdownToggle">
-              <li>
-                <button class="dropdown-item" type="button" data-bs-toggle="modal"
-                  data-bs-target="#massAssignDepartmentsModal">
-                  <i class="bi bi-diagram-3-fill me-2"></i>Mass Assign Departments
-                </button>
-              </li>
-            </ul>
+          <div class="col-auto flex-shrink-0">
+            <select id="statusFilter" class="form-select">
+              <option value="all">All Statuses</option>
+            </select>
           </div>
-          <a href="{{ url('/admin/scan-equipment') }}" class="btn btn-primary ms-2">
-            <i class="fa-solid fa-camera me-2"></i>Barcode Scanner
-          </a>
-        </div>
-      </div>
 
-      <!-- Equipment List (scrollable) -->
-      <div id="equipmentContainer" class="flex-grow-1 overflow-auto" style="height: calc(100vh - 300px);">
-        <div class="row g-2" id="equipmentCardsContainer">
-          <div class="col-12 text-center py-5" id="loadingIndicator">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-2">Loading equipment...</p>
+          <div class="col-auto flex-shrink-0">
+            <select id="categoryFilter" class="form-select">
+              <option value="all">All Categories</option>
+            </select>
           </div>
-          <div class="col-12 text-center py-5 d-none" id="noResultsMessage">
-            <i class="bi bi-exclamation-circle fs-1 text-muted"></i>
-            <p class="mt-2 text-muted">No equipment found matching your criteria</p>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Pagination Controls (fixed at bottom) -->
-    <div class="d-flex justify-content-center mt-auto pt-3">
-      <nav aria-label="Equipment pagination">
-        <ul class="pagination" id="paginationContainer">
-          <li class="page-item disabled" id="prevPage">
-            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
-              <span aria-hidden="true">&laquo;</span>
-              <span class="visually-hidden">Previous</span>
-            </a>
-          </li>
-          <li class="page-item active">
-            <a class="page-link" href="#" data-page="1">1</a>
-          </li>
-          <li class="page-item" id="nextPage">
-            <a class="page-link" href="#" data-page="2">
-              <span aria-hidden="true">&raquo;</span>
-              <span class="visually-hidden">Next</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-
-    <!-- Mass Assign Departments Modal -->
-    <div class="modal fade" id="massAssignDepartmentsModal" tabindex="-1"
-      aria-labelledby="massAssignDepartmentsModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="massAssignDepartmentsModalLabel" style="color: #003366;">Mass Assign Departments
-              to Equipment</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form id="massAssignForm">
-              <!-- Equipment Selection -->
-              <div class="mb-4">
-                <label class="form-label fw-bold" style="color: #003366;">Select Equipment</label>
-                <select id="equipmentMultiSelect" class="form-select" multiple size="6" style="border-color: #003366;">
-                  <!-- Will be populated dynamically -->
-                </select>
-                <div class="form-text text-muted">Hold Ctrl/Cmd to select multiple equipment</div>
-              </div>
-
-              <!-- Department Selection -->
-              <div class="mb-4">
-                <label class="form-label fw-bold" style="color: #003366;">Select Departments to Assign</label>
-                <select id="departmentMultiSelect" class="form-select" multiple size="6" style="border-color: #003366;">
-                  <!-- Will be populated dynamically -->
-                </select>
-                <div class="form-text text-muted">Hold Ctrl/Cmd to select multiple departments</div>
-              </div>
-
-              <!-- Summary -->
-              <div class="alert" style="background-color: #f8f9fa; border-left: 4px solid #003366;" id="selectionSummary">
-                <i class="bi bi-info-circle me-2" style="color: #003366;"></i>
-                <span id="summaryText">No equipment selected</span>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn" id="executeMassAssignBtn" style="background-color: #003366; color: white;"
-              onmouseover="this.style.backgroundColor='#004080'" onmouseout="this.style.backgroundColor='#003366'">
-              <i class="bi bi-check-circle me-2"></i>Assign Departments
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Warning Modal -->
-    <div class="modal fade" id="assignmentWarningModal" tabindex="-1" aria-labelledby="warningModalLabel"
-      aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="warningModalLabel" style="color: #003366;">Confirm Department Assignment</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div class="text-center mb-3">
-              <i class="bi bi-exclamation-triangle-fill" style="color: #003366; font-size: 2.5rem;"></i>
+          <div class="col flex-grow-1">
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" id="searchInput" class="form-control" placeholder="Search Equipment...">
             </div>
-            <p class="text-center mb-0">
-              This action will <strong>replace all existing department assignments</strong> for the selected equipment
-              with the new departments.
-            </p>
-            <p class="text-center text-muted mt-2 mb-0">
-              Are you sure you want to continue?
-            </p>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn" id="confirmAssignBtn" style="background-color: #003366; color: white;"
-              onmouseover="this.style.backgroundColor='#004080'" onmouseout="this.style.backgroundColor='#003366'">
-              <i class="bi bi-check-circle me-2"></i>Yes, Assign Departments
-            </button>
+
+          <div class="col-auto text-nowrap">
+            <div class="btn-group" role="group">
+              <a href="{{ url('/admin/add-equipment') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle-fill me-2"></i>Add New
+              </a>
+              <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"
+                id="equipmentDropdownToggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="visually-hidden">Toggle Dropdown</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="equipmentDropdownToggle">
+                <li>
+                  <button class="dropdown-item" type="button" data-bs-toggle="modal"
+                    data-bs-target="#massAssignDepartmentsModal">
+                    <i class="bi bi-diagram-3-fill me-2"></i>Mass Assign Departments
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <a href="{{ url('/admin/scan-equipment') }}" class="btn btn-primary ms-2">
+              <i class="fa-solid fa-camera me-2"></i>Barcode Scanner
+            </a>
+          </div>
+        </div>
+
+        <!-- Equipment List (scrollable) -->
+        <div id="equipmentContainer">
+          <div class="row g-2" id="equipmentCardsContainer">
+            <div class="col-12 text-center py-5" id="loadingIndicator">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-2">Loading equipment...</p>
+            </div>
+            <div class="col-12 text-center py-5 d-none" id="noResultsMessage">
+              <i class="bi bi-exclamation-circle fs-1 text-muted"></i>
+              <p class="mt-2 text-muted">No equipment found matching your criteria</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination Controls (fixed at bottom) -->
+      <div class="d-flex justify-content-center mt-auto pt-3">
+        <nav aria-label="Equipment pagination">
+          <ul class="pagination" id="paginationContainer">
+            <li class="page-item disabled" id="prevPage">
+              <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                <span aria-hidden="true">&laquo;</span>
+                <span class="visually-hidden">Previous</span>
+              </a>
+            </li>
+            <li class="page-item active">
+              <a class="page-link" href="#" data-page="1">1</a>
+            </li>
+            <li class="page-item" id="nextPage">
+              <a class="page-link" href="#" data-page="2">
+                <span aria-hidden="true">&raquo;</span>
+                <span class="visually-hidden">Next</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <!-- Mass Assign Departments Modal -->
+      <div class="modal fade" id="massAssignDepartmentsModal" tabindex="-1"
+        aria-labelledby="massAssignDepartmentsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="massAssignDepartmentsModalLabel" style="color: #003366;">Mass Assign Departments
+                to Equipment</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="massAssignForm">
+                <!-- Equipment Selection -->
+                <div class="mb-4">
+                  <label class="form-label fw-bold" style="color: #003366;">Select Equipment</label>
+                  <select id="equipmentMultiSelect" class="form-select" multiple size="6" style="border-color: #003366;">
+                    <!-- Will be populated dynamically -->
+                  </select>
+                  <div class="form-text text-muted">Hold Ctrl/Cmd to select multiple equipment</div>
+                </div>
+
+                <!-- Department Selection -->
+                <div class="mb-4">
+                  <label class="form-label fw-bold" style="color: #003366;">Select Departments to Assign</label>
+                  <select id="departmentMultiSelect" class="form-select" multiple size="6" style="border-color: #003366;">
+                    <!-- Will be populated dynamically -->
+                  </select>
+                  <div class="form-text text-muted">Hold Ctrl/Cmd to select multiple departments</div>
+                </div>
+
+                <!-- Summary -->
+                <div class="alert" style="background-color: #f8f9fa; border-left: 4px solid #003366;"
+                  id="selectionSummary">
+                  <i class="bi bi-info-circle me-2" style="color: #003366;"></i>
+                  <span id="summaryText">No equipment selected</span>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn" id="executeMassAssignBtn" style="background-color: #003366; color: white;"
+                onmouseover="this.style.backgroundColor='#004080'" onmouseout="this.style.backgroundColor='#003366'">
+                <i class="bi bi-check-circle me-2"></i>Assign Departments
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warning Modal -->
+      <div class="modal fade" id="assignmentWarningModal" tabindex="-1" aria-labelledby="warningModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="warningModalLabel" style="color: #003366;">Confirm Department Assignment</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="text-center mb-3">
+                <i class="bi bi-exclamation-triangle-fill" style="color: #003366; font-size: 2.5rem;"></i>
+              </div>
+              <p class="text-center mb-0">
+                This action will <strong>replace all existing department assignments</strong> for the selected equipment
+                with the new departments.
+              </p>
+              <p class="text-center text-muted mt-2 mb-0">
+                Are you sure you want to continue?
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn" id="confirmAssignBtn" style="background-color: #003366; color: white;"
+                onmouseover="this.style.backgroundColor='#004080'" onmouseout="this.style.backgroundColor='#003366'">
+                <i class="bi bi-check-circle me-2"></i>Yes, Assign Departments
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -499,11 +478,11 @@
         if (equipmentList.length === 0) {
           // Show no equipment found message with icon
           container.innerHTML = `
-                <div class="col-12 text-center py-5">
-                  <i class="bi bi-tools fs-1 text-muted" style="font-size: 4rem !important;"></i>
-                  <p class="mt-2 text-muted">No equipment found.</p>
-                </div>
-              `;
+                        <div class="col-12 text-center py-5">
+                          <i class="bi bi-tools fs-1 text-muted" style="font-size: 4rem !important;"></i>
+                          <p class="mt-2 text-muted">No equipment found.</p>
+                        </div>
+                      `;
           // Clear pagination when no results
           paginationContainer.innerHTML = '';
           return;
@@ -553,67 +532,67 @@
             // List layout
             card.className = "col-12 equipment-card mb-0";
             card.innerHTML = `
-              <div class="card h-100 shadow-sm rounded-3">
-                <div class="row g-0">
-                  <div class="col-md-2" style="max-width: 120px; flex: 0 0 120px;">
-                    <img src="${primaryImage}" 
-                         class="img-fluid rounded-start" 
-                         style="width: 120px; height: 120px; object-fit: cover;" 
-                         alt="${equipment.equipment_name}">
-                  </div>
-                  <div class="col-md-8">
-                    <div class="card-body py-3">
-                      <h5 class="card-title fw-bold mb-2">${equipment.equipment_name}</h5>
-                      <p class="card-text mb-2">
-                        <span class="badge ${statusClass} me-2">${equipment.status.status_name}</span>
-          <small class="text-muted">
-            <i class="bi bi-tag-fill text-primary me-1"></i>${equipment.category.category_name}
-            <i class="bi bi-box-fill text-primary ms-2 me-1"></i>${equipment.available_quantity}/${equipment.total_quantity} available
-          </small>
-                      </p>
-                      <p class="card-text text-muted mb-0">
-                        ${equipment.description || "No description available"}
-                      </p>
-                    </div>
-                  </div>
-                  <div class="col-md-2 d-flex align-items-center justify-content-center">
-                    <div class="d-grid gap-2 w-100 px-2">
-                      <a href="/admin/edit-equipment?id=${equipment.equipment_id}" 
-                         class="btn btn-sm btn-primary">
-                         Manage
-                      </a>
-                      <button class="btn btn-sm btn-outline-danger btn-delete" 
-                              data-id="${equipment.equipment_id}">
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
+                      <div class="card h-100 shadow-sm rounded-3">
+                        <div class="row g-0">
+                          <div class="col-md-2" style="max-width: 120px; flex: 0 0 120px;">
+                            <img src="${primaryImage}" 
+                                 class="img-fluid rounded-start" 
+                                 style="width: 120px; height: 120px; object-fit: cover;" 
+                                 alt="${equipment.equipment_name}">
+                          </div>
+                          <div class="col-md-8">
+                            <div class="card-body py-3">
+                              <h5 class="card-title fw-bold mb-2">${equipment.equipment_name}</h5>
+                              <p class="card-text mb-2">
+                                <span class="badge ${statusClass} me-2">${equipment.status.status_name}</span>
+                  <small class="text-muted">
+                    <i class="bi bi-tag-fill text-primary me-1"></i>${equipment.category.category_name}
+                    <i class="bi bi-box-fill text-primary ms-2 me-1"></i>${equipment.available_quantity}/${equipment.total_quantity} available
+                  </small>
+                              </p>
+                              <p class="card-text text-muted mb-0">
+                                ${equipment.description || "No description available"}
+                              </p>
+                            </div>
+                          </div>
+                          <div class="col-md-2 d-flex align-items-center justify-content-center">
+                            <div class="d-grid gap-2 w-100 px-2">
+                              <a href="/admin/edit-equipment?id=${equipment.equipment_id}" 
+                                 class="btn btn-sm btn-primary">
+                                 Manage
+                              </a>
+                              <button class="btn btn-sm btn-outline-danger btn-delete" 
+                                      data-id="${equipment.equipment_id}">
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    `;
           } else {
             // Grid layout
             card.className = "col-md-4 col-lg-3 equipment-card mb-3";
             card.innerHTML = `
-              <div class="card h-100">
-                <img src="${primaryImage}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="${equipment.equipment_name}">
-                <div class="card-body d-flex flex-column p-2">
-                  <div>
-                    <h6 class="card-title mb-1 fw-bold">${equipment.equipment_name}</h6>
-          <p class="card-text text-muted mb-1 small">
-            <i class="bi bi-tag-fill text-primary me-1"></i>${equipment.category.category_name}
-            <i class="bi bi-box-fill text-primary ms-2 me-1"></i>${equipment.available_quantity}/${equipment.total_quantity}
-          </p>
-                    <span class="badge ${statusClass} mb-2">${equipment.status.status_name}</span>
-                    <p class="card-text mb-2 small text-truncate">${equipment.description || "No description available"}</p>
-                  </div>
-                  <div class="equipment-actions mt-auto d-grid gap-1">
-                    <a href="/admin/edit-equipment?id=${equipment.equipment_id}" class="btn btn-sm btn-primary btn-manage">Manage</a>
-                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${equipment.equipment_id}">Delete</button>
-                  </div>
-                </div>
-              </div>
-            `;
+                      <div class="card h-100">
+                        <img src="${primaryImage}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="${equipment.equipment_name}">
+                        <div class="card-body d-flex flex-column p-2">
+                          <div>
+                            <h6 class="card-title mb-1 fw-bold">${equipment.equipment_name}</h6>
+                  <p class="card-text text-muted mb-1 small">
+                    <i class="bi bi-tag-fill text-primary me-1"></i>${equipment.category.category_name}
+                    <i class="bi bi-box-fill text-primary ms-2 me-1"></i>${equipment.available_quantity}/${equipment.total_quantity}
+                  </p>
+                            <span class="badge ${statusClass} mb-2">${equipment.status.status_name}</span>
+                            <p class="card-text mb-2 small text-truncate">${equipment.description || "No description available"}</p>
+                          </div>
+                          <div class="equipment-actions mt-auto d-grid gap-1">
+                            <a href="/admin/edit-equipment?id=${equipment.equipment_id}" class="btn btn-sm btn-primary btn-manage">Manage</a>
+                            <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${equipment.equipment_id}">Delete</button>
+                          </div>
+                        </div>
+                      </div>
+                    `;
           }
 
           container.appendChild(card);
@@ -673,26 +652,26 @@
       function showDeleteConfirmationModal(equipmentId, equipmentName) {
         // Create modal HTML
         const modalHtml = `
-              <div class="modal fade" id="deleteEquipmentModal" tabindex="-1" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered">
-                      <div class="modal-content">
-                          <div class="modal-header">
-                              <h5 class="modal-title">Confirm Deletion</h5>
-                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                          </div>
-                          <div class="modal-body text-center">
-                              <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 2.5rem;"></i>
-                              <p class="mt-3 mb-1">Are you sure you want to delete <strong>"${equipmentName}"</strong>?</p>
-                              <p class="text-danger mt-1">This action cannot be undone.</p>
-                          </div>
-                          <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                              <button type="button" class="btn btn-danger" id="confirmDeleteEquipmentBtn">Delete Equipment</button>
+                      <div class="modal fade" id="deleteEquipmentModal" tabindex="-1" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered">
+                              <div class="modal-content">
+                                  <div class="modal-header">
+                                      <h5 class="modal-title">Confirm Deletion</h5>
+                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                  </div>
+                                  <div class="modal-body text-center">
+                                      <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 2.5rem;"></i>
+                                      <p class="mt-3 mb-1">Are you sure you want to delete <strong>"${equipmentName}"</strong>?</p>
+                                      <p class="text-danger mt-1">This action cannot be undone.</p>
+                                  </div>
+                                  <div class="modal-footer">
+                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                      <button type="button" class="btn btn-danger" id="confirmDeleteEquipmentBtn">Delete Equipment</button>
+                                  </div>
+                              </div>
                           </div>
                       </div>
-                  </div>
-              </div>
-          `;
+                  `;
 
 
         // Add modal to DOM
@@ -753,18 +732,18 @@
         toast.style.borderRadius = '0.3rem';
 
         toast.innerHTML = `
-                  <div class="d-flex align-items-center px-3 py-1"> 
-                      <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                      <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                      <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                  </div>
-                  <div class="loading-bar" style="
-                      height: 3px;
-                      background: rgba(255,255,255,0.7);
-                      width: 100%;
-                      transition: width ${duration}ms linear;
-                  "></div>
-              `;
+                          <div class="d-flex align-items-center px-3 py-1"> 
+                              <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                              <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
+                              <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                          <div class="loading-bar" style="
+                              height: 3px;
+                              background: rgba(255,255,255,0.7);
+                              width: 100%;
+                              transition: width ${duration}ms linear;
+                          "></div>
+                      `;
 
         document.body.appendChild(toast);
 
@@ -969,11 +948,11 @@
         prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
         prevLi.id = "prevPage";
         prevLi.innerHTML = `
-                      <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
-                        <span aria-hidden="true">&laquo;</span>
-                        <span class="visually-hidden">Previous</span>
-                      </a>
-                    `;
+                              <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                <span aria-hidden="true">&laquo;</span>
+                                <span class="visually-hidden">Previous</span>
+                              </a>
+                            `;
         paginationContainer.appendChild(prevLi);
 
         // Page numbers
@@ -997,11 +976,11 @@
         nextLi.className = `page-item ${currentPage === totalPages ? "disabled" : ""}`;
         nextLi.id = "nextPage";
         nextLi.innerHTML = `
-                              <a class="page-link" href="#" data-page="${currentPage + 1}">
-                                <span aria-hidden="true">&raquo;</span>
-                                <span class="visually-hidden">Next</span>
-                              </a>
-                            `;
+                                      <a class="page-link" href="#" data-page="${currentPage + 1}">
+                                        <span aria-hidden="true">&raquo;</span>
+                                        <span class="visually-hidden">Next</span>
+                                      </a>
+                                    `;
         paginationContainer.appendChild(nextLi);
 
         // Add event listeners

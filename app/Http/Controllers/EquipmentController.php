@@ -95,11 +95,51 @@ public function publicIndex(Request $request): JsonResponse
     }
 }
 
+// === EQUIPMENT DETAILS API ENDPOINT === //
+public function getEquipmentDetails($id): JsonResponse
+{
+    try {
+        if (!$id) {
+            return response()->json(['success' => false, 'message' => 'Equipment ID is required'], 400);
+        }
 
+        $equipment = Equipment::with(['category', 'status', 'department', 'images'])
+            // Count total items (excluding status_id 5)
+            ->withCount(['items as total_quantity' => function ($query) {
+                $query->where('status_id', '!=', 5);
+            }])
+            // Count available items based on status AND condition rules
+            ->withCount(['items as available_quantity' => function ($query) {
+                $query->where('status_id', 1)
+                      ->whereIn('condition_id', [1, 2, 3]);
+            }])
+            ->find($id);
 
+        if (!$equipment) {
+            return response()->json(['success' => false, 'message' => 'Equipment not found'], 404);
+        }
 
+        $formattedEquipment = $this->formatPublicEquipment($equipment);
+        
+        // Map the counts from the model attributes to your response
+        $formattedEquipment['available_quantity'] = $equipment->available_quantity;
+        $formattedEquipment['total_quantity'] = $equipment->total_quantity;
+        $formattedEquipment['images'] = $equipment->images;
 
+        return response()->json([
+            'success' => true,
+            'data' => $formattedEquipment
+        ]);
 
+    } catch (\Exception $e) {
+        \Log::error('Error fetching equipment details', ['error' => $e->getMessage()]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch equipment details'
+        ], 500);
+    }
+}
 
     // ----- EQUIPMENT MANAGEMENT SECTION ----- //
 

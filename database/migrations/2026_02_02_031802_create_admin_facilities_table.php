@@ -18,7 +18,10 @@ return new class extends Migration
             $table->timestamps();
             // Foreign Keys
             $table->foreign('admin_id')->references('admin_id')->on('admins');
-            $table->foreign('facility_id')->references('facility_id')->on('facilities');
+            $table->foreign('facility_id')
+                  ->references('facility_id')
+                  ->on('facilities')
+                  ->onDelete('cascade');  // ← Add this line
         });
     }
 

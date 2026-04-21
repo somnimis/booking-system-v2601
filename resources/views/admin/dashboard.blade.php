@@ -210,6 +210,7 @@
   <div>
     <!-- Main Content -->
     <main id="main">
+      <div class="container-fluid px-4">
       <!-- Dashboard Header with Wallpaper -->
       <div class="dashboard-header">
         <div class="d-flex justify-content-between align-items-center">

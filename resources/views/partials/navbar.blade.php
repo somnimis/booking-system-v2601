@@ -1,179 +1,328 @@
 <style>
-    /* Your existing root variables are already in your main CSS file */
+    /* ============================================
+       REFINED INSTITUTIONAL THEME - NAVBAR
+       Matching catalog.css design system
+       ============================================ */
 
-    /* Top Header Bar - Using CPU Blue */
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fraunces:wght@600;700&display=swap');
+
+    /* Design Tokens - Matching catalog.css */
+    :root {
+        --navy: #041a4b;
+        --navy-mid: #0b2d72;
+        --navy-light: #e8edf8;
+        --amber: #f5bc40;
+        --amber-dark: #d9a12a;
+        --white: #ffffff;
+        --surface: #f5f6fa;
+        --border: #e2e6f0;
+        --text-base: #1e2d4a;
+        --text-muted: #6b7a99;
+        --text-light: #9aaac5;
+        --shadow-sm: 0 1px 3px rgba(4, 26, 75, .06), 0 1px 2px rgba(4, 26, 75, .04);
+        --shadow-md: 0 4px 16px rgba(4, 26, 75, .10), 0 2px 6px rgba(4, 26, 75, .06);
+        --shadow-lg: 0 12px 40px rgba(4, 26, 75, .16), 0 4px 12px rgba(4, 26, 75, .08);
+        --radius-sm: 6px;
+        --radius-md: 12px;
+        --radius-lg: 18px;
+        --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+
+        /* Legacy support */
+        --cpu-primary: #041a4b;
+        --cpu-primary-light: #e8edf8;
+        --cpu-secondary: #f5bc40;
+        --cpu-secondary-hover: #d9a12a;
+        --cpu-white: #ffffff;
+        --cpu-light-bg: #f5f6fa;
+        --cpu-border-accent: #e2e6f0;
+        --cpu-shadow: rgba(4, 26, 75, .06);
+    }
+
+    /* Top Header Bar */
     .top-header-bar {
-        background-color: var(--cpu-primary);
-        color: var(--cpu-white);
-        padding: 10px 0;
+        background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+        color: var(--white);
+        padding: 12px 0;
+        position: relative;
+        z-index: 2001;
     }
 
     .top-header-bar .cpu-brand {
         display: flex;
         align-items: center;
+        gap: 1rem;
     }
 
     .top-header-bar .cpu-brand img {
-        height: 60px;
-        margin-right: 15px;
+        height: 55px;
+        width: auto;
+        transition: var(--transition);
     }
 
     .top-header-bar .cpu-brand .title {
-        font-size: 1.5rem;
+        font-family: 'Fraunces', serif;
+        font-size: 1.3rem;
+        font-weight: 700;
         line-height: 1.2;
-        color: var(--cpu-white);
+        color: var(--white);
+        letter-spacing: -0.3px;
     }
 
     .top-header-bar .cpu-brand .subtitle {
-        font-size: 1rem;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.8rem;
+        font-weight: 400;
         line-height: 1.2;
-        color: var(--cpu-white);
+        color: rgba(255, 255, 255, 0.85);
+        letter-spacing: 0.2px;
     }
 
     .top-header-bar .admin-login {
-        color: var(--cpu-white);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.8);
     }
 
     .top-header-bar .admin-login a {
-        color: var(--cpu-white);
-        text-decoration: underline;
+        color: var(--amber);
+        text-decoration: none;
+        font-weight: 500;
+        transition: var(--transition);
     }
 
     .top-header-bar .admin-login a:hover {
-        color: var(--cpu-secondary);
+        color: var(--amber-dark);
+        text-decoration: underline;
     }
 
-    /* Main Navbar - Using Light BG with Gold Border */
+    /* Main Navbar */
     .main-navbar {
-        background-color: var(--cpu-light-bg);
-        border-bottom: 3px solid var(--cpu-border-accent);
-        padding: 0.5rem 0;
-        box-shadow: 0 2px 5px var(--cpu-shadow);
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        padding: 0;
         position: sticky;
         top: 0;
         z-index: 2000;
+        box-shadow: var(--shadow-sm);
     }
 
+    .navbar {
+        padding: 0.75rem 0;
+    }
+
+    /* Navbar Toggler */
+    .navbar-toggler {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0.5rem 0.75rem;
+        transition: var(--transition);
+    }
+
+    .navbar-toggler:hover {
+        background: var(--surface);
+        border-color: var(--navy);
+    }
+
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%23041a4b' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+    }
+
+    /* Navbar Links */
     .main-navbar .nav-link {
-        color: var(--cpu-primary);
-        padding: 0.5rem 1rem;
-        font-size: 0.95rem;
-        transition: color 0.2s ease-in-out;
+        font-family: 'DM Sans', sans-serif;
+        color: var(--text-base);
+        font-weight: 500;
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
+        transition: var(--transition);
+        border-radius: var(--radius-sm);
+        margin: 0 2px;
     }
 
-    .main-navbar .nav-link:hover,
-    .main-navbar .nav-link.active {
-        color: var(--cpu-secondary-hover);
+    .main-navbar .nav-link:hover {
+        color: var(--amber);
         background-color: transparent;
     }
 
-    /* Dropdown Menu Styling */
+    .main-navbar .nav-link.active {
+        color: var(--amber);
+        background-color: transparent;
+        font-weight: 600;
+        position: relative;
+    }
+
+    .main-navbar .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 1rem;
+        right: 1rem;
+        height: 2px;
+        background: var(--amber);
+        border-radius: 2px;
+    }
+
+    /* Dropdown */
+    .main-navbar .dropdown-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .main-navbar .dropdown-toggle::after {
+        margin-top: 2px;
+    }
+
     .main-navbar .dropdown-menu {
-        background-color: var(--cpu-white);
-        border: 1px solid var(--cpu-border-accent);
-        border-radius: 0;
-        margin-top: 0;
-        padding: 0.5rem 0;
-        box-shadow: 0 4px 8px var(--cpu-shadow);
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        box-shadow: var(--shadow-md);
+        min-width: 200px;
+        animation: dropdownFadeIn 0.2s ease-out;
+    }
+
+    @keyframes dropdownFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .main-navbar .dropdown-item {
-        color: var(--cpu-primary);
-        padding: 0.5rem 1.5rem;
-        font-size: 0.9rem;
-        transition: all 0.2s ease;
+        font-family: 'DM Sans', sans-serif;
+        color: var(--text-base);
+        font-size: 0.85rem;
+        padding: 0.6rem 1rem;
+        border-radius: var(--radius-sm);
+        transition: var(--transition);
     }
 
     .main-navbar .dropdown-item:hover,
     .main-navbar .dropdown-item:focus {
-        background-color: var(--cpu-primary-light);
-        color: var(--cpu-secondary-hover);
+        background-color: var(--navy-light);
+        color: var(--navy);
     }
 
     .main-navbar .dropdown-item.active {
-        background-color: var(--cpu-primary);
-        color: var(--cpu-white);
+        background-color: var(--navy);
+        color: var(--white);
     }
 
-    /* How to book trigger text */
+    /* How to Book */
     .navbar .how-to-book {
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.85rem;
         cursor: pointer;
-        text-decoration: underline;
-        color: var(--cpu-primary);
+        color: var(--text-muted);
+        transition: var(--transition);
         white-space: nowrap;
-    }
-
-    .navbar .how-to-book i {
-        color: var(--cpu-primary);
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--radius-sm);
     }
 
     .navbar .how-to-book:hover {
-        color: var(--cpu-secondary-hover);
+        color: var(--navy);
+        background-color: var(--navy-light);
     }
 
-    .how-to-book:hover i {
-        color: var(--cpu-secondary-hover);
-        /* or whatever color you want */
+    .navbar .how-to-book i {
+        color: var(--text-muted);
+        transition: var(--transition);
     }
 
-    /* If you want the icon to change color when hovering over just the icon as well */
-    .how-to-book i:hover {
-        color: var(--cpu-secondary-hover);
+    .navbar .how-to-book:hover i {
+        color: var(--navy);
     }
 
     /* Book Now Button */
     .main-navbar .btn-book-now {
-        background-color: var(--cpu-secondary);
-        color: var(--cpu-primary);
+        background: linear-gradient(135deg, var(--amber) 0%, var(--amber-dark) 100%);
+        color: var(--navy);
         border: none;
-        font-weight: bold;
-        padding: 0.5rem 1.5rem;
-        border-radius: 5px;
-        transition: all 0.2s ease-in-out;
-        box-shadow: 0 2px 4px var(--cpu-shadow);
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 700;
+        font-size: 0.85rem;
+        padding: 0.6rem 1.5rem;
+        border-radius: 60px;
+        transition: var(--transition);
+        box-shadow: var(--shadow-sm);
+        letter-spacing: 0.3px;
     }
 
     .main-navbar .btn-book-now:hover {
-        background-color: var(--cpu-secondary-hover);
-        color: var(--cpu-primary);
-        box-shadow: 0 4px 8px var(--cpu-shadow);
+        background: linear-gradient(135deg, var(--amber-dark) 0%, #c08e22 100%);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .main-navbar .btn-book-now:active {
+        transform: translateY(0);
     }
 
     /* Tooltip Styling */
-
     .tooltip {
         z-index: 2500 !important;
     }
 
     .tooltip-inner {
-        background-color: #000000d2;
-        color: var(--cpu-white);
-        font-size: 0.85rem;
-        padding: 0.75rem 0.75rem;
-        line-height: 1.2;
-        max-width: 300px;
+        background-color: var(--navy);
+        color: var(--white);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.8rem;
+        padding: 0.75rem 1rem;
+        line-height: 1.4;
+        max-width: 320px;
         text-align: left;
-        white-space: pre-line;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-md);
     }
 
     .tooltip-arrow::before {
-        border-bottom-color: #000000d2;
+        border-bottom-color: var(--navy);
     }
 
+    .bs-tooltip-top .tooltip-arrow::before {
+        border-top-color: var(--navy);
+    }
+
+    .bs-tooltip-end .tooltip-arrow::before {
+        border-right-color: var(--navy);
+    }
+
+    .bs-tooltip-start .tooltip-arrow::before {
+        border-left-color: var(--navy);
+    }
 
     /* Mobile Responsive Styles */
+    @media (max-width: 991px) {
+        .navbar-collapse {
+            background: var(--white);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-top: 0.75rem;
+            box-shadow: var(--shadow-md);
+        }
+    }
+
     @media (max-width: 768px) {
 
-        /* Force header background */
+        /* Top Header */
         .top-header-bar {
-            background-color: var(--cpu-primary) !important;
+            padding: 10px 0;
         }
 
         .top-header-bar .container {
             flex-direction: column;
             align-items: flex-start !important;
-            gap: 10px;
+            gap: 12px;
         }
 
         .top-header-bar .cpu-brand {
@@ -181,164 +330,103 @@
         }
 
         .top-header-bar .cpu-brand img {
-            height: 50px;
-            margin-right: 12px;
+            height: 45px;
         }
 
         .top-header-bar .cpu-brand .title {
-            font-size: 1.2rem;
-            color: var(--cpu-white) !important;
+            font-size: 1.1rem;
         }
 
         .top-header-bar .cpu-brand .subtitle {
-            font-size: 0.85rem;
-            color: var(--cpu-white) !important;
+            font-size: 0.7rem;
         }
 
         .top-header-bar .admin-login {
             width: 100%;
             text-align: left;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             padding-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            color: var(--cpu-white) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        /* Force navbar background */
+        /* Navbar */
         .main-navbar {
-            background-color: var(--cpu-light-bg) !important;
-            padding: 0.25rem 0;
+            padding: 0;
         }
 
-        .main-navbar .container {
-            padding-left: 15px;
-            padding-right: 15px;
+        .navbar {
+            padding: 0.5rem 0;
         }
 
-        .main-navbar .navbar-nav {
-            padding: 15px 0;
-            background-color: var(--cpu-light-bg) !important;
-        }
-
-        .main-navbar .nav-item {
-            width: 100%;
-            text-align: left;
+        .navbar-collapse {
+            padding: 0.75rem;
+            margin-top: 0.5rem;
         }
 
         .main-navbar .nav-link {
-            padding: 12px 0 !important;
-            border-bottom: 1px solid var(--cpu-border-accent);
-            color: var(--cpu-primary) !important;
+            padding: 0.75rem 0;
+            margin: 0;
+            border-radius: 0;
         }
 
-        /* Dropdown mobile background */
+        .main-navbar .nav-link.active::after {
+            display: none;
+        }
+
         .main-navbar .dropdown-menu {
-            width: 100%;
+            background: var(--surface);
             border: none;
-            background-color: var(--cpu-primary-light) !important;
-            padding: 0 0 0 15px !important;
+            padding: 0;
             margin: 0;
             box-shadow: none;
+            animation: none;
         }
 
         .main-navbar .dropdown-item {
-            padding: 8px 15px;
-            white-space: normal;
-            font-size: 0.9rem;
-            color: var(--cpu-primary) !important;
+            padding: 0.6rem 0 0.6rem 1rem;
         }
 
-        .main-navbar .dropdown-item:hover {
-            background-color: transparent;
-            color: var(--cpu-secondary-hover) !important;
-        }
-
-        /* Force Book Now section background */
+        /* Right side actions */
         .d-flex.align-items-center.ms-lg-3 {
-            flex-direction: row;
-            justify-content: space-between;
+            flex-direction: column;
             width: 100%;
             margin-left: 0 !important;
-            padding: 15px 0 5px;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
             gap: 10px;
-            border-top: 1px solid var(--cpu-border-accent);
-            background-color: var(--cpu-light-bg) !important;
+            border-top: 1px solid var(--border);
         }
 
         .navbar .how-to-book {
-            font-size: 0.8rem;
+            width: 100%;
+            text-align: center;
             white-space: normal;
-            color: var(--cpu-primary) !important;
-        }
-
-        .navbar .how-to-book i {
-            color: var(--cpu-primary) !important;
         }
 
         .main-navbar .btn-book-now {
-            padding: 8px 20px;
-            font-size: 0.9rem;
-            white-space: nowrap;
-            background-color: var(--cpu-secondary) !important;
-            color: var(--cpu-primary) !important;
-        }
-
-        /* Tooltip mobile adjustments */
-        .custom-tooltip .tooltip-inner {
-            max-width: 250px;
-            font-size: 0.75rem;
-            padding: 0.6rem;
-            background-color: #000000d2 !important;
-        }
-
-        /* Ensure collapsed menu has background */
-        .navbar-collapse {
-            background-color: var(--cpu-light-bg) !important;
+            width: 100%;
+            text-align: center;
         }
     }
 
     /* Extra small devices */
     @media (max-width: 480px) {
-        .top-header-bar {
-            background-color: var(--cpu-primary) !important;
-        }
-
         .top-header-bar .cpu-brand img {
-            height: 40px;
-            margin-right: 10px;
+            height: 38px;
         }
 
         .top-header-bar .cpu-brand .title {
-            font-size: 1rem;
-            color: var(--cpu-white) !important;
+            font-size: 0.95rem;
         }
 
         .top-header-bar .cpu-brand .subtitle {
-            font-size: 0.75rem;
-            color: var(--cpu-white) !important;
+            font-size: 0.65rem;
         }
 
-        .d-flex.align-items-center.ms-lg-3 {
-            flex-wrap: wrap;
-            background-color: var(--cpu-light-bg) !important;
-        }
-
-        .navbar .how-to-book {
-            width: 100%;
-            margin-bottom: 10px;
-            justify-content: center;
-            text-align: center;
-            color: var(--cpu-primary) !important;
-        }
-
-        .main-navbar .btn-book-now {
-            width: 100%;
-            text-align: center;
-        }
-
-        /* Ensure collapsed menu background on small devices */
-        .navbar-collapse {
-            background-color: var(--cpu-light-bg) !important;
+        .tooltip-inner {
+            max-width: 260px;
+            font-size: 0.7rem;
+            padding: 0.5rem 0.75rem;
         }
     }
 </style>
@@ -366,35 +454,27 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
-
                 <li class="nav-item">
                     <a class="nav-link {{ Request::is('home') ? 'active' : '' }}" href="{{ url('home') }}">Home</a>
                 </li>
-
                 <li class="nav-item">
                     <a class="nav-link {{ Request::is('booking-catalog') ? 'active' : '' }}"
                         href="{{ url('booking-catalog') }}">Booking Catalog</a>
                 </li>
-
                 <li class="nav-item">
                     <a class="nav-link {{ Request::is('events-calendar') ? 'active' : '' }}"
                         href="{{ url('events-calendar') }}">Events Calendar</a>
                 </li>
-
-
                 <li class="nav-item">
                     <a class="nav-link {{ Request::is('your-bookings') ? 'active' : '' }}"
                         href="{{ url('your-bookings') }}">Your Bookings</a>
                 </li>
-
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle {{ Request::is('about-facilities', 'about-equipment', 'about-services') ? 'active' : '' }}"
                         href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         About Services
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item {{ Request::is('inquiries') ? 'active' : '' }}"
-                                href="{{ url('inquiries') }}">Booking Guidelines</a></li>
                         <li><a class="dropdown-item {{ Request::is('about-facilities') ? 'active' : '' }}"
                                 href="{{ url('about-facilities') }}">About Facilities</a></li>
                         <li><a class="dropdown-item {{ Request::is('about-equipment') ? 'active' : '' }}"
@@ -403,12 +483,10 @@
                                 href="{{ url('about-services') }}">Extra Services</a></li>
                     </ul>
                 </li>
-
                 <li class="nav-item">
                     <a class="nav-link {{ Request::is('policies') ? 'active' : '' }}" href="{{ url('policies') }}">Our
                         Policies</a>
                 </li>
-
                 <li class="nav-item">
                     <a class="nav-link {{ Request::is('user-feedback') ? 'active' : '' }}"
                         href="{{ url('user-feedback') }}">Rate Services</a>
@@ -422,15 +500,15 @@
 3. Fill in required booking data and check item availability for your timeslot.
 4. Read reservation policies before submitting.">
                     How to book?
-                    <i class="bi bi-question-circle ms-1" style="font-size: 0.9rem;"></i>
+                    <i class="bi bi-question-circle ms-1" style="font-size: 0.85rem;"></i>
                 </span>
 
-
-
-                <a href="{{ url('reservation-form') }}" class="btn btn-book-now">Book Now</a>
+                @if(Route::currentRouteName() === 'reservation.form' || Request::is('reservation-form'))
+                    <a href="{{ url('booking-catalog') }}" class="btn btn-book-now">Back to Catalog</a>
+                @else
+                    <a href="{{ url('reservation-form') }}" class="btn btn-book-now">Book Now</a>
+                @endif
             </div>
-
-
         </div>
     </div>
 </nav>
@@ -441,7 +519,6 @@
     tooltipTriggerList.map(function (el) {
         return new bootstrap.Tooltip(el, { container: 'body' });
     });
-
 
     // Initialize Bootstrap dropdowns
     document.addEventListener('DOMContentLoaded', function () {
