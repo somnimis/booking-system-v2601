@@ -917,6 +917,20 @@ ${
     }
 
     async addToForm(id, type, quantity) {
+        // Find the item name before making the API call
+        let itemName = "";
+        if (type === "equipment") {
+            const equipmentItem = this.allItems.find(
+                (item) => item.equipment_id === parseInt(id),
+            );
+            itemName = equipmentItem?.equipment_name || "Equipment";
+        } else {
+            const facilityItem = this.allItems.find(
+                (item) => item.facility_id === parseInt(id),
+            );
+            itemName = facilityItem?.facility_name || "Facility";
+        }
+
         const response = await this.fetchData("/api/requisition/add-item", {
             method: "POST",
             body: JSON.stringify({
@@ -929,12 +943,28 @@ ${
 
         if (!response?.success)
             throw new Error(response?.message || "Failed to add item");
-        this.showToast(`${type} added to form`, "success");
+
+        // Use the actual item name in the toast
+        this.showToast(`${itemName} added to form`, "success");
         if (this.config.onItemAdded)
             this.config.onItemAdded(id, type, quantity);
     }
 
     async removeFromForm(id, type) {
+        // Find the item name before making the API call
+        let itemName = "";
+        if (type === "equipment") {
+            const equipmentItem = this.allItems.find(
+                (item) => item.equipment_id === parseInt(id),
+            );
+            itemName = equipmentItem?.equipment_name || "Equipment";
+        } else {
+            const facilityItem = this.allItems.find(
+                (item) => item.facility_id === parseInt(id),
+            );
+            itemName = facilityItem?.facility_name || "Facility";
+        }
+
         const response = await this.fetchData("/api/requisition/remove-item", {
             method: "POST",
             body: JSON.stringify({
@@ -946,7 +976,9 @@ ${
 
         if (!response?.success)
             throw new Error(response?.message || "Failed to remove item");
-        this.showToast(`${type} removed from form`);
+
+        // Use the actual item name in the toast
+        this.showToast(`${itemName} removed from form`);
         if (this.config.onItemRemoved) this.config.onItemRemoved(id, type);
     }
 

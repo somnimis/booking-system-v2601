@@ -992,7 +992,7 @@
 
 <body>
 
-@include('partials.navbar')
+  @include('partials.navbar')
 
   <div class="container main-content">
     <form id="reservationForm" method="POST">
@@ -1645,8 +1645,7 @@
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             Close
           </button>
-          <button type="button" class="btn btn-primary"
-            onclick="window.location.href='{{ asset("booking-catalog") }}'">
+          <button type="button" class="btn btn-primary" onclick="window.location.href='{{ asset("booking-catalog") }}'">
             View Catalog
           </button>
         </div>
@@ -1762,7 +1761,7 @@
   </div>
 
 
-@include('partials.footer')
+  @include('partials.footer')
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{{ asset('js/admin/toast.js') }}"></script>
   <script>
@@ -1772,12 +1771,6 @@
     const equipmentList = document.getElementById('equipmentList');
     const feeDisplay = document.getElementById('feeDisplay');
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-
-    // Initialize Bootstrap tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (el) {
-      return new bootstrap.Tooltip(el);
-    });
 
 
     // Ensure the form always starts at Step 1 when page loads
@@ -2520,121 +2513,153 @@
     };
 
     // ========== INITIALIZATION ==========
-    document.addEventListener('DOMContentLoaded', function () {
+   document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOMContentLoaded fired - Initializing page');
+    
+    // ========== 1. INITIALIZE ALL BOOTSTRAP COMPONENTS ==========
+    // Check if Bootstrap is loaded
+    if (typeof bootstrap !== 'undefined') {
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+        
+        // Initialize dropdowns
+        const dropdownElements = document.querySelectorAll('.dropdown-toggle');
+        dropdownElements.forEach(dropdown => {
+            new bootstrap.Dropdown(dropdown);
+        });
+        
+        console.log('Bootstrap components initialized');
+    } else {
+        console.warn('Bootstrap not loaded yet');
+    }
 
-      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-      tooltipTriggerList.map(el => new bootstrap.Tooltip(el))
+    // ========== 2. INITIALIZE STEP SYSTEM ==========
+    showStep(1);
 
-      // Initialize step system
-      showStep(1);
-
-      // ========== INITIALIZE LOCAL STORAGE AUTO-SAVE ==========
-      window.autoSave = new LocalStorageAutoSave({
+    // ========== 3. INITIALIZE LOCAL STORAGE AUTO-SAVE ==========
+    window.autoSave = new LocalStorageAutoSave({
         formSelector: '#reservationForm',
         formId: 'reservation_form',
         saveInterval: 2000,
         excludedFields: ['password', '_token', 'csrf_token']
-      });
-
-      // Clear localStorage on successful form submission
-      window.addEventListener('formSubmitted', () => {
-        if (window.autoSave) {
-          window.autoSave.clearProgress();
-        }
-      });
-
-      // Set up applicant type change handler
-      const applicantType = document.getElementById('applicantType');
-      const schoolIdInput = document.getElementById('school_id');
-      const schoolIdRequired = document.getElementById('schoolIdRequired');
-
-      applicantType.addEventListener('change', function () {
-        if (this.value === 'Internal') {
-          schoolIdInput.required = true;
-          schoolIdInput.disabled = false;
-          schoolIdRequired.style.display = '';
-          schoolIdInput.placeholder = 'School ID';
-        } else {
-          schoolIdInput.required = false;
-          schoolIdInput.disabled = true;
-          schoolIdRequired.style.display = 'none';
-          schoolIdInput.value = '';
-          schoolIdInput.placeholder = 'School ID';
-        }
-      });
-
-      // Initialize applicant type state
-      if (applicantType.value === 'Internal') {
-        schoolIdInput.required = true;
-        schoolIdInput.disabled = false;
-        schoolIdRequired.style.display = '';
-      } else {
-        schoolIdInput.required = false;
-        schoolIdInput.disabled = true;
-        schoolIdRequired.style.display = 'none';
-        schoolIdInput.value = '';
-      }
-
-      // Set up clear selection button
-      document.getElementById('clearSelectionBtn').addEventListener('click', function (e) {
-        e.preventDefault();
-        document.getElementById('startDateField').value = '';
-        document.getElementById('endDateField').value = '';
-        document.getElementById('startTimeField').selectedIndex = 0;
-        document.getElementById('endTimeField').selectedIndex = 0;
-        document.getElementById('availabilityResult').textContent = '';
-        document.getElementById('availabilityResult').style.color = '';
-
-        if (typeof calculateAndDisplayFees === 'function') {
-          calculateAndDisplayFees();
-        }
-
-        showToast('Booking schedule cleared successfully', 'success');
-      });
-
-      // Prevent non-numeric input in contact number field
-      const contactNumberField = document.getElementById('contactNumberField');
-      contactNumberField.addEventListener('input', function (e) {
-        this.value = this.value.replace(/\D/g, '');
-      });
-
-      // Initialize dropdowns
-      const dropdownElements = document.querySelectorAll('.dropdown-toggle');
-      dropdownElements.forEach(dropdown => {
-        new bootstrap.Dropdown(dropdown);
-      });
-
-      console.log('Form validation initialized successfully');
-
-
-      // Add this to initialize form items
-      initForm();
-
-      const startTimeSelect = document.getElementById('startTimeField');
-      if (startTimeSelect) {
-        startTimeSelect.addEventListener('change', updateEndTimeOptions);
-        // Initial call
-        setTimeout(updateEndTimeOptions, 100);
-      }
-
-
-      // Set up schedule field change listeners for fee calculation
-      const scheduleFields = [
-        'startDateField', 'endDateField', 'startTimeField', 'endTimeField'
-      ];
-      scheduleFields.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field) {
-          field.addEventListener('change', function () {
-            calculateAndDisplayFees();
-          });
-        }
-      });
-
-
-
     });
 
+    // ========== 4. SET UP EVENT LISTENERS ==========
+    // Clear localStorage on successful form submission
+    window.addEventListener('formSubmitted', () => {
+        if (window.autoSave) {
+            window.autoSave.clearProgress();
+        }
+    });
+
+    // ========== 5. APPLICANT TYPE CHANGE HANDLER ==========
+    const applicantType = document.getElementById('applicantType');
+    const schoolIdInput = document.getElementById('school_id');
+    const schoolIdRequired = document.getElementById('schoolIdRequired');
+
+    if (applicantType) {
+        applicantType.addEventListener('change', function () {
+            if (this.value === 'Internal') {
+                schoolIdInput.required = true;
+                schoolIdInput.disabled = false;
+                if (schoolIdRequired) schoolIdRequired.style.display = '';
+                schoolIdInput.placeholder = 'School ID';
+            } else {
+                schoolIdInput.required = false;
+                schoolIdInput.disabled = true;
+                if (schoolIdRequired) schoolIdRequired.style.display = 'none';
+                schoolIdInput.value = '';
+                schoolIdInput.placeholder = 'School ID';
+            }
+        });
+
+        // Initialize applicant type state
+        if (applicantType.value === 'Internal') {
+            schoolIdInput.required = true;
+            schoolIdInput.disabled = false;
+            if (schoolIdRequired) schoolIdRequired.style.display = '';
+        } else {
+            schoolIdInput.required = false;
+            schoolIdInput.disabled = true;
+            if (schoolIdRequired) schoolIdRequired.style.display = 'none';
+            schoolIdInput.value = '';
+        }
+    }
+
+    // ========== 6. CLEAR SELECTION BUTTON ==========
+    const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+    if (clearSelectionBtn) {
+        clearSelectionBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const startDateField = document.getElementById('startDateField');
+            const endDateField = document.getElementById('endDateField');
+            const startTimeField = document.getElementById('startTimeField');
+            const endTimeField = document.getElementById('endTimeField');
+            const availabilityResult = document.getElementById('availabilityResult');
+            
+            if (startDateField) startDateField.value = '';
+            if (endDateField) endDateField.value = '';
+            if (startTimeField) startTimeField.selectedIndex = 0;
+            if (endTimeField) endTimeField.selectedIndex = 0;
+            if (availabilityResult) {
+                availabilityResult.textContent = '';
+                availabilityResult.style.color = '';
+            }
+
+            if (typeof calculateAndDisplayFees === 'function') {
+                calculateAndDisplayFees();
+            }
+
+            if (typeof showToast === 'function') {
+                showToast('Booking schedule cleared successfully', 'success');
+            }
+        });
+    }
+
+    // ========== 7. CONTACT NUMBER VALIDATION ==========
+    const contactNumberField = document.getElementById('contactNumberField');
+    if (contactNumberField) {
+        contactNumberField.addEventListener('input', function (e) {
+            this.value = this.value.replace(/\D/g, '');
+        });
+    }
+
+    // ========== 8. TIME SELECTOR HANDLERS ==========
+    const startTimeSelect = document.getElementById('startTimeField');
+    if (startTimeSelect) {
+        startTimeSelect.addEventListener('change', updateEndTimeOptions);
+        setTimeout(updateEndTimeOptions, 100);
+    }
+
+    // ========== 9. SCHEDULE FIELD CHANGE LISTENERS ==========
+    const scheduleFields = [
+        'startDateField', 'endDateField', 'startTimeField', 'endTimeField'
+    ];
+    scheduleFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('change', function () {
+                if (typeof calculateAndDisplayFees === 'function') {
+                    calculateAndDisplayFees();
+                }
+            });
+        }
+    });
+
+    // ========== 10. INITIALIZE FORM ITEMS (MOST IMPORTANT) ==========
+    // Small delay to ensure everything is ready
+    setTimeout(() => {
+        console.log('Calling initForm...');
+        if (typeof initForm === 'function') {
+            initForm();
+        } else {
+            console.error('initForm function not defined');
+        }
+    }, 100);
+
+    console.log('DOMContentLoaded initialization complete');
+});
     // ========== AVAILABILITY CHECK ==========
     window.checkAvailability = async function () {
       const checkBtn = document.getElementById('checkAvailabilityBtn');
