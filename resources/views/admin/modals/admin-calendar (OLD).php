@@ -1736,7 +1736,7 @@
 
 @section('scripts')
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <script defer src="{{ asset('js/public/calendar.js') }}"></script>
+    <script defer src="{{ asset('js/public/availability-calendar-v1.js') }}"></script>
 
     <script>
         let adminToken = localStorage.getItem('adminToken');
@@ -2554,7 +2554,7 @@
                     console.log('Event clicked:', eventType, eventData);
 
                     if (eventType === 'calendar_event') {
-                        // Use the calendar.js method to show calendar events
+                        // Use the availability-calendar-v1.js method to show calendar events
                         this.showCalendarEventModal(eventData);
                     } else {
                         // Use the original method for requisition events

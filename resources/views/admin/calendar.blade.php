@@ -1205,7 +1205,7 @@
 @endsection
 
 @section('scripts')
-  <script defer src="{{ asset('js/public/calendar.js') }}"></script>
+  <script defer src="{{ asset('js/public/availability-calendar-v1.js') }}"></script>
 
   <script>
     let adminToken = localStorage.getItem('adminToken');

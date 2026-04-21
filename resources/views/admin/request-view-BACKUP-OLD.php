@@ -3480,7 +3480,7 @@ function initializeCalendar() {
         expandRows: true,
         events: [],
         
-        // NEW: Time formatting settings from calendar.js
+        // NEW: Time formatting settings from availability-calendar-v1.js
         eventTimeFormat: {
             hour: 'numeric',
             minute: '2-digit',
@@ -3555,7 +3555,7 @@ function initializeCalendar() {
             return { domNodes: arrayOfDomNodes };
         },
         
-        // Views configuration from calendar.js
+        // Views configuration from availability-calendar-v1.js
         views: {
             dayGridMonth: {
                 dayHeaderFormat: { weekday: "short" },
