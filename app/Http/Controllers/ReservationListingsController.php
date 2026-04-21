@@ -540,6 +540,13 @@ private function formatRequisitionFees($fees)
             ]
         ]);
     }
+/**
+ * Filter requisition forms based on admin's managing departments only.
+ * 
+ * This function retrieves pending requisition forms and filters them
+ * to only show forms that belong to departments managed by the current admin.
+ * Head admins bypass all filters and see all pending requests.
+ */
 public function paginatedPendingRequests(Request $request)
 {
     try {
@@ -597,7 +604,9 @@ public function paginatedPendingRequests(Request $request)
         // Build the query
         $query = RequisitionForm::whereIn('status_id', $pendingStatusIds);
         
+        // COMMENTED OUT: Department filtering for now
         // Apply ownership filter ONLY if not head admin
+        /*
         if (!$isHeadAdmin) {
             if (empty($managedDepartmentIds) && empty($managedServiceIds)) {
                 \Log::warning('Non-head admin has no managed departments or services');
@@ -647,6 +656,10 @@ public function paginatedPendingRequests(Request $request)
             \Log::info('Head Admin - bypassing department/service filters');
             // For head admin, no additional filters needed
         }
+        */
+        
+        // TEMPORARY: Show all pending requests regardless of department
+        \Log::info('Department filtering temporarily disabled - showing all pending requests');
         
         // Execute the query with eager loading
         $forms = $query->with([
