@@ -4,12 +4,13 @@
 
 @section('content')
     <style>
-label.required::after {
-  content: " *";
-  color: red;
-  font-weight: bold;
-  margin-left: 4px; /* ensures spacing is always visible */
-}
+        label.required::after {
+            content: " *";
+            color: red;
+            font-weight: bold;
+            margin-left: 4px;
+            /* ensures spacing is always visible */
+        }
 
 
         /* Toast notification styles */
@@ -145,333 +146,343 @@ label.required::after {
         }
     </style>
     <!-- Main Content -->
-    <main>
-        <!-- Edit Facility Page -->
+    <main id="main">
+        <div class="container-fluid px-4">
+            <!-- Edit Facility Page -->
 
-        <div class="card-body">
-            <form id="addFacilityForm">
-                <input type="hidden" id="facilityId" value="{{ request()->get('id') }}">
+            <div class="card-body">
+                <form id="addFacilityForm">
+                    <input type="hidden" id="facilityId" value="{{ request()->get('id') }}">
 
-                <!-- Overall Row Container -->
-                <div class="row mb-4 align-items-stretch">
+                    <!-- Overall Row Container -->
+                    <div class="row mb-4 align-items-stretch">
 
-                    <!-- Row 1: Photos and Basic Facility Details -->
-                    <div class="row mb-4">
-                        <!-- Facility Details Card (now containing photos section) -->
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center"
-                                    style="height: 56px;">
-                                    <h5 class="fw-bold mb-0">Facility Details</h5>
-                                </div>
-                                <div class="card-body">
-                                    <!-- Photos and Basic Information Side by Side -->
-                                    <div class="row">
-                                        <!-- Photos Section - Left Column -->
-                                        <div class="col-md-6">
-                                            <div class="photo-section">
-                                                <div class="dropzone border p-4 text-center" id="facilityPhotosDropzone"
-                                                    style="cursor: pointer;">
-                                                    <i class="bi bi-images fs-1 text-muted"></i>
-                                                    <p class="mt-2">Drag & drop facility photos here or click to browse</p>
-                                                    <input type="file" id="facilityPhotos" class="d-none" multiple
-                                                        accept="image/*">
-                                                </div>
-                                                <small class="text-muted mt-2 d-block">
-                                                    Upload at least one photo of the facility (max 5 photos)
-                                                </small>
-                                                <div id="photosPreview" class="d-flex flex-wrap gap-2 mt-3"></div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Basic Information Section - Right Column -->
-
-                                        <div class="col-md-6">
-                                            <div class="details-section">
-                                                <!-- Facility Information Header -->
-                                                <div class="row mb-3">
-                                                    <div class="col-12 d-flex align-items-center">
-                                                        <div class="flex-grow-1 border-top"></div>
-                                                        <h6 class="text-center mx-3 fw-bold text-primary mb-0">Main
-                                                            Information</h6>
-                                                        <div class="flex-grow-1 border-top"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="row mb-3">
-                                                    <div class="col-md-6">
-                                                        <label for="facilityName"
-                                                            class="form-label fw-bold d-flex align-items-center">
-                                                            Facility Name
-                                                        </label>
-                                                        <input type="text" class="form-control" required
-                                                            id="facilityName" value="" placeholder="Facility Name">
-                                                    </div>
-
-                                                    <div class="col-md-6">
-                                                        <label for="buildingCode"
-                                                            class="form-label fw-bold d-flex align-items-center">
-                                                            Facility Code
-                                                        </label>
-                                                        <input type="text" class="form-control"
-                                                            id="buildingCode" value="" placeholder="Facility Code">
-                                                    </div>
-                                                </div>
-
-                                                <div class="row mb-3">
-                                                    <div class="col-12 position-relative">
-                                                        <label for="description"
-                                                            class="form-label fw-bold d-flex align-items-center">
-                                                            Description
-                                                        </label>
-                                                        <textarea class="form-control" id="description"
-                                                            rows="3"
-                                                            placeholder="Write a description..."></textarea>
-                                                        <small class="text-muted position-absolute bottom-0 end-0 me-4 mb-1"
-                                                            id="descriptionWordCount">0/250 characters</small>
-                                                    </div>
-                                                </div>
-
-                                                <div class="row mb-3">
-                                                   
-                                                                                                <!-- Rental Fee -->
+                        <!-- Row 1: Photos and Basic Facility Details -->
+                        <div class="row mb-4">
+                            <!-- Facility Details Card (now containing photos section) -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center"
+                                        style="height: 56px;">
+                                        <h5 class="fw-bold mb-0">Facility Details</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Photos and Basic Information Side by Side -->
+                                        <div class="row">
+                                            <!-- Photos Section - Left Column -->
                                             <div class="col-md-6">
-                                                <label for="rentalFee" class="form-label fw-bold d-flex align-items-center">
-                                                    Rental Fee (₱)
-                                                </label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">₱</span>
-                                                    <input type="number" class="form-control" id="rentalFee" min="0"
-                                                        step="0.01" required placeholder="0.00">
+                                                <div class="photo-section">
+                                                    <div class="dropzone border p-4 text-center" id="facilityPhotosDropzone"
+                                                        style="cursor: pointer;">
+                                                        <i class="bi bi-images fs-1 text-muted"></i>
+                                                        <p class="mt-2">Drag & drop facility photos here or click to browse
+                                                        </p>
+                                                        <input type="file" id="facilityPhotos" class="d-none" multiple
+                                                            accept="image/*">
+                                                    </div>
+                                                    <small class="text-muted mt-2 d-block">
+                                                        Upload at least one photo of the facility (max 5 photos)
+                                                    </small>
+                                                    <div id="photosPreview" class="d-flex flex-wrap gap-2 mt-3"></div>
                                                 </div>
                                             </div>
-                                             <!-- Rate Type -->
+
+                                            <!-- Basic Information Section - Right Column -->
+
                                             <div class="col-md-6">
-                                                <label for="rateType" class="form-label fw-bold d-flex align-items-center">
-                                                    Rate Type
-                                                </label>
-                                                <select class="form-select" id="rateType" required>
-                                                    <option value="Per Hour">Per Hour</option>
-                                                    <option value="Per Event">Per Event</option>
-                                                </select>
-                                            </div>
-
-                                                  
-
-                                                    <!-- Category and Subcategory row -->
-                                                    <div class="row mt-3 mb-3">
-                                                        <div class="col-md-6">
-                                                            <label for="category"
-                                                                class="form-label fw-bold d-flex align-items-center">
-                                                                Category
-                                                            </label>
-                                                            <select class="form-select" id="category" required>
-                                                                <option value="">Select Category</option>
-                                                                <!-- Categories populated dynamically -->
-                                                            </select>
+                                                <div class="details-section">
+                                                    <!-- Facility Information Header -->
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 d-flex align-items-center">
+                                                            <div class="flex-grow-1 border-top"></div>
+                                                            <h6 class="text-center mx-3 fw-bold text-primary mb-0">Main
+                                                                Information</h6>
+                                                            <div class="flex-grow-1 border-top"></div>
                                                         </div>
+                                                    </div>
+                                                    <div class="row mb-3">
                                                         <div class="col-md-6">
-                                                            <label for="subcategory"
+                                                            <label for="facilityName"
                                                                 class="form-label fw-bold d-flex align-items-center">
-                                                                Subcategory
+                                                                Facility Name
                                                             </label>
-                                                            <select class="form-select" id="subcategory" required>
-                                                                <option value="">Select Subcategory</option>
-                                                                <!-- Subcategories populated dynamically -->
-                                                            </select>
+                                                            <input type="text" class="form-control" required
+                                                                id="facilityName" value="" placeholder="Facility Name">
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <label for="buildingCode"
+                                                                class="form-label fw-bold d-flex align-items-center">
+                                                                Facility Code
+                                                            </label>
+                                                            <input type="text" class="form-control" id="buildingCode"
+                                                                value="" placeholder="Facility Code">
                                                         </div>
                                                     </div>
 
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 position-relative">
+                                                            <label for="description"
+                                                                class="form-label fw-bold d-flex align-items-center">
+                                                                Description
+                                                            </label>
+                                                            <textarea class="form-control" id="description" rows="3"
+                                                                placeholder="Write a description..."></textarea>
+                                                            <small
+                                                                class="text-muted position-absolute bottom-0 end-0 me-4 mb-1"
+                                                                id="descriptionWordCount">0/250 characters</small>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row mb-3">
+
+                                                        <!-- Rental Fee -->
+                                                        <div class="col-md-6">
+                                                            <label for="rentalFee"
+                                                                class="form-label fw-bold d-flex align-items-center">
+                                                                Rental Fee (₱)
+                                                            </label>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">₱</span>
+                                                                <input type="number" class="form-control" id="rentalFee"
+                                                                    min="0" step="0.01" required placeholder="0.00">
+                                                            </div>
+                                                        </div>
+                                                        <!-- Rate Type -->
+                                                        <div class="col-md-6">
+                                                            <label for="rateType"
+                                                                class="form-label fw-bold d-flex align-items-center">
+                                                                Rate Type
+                                                            </label>
+                                                            <select class="form-select" id="rateType" required>
+                                                                <option value="Per Hour">Per Hour</option>
+                                                                <option value="Per Event">Per Event</option>
+                                                            </select>
+                                                        </div>
+
+
+
+                                                        <!-- Category and Subcategory row -->
+                                                        <div class="row mt-3 mb-3">
+                                                            <div class="col-md-6">
+                                                                <label for="category"
+                                                                    class="form-label fw-bold d-flex align-items-center">
+                                                                    Category
+                                                                </label>
+                                                                <select class="form-select" id="category" required>
+                                                                    <option value="">Select Category</option>
+                                                                    <!-- Categories populated dynamically -->
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="subcategory"
+                                                                    class="form-label fw-bold d-flex align-items-center">
+                                                                    Subcategory
+                                                                </label>
+                                                                <select class="form-select" id="subcategory" required>
+                                                                    <option value="">Select Subcategory</option>
+                                                                    <!-- Subcategories populated dynamically -->
+                                                                </select>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Divider: More Details -->
-                                    <div class="row my-1">
-                                        <div class="col-12 d-flex align-items-center">
-                                            <div class="flex-grow-1 border-top"></div>
-                                            <h6 class="text-center text-primary mx-3 mb-0 fw-bold">Additional Details</h6>
-                                            <div class="flex-grow-1 border-top"></div>
+                                        <!-- Divider: More Details -->
+                                        <div class="row my-1">
+                                            <div class="col-12 d-flex align-items-center">
+                                                <div class="flex-grow-1 border-top"></div>
+                                                <h6 class="text-center text-primary mx-3 mb-0 fw-bold">Additional Details
+                                                </h6>
+                                                <div class="flex-grow-1 border-top"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- New Row: Category, Subcategory, and Capacity Section Below -->
+                                        <div class="row my-3">
+
+                                            <!-- Capacity & Location Section -->
+                                            <div class="row mb-3">
+                                                <div class="col-md-3">
+                                                    <label for="capacity"
+                                                        class="form-label fw-bold d-flex align-items-center">
+                                                        Capacity
+                                                    </label>
+                                                    <input type="number" class="form-control" id="capacity" min="1"
+                                                        value="1" required>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <label for="floorLevel"
+                                                        class="form-label fw-bold d-flex align-items-center">
+                                                        Floor Level
+                                                    </label>
+                                                    <input type="number" class="form-control" id="floorLevel" min="1"
+                                                        placeholder="Floor level">
+                                                </div>
+                                                <!-- Building Details Section -->
+                                                <div class="col-md-3">
+                                                    <label for="totalLevels"
+                                                        class="form-label fw-bold d-flex align-items-center">
+                                                        Total Levels
+                                                    </label>
+                                                    <input type="number" class="form-control" id="totalLevels" min="1"
+                                                        placeholder="Total Levels">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label for="totalRooms"
+                                                        class="form-label fw-bold d-flex align-items-center">
+                                                        Total Rooms
+                                                    </label>
+                                                    <input type="number" class="form-control" id="totalRooms" min="1"
+                                                        placeholder="Total Rooms">
+                                                </div>
+                                            </div>
+
+                                            <!-- Pricing Section -->
+                                            <div class="row mb-3">
+                                                <!-- Location Note: wider (8 of 12 columns) -->
+                                                <div class="col-md-9">
+                                                    <label for="locationNote"
+                                                        class="form-label fw-bold d-flex align-items-center">
+                                                        Location Note
+                                                    </label>
+                                                    <input type="text" class="form-control" id="locationNote" value=""
+                                                        placeholder="Write directions to facility...">
+                                                </div>
+                                                <!-- Location Type: narrower (4 of 12 columns) -->
+                                                <div class="col-md-3">
+                                                    <label for="locationType"
+                                                        class="form-label fw-bold d-flex align-items-center">
+                                                        Location Type
+                                                    </label>
+                                                    <select class="form-select" id="locationType" required>
+                                                        <option value="Indoors">Indoors</option>
+                                                        <option value="Outdoors">Outdoors</option>
+                                                    </select>
+                                                </div>
+
+
+
+                                            </div>
+                                            <div class="row mb-3">
+                                                <!-- Department & Availability Section -->
+                                                <div class="col-md-6">
+                                                    <label for="department"
+                                                        class="form-label fw-bold d-flex align-items-center">
+                                                        Owning Department
+                                                    </label>
+                                                    <select class="form-select" id="department" required>
+                                                        <!-- Departments will be populated dynamically -->
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label for="availabilityStatus"
+                                                        class="form-label fw-bold d-flex align-items-center">
+                                                        Availability Status
+                                                    </label>
+                                                    <select class="form-select" id="availabilityStatus" required>
+                                                        <!-- Statuses will be populated dynamically -->
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <!-- Form Actions -->
+                                            <div class="d-flex justify-content-end mt-3 gap-2">
+                                                <button type="button" class="btn btn-secondary"
+                                                    id="cancelBtn">Discard</button>
+                                                <button type="submit" class="btn btn-primary">Add New Facility</button>
+                                            </div>
+
                                         </div>
                                     </div>
 
-                                    <!-- New Row: Category, Subcategory, and Capacity Section Below -->
-                                    <div class="row my-3">
-
-                                        <!-- Capacity & Location Section -->
-                                        <div class="row mb-3">
-                                            <div class="col-md-3">
-                                                <label for="capacity" class="form-label fw-bold d-flex align-items-center">
-                                                    Capacity
-                                                </label>
-                                                <input type="number" class="form-control" id="capacity" min="1" value="1"
-                                                    required>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <label for="floorLevel"
-                                                    class="form-label fw-bold d-flex align-items-center">
-                                                    Floor Level
-                                                </label>
-                                                <input type="number" class="form-control" id="floorLevel" min="1"
-                                                    placeholder="Floor level">
-                                            </div>
-                                                                                    <!-- Building Details Section -->
-                                            <div class="col-md-3">
-                                                <label for="totalLevels"
-                                                    class="form-label fw-bold d-flex align-items-center">
-                                                    Total Levels
-                                                </label>
-                                                <input type="number" class="form-control" id="totalLevels" min="1"
-                                                    placeholder="Total Levels">
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label for="totalRooms"
-                                                    class="form-label fw-bold d-flex align-items-center">
-                                                    Total Rooms
-                                                </label>
-                                                <input type="number" class="form-control" id="totalRooms" min="1"
-                                                    placeholder="Total Rooms">
-                                            </div>
-                                        </div>
-
-                                        <!-- Pricing Section -->
-                                        <div class="row mb-3">
-                                             <!-- Location Note: wider (8 of 12 columns) -->
-                                                    <div class="col-md-9">
-                                                        <label for="locationNote"
-                                                            class="form-label fw-bold d-flex align-items-center">
-                                                            Location Note
-                                                        </label>
-                                                        <input type="text" class="form-control"
-                                                            id="locationNote" value="" placeholder="Write directions to facility...">
-                                                    </div>
-                                                      <!-- Location Type: narrower (4 of 12 columns) -->
-                                                    <div class="col-md-3">
-                                                        <label for="locationType"
-                                                            class="form-label fw-bold d-flex align-items-center">
-                                                            Location Type
-                                                        </label>
-                                                        <select class="form-select" id="locationType" required>
-                                                            <option value="Indoors">Indoors</option>
-                                                            <option value="Outdoors">Outdoors</option>
-                                                        </select>
-                                                    </div>
-
-
-                                           
-                                        </div>
-                                        <div class="row mb-3">
-                                            <!-- Department & Availability Section -->
-                                            <div class="col-md-6">
-                                                <label for="department"
-                                                    class="form-label fw-bold d-flex align-items-center">
-                                                    Owning Department
-                                                </label>
-                                                <select class="form-select" id="department" required>
-                                                    <!-- Departments will be populated dynamically -->
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-6">
-                                                <label for="availabilityStatus"
-                                                    class="form-label fw-bold d-flex align-items-center">
-                                                    Availability Status
-                                                </label>
-                                                <select class="form-select" id="availabilityStatus" required>
-                                                    <!-- Statuses will be populated dynamically -->
-                                                </select>
-                                            </div>
-                                        </div>
-                                       <!-- Form Actions -->
-<div class="d-flex justify-content-end mt-3 gap-2">
-    <button type="button" class="btn btn-secondary" id="cancelBtn">Discard</button>
-    <button type="submit" class="btn btn-primary">Add New Facility</button> 
-</div>
-
-                                    </div>
                                 </div>
-                                
+
                             </div>
-                             
+
                         </div>
-                        
+
+
                     </div>
-                    
 
-                </div>
-
-                <!-- Image Deletion Confirmation Modal -->
-                <div class="modal fade" id="deleteImageModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Confirm Image Deletion</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                Are you sure you want to delete this photo? This action cannot be undone.
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger" id="confirmDeleteImageBtn">Delete
-                                    Photo</button>
+                    <!-- Image Deletion Confirmation Modal -->
+                    <div class="modal fade" id="deleteImageModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Confirm Image Deletion</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Are you sure you want to delete this photo? This action cannot be undone.
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-danger" id="confirmDeleteImageBtn">Delete
+                                        Photo</button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </form>
-            
-        </div>
+                </form>
 
-        <!-- Event Modal -->
-        <div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Event Details</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Event Modal -->
+            <div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Event Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <strong>Title:</strong> <span id="eventTitle"></span>
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Date:</strong> <span id="eventDate"></span>
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Time:</strong> <span id="eventTime">10:00 AM - 12:00 PM</span>
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Description:</strong> <span id="eventDescription"></span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <strong>Title:</strong> <span id="eventTitle"></span>
-                            </li>
-                            <li class="list-group-item">
-                                <strong>Date:</strong> <span id="eventDate"></span>
-                            </li>
-                            <li class="list-group-item">
-                                <strong>Time:</strong> <span id="eventTime">10:00 AM - 12:00 PM</span>
-                            </li>
-                            <li class="list-group-item">
-                                <strong>Description:</strong> <span id="eventDescription"></span>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+            <!-- Reset Confirmation Modal -->
+            <div class="modal fade" id="cancelConfirmationModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Discard Changes</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to cancel? Unsaved changes will be lost.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmCancelBtn">Confirm</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Reset Confirmation Modal -->
-        <div class="modal fade" id="cancelConfirmationModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Discard Changes</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        Are you sure you want to cancel? Unsaved changes will be lost.
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="confirmCancelBtn">Confirm</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    </main>
 @endsection
 
 @section('scripts')
@@ -484,7 +495,7 @@ label.required::after {
             window.newFacilityId = null; // Will store the ID after facility is created
             window.facilityCategories = []; // Store categories with subcategories
             window.updatedFields = {}; // Track field changes for visual updates
-            
+
             // 2. Authentication check
             const token = localStorage.getItem('adminToken');
             if (!token) {
@@ -517,18 +528,18 @@ label.required::after {
                 toast.style.borderRadius = '0.3rem';
 
                 toast.innerHTML = `
-                    <div class="d-flex align-items-center px-3 py-1"> 
-                        <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                        <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                    <div class="loading-bar" style="
-                        height: 3px;
-                        background: rgba(255,255,255,0.7);
-                        width: 100%;
-                        transition: width ${duration}ms linear;
-                    "></div>
-                `;
+                        <div class="d-flex align-items-center px-3 py-1"> 
+                            <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                            <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
+                            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="loading-bar" style="
+                            height: 3px;
+                            background: rgba(255,255,255,0.7);
+                            width: 100%;
+                            transition: width ${duration}ms linear;
+                        "></div>
+                    `;
 
                 document.body.appendChild(toast);
 
@@ -671,7 +682,7 @@ label.required::after {
                 }
 
                 // Update the uploadedPhotos array (UI only)
-                window.uploadedPhotos = window.uploadedPhotos.filter(photo => 
+                window.uploadedPhotos = window.uploadedPhotos.filter(photo =>
                     photo.id !== currentDeletePhotoId && photo.publicId !== currentDeletePublicId
                 );
 
@@ -967,138 +978,138 @@ label.required::after {
                 });
             }
 
-// 21. Form submission handler - processes all pending changes when "Add Facility" is clicked
-document.getElementById('addFacilityForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
+            // 21. Form submission handler - processes all pending changes when "Add Facility" is clicked
+            document.getElementById('addFacilityForm').addEventListener('submit', async function (e) {
+                e.preventDefault();
 
-    const token = localStorage.getItem('adminToken');
-    const adminId = localStorage.getItem('adminId');
+                const token = localStorage.getItem('adminToken');
+                const adminId = localStorage.getItem('adminId');
 
-    try {
-        showToast('Creating facility...', 'info');
-
-        // Validate required fields (locationNote removed)
-        const requiredFields = [
-            'facilityName', 'capacity', 'category', 
-            'department', 'locationType', 'rentalFee', 'rateType', 'availabilityStatus'
-        ];
-        
-        for (const fieldId of requiredFields) {
-            const field = document.getElementById(fieldId);
-            if (!field.value.trim()) {
-                showToast(`Please fill in the ${fieldId.replace(/([A-Z])/g, ' $1').toLowerCase()} field`, 'error');
-                field.focus();
-                return;
-            }
-        }
-
-        // Validate field lengths
-        const facilityName = document.getElementById('facilityName').value;
-        const description = document.getElementById('description').value;
-        const buildingCode = document.getElementById('buildingCode').value;
-
-        if (facilityName.length > 50) {
-            showToast('Facility name must be 50 characters or less', 'error');
-            return;
-        }
-
-        if (description.length > 250) {
-            showToast('Description must be 250 characters or less', 'error');
-            return;
-        }
-
-        if (buildingCode && buildingCode.length > 20) {
-            showToast('Building code must be 20 characters or less', 'error');
-            return;
-        }
-
-        // 1. First create the facility record
-        const formData = {
-            facility_name: facilityName,
-            facility_code: buildingCode || null,
-            location_type: document.getElementById('locationType').value,
-            category_id: document.getElementById('category').value,
-            subcategory_id: document.getElementById('subcategory').value || null,
-            capacity: parseInt(document.getElementById('capacity').value),
-            floor_level: document.getElementById('floorLevel').value ? parseInt(document.getElementById('floorLevel').value) : null,
-            base_fee: parseFloat(document.getElementById('rentalFee').value),
-            rate_type: document.getElementById('rateType').value,
-            total_levels: document.getElementById('totalLevels').value ? parseInt(document.getElementById('totalLevels').value) : null,
-            department_id: document.getElementById('department').value,
-            status_id: document.getElementById('availabilityStatus').value,
-            created_by: adminId,
-            // Add default values for description and location_note
-            description: document.getElementById('description').value.trim() || 'No description provided',
-            location_note: document.getElementById('locationNote').value.trim() || 'No location details provided'
-        };
-
-        const facilityResponse = await fetch(`/api/admin/add-facility`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(formData)
-        });
-
-        if (!facilityResponse.ok) {
-            const errorData = await facilityResponse.json();
-            console.error('Facility creation failed:', {
-                status: facilityResponse.status,
-                error: errorData,
-                formData: { ...formData, created_by: 'REDACTED' }
-            });
-            throw new Error(errorData.message || `Failed to create facility: ${facilityResponse.status}`);
-        }
-
-        const facilityResult = await facilityResponse.json();
-        window.newFacilityId = facilityResult.data?.facility_id || facilityResult.facility_id;
-        
-        if (!window.newFacilityId) {
-            console.error('No facility ID returned from API:', {
-                response: facilityResult,
-                adminId: adminId
-            });
-            throw new Error('Failed to get facility ID from server response');
-        }
-
-        // 2. Process facility image uploads with the new facility ID
-        if (window.pendingImageUploads.length > 0) {
-            for (const upload of window.pendingImageUploads) {
                 try {
-                    const cloudinaryData = await uploadToCloudinary(upload.file, window.newFacilityId);
-                    await saveImageToDatabase(window.newFacilityId, cloudinaryData.secure_url, cloudinaryData.public_id);
+                    showToast('Creating facility...', 'info');
+
+                    // Validate required fields (locationNote removed)
+                    const requiredFields = [
+                        'facilityName', 'capacity', 'category',
+                        'department', 'locationType', 'rentalFee', 'rateType', 'availabilityStatus'
+                    ];
+
+                    for (const fieldId of requiredFields) {
+                        const field = document.getElementById(fieldId);
+                        if (!field.value.trim()) {
+                            showToast(`Please fill in the ${fieldId.replace(/([A-Z])/g, ' $1').toLowerCase()} field`, 'error');
+                            field.focus();
+                            return;
+                        }
+                    }
+
+                    // Validate field lengths
+                    const facilityName = document.getElementById('facilityName').value;
+                    const description = document.getElementById('description').value;
+                    const buildingCode = document.getElementById('buildingCode').value;
+
+                    if (facilityName.length > 50) {
+                        showToast('Facility name must be 50 characters or less', 'error');
+                        return;
+                    }
+
+                    if (description.length > 250) {
+                        showToast('Description must be 250 characters or less', 'error');
+                        return;
+                    }
+
+                    if (buildingCode && buildingCode.length > 20) {
+                        showToast('Building code must be 20 characters or less', 'error');
+                        return;
+                    }
+
+                    // 1. First create the facility record
+                    const formData = {
+                        facility_name: facilityName,
+                        facility_code: buildingCode || null,
+                        location_type: document.getElementById('locationType').value,
+                        category_id: document.getElementById('category').value,
+                        subcategory_id: document.getElementById('subcategory').value || null,
+                        capacity: parseInt(document.getElementById('capacity').value),
+                        floor_level: document.getElementById('floorLevel').value ? parseInt(document.getElementById('floorLevel').value) : null,
+                        base_fee: parseFloat(document.getElementById('rentalFee').value),
+                        rate_type: document.getElementById('rateType').value,
+                        total_levels: document.getElementById('totalLevels').value ? parseInt(document.getElementById('totalLevels').value) : null,
+                        department_id: document.getElementById('department').value,
+                        status_id: document.getElementById('availabilityStatus').value,
+                        created_by: adminId,
+                        // Add default values for description and location_note
+                        description: document.getElementById('description').value.trim() || 'No description provided',
+                        location_note: document.getElementById('locationNote').value.trim() || 'No location details provided'
+                    };
+
+                    const facilityResponse = await fetch(`/api/admin/add-facility`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!facilityResponse.ok) {
+                        const errorData = await facilityResponse.json();
+                        console.error('Facility creation failed:', {
+                            status: facilityResponse.status,
+                            error: errorData,
+                            formData: { ...formData, created_by: 'REDACTED' }
+                        });
+                        throw new Error(errorData.message || `Failed to create facility: ${facilityResponse.status}`);
+                    }
+
+                    const facilityResult = await facilityResponse.json();
+                    window.newFacilityId = facilityResult.data?.facility_id || facilityResult.facility_id;
+
+                    if (!window.newFacilityId) {
+                        console.error('No facility ID returned from API:', {
+                            response: facilityResult,
+                            adminId: adminId
+                        });
+                        throw new Error('Failed to get facility ID from server response');
+                    }
+
+                    // 2. Process facility image uploads with the new facility ID
+                    if (window.pendingImageUploads.length > 0) {
+                        for (const upload of window.pendingImageUploads) {
+                            try {
+                                const cloudinaryData = await uploadToCloudinary(upload.file, window.newFacilityId);
+                                await saveImageToDatabase(window.newFacilityId, cloudinaryData.secure_url, cloudinaryData.public_id);
+                            } catch (error) {
+                                console.error('Error uploading facility image:', {
+                                    facilityId: window.newFacilityId,
+                                    error: error.message,
+                                    adminId: adminId
+                                });
+                                showToast('Warning: Failed to upload some images', 'warning');
+                            }
+                        }
+                    }
+
+                    // Clear pending changes
+                    window.pendingImageUploads = [];
+                    window.pendingImageDeletions = [];
+                    window.updatedFields = {};
+
+                    showToast('Facility created successfully!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/admin/manage-facilities';
+                    }, 1500);
+
                 } catch (error) {
-                    console.error('Error uploading facility image:', {
-                        facilityId: window.newFacilityId,
+                    console.error('Error creating facility:', {
                         error: error.message,
+                        stack: error.stack,
                         adminId: adminId
                     });
-                    showToast('Warning: Failed to upload some images', 'warning');
+                    showToast('Failed to create facility: ' + error.message, 'error');
                 }
-            }
-        }
-
-        // Clear pending changes
-        window.pendingImageUploads = [];
-        window.pendingImageDeletions = [];
-        window.updatedFields = {};
-
-        showToast('Facility created successfully!', 'success');
-        setTimeout(() => {
-            window.location.href = '/admin/manage-facilities';
-        }, 1500);
-
-    } catch (error) {
-        console.error('Error creating facility:', {
-            error: error.message,
-            stack: error.stack,
-            adminId: adminId
-        });
-        showToast('Failed to create facility: ' + error.message, 'error');
-    }
-});
+            });
 
             // 22. Initialize the form
             initializeNewFacilityForm();

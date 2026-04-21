@@ -5,248 +5,492 @@
 @section('content')
   <link rel="stylesheet" href="{{ asset('css/public/global-styles.css') }}" />
   <style>
-    .catalog-dropdown .dropdown-menu {
-      min-width: 100%;
-      /* matches the button width */
-    }
-
-    .catalog-dropdown .dropdown-item {}
-
-    .catalog-dropdown .dropdown-item:hover,
-    .catalog-dropdown .dropdown-item:focus {
-      background: #e6e6e6;
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.15);
+      --cpu-gold: #e8b342;
+      --cpu-gold-hover: #f7c55f;
+      --cpu-blue: #003366;
+      --cpu-blue-hover: #004a94;
     }
 
     body {
-      background-color: rgba(0, 0, 0, 0.4);
-      background-image: url("{{ asset('assets/homepage.jpg') }}");
+      background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                  url("{{ asset('assets/homepage.jpg') }}");
       background-size: cover;
-      background-position: relative;
+      background-position: center;
       background-repeat: no-repeat;
       background-attachment: fixed;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: #fff;
     }
+    
 
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: -1;
+    .section-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
 
-    }
+.section-title-area {
+  margin-bottom: 0;
+}
 
+    /* Modern Hero Section */
     .hero-section {
-      min-height: 50vh;
+      min-height: 70vh;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
       align-items: center;
-      height: 70vh;
-      margin-bottom: 50px;
+      justify-content: center;
+      text-align: center;
       opacity: 0;
-      transform: translateY(40px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
+      transition: all 1s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .hero-section.visible {
       opacity: 1;
-      transform: translateY(0);
     }
 
-    .hero-section h2 {
-      font-size: 2rem;
+    .hero-section h1 {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
       margin-bottom: 1.5rem;
     }
 
-    .hero-section .btn {
-      padding: 0.75rem 2rem;
-      font-size: 1.1rem;
+    /* Glass Panels for Sections */
+    .catalog-section-container {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 30px;
+      padding: 3rem;
+      margin-bottom: 4rem;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.2);
     }
 
-    .catalog-section {
-      background: #144270ff;
-      margin-top: -100px;
-      border-top: solid 2px var(--cpu-secondary);
-      border-bottom: solid 2px var(--cpu-secondary);
-      border-radius: 0.5rem;
-      padding: 2rem;
-      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.28);
+    .section-title-area h2 {
+      font-weight: 700;
+      letter-spacing: -0.5px;
       position: relative;
-      z-index: 1;
-      margin-left: auto;
-      margin-right: auto;
-      width: 100%;
-      margin-bottom: 5%;
-      max-width: 1100px;
-      opacity: 0;
-      transform: translateY(40px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
+      display: inline-block;
+      color: white;
     }
 
-    .catalog-section.visible {
-      opacity: 1;
-      transform: translateY(0);
+    .section-title-area h2::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      width: 50px;
+      height: 4px;
+      background: var(--cpu-gold);
+      border-radius: 2px;
     }
 
-    .catalog-section h4 {
-      font-size: 1.8rem;
-      color: #fff;
-    }
-
-    .catalog-section p {
-      color: #dfdfdfff;
-      font-size: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .catalog-card {
-      background-color: #ffffffff;
-      text-align: center;
-      border-radius: 0.5rem;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+    /* Modern Search Inputs */
+    .search-wrapper .input-group {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      transition: box-shadow 0.2s ease;
-      padding-bottom: 1rem;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
     }
 
-    .catalog-card:hover {
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.86);
-      /* darker shadow, no lift */
+    .search-wrapper .input-group:focus-within {
+      border-color: var(--cpu-gold);
+      box-shadow: 0 5px 15px rgba(232, 179, 66, 0.3);
     }
 
-    .catalog-card img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      margin-bottom: 1rem !important;
-    }
-
-    .catalog-card h6 {
-      font-size: 1.25rem;
-      color: #003366;
-      margin-bottom: 0.5rem;
-    }
-
-    .catalog-card h6 a {
-      color: inherit;
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-
-    .catalog-card h6 a:hover {
-      color: #004a94;
-    }
-
-    .catalog-card p {
-      font-size: 0.9rem;
-      color: black;
-      flex-grow: 1;
-      margin-bottom: 0;
-      margin: 0 auto 0;
-      max-width: 85%;
-    }
-
-    /* Toast styling */
-    #storageConsentToast {
+    .search-wrapper input {
       border: none !important;
-      border-radius: 0 !important;
-      overflow: hidden !important;
-      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      padding: 12px 15px;
+      background: transparent;
+    }
+
+    .search-wrapper .input-group-text {
+      background: transparent;
+      border: none;
+      color: #6c757d;
+    }
+
+    /* Modernized Venue/Equipment Cards */
+    .venue-card {
+      background: #fff;
+      border: none;
+      border-radius: 20px;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      color: #333;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .venue-card:hover {
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+
+    .venue-card .card-img-top {
+      height: 220px;
+      object-fit: cover;
+      width: 100%;
+    }
+
+    .btn-view {
+      background: var(--cpu-blue);
+      color: white;
+      border-radius: 12px;
+      font-weight: 600;
+      padding: 0.8rem;
+      border: none;
+      transition: all 0.3s ease;
+    }
+
+    .btn-view:hover {
+      background: var(--cpu-blue-hover);
+      box-shadow: 0 8px 20px rgba(0, 51, 102, 0.3);
+      color: white;
+    }
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--cpu-gold), #f3c969);
+  color: #111;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0.6rem 1.4rem;
+  box-shadow: 0 6px 16px rgba(232, 179, 66, 0.25);
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-gold:hover {
+  background: linear-gradient(135deg, var(--cpu-gold-hover), #f7d47a);
+  box-shadow: 0 12px 28px rgba(232, 179, 66, 0.35);
+  color: #111;
+}
+
+.btn-gold:active {
+  box-shadow: 0 6px 14px rgba(232, 179, 66, 0.2);
+}
+
+.btn-gold:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(232, 179, 66, 0.25);
+}
+    /* Skeleton Loading Update */
+    .skeleton-card {
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .skeleton-image {
+      height: 220px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    .skeleton-content {
+      padding: 1.5rem;
+    }
+
+    .skeleton-title {
+      height: 24px;
+      width: 80%;
+      background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .skeleton-text {
+      height: 60px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .skeleton-badge {
+      height: 28px;
+      width: 100px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    .skeleton-button {
+      height: 48px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 12px;
+      margin-top: 16px;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0;
+      }
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    /* Custom Toast */
+    .toast {
+      backdrop-filter: blur(15px);
+      background: rgba(255, 255, 255, 0.95) !important;
+      border-radius: 15px !important;
     }
 
     .toast-header {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 0
+      border-radius: 15px 15px 0 0 !important;
     }
 
-    #acceptStorageBtn:hover {
-      border: 1px solid var(--cpu-secondary);
-      background-color: var(--cpu-primary-hover) !important;
-      transition: all 0.2s ease;
+    .location-badge {
+      background-color: #e9ecef;
+      color: var(--cpu-blue);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      max-width: 100%;
+      cursor: help;
     }
 
-    #acceptStorageBtn:active {
-      transform: scale(0.98);
+    .location-badge span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 150px;
     }
 
-    .toast-body ul {
-      padding-left: 0;
+    .capacity-badge {
+      background-color: #f8f9fa;
+      color: #6c757d;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
     }
 
-    .toast-body ul li i {
-      width: 18px;
+    .fee-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--cpu-gold);
     }
 
-    /* Ensure toast appears above navbar */
-    .toast-container {
-      z-index: 3000 !important;
+    .category-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background-color: rgba(0, 51, 102, 0.9);
+      color: white;
+      padding: 0.35rem 0.85rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      z-index: 1;
+    }
+
+    .results-info {
+      color: rgba(255,255,255,0.8);
+      font-size: 0.9rem;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 50px 0;
+    }
+
+    .no-results i {
+      font-size: 3rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .no-results h3 {
+      color: white;
+      margin-top: 1rem;
+    }
+
+    .no-results p {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .text-white-50 {
+      color: rgba(255, 255, 255, 0.7) !important;
     }
   </style>
 
-  <section class="hero-section text-white text-center">
-    <h2 class="fw-bold">Simplify the way you book university facilities,<br>equipment, and services — all in one
-      platform,<br>anytime, anywhere.</h2>
+<section class="hero-section">
+  <div class="container">
+    <div class="hero-glass-card col-lg-8 mx-auto">
+      <h2 class="fw-bold">
+        Simplify the way you book campus facilities, equipment, and services — all in one platform, anytime, anywhere.
+      </h2>
 
-    <div class="dropdown mt-3 catalog-dropdown">
-      <button class="btn btn-warning fw-bold dropdown-toggle" type="button" data-bs-toggle="dropdown"
-        aria-expanded="false">
-        Start Browsing
-      </button>
+      <br>
 
-      <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="booking-catalog">Booking Catalog</a></li>
-        <li><a class="dropdown-item" href="events-calendar">Events Calendar</a></li>
-      </ul>
-
-    </div>
-
-  </section>
-
-  <section class="catalog-section container text-center">
-    <h4 class="fw-bold mb-2">Explore Available Resources</h4>
-    <p class="mb-4">Browse available facilities, equipment, and services for your next event or activity.</p>
-    <div class="row g-3">
-      <div class="col-md-4 mb-3">
-        <div class="catalog-card">
-          <img src="{{ asset('assets/facilities-pic2.JPG') }}" class="img-fluid rounded mb-2" alt="Facilities">
-          <h6 class="fw-bold"><a href="about-facilities">Facilities</a></h6>
-          <p class="text-muted">Explore our venues to support every activity.</p>
-        </div>
-      </div>
-      <div class="col-md-4 mb-3">
-        <div class="catalog-card">
-          <img src="{{ asset('assets/equipment-pic.jpg') }}" class="img-fluid rounded mb-2" alt="Equipment">
-          <h6 class="fw-bold"><a href="about-equipment">Equipment</a></h6>
-          <p class="text-muted">Equip your activities with reliable resources.</p>
-        </div>
-      </div>
-      <div class="col-md-4 mb-3">
-        <div class="catalog-card">
-          <img
-            src="https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/https://images.ctfassets.net/wp1lcwdav1p1/5PbtVEidv28K3XNOywzVj3/fedb6ac03469ce4de8720bc0995df898/GettyImages-1620440886.jpg?w=1500&h=680&q=60&fit=fill&f=faces&fm=jpg&fl=progressive&auto=format%2Ccompress&dpr=1&w=1000"
-            class="img-fluid rounded mb-2" alt="Extra Services">
-          <h6 class="fw-bold"><a href="about-services">Extra Services</a></h6>
-          <p class="text-muted">Make your event seamless with extra services.</p>
-        </div>
+      <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a href="/booking-catalog" class="btn btn-gold btn-lg px-5 py-3 fw-bold">
+          Start Booking
+        </a>
       </div>
     </div>
-  </section>
+  </div>
+</section>
+
+  <div class="container pb-5">
+    <!-- Facilities Section -->
+    <div id="facilitiesSection" class="catalog-section-container">
+<div class="section-header-flex">
+  <div class="section-title-area">
+    <h2>Available Venues</h2>
+    <p class="text-white-50 mt-2">Discover campus spaces for your events and meetings.</p>
+  </div>
+  <a href="/booking-catalog" class="btn btn-gold px-4 py-2">View All Venues →</a>
+</div>
+
+      <div id="facilitiesSkeleton" class="row g-4" style="display: none;">
+        <div class="col-md-6 col-lg-4">
+          <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-text"></div>
+              <div class="d-flex gap-2 mb-3">
+                <div class="skeleton-badge"></div>
+                <div class="skeleton-badge"></div>
+              </div>
+              <div class="skeleton-button"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-text"></div>
+              <div class="d-flex gap-2 mb-3">
+                <div class="skeleton-badge"></div>
+                <div class="skeleton-badge"></div>
+              </div>
+              <div class="skeleton-button"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-text"></div>
+              <div class="d-flex gap-2 mb-3">
+                <div class="skeleton-badge"></div>
+                <div class="skeleton-badge"></div>
+              </div>
+              <div class="skeleton-button"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="facilitiesGrid" class="row g-4"></div>
+
+      <div id="facilitiesNoResults" class="no-results" style="display: none;">
+        <i class="bi bi-building"></i>
+        <h3>No venues found</h3>
+        <p>Try adjusting your search terms</p>
+      </div>
+    </div>
+
+    <!-- Equipment Section -->
+<div id="equipmentSection" class="catalog-section-container">
+  <div class="section-header-flex">
+<div class="section-title-area">
+  <h2>Available Equipment</h2>
+  <p class="text-white-50 mt-2">Resources ready for academic activities, events, and campus use.</p>
+</div>
+<a href="/booking-catalog" class="btn btn-gold px-4 py-2 glass-btn">
+  View All Equipment →
+</a>
+  </div>
+      <div id="equipmentSkeleton" class="row g-4" style="display: none;">
+        <div class="col-md-6 col-lg-4">
+          <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-text"></div>
+              <div class="d-flex justify-content-between mb-3">
+                <div class="skeleton-badge" style="width: 80px;"></div>
+                <div class="skeleton-badge" style="width: 100px;"></div>
+              </div>
+              <div class="skeleton-button"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-text"></div>
+              <div class="d-flex justify-content-between mb-3">
+                <div class="skeleton-badge" style="width: 80px;"></div>
+                <div class="skeleton-badge" style="width: 100px;"></div>
+              </div>
+              <div class="skeleton-button"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-text"></div>
+              <div class="d-flex justify-content-between mb-3">
+                <div class="skeleton-badge" style="width: 80px;"></div>
+                <div class="skeleton-badge" style="width: 100px;"></div>
+              </div>
+              <div class="skeleton-button"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="equipmentGrid" class="row g-4"></div>
+
+      <div id="equipmentNoResults" class="no-results" style="display: none;">
+        <i class="bi bi-tools"></i>
+        <h3>No equipment found</h3>
+        <p>Try adjusting your search terms</p>
+      </div>
+    </div>
+  </div>
 
   <!-- Storage Consent Toast -->
   <div class="toast-container position-fixed bottom-0 start-0 p-3" style="z-index: 3000;">
     <div id="storageConsentToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"
       data-bs-autohide="false" style="min-width: 350px;">
-      <div class="toast-header" style="background-color: var(--cpu-primary); color: white;">
+      <div class="toast-header" style="background-color: var(--cpu-blue); color: white;">
         <i class="bi bi-cookie me-2"></i>
         <strong class="me-auto">We Value Your Privacy</strong>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"
@@ -254,104 +498,279 @@
       </div>
       <div class="toast-body p-3" style="background-color: white;">
         <div class="text-center mb-2">
-          <i class="bi bi-shield-check" style="font-size: 2rem; color: var(--cpu-primary);"></i>
+          <i class="bi bi-shield-check" style="font-size: 2rem; color: var(--cpu-blue);"></i>
         </div>
-
         <p class="mb-2 small">
-          To make your experience smoother, this website saves some information on your device, similar to how cookies
-          work.
-          This helps keep your selections and preferences while you use the booking system.
+          We use cookies and your browser's local storage to remember your activity, such as items in your cart or form
+          progress. This helps you continue where you left off without losing your selections when you refresh or leave
+          the page.
         </p>
-
-        <p class="mb-1 small fw-bold">We may remember things like:</p>
-
-        <ul class="list-unstyled mb-2 small">
-          <li class="mb-1">
-            <i class="bi bi-check-circle-fill me-1" style="color: var(--cpu-secondary); font-size: 0.8rem;"></i>
-            Items you add to your requisition form
-          </li>
-          <li class="mb-1">
-            <i class="bi bi-check-circle-fill me-1" style="color: var(--cpu-secondary); font-size: 0.8rem;"></i>
-            Your selected booking schedule
-          </li>
-          <li class="mb-1">
-            <i class="bi bi-check-circle-fill me-1" style="color: var(--cpu-secondary); font-size: 0.8rem;"></i>
-            Data that helps pages load faster
-          </li>
-        </ul>
-
-        <p class="text-muted small mb-2">
-          <small>This information stays on your device and is not shared with others. You can clear it anytime through
-            your browser settings.</small>
-        </p>
-
         <div class="d-grid mt-2">
           <button type="button" class="btn btn-sm fw-bold" id="acceptStorageBtn"
-            style="background-color: var(--cpu-primary); color: white; border: none; padding: 0.5rem;">
+            style="background-color: var(--cpu-blue); color: white;">
             <i class="bi bi-check-lg me-1"></i>I Understand
           </button>
         </div>
       </div>
     </div>
   </div>
+  
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      // Check if user has already seen the toast
-      const hasSeenStorageToast = localStorage.getItem('storage_consent_seen');
+    // Facilities State
+    let facilitiesPage = 1;
+    let facilitiesLoading = false;
+    let facilitiesTotalPages = 1;
 
-      // Get toast element
+    // Equipment State
+    let equipmentPage = 1;
+    let equipmentLoading = false;
+    let equipmentTotalPages = 1;
+
+    // Animation observer
+    const heroSection = document.querySelector(".hero-section");
+    if (heroSection) {
+      new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.2 }).observe(heroSection);
+    }
+
+    // Load both sections on page load
+    document.addEventListener("DOMContentLoaded", () => {
+      loadFacilities();
+      loadEquipment();
+      setupToastConsent();
+    });
+
+    function setupToastConsent() {
+      const hasSeenStorageToast = localStorage.getItem('storage_consent_seen');
       const toastElement = document.getElementById('storageConsentToast');
 
       if (!hasSeenStorageToast && toastElement) {
-        // Show toast after a short delay
-        setTimeout(() => {
-          const storageToast = new bootstrap.Toast(toastElement, {
-            autohide: false
-          });
-          storageToast.show();
-        }, 1500); // 1.5 second delay
+        setTimeout(() => new bootstrap.Toast(toastElement, { autohide: false }).show(), 1500);
       }
 
-      // Handle accept button click
-      document.getElementById('acceptStorageBtn')?.addEventListener('click', function () {
-        // Set flag in localStorage
+      document.getElementById('acceptStorageBtn')?.addEventListener('click', () => {
         localStorage.setItem('storage_consent_seen', 'true');
-
-        // Hide toast
-        const storageToast = bootstrap.Toast.getInstance(toastElement);
-        if (storageToast) {
-          storageToast.hide();
-        }
+        bootstrap.Toast.getInstance(toastElement)?.hide();
       });
 
-      // Handle manual close button
-      document.getElementById('closeToastBtn')?.addEventListener('click', function () {
-        // Still set the flag so they don't see it again this session
+      document.getElementById('closeToastBtn')?.addEventListener('click', () => {
         localStorage.setItem('storage_consent_seen', 'true');
       });
+    }
 
-      // Hero section animation
-      const heroSection = document.querySelector(".hero-section");
-      const catalogSection = document.querySelector(".catalog-section");
+    // === FACILITIES FUNCTIONS ===
+    function loadFacilities() {
+      if (facilitiesLoading) return;
+      facilitiesLoading = true;
 
-      if (catalogSection) {
-        catalogSection.classList.add("visible");
-      }
+      const skeletonEl = document.getElementById('facilitiesSkeleton');
+      const gridEl = document.getElementById('facilitiesGrid');
+      const noResultsEl = document.getElementById('facilitiesNoResults');
 
-      if (heroSection) {
-        const observer = new IntersectionObserver((entries, obs) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("visible");
-              obs.unobserve(entry.target);
-            }
-          });
-        }, { threshold: 0.2 });
+      skeletonEl.style.display = 'flex';
+      gridEl.style.display = 'none';
+      noResultsEl.style.display = 'none';
 
-        observer.observe(heroSection);
-      }
-    });
+      let url = `/api/parent-facilities?page=${facilitiesPage}&per_page=6`;
+
+      fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(res => res.json())
+        .then(res => {
+          skeletonEl.style.display = 'none';
+          if (res.success && res.data?.length > 0) {
+            renderFacilities(res.data);
+            gridEl.style.display = 'flex';
+          } else {
+            noResultsEl.style.display = 'block';
+          }
+        })
+        .catch(() => {
+          skeletonEl.style.display = 'none';
+          noResultsEl.style.display = 'block';
+          document.getElementById('facilitiesResultsInfo').textContent = 'Error loading facilities';
+        })
+        .finally(() => {
+          facilitiesLoading = false;
+        });
+    }
+
+    function renderFacilities(venues) {
+      const grid = document.getElementById('facilitiesGrid');
+      const html = venues.map(venue => {
+        const imageUrl = venue.images?.[0]?.image_url || 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png';
+        const hasChildren = venue.has_children || false;
+        const locationTypeIcon = venue.location_type === 'Indoors' ? 'bi-building' : 'bi-tree';
+        const capacityText = venue.capacity === 1 ? 'Flexible Capacity' : `Up to ${venue.capacity} people`;
+        const feeText = venue.base_fee == 0 ? 'Contact for pricing' : `₱${parseFloat(venue.base_fee).toLocaleString()}`;
+        const description = venue.description ? venue.description.substring(0, 100) : 'No description available';
+        const locationNote = venue.location_note || 'Location TBA';
+
+        return `
+          <div class="col-md-6 col-lg-4">
+            <div class="card venue-card h-100" data-facility-id="${venue.facility_id}" data-has-children="${hasChildren}">
+              <div class="position-relative">
+                <img src="${imageUrl}" class="card-img-top" alt="${escapeHtml(venue.facility_name)}" loading="lazy"
+                  onerror="this.onerror=null; this.src='/images/placeholder-facility.png'">
+                <span class="category-badge"><i class="bi ${locationTypeIcon} me-1"></i>${venue.location_type}</span>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">${escapeHtml(venue.facility_name)}</h5>
+                <p class="card-text text-muted small mb-3">${escapeHtml(description)}${venue.description?.length > 100 ? '...' : ''}</p>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                  <span class="location-badge" title="${escapeHtml(locationNote)}">
+                    <i class="bi bi-geo-alt"></i><span>${escapeHtml(locationNote.substring(0, 25))}</span>
+                  </span>
+                  <span class="capacity-badge"><i class="bi bi-people"></i>${capacityText}</span>
+                </div>
+                <div class="mt-auto">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="fee-text">${feeText}</span>
+                    <small class="text-muted">${venue.rate_type}</small>
+                  </div>
+                  <button class="btn btn-view w-100 view-venue-btn">
+                    ${hasChildren ? 'View Available Spaces <i class="bi bi-arrow-right ms-2"></i>' : 'View Details <i class="bi bi-arrow-right ms-2"></i>'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      grid.innerHTML = html;
+
+      // Event handlers
+      grid.querySelectorAll('.venue-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.view-venue-btn')) return;
+          const facilityId = card.dataset.facilityId;
+          const hasChildren = card.dataset.hasChildren === 'true';
+          
+          if (hasChildren) {
+            window.location.href = `/pick-a-venue?parent_facility_id=${facilityId}`;
+          } else {
+            window.location.href = `/facility/${facilityId}`;
+          }
+        });
+      });
+
+      grid.querySelectorAll('.view-venue-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const card = btn.closest('.venue-card');
+          const facilityId = card.dataset.facilityId;
+          const hasChildren = card.dataset.hasChildren === 'true';
+          
+          if (hasChildren) {
+            window.location.href = `/pick-a-venue?parent_facility_id=${facilityId}`;
+          } else {
+            window.location.href = `/facility/${facilityId}`;
+          }
+        });
+      });
+    }
+
+
+    // === EQUIPMENT FUNCTIONS ===
+    function loadEquipment() {
+      if (equipmentLoading) return;
+      equipmentLoading = true;
+
+      const skeletonEl = document.getElementById('equipmentSkeleton');
+      const gridEl = document.getElementById('equipmentGrid');
+      const noResultsEl = document.getElementById('equipmentNoResults');
+
+      skeletonEl.style.display = 'flex';
+      gridEl.style.display = 'none';
+      noResultsEl.style.display = 'none';
+
+      let url = `/api/equipment?page=${equipmentPage}&per_page=6`;
+
+      fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(res => res.json())
+        .then(res => {
+          skeletonEl.style.display = 'none';
+          if (res.data?.length > 0) {
+            renderEquipment(res.data);
+            gridEl.style.display = 'flex';
+          } else {
+            noResultsEl.style.display = 'block';
+          }
+        })
+        .catch(() => {
+          skeletonEl.style.display = 'none';
+          noResultsEl.style.display = 'block';
+          document.getElementById('equipmentResultsInfo').textContent = 'Error loading equipment';
+        })
+        .finally(() => {
+          equipmentLoading = false;
+        });
+    }
+
+    function renderEquipment(items) {
+      const grid = document.getElementById('equipmentGrid');
+      const html = items.map(item => {
+        const imageUrl = item.images?.[0]?.image_url || 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png';
+        const availableQty = item.available_quantity || 0;
+        const statusText = availableQty > 0 ? 'Available' : 'Out of Stock';
+        const statusColor = availableQty > 0 ? 'var(--cpu-gold)' : '#dc3545';
+
+        return `
+          <div class="col-md-6 col-lg-4">
+            <div class="card venue-card h-100" data-equipment-id="${item.equipment_id}">
+              <div class="position-relative">
+                <img src="${imageUrl}" class="card-img-top" alt="${escapeHtml(item.equipment_name)}" loading="lazy"
+                  onerror="this.onerror=null; this.src='/images/placeholder-equipment.png'">
+                <span class="category-badge" style="background-color: ${statusColor}">
+                  <i class="bi ${availableQty > 0 ? 'bi-check-circle' : 'bi-x-circle'} me-1"></i>${statusText}
+                </span>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">${escapeHtml(item.equipment_name)}</h5>
+                <p class="card-text text-muted small mb-3">${escapeHtml(item.description?.substring(0, 100) || 'No description available')}</p>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <span class="fee-text">${availableQty} available</span>
+                  <small class="text-muted">${item.category?.category_name || 'Uncategorized'}</small>
+                </div>
+                <button class="btn btn-view w-100 view-equipment-btn">View Details <i class="bi bi-arrow-right ms-2"></i></button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      grid.innerHTML = html;
+
+      grid.querySelectorAll('.venue-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.view-equipment-btn')) return;
+          const equipmentId = card.dataset.equipmentId;
+          window.location.href = `/equipment-details/${equipmentId}`;
+        });
+      });
+
+      grid.querySelectorAll('.view-equipment-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const equipmentId = btn.closest('.venue-card').dataset.equipmentId;
+          window.location.href = `/equipment-details/${equipmentId}`;
+        });
+      });
+    }
+
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
   </script>
-
 @endsection

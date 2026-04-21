@@ -1,176 +1,606 @@
 @extends('layouts.app')
 
-@section('title', 'Booking Catalog - Facilities & Equipment')
+@section('title', 'My Bookings - Requisition Status')
 
 @section('content')
     <link rel="stylesheet" href="{{ asset('css/public/global-styles.css') }}" />
     <style>
+        /* ============================================
+           REFINED INSTITUTIONAL THEME - YOUR BOOKINGS
+           Matching catalog.css design system
+           ============================================ */
+
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fraunces:wght@600;700&display=swap');
+
+        :root {
+            --navy: #041a4b;
+            --navy-mid: #0b2d72;
+            --navy-light: #e8edf8;
+            --amber: #f5bc40;
+            --amber-dark: #d9a12a;
+            --white: #ffffff;
+            --surface: #f5f6fa;
+            --border: #e2e6f0;
+            --text-base: #1e2d4a;
+            --text-muted: #6b7a99;
+            --text-light: #9aaac5;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f5bc40;
+            --shadow-sm: 0 1px 3px rgba(4, 26, 75, .06), 0 1px 2px rgba(4, 26, 75, .04);
+            --shadow-md: 0 4px 16px rgba(4, 26, 75, .10), 0 2px 6px rgba(4, 26, 75, .06);
+            --shadow-lg: 0 12px 40px rgba(4, 26, 75, .16), 0 4px 12px rgba(4, 26, 75, .08);
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface);
+            color: var(--text-base);
+        }
+
         .main-content {
             min-height: 100vh;
             background-image: url('{{ asset('assets/homepage.jpg') }}');
             background-size: cover;
             background-position: center bottom;
             background-repeat: no-repeat;
-            padding: 2rem 0;
+            padding: 3rem 1rem;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
+        .main-content::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(4, 26, 75, 0.54) 0%, rgba(4, 26, 75, 0.75) 100%);
+            z-index: 1;
+        }
+
         .content-wrapper {
             position: relative;
-            background-color: #ffffff;
-            border-radius: 0.5rem;
+            z-index: 2;
+            background: var(--white);
+            border-radius: var(--radius-xl);
             padding: 2rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, .1);
-            max-width: 1000px;
-            width: 90%;
+            box-shadow: var(--shadow-lg);
+            max-width: 1100px;
+            width: 100%;
             margin: 0 auto;
+            backdrop-filter: blur(2px);
         }
 
-        /* Override responsive container for this specific page if needed */
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 1rem 0;
-                background-attachment: fixed;
-            }
-
-            .content-wrapper {
-                padding: 1rem;
-                width: 95%;
-            }
+        /* Header Styles */
+        .lookup-header {
+            font-family: 'Fraunces', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--navy);
+            text-align: center;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
         }
 
-        /* Loading Spinner Styles (keep these specific to this page) */
+        .header-subtext {
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Search Form */
+        .lookup-form {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+            background: var(--white);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .form-control {
+            flex: 1;
+            padding: 0.875rem 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-family: 'DM Sans', sans-serif;
+            transition: var(--transition);
+            background: var(--white);
+            color: var(--text-base);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 3px rgba(4, 26, 75, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-light);
+        }
+
+        .btn-primary {
+            background: var(--navy);
+            color: white;
+            border: none;
+            padding: 0.875rem 1.75rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .btn-primary:hover {
+            background: var(--navy-mid);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary.btn-loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface);
+            border-color: var(--navy);
+            color: var(--navy);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+            transform: translateY(-1px);
+        }
+
+        /* Loading Spinner */
         .loading-spinner {
-            display: none;
             text-align: center;
             padding: 2rem;
         }
 
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #041A4B;
+            border: 3px solid var(--navy-light);
+            border-top: 3px solid var(--navy);
             border-radius: 50%;
             width: 40px;
             height: 40px;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
             margin: 0 auto 1rem;
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .loading-text {
-            color: #041A4B;
-            font-weight: bold;
-        }
-
-        /* Disable button during loading */
-        .btn-loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        @media (min-width: 768px) {
-            .requisition-list {
-                padding-bottom: 2rem;
-            }
-        }
-
-        @media (max-width: 767.98px) {
-            .requisition-list {
-                padding-bottom: 1.5rem;
-            }
-        }
-
-        .lookup-header {
-            font-weight: bolder;
-            text-align: center;
-        }
-
-        .header-subtext {
-            color: gray !important;
-            /* Force color */
-            text-align: center !important;
-            /* Force center alignment */
-            margin-bottom: 1.5rem !important;
-            /* Force margin */
-            display: block;
-            /* Make it block-level */
+            color: var(--navy);
+            font-weight: 500;
             font-size: 0.875rem;
-            /* Explicit font size */
-            opacity: 0.8;
-            /* Alternative to gray color */
-            line-height: 1.4;
         }
 
+        /* No Results Message */
         .no-requisition-message {
             text-align: center;
+            padding: 3rem 2rem;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
             margin-top: 1.5rem;
-            padding: 2rem 1rem;
-            background-color: #f8f9fa;
-            border-radius: 0.5rem;
-            border: 1px solid #e9ecef;
-            display: none;
-            /* Hidden by default */
-            width: 100%;
-            /* Full width */
         }
 
         .no-requisition-message i {
-            font-size: 3rem;
-            color: #6c757d;
+            font-size: 3.5rem;
+            color: var(--text-light);
             margin-bottom: 1rem;
-            display: block;
         }
 
         .no-requisition-message p {
-            color: #495057;
+            color: var(--text-base);
             font-size: 1.1rem;
-            margin-bottom: 0.5rem;
             font-weight: 500;
+            margin-bottom: 0.5rem;
         }
 
         .no-requisition-message .subtext {
-            color: #6c757d;
-            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
             max-width: 400px;
             margin: 0 auto;
-            line-height: 1.5;
         }
 
-        .no-requisition-message.show {
+        /* Requisition Cards */
+        .requisition-list {
+            margin-top: 1.5rem;
+        }
+
+        .card-responsive {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-responsive:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .card-responsive-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .request-id {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--navy);
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.3px;
+        }
+
+        .status-badge-responsive {
+            padding: 0.25rem 0.75rem;
+            border-radius: 60px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: var(--surface);
+            color: var(--text-base);
+        }
+
+        /* Dynamic status colors will be injected via JS */
+        .card-responsive-body {
+            padding: 1.25rem;
+        }
+
+        .card-responsive-footer {
+            padding: 1rem 1.25rem;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Fee Breakdown */
+        .fee-section {
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .fee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .fee-item:last-child {
+            border-bottom: none;
+        }
+
+        .fee-item.subtotal {
+            font-weight: 600;
+            color: var(--navy);
+            padding-top: 0.75rem;
+            margin-top: 0.25rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .fee-item.total-fee {
+            background: var(--navy);
+            color: white;
+            padding: 0.75rem;
+            border-radius: var(--radius-sm);
+            margin-top: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Lists */
+        ul {
+            margin: 0;
+            padding-left: 1.25rem;
+        }
+
+        li {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .no-items {
+            color: var(--text-light);
+            font-style: italic;
+            font-size: 0.8rem;
+        }
+
+        /* Filter Dropdown */
+        .filter-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item {
             display: block;
-            /* Show when class is added */
+            padding: 0.5rem 1rem;
+            color: var(--text-base);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: var(--transition);
+            cursor: pointer;
         }
 
-        .has-no-results .requisition-list {
-            display: none;
+        .dropdown-item:hover {
+            background: var(--navy-light);
+            color: var(--navy);
         }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        /* Modal Styles */
+        .modal-content {
+            border: none;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            background: var(--navy);
+            color: white;
+            border-bottom: none;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .modal-title {
+            font-family: 'Fraunces', serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+            padding: 1rem 1.5rem;
+            gap: 0.75rem;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--surface);
+        }
+
+        .upload-area:hover {
+            border-color: var(--navy);
+            background: var(--navy-light);
+        }
+
+        .upload-area i {
+            font-size: 2.5rem;
+            color: var(--text-light);
+            margin-bottom: 0.75rem;
+        }
+
+        .upload-area p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .upload-area .small {
+            font-size: 0.7rem;
+        }
+
+        /* Progress Bar */
+        .progress {
+            background: var(--surface);
+            border-radius: 60px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: var(--navy);
+            border-radius: 60px;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content-wrapper {
+                padding: 1.25rem;
+            }
+
+            .lookup-header {
+                font-size: 1.4rem;
+            }
+
+            .header-subtext {
+                font-size: 0.75rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .btn-primary {
+                justify-content: center;
+            }
+
+            .card-responsive-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .card-responsive-footer {
+                flex-direction: column;
+            }
+
+            .card-responsive-footer .btn {
+                width: 100%;
+            }
+
+            .filter-bar {
+                justify-content: stretch;
+            }
+
+            .filter-bar .dropdown-toggle {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .content-wrapper {
+                max-width: 95%;
+            }
+        }
+
+        /* Text utilities */
+        .text-primary { color: var(--navy) !important; }
+        .text-muted { color: var(--text-muted) !important; }
+        .fw-bold { font-weight: 700 !important; }
+        .mb-0 { margin-bottom: 0 !important; }
+        .mb-1 { margin-bottom: 0.25rem !important; }
+        .mb-2 { margin-bottom: 0.5rem !important; }
+        .mb-3 { margin-bottom: 1rem !important; }
+        .mt-3 { margin-top: 1rem !important; }
+        .ps-3 { padding-left: 1rem !important; }
     </style>
+
     <main class="main-content">
         <div class="content-wrapper">
-            <h2 class="lookup-header">Requisition Form Lookup</h2>
-            <small class="header-subtext">To monitor your submitted requests, check your email address for its unique code.
-                You will also be notified once your form has been approved.</small>
+            <h2 class="lookup-header">Your Bookings</h2>
+            <p class="header-subtext">Track your requests, upload payment receipts, and manage your reservations.</p>
 
             <!-- Initial search section -->
             <div id="lookupSection" class="lookup-form">
                 <div class="input-group">
-                    <input type="text" class="form-control" id="referenceInput" placeholder="Enter reference code..."
-                        aria-label="Reference code">
-                    <button class="btn btn-primary" type="button" id="searchButton" onclick="showResults()">Search</button>
+                    <input type="text" class="form-control" id="referenceInput" 
+                           placeholder="Enter your reference code..." aria-label="Reference code">
+                    <button class="btn-primary" type="button" id="searchButton" onclick="showResults()">
+                        <i class="fas fa-search"></i> Search
+                    </button>
                 </div>
-                <div id="loadingSpinner" class="loading-spinner">
+                <div id="loadingSpinner" class="loading-spinner" style="display: none;">
                     <div class="spinner"></div>
                     <p class="loading-text">Searching for your requisition...</p>
                 </div>
@@ -180,20 +610,32 @@
             <div id="resultsSection" style="display: none;">
                 <div class="lookup-form">
                     <div class="input-group">
-                        <input type="text" class="form-control" id="resultsReferenceInput" aria-label="Reference code"
-                            placeholder="Enter reference code...">
-                        <button class="btn btn-primary" type="button" id="resultsSearchButton"
-                            onclick="showResults()">Search</button>
+                        <input type="text" class="form-control" id="resultsReferenceInput" 
+                               placeholder="Enter reference code..." aria-label="Reference code">
+                        <button class="btn-primary" type="button" id="resultsSearchButton" onclick="showResults()">
+                            <i class="fas fa-search"></i> Search
+                        </button>
                     </div>
                     <div id="resultsLoadingSpinner" class="loading-spinner" style="display: none;">
                         <div class="spinner"></div>
                         <p class="loading-text">Searching for your requisition...</p>
                     </div>
                 </div>
-                <!-- Results container - cards will go here -->
-                <div class="requisition-list mt-3">
-                    <!-- Cards will be dynamically inserted here by JavaScript -->
+
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-dropdown">
+                        <button class="dropdown-toggle" type="button" id="filterDropdownBtn">
+                            <i class="fas fa-filter"></i> Filter by Status
+                        </button>
+                        <div class="dropdown-menu" id="filterDropdownMenu">
+                            <a class="dropdown-item" href="#" data-status="all">All</a>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Results container -->
+                <div class="requisition-list mt-3"></div>
             </div>
 
             <!-- No results message -->
@@ -202,70 +644,64 @@
                 <p>No requisition forms found</p>
                 <p class="subtext">Please check your reference code and try again.</p>
             </div>
+        </div>
+    </main>
 
-            <!-- Modals -->
-            <div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="cancelModalLabel">Confirm Cancellation</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Are you sure you want to cancel this request? This action cannot be undone.</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep
-                                Request</button>
-                            <button type="button" class="btn btn-danger" id="confirmCancelBtn">Yes, Cancel Request</button>
-                        </div>
-                    </div>
+    <!-- Modals -->
+    <div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelModalLabel">Confirm Cancellation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-            </div>
-
-            <div class="modal fade" id="uploadReceiptModal" tabindex="-1" aria-labelledby="uploadReceiptModalLabel"
-                aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="uploadReceiptModalLabel">Upload Payment Receipt</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div id="uploadArea" class="border-dashed p-4 text-center"
-                                style="border: 2px dashed #ccc; border-radius: 5px; cursor: pointer;">
-                                <i class="fas fa-cloud-upload-alt fa-3x mb-2"></i>
-                                <p>Drag & drop your receipt here or click to browse</p>
-                                <p class="small text-muted">Supported formats: JPG, PNG, PDF (Max: 5MB)</p>
-                            </div>
-                            <input type="file" id="receiptFile" accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
-
-                            <div id="uploadPreview" class="mt-3" style="display: none;">
-                                <div class="alert alert-info">
-                                    <i class="fas fa-file"></i>
-                                    <span id="fileName"></span>
-                                    <button type="button" class="btn-close float-end"
-                                        onclick="clearFileSelection()"></button>
-                                </div>
-                            </div>
-
-                            <div id="uploadProgress" class="progress mt-3" style="display: none;">
-                                <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0"
-                                    aria-valuemin="0" aria-valuemax="100">0%</div>
-                            </div>
-
-                            <div id="uploadError" class="alert alert-danger mt-3" style="display: none;"></div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="confirmUploadBtn" disabled
-                                onclick="uploadReceipt()">Upload Receipt</button>
-                        </div>
-                    </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel this request? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">No, Keep Request</button>
+                    <button type="button" class="btn-danger" id="confirmCancelBtn">Yes, Cancel Request</button>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
+
+    <div class="modal fade" id="uploadReceiptModal" tabindex="-1" aria-labelledby="uploadReceiptModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadReceiptModalLabel">Upload Payment Receipt</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="uploadArea" class="upload-area">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drag & drop your receipt here or click to browse</p>
+                        <p class="small text-muted">Supported formats: JPG, PNG, PDF (Max: 5MB)</p>
+                    </div>
+                    <input type="file" id="receiptFile" accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
+
+                    <div id="uploadPreview" class="mt-3" style="display: none;">
+                        <div class="alert alert-info" style="background: var(--navy-light); border: none; border-radius: var(--radius-md); padding: 0.75rem;">
+                            <i class="fas fa-file"></i>
+                            <span id="fileName"></span>
+                            <button type="button" class="btn-close float-end" onclick="clearFileSelection()" style="font-size: 0.7rem;"></button>
+                        </div>
+                    </div>
+
+                    <div id="uploadProgress" class="progress mt-3" style="display: none; height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: 0%;"></div>
+                    </div>
+
+                    <div id="uploadError" class="alert alert-danger mt-3" style="display: none; border-radius: var(--radius-sm);"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-primary" id="confirmUploadBtn" disabled onclick="uploadReceipt()">Upload Receipt</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 @endsection
 
@@ -277,59 +713,9 @@
         let selectedFile = null;
         let currentRequestId = null;
 
-        // ------  Helper functions  ------ //
-
-        // Function to generate dynamic CSS for status badges
-        function generateStatusStyles(statuses) {
-            console.log('Generating dynamic styles for statuses:', statuses);
-
-            const styleId = 'dynamic-status-styles';
-            let existingStyle = document.getElementById(styleId);
-
-            if (existingStyle) {
-                existingStyle.remove();
-            }
-
-            const style = document.createElement('style');
-            style.id = styleId;
-
-            let css = '';
-
-            statuses.forEach(status => {
-                const className = status.status_name.toLowerCase().replace(/\s+/g, '-');
-                const bgColor = status.color_code;
-                const textColor = getContrastingTextColor(bgColor);
-
-                // ADD !important to override dark mode styles
-                css += `
-                .status-badge-responsive.${className} {
-                    background-color: ${bgColor} !important;
-                    color: ${textColor} !important;
-                    border-color: ${darkenColor(bgColor, 20)} !important;
-                }
-
-                /* Dark mode override */
-                @media (prefers-color-scheme: dark) {
-                    .status-badge-responsive.${className} {
-                        background-color: ${bgColor} !important;
-                        color: ${textColor} !important;
-                        border-color: ${darkenColor(bgColor, 20)} !important;
-                    }
-                }
-            `;
-            });
-
-            style.textContent = css;
-            document.head.appendChild(style);
-
-            console.log('Dynamic styles injected with !important flags');
-        }
-
-        // Helper function to determine contrasting text color
+        // Helper functions
         function getContrastingTextColor(bgColor) {
-            // Convert rgb/rgba/hex to rgb values
             let r, g, b;
-
             if (bgColor.startsWith('rgb')) {
                 const matches = bgColor.match(/\d+/g);
                 r = parseInt(matches[0]);
@@ -341,17 +727,12 @@
                 g = parseInt(hex.substring(2, 4), 16);
                 b = parseInt(hex.substring(4, 6), 16);
             } else {
-                return '#ffffff'; // Default to white
+                return '#ffffff';
             }
-
-            // Calculate luminance
             const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-            // Return black for light backgrounds, white for dark backgrounds
             return luminance > 0.5 ? '#000000' : '#ffffff';
         }
 
-        // Helper function to darken a color for borders
         function darkenColor(color, percent) {
             if (color.startsWith('rgb')) {
                 const matches = color.match(/\d+/g);
@@ -360,38 +741,67 @@
                 let b = Math.max(0, parseInt(matches[2]) * (100 - percent) / 100);
                 return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
             } else if (color.startsWith('#')) {
-                // Convert hex to rgb, darken, then back to hex
                 const hex = color.replace('#', '');
                 let r = parseInt(hex.substring(0, 2), 16);
                 let g = parseInt(hex.substring(2, 4), 16);
                 let b = parseInt(hex.substring(4, 6), 16);
-
                 r = Math.max(0, Math.round(r * (100 - percent) / 100));
                 g = Math.max(0, Math.round(g * (100 - percent) / 100));
                 b = Math.max(0, Math.round(b * (100 - percent) / 100));
-
                 return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
             }
             return color;
         }
 
+        function generateStatusStyles(statuses) {
+            const styleId = 'dynamic-status-styles';
+            let existingStyle = document.getElementById(styleId);
+            if (existingStyle) existingStyle.remove();
+
+            const style = document.createElement('style');
+            style.id = styleId;
+            let css = '';
+
+            statuses.forEach(status => {
+                const className = status.status_name.toLowerCase().replace(/\s+/g, '-');
+                const bgColor = status.color_code;
+                const textColor = getContrastingTextColor(bgColor);
+                css += `
+                    .status-badge-responsive.${className} {
+                        background-color: ${bgColor} !important;
+                        color: ${textColor} !important;
+                    }
+                `;
+            });
+
+            style.textContent = css;
+            document.head.appendChild(style);
+        }
+
+        function generateFallbackStyles() {
+            const fallbackStatuses = [
+                { status_name: 'pending-approval', color_code: '#707485' },
+                { status_name: 'awaiting-payment', color_code: '#1c5b8f' },
+                { status_name: 'scheduled', color_code: '#1e7941' },
+                { status_name: 'ongoing', color_code: '#ac7a0f' },
+                { status_name: 'completed', color_code: '#3e5568' },
+                { status_name: 'rejected', color_code: '#3e5568' },
+                { status_name: 'cancelled', color_code: '#3e5568' }
+            ];
+            generateStatusStyles(fallbackStatuses);
+        }
+
         function handleFileSelection(file) {
-            // Validate file type
             const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
             if (!validTypes.includes(file.type)) {
                 showUploadError('Invalid file type. Please upload JPG, PNG, or PDF files only.');
                 return;
             }
-
-            // Validate file size (5MB max)
             if (file.size > 5 * 1024 * 1024) {
                 showUploadError('File too large. Maximum size is 5MB.');
                 return;
             }
-
             selectedFile = file;
-
-            // Show file preview
             document.getElementById('fileName').textContent = file.name;
             document.getElementById('uploadPreview').style.display = 'block';
             document.getElementById('confirmUploadBtn').disabled = false;
@@ -429,32 +839,25 @@
 
             const progressBar = document.querySelector('#uploadProgress .progress-bar');
             progressBar.style.width = '0%';
-            progressBar.textContent = '0%';
             document.getElementById('uploadProgress').style.display = 'block';
             document.getElementById('confirmUploadBtn').disabled = true;
 
-            // Create form data for Cloudinary upload
             const formData = new FormData();
             formData.append('file', selectedFile);
             formData.append('upload_preset', uploadPreset);
             formData.append('cloud_name', cloudName);
 
-            // Upload to Cloudinary
             const xhr = new XMLHttpRequest();
-
-            xhr.upload.addEventListener('progress', function (e) {
+            xhr.upload.addEventListener('progress', function(e) {
                 if (e.lengthComputable) {
                     const percent = Math.round((e.loaded / e.total) * 100);
                     progressBar.style.width = percent + '%';
-                    progressBar.textContent = percent + '%';
                 }
             });
 
-            xhr.addEventListener('load', function () {
+            xhr.addEventListener('load', function() {
                 if (xhr.status === 200) {
                     const response = JSON.parse(xhr.responseText);
-
-                    // Send to our server to save to database
                     fetch(`/api/requester/requisition/${currentRequestId}/upload-receipt`, {
                         method: 'POST',
                         headers: {
@@ -466,29 +869,27 @@
                             public_id: response.public_id
                         })
                     })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Close modal and refresh page
-                                bootstrap.Modal.getInstance(document.getElementById('uploadReceiptModal')).hide();
-                                alert('Receipt uploaded successfully!');
-                                location.reload();
-                            } else {
-                                showUploadError('Failed to save receipt details: ' + data.message);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error saving receipt:', error);
-                            showUploadError('Failed to save receipt details. Please try again.');
-                        });
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            bootstrap.Modal.getInstance(document.getElementById('uploadReceiptModal')).hide();
+                            alert('Receipt uploaded successfully!');
+                            location.reload();
+                        } else {
+                            showUploadError('Failed to save receipt details: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error saving receipt:', error);
+                        showUploadError('Failed to save receipt details. Please try again.');
+                    });
                 } else {
                     showUploadError('Upload failed. Please try again.');
                 }
-
                 document.getElementById('uploadProgress').style.display = 'none';
             });
 
-            xhr.addEventListener('error', function () {
+            xhr.addEventListener('error', function() {
                 showUploadError('Upload failed. Please check your connection and try again.');
                 document.getElementById('uploadProgress').style.display = 'none';
             });
@@ -500,72 +901,41 @@
         let allForms = [];
         let statuses = [];
 
-        // Fetch statuses from API
         async function fetchStatuses() {
             try {
                 const response = await fetch('/api/form-statuses');
                 const data = await response.json();
-
-                // Filter out unwanted statuses if needed
                 statuses = data.filter(status =>
                     status.status_name !== 'Returned' &&
                     status.status_name !== 'Late Return'
                 );
-
-                // Generate dynamic CSS styles
                 generateStatusStyles(statuses);
-
-                // Update dropdown menu
-                const dropdownMenu = document.querySelector('#resultsSection .dropdown-menu');
+                
+                const dropdownMenu = document.querySelector('#filterDropdownMenu');
                 if (dropdownMenu) {
                     dropdownMenu.innerHTML = `
-                    <li><a class="dropdown-item" href="#" data-status="all">All</a></li>
-                    ${statuses.map(status => `
-                        <li><a class="dropdown-item" href="#" data-status="${status.status_name.toLowerCase().replace(/\s+/g, '-')}">${status.status_name}</a></li>
-                    `).join('')}
-                `;
+                        <a class="dropdown-item" href="#" data-status="all">All</a>
+                        ${statuses.map(status => `
+                            <a class="dropdown-item" href="#" data-status="${status.status_name.toLowerCase().replace(/\s+/g, '-')}">${status.status_name}</a>
+                        `).join('')}
+                    `;
                 }
-
             } catch (error) {
                 console.error('Failed to fetch statuses:', error);
-                // Fallback to default colors if API fails
                 generateFallbackStyles();
             }
         }
 
-        // Fallback function in case API fails
-        function generateFallbackStyles() {
-            const fallbackStatuses = [
-                { status_name: 'pending-approval', color_code: '#707485' },
-                { status_name: 'awaiting-payment', color_code: '#1c5b8f' },
-                { status_name: 'scheduled', color_code: '#1e7941' },
-                { status_name: 'ongoing', color_code: '#ac7a0f' },
-                { status_name: 'late', color_code: '#8f2a2a' },
-                { status_name: 'returned', color_code: '#3e5568' },
-                { status_name: 'late-return', color_code: '#3e5568' },
-                { status_name: 'completed', color_code: '#3e5568' },
-                { status_name: 'rejected', color_code: '#3e5568' },
-                { status_name: 'cancelled', color_code: '#3e5568' }
-            ];
-
-            generateStatusStyles(fallbackStatuses);
-        }
         function showResults() {
-            // Get the active search input based on which section is visible
             let searchInput;
-
             const resultsSection = document.getElementById('resultsSection');
             const lookupSection = document.getElementById('lookupSection');
 
-            // Hide no results message immediately when starting new search
             document.getElementById('noResultsMessage').style.display = 'none';
 
-            // Check if results section is visible
             if (resultsSection && resultsSection.style.display !== 'none') {
-                // Results are showing, use the results section input
                 searchInput = document.getElementById('resultsReferenceInput');
             } else {
-                // Initial lookup, use the original input
                 searchInput = document.getElementById('referenceInput');
             }
 
@@ -575,49 +945,37 @@
             }
 
             const referenceInput = searchInput.value.trim();
-
-            // Show loading animation
             showLoading();
-
             fetchFormByAccessCode(referenceInput);
         }
+
         function showLoading() {
             const resultsSection = document.getElementById('resultsSection');
             const isResultsVisible = resultsSection && resultsSection.style.display !== 'none';
 
-            // Clear previous results immediately when starting new search
             const requisitionList = document.querySelector('.requisition-list');
-            if (requisitionList) {
-                requisitionList.innerHTML = '';
-            }
+            if (requisitionList) requisitionList.innerHTML = '';
 
             if (isResultsVisible) {
-                // Results section is visible
                 const loadingSpinner = document.getElementById('resultsLoadingSpinner');
                 const searchButton = document.getElementById('resultsSearchButton');
-
                 if (loadingSpinner) loadingSpinner.style.display = 'block';
                 if (searchButton) {
                     searchButton.classList.add('btn-loading');
                     searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
                 }
             } else {
-                // Initial lookup section
                 const loadingSpinner = document.getElementById('loadingSpinner');
                 const searchButton = document.getElementById('searchButton');
-                const noResultsMessage = document.getElementById('noResultsMessage');
-
                 if (loadingSpinner) loadingSpinner.style.display = 'block';
                 if (searchButton) {
                     searchButton.classList.add('btn-loading');
                     searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
                 }
-                if (noResultsMessage) noResultsMessage.style.display = 'none';
             }
         }
 
         function hideLoading() {
-            // Hide both loading spinners and reset both buttons
             const loadingSpinner1 = document.getElementById('loadingSpinner');
             const loadingSpinner2 = document.getElementById('resultsLoadingSpinner');
             const searchButton1 = document.getElementById('searchButton');
@@ -625,463 +983,151 @@
 
             if (loadingSpinner1) loadingSpinner1.style.display = 'none';
             if (loadingSpinner2) loadingSpinner2.style.display = 'none';
-
             if (searchButton1) {
                 searchButton1.classList.remove('btn-loading');
-                searchButton1.innerHTML = 'Search';
+                searchButton1.innerHTML = '<i class="fas fa-search"></i> Search';
             }
             if (searchButton2) {
                 searchButton2.classList.remove('btn-loading');
-                searchButton2.innerHTML = 'Search';
+                searchButton2.innerHTML = '<i class="fas fa-search"></i> Search';
             }
         }
 
         async function fetchFormByAccessCode(accessCode) {
             try {
                 const response = await fetch(`/api/requester/form/${accessCode}`);
-
-                if (!response.ok) {
-                    throw new Error(`Form not found (${response.status})`);
-                }
-
+                if (!response.ok) throw new Error(`Form not found (${response.status})`);
                 const form = await response.json();
-
-                // Check if the response structure is correct
-                if (!form.form_status || !form.purpose) {
-                    throw new Error('Invalid form data structure');
-                }
-
+                if (!form.form_status || !form.purpose) throw new Error('Invalid form data structure');
                 allForms = [form];
-
-                // SUCCESS: Hide no results message, show requisition list
                 document.getElementById('noResultsMessage').style.display = 'none';
-
-                // Display the form - this will show the requisition list
                 displayForms();
-
-                // Clear inputs
                 document.getElementById('resultsReferenceInput').value = '';
                 document.getElementById('referenceInput').value = '';
-
-                // Show results section, hide lookup
                 document.getElementById('lookupSection').style.display = 'none';
                 document.getElementById('resultsSection').style.display = 'block';
-
             } catch (error) {
                 console.error('Error fetching form:', error);
-
-                // Get all elements
                 const noResultsMessage = document.getElementById('noResultsMessage');
                 const lookupSection = document.getElementById('lookupSection');
                 const resultsSection = document.getElementById('resultsSection');
                 const requisitionList = document.querySelector('.requisition-list');
-
-                // Clear the requisition list content
-                if (requisitionList) {
-                    requisitionList.innerHTML = '';
-                }
-
-                // Hide everything first
+                if (requisitionList) requisitionList.innerHTML = '';
                 lookupSection.style.display = 'none';
                 resultsSection.style.display = 'none';
                 noResultsMessage.style.display = 'none';
-
-                // Determine which search interface to show
                 const resultsInput = document.getElementById('resultsReferenceInput');
                 const lookupInput = document.getElementById('referenceInput');
-
                 if (resultsInput && resultsInput.value.trim() === accessCode) {
-                    // Came from results section - IMPORTANT: Hide the results container area
                     resultsSection.style.display = 'block';
-                    // Hide just the requisition-list container to eliminate the gap
-                    if (requisitionList) {
-                        requisitionList.style.display = 'none';
-                    }
+                    if (requisitionList) requisitionList.style.display = 'none';
                     resultsInput.value = '';
                 } else {
-                    // Came from lookup section or fallback
                     lookupSection.style.display = 'block';
                     if (lookupInput) lookupInput.value = '';
                 }
-
-                // Show no results message
                 noResultsMessage.style.display = 'block';
-
             } finally {
                 hideLoading();
             }
         }
 
-        async function fetchFormsByEmail(email) {
-            try {
-                const response = await fetch(`/api/requester/forms/${email}`);
-                if (!response.ok) throw new Error('No forms found');
-
-                const forms = await response.json();
-                if (forms.length === 0) throw new Error('No forms found');
-
-                // Fetch details for each form
-                const formDetails = [];
-                for (const form of forms) {
-                    try {
-                        const detailResponse = await fetch(`/api/requester/form/${form.access_code}`);
-                        if (detailResponse.ok) {
-                            const detail = await detailResponse.json();
-                            // Validate the detail structure
-                            if (detail.form_details && detail.form_details.status) {
-                                formDetails.push(detail);
-                            } else {
-                                console.warn('Skipping invalid form detail:', detail);
-                            }
-                        }
-                    } catch (detailError) {
-                        console.warn('Failed to fetch form detail:', detailError);
-                    }
-                }
-
-                if (formDetails.length === 0) throw new Error('No valid forms found');
-
-                allForms = formDetails;
-                displayForms();
-
-                document.getElementById('lookupSection').style.display = 'none';
-                document.getElementById('resultsSection').style.display = 'block';
-                document.getElementById('noResultsMessage').style.display = 'none';
-
-            } catch (error) {
-                console.error('Error fetching forms:', error);
-                document.getElementById('noResultsMessage').style.display = 'block';
-            }
-        }
-
-
-
-        // Function to calculate total fee based on form data
         function calculateTotalFee(form) {
-            console.log('Form data for fee calculation:', form); // Debug log
-
-            // First priority: Use total_fee from requester API
-            if (form.total_fee && parseFloat(form.total_fee) > 0) {
-                return parseFloat(form.total_fee);
-            }
-
-            // Second priority: Use approved_fee from admin API structure
-            if (form.fees && form.fees.approved_fee) {
-                return parseFloat(form.fees.approved_fee);
-            }
-
-            // Fallback: Calculate manually (this won't work for requester API since fee data is missing)
-            let totalFee = 0;
-
-            // Calculate facility fees - this requires base_fee data which isn't in requester API
-            if (form.requested_facilities && form.requested_facilities.length > 0) {
-                console.warn('Cannot calculate facility fees - base_fee data missing');
-            }
-
-            // Calculate equipment fees - this requires base_fee data which isn't in requester API
-            if (form.requested_equipment && form.requested_equipment.length > 0) {
-                console.warn('Cannot calculate equipment fees - base_fee data missing');
-            }
-
-            // Add late penalty if applicable
-            if (form.is_late && form.late_penalty_fee) {
-                totalFee += parseFloat(form.late_penalty_fee);
-            }
-
-            return totalFee;
+            if (form.total_fee && parseFloat(form.total_fee) > 0) return parseFloat(form.total_fee);
+            if (form.fees && form.fees.approved_fee) return parseFloat(form.fees.approved_fee);
+            return 0;
         }
 
-
-        // Function to calculate duration in hours
-        function calculateDurationHours(startDate, startTime, endDate, endTime) {
-            const startDateTime = new Date(`${startDate}T${convertTo24Hour(startTime)}:00`);
-            const endDateTime = new Date(`${endDate}T${convertTo24Hour(endTime)}:00`);
-            const durationHours = (endDateTime - startDateTime) / (1000 * 60 * 60);
-            return Math.max(0, durationHours);
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
         }
 
-        // Function to convert 12-hour time to 24-hour time (same as in reservation form)
-        function convertTo24Hour(time12h) {
-            if (!time12h) return '';
-
-            // If it's already in 24-hour format (contains : but no AM/PM)
-            if (time12h.includes(':') && !time12h.includes('AM') && !time12h.includes('PM')) {
-                return time12h; // Already in 24-hour format
-            }
-
-            // Convert from 12-hour to 24-hour
-            if (time12h.includes(':')) {
-                const [timePart, modifier] = time12h.split(' ');
-                if (!modifier) return timePart;
-
-                let [hours, minutes] = timePart.split(':');
-                hours = parseInt(hours, 10);
-
-                if (modifier === 'PM' && hours !== 12) {
-                    hours += 12;
-                } else if (modifier === 'AM' && hours === 12) {
-                    hours = 0;
-                }
-
-                return `${hours.toString().padStart(2, '0')}:${minutes}`;
-            }
-
-            return time12h;
-        }
-
-        function convertTo12Hour(time24h) {
-            if (!time24h) return '';
-
-            // Remove seconds if present
-            let time = time24h;
-            if (time.length > 5) {
-                time = time.substring(0, 5);
-            }
-
+        function formatTime(timeString) {
+            if (!timeString) return '';
+            if (timeString.includes('AM') || timeString.includes('PM')) return timeString;
+            let time = timeString.length > 5 ? timeString.substring(0, 5) : timeString;
             const [hours, minutes] = time.split(':');
             let hour = parseInt(hours, 10);
             const suffix = hour >= 12 ? 'PM' : 'AM';
-
-            // Convert to 12-hour format
             hour = hour % 12 || 12;
-
             return `${hour}:${minutes} ${suffix}`;
-        }
-
-        // Function to generate fee breakdown HTML
-        function generateFeeBreakdown(form) {
-            const durationHours = calculateDurationHours(form.start_date, form.start_time, form.end_date, form.end_time);
-
-            let facilityTotal = 0;
-            let equipmentTotal = 0;
-            let htmlContent = '';
-
-            // Facilities breakdown
-            const facilityItems = form.requested_facilities || [];
-            if (facilityItems.length > 0) {
-                htmlContent += '<div class="fee-section"><h6 class="text-primary">Facilities</h6>';
-                facilityItems.forEach(item => {
-                    let fee = parseFloat(item.base_fee || 0);
-                    if (item.rate_type === 'Per Hour' && durationHours > 0) {
-                        fee = fee * durationHours;
-                        htmlContent += `
-                                <div class="fee-item">
-                                    <span>${item.facility_name} (${durationHours.toFixed(1)} hrs)</span>
-                                    <div class="text-end">
-                                        <small>₱${parseFloat(item.base_fee).toLocaleString()}/hr</small>
-                                        <div><strong>₱${fee.toLocaleString()}</strong></div>
-                                    </div>
-                                </div>
-                            `;
-                    } else {
-                        htmlContent += `
-                                <div class="fee-item">
-                                    <span>${item.facility_name}</span>
-                                    <span>₱${fee.toLocaleString()}</span>
-                                </div>
-                            `;
-                    }
-                    facilityTotal += fee;
-                });
-                htmlContent += `
-                        <div class="fee-item subtotal">
-                            <strong>Subtotal</strong>
-                            <strong>₱${facilityTotal.toLocaleString()}</strong>
-                        </div>
-                    </div>`;
-            }
-
-            // Equipment breakdown
-            const equipmentItems = form.requested_equipment || [];
-            if (equipmentItems.length > 0) {
-                htmlContent += '<div class="fee-section mt-3"><h6 class="text-primary">Equipment</h6>';
-                equipmentItems.forEach(item => {
-                    let unitFee = parseFloat(item.base_fee || 0);
-                    const quantity = item.quantity || 1;
-                    let itemTotal = unitFee * quantity;
-                    if (item.rate_type === 'Per Hour' && durationHours > 0) {
-                        itemTotal = itemTotal * durationHours;
-                        htmlContent += `
-                                <div class="fee-item">
-                                    <span>${item.equipment_name} ${quantity > 1 ? `(x${quantity})` : ''} (${durationHours.toFixed(1)} hrs)</span>
-                                    <div class="text-end">
-                                        <small>₱${unitFee.toLocaleString()}/hr × ${quantity}</small>
-                                        <div><strong>₱${itemTotal.toLocaleString()}</strong></div>
-                                    </div>
-                                </div>
-                            `;
-                    } else {
-                        htmlContent += `
-                                <div class="fee-item">
-                                    <span>${item.equipment_name} ${quantity > 1 ? `(x${quantity})` : ''}</span>
-                                    <div class="text-end">
-                                        <div>₱${unitFee.toLocaleString()} × ${quantity}</div>
-                                        <strong>₱${itemTotal.toLocaleString()}</strong>
-                                    </div>
-                                </div>
-                            `;
-                    }
-                    equipmentTotal += itemTotal;
-                });
-                htmlContent += `
-                        <div class="fee-item subtotal">
-                            <strong>Subtotal</strong>
-                            <strong>₱${equipmentTotal.toLocaleString()}</strong>
-                        </div>
-                    </div>`;
-            }
-
-            // Total
-            const total = facilityTotal + equipmentTotal;
-            if (total > 0) {
-                htmlContent += `
-                        <div class="fee-item total-fee">
-                            <strong>Total Amount</strong>
-                            <strong>₱${total.toLocaleString()}</strong>
-                        </div>
-                    `;
-            }
-
-            return {
-                html: htmlContent,
-                total: total
-            };
         }
 
         function displayForms() {
             const requisitionList = document.querySelector('.requisition-list');
             if (!requisitionList) return;
-
             requisitionList.innerHTML = '';
-            requisitionList.style.display = 'block'; // Ensure it's visible
+            requisitionList.style.display = 'block';
 
             allForms.forEach(form => {
-                // Update the safety check to match the new structure
-                if (!form.form_status || !form.purpose) {
-                    console.error('Invalid form structure:', form);
-                    return;
-                }
-
+                if (!form.form_status || !form.purpose) return;
                 const statusClass = form.form_status.status_name.toLowerCase().replace(/\s+/g, '-');
                 const statusName = form.form_status.status_name;
-
-                // Calculate total fee
                 const totalFee = calculateTotalFee(form);
 
                 let footerButtons = '';
-
                 if (['Pending Approval', 'Scheduled'].includes(statusName)) {
-                    footerButtons = `
-                        <div class="card-responsive-footer">
-                            <button class="btn btn-sm btn-danger" onclick="showCancelModal(${form.request_id})">Cancel Request</button>
-                        </div>
-                    `;
+                    footerButtons = `<button class="btn-danger" onclick="showCancelModal(${form.request_id})">Cancel Request</button>`;
                 } else if (statusName === 'Awaiting Payment') {
                     footerButtons = `
-                        <div class="card-responsive-footer">
-                            <button class="btn btn-sm btn-success" onclick="showUploadModal(${form.request_id})">Upload Receipt</button>
-                            <button class="btn btn-sm btn-danger" onclick="showCancelModal(${form.request_id})">Cancel Request</button>
-                        </div>
+                        <button class="btn-success" onclick="showUploadModal(${form.request_id})">Upload Receipt</button>
+                        <button class="btn-danger" onclick="showCancelModal(${form.request_id})">Cancel Request</button>
                     `;
-                } else {
-                    footerButtons = '<div class="card-responsive-footer"></div>';
                 }
 
                 const facilitiesList = form.requested_facilities && form.requested_facilities.length > 0
                     ? form.requested_facilities.map(f => `<li>${f.facility_name}</li>`).join('')
-                    : '<p class="no-items mb-0">No facilities requested</p>';
+                    : '<p class="no-items">No facilities requested</p>';
 
                 const equipmentList = form.requested_equipment && form.requested_equipment.length > 0
                     ? form.requested_equipment.map(e => `<li>${e.equipment_name}</li>`).join('')
-                    : '<p class="no-items mb-0">No equipment requested</p>';
+                    : '<p class="no-items">No equipment requested</p>';
 
-                const purpose = form.purpose.purpose_name || 'No purpose specified';
-
-                // Format dates properly
-                const formatDate = (dateString) => {
-                    return new Date(dateString).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                };
-
-                // Format time to standard 12-hour format with AM/PM
-                const formatTime = (timeString) => {
-                    // If timeString is already in 12-hour format (contains AM/PM), return as is
-                    if (timeString.includes('AM') || timeString.includes('PM')) {
-                        return timeString;
-                    }
-
-                    // Convert military time (HH:MM:SS or HH:MM) to 12-hour format
-                    let time = timeString;
-                    // Remove seconds if present
-                    if (time.length > 5) {
-                        time = time.substring(0, 5);
-                    }
-
-                    const [hours, minutes] = time.split(':');
-                    let hour = parseInt(hours, 10);
-                    const suffix = hour >= 12 ? 'PM' : 'AM';
-
-                    // Convert to 12-hour format
-                    hour = hour % 12 || 12;
-
-                    return `${hour}:${minutes} ${suffix}`;
-                };
-
-                // Extract requester details - check for both old and new structure
                 let organizationName = '';
                 let requesterName = '';
-
-                // Check for user_details structure (from controller)
                 if (form.user_details) {
                     organizationName = form.user_details.organization_name || '';
                     requesterName = `${form.user_details.first_name || ''} ${form.user_details.last_name || ''}`.trim();
-                }
-                // Check for older structure
-                else if (form.organization_name || form.first_name || form.last_name) {
+                } else if (form.organization_name || form.first_name || form.last_name) {
                     organizationName = form.organization_name || '';
                     requesterName = `${form.first_name || ''} ${form.last_name || ''}`.trim();
                 }
 
                 const card = `
-        <div class="card card-responsive mb-3">
-            <div class="card-responsive-header">
-                <span class="request-id">Request ID #${form.request_id.toString().padStart(4, '0')}</span>
-                <span class="status-badge-responsive ${statusClass}">${statusName}</span>
-            </div>
-            <div class="card-responsive-body">
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        ${organizationName ? `<p class="mb-2"><strong class="d-inline-block" style="min-width: 110px;">Organization:</strong> ${organizationName}</p>` : ''}
-                        ${requesterName ? `<p class="mb-2"><strong class="d-inline-block" style="min-width: 110px;">Requester:</strong> ${requesterName}</p>` : ''}
-
-                        <p class="mb-2"><strong class="d-inline-block" style="min-width: 110px;">Purpose:</strong> ${purpose}</p>
-                        <p class="mb-2"><strong class="d-inline-block" style="min-width: 110px;">Start Schedule:</strong> ${formatDate(form.start_date)}, ${formatTime(form.start_time)}</p>
-                        <p class="mb-2"><strong class="d-inline-block" style="min-width: 110px;">End Schedule:</strong> ${formatDate(form.end_date)}, ${formatTime(form.end_time)}</p>
-                        <p class="mb-0"><strong class="d-inline-block" style="min-width: 110px;">Total Fee:</strong> ₱${totalFee.toLocaleString('en-PH', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                })}</p>
+                    <div class="card-responsive">
+                        <div class="card-responsive-header">
+                            <span class="request-id">Request #${form.request_id.toString().padStart(4, '0')}</span>
+                            <span class="status-badge-responsive ${statusClass}">${statusName}</span>
+                        </div>
+                        <div class="card-responsive-body">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    ${organizationName ? `<p class="mb-2"><strong>Organization:</strong> ${organizationName}</p>` : ''}
+                                    ${requesterName ? `<p class="mb-2"><strong>Requester:</strong> ${requesterName}</p>` : ''}
+                                    <p class="mb-2"><strong>Purpose:</strong> ${form.purpose.purpose_name}</p>
+                                    <p class="mb-2"><strong>Start:</strong> ${formatDate(form.start_date)}, ${formatTime(form.start_time)}</p>
+                                    <p class="mb-2"><strong>End:</strong> ${formatDate(form.end_date)}, ${formatTime(form.end_time)}</p>
+                                    <p class="mb-0"><strong>Total Fee:</strong> ₱${totalFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <p class="mb-1"><strong>Facilities:</strong></p>
+                                    <ul class="mb-3">${facilitiesList}</ul>
+                                    <p class="mb-1"><strong>Equipment:</strong></p>
+                                    <ul class="mb-0">${equipmentList}</ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-responsive-footer">
+                            ${footerButtons}
+                        </div>
                     </div>
-                    <div class="col-12 col-md-6 border-md-start ps-md-3">
-                        <h6 class="fw-bold text-responsive-md mb-3">Request Details</h6>
-                        <p class="mb-1"><strong>Facilities:</strong></p>
-                        <ul class="mb-3 ps-3">${facilitiesList}</ul>
-                        <p class="mb-1"><strong>Equipment:</strong></p>
-                        <ul class="mb-0 ps-3">${equipmentList}</ul>
-                    </div>
-                </div>
-            </div>
-            <div class="card-responsive-footer">
-                ${footerButtons}
-            </div>
-        </div>
-    `;
+                `;
                 requisitionList.innerHTML += card;
             });
         }
+
         function showCancelModal(requestId) {
             currentRequestId = requestId;
             const cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
@@ -1090,18 +1136,12 @@
 
         async function cancelRequest() {
             if (!currentRequestId) return;
-
             try {
                 const response = await fetch(`/api/requester/requisition/${currentRequestId}/cancel`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
-
                 const result = await response.json();
-
                 if (response.ok) {
                     alert('Request cancelled successfully');
                     location.reload();
@@ -1117,85 +1157,65 @@
         }
 
         function filterRequisitions(status) {
-            const cards = document.querySelectorAll('.requisition-list .card.mb-3');
-
+            const cards = document.querySelectorAll('.requisition-list .card-responsive');
             cards.forEach(card => {
                 if (status === 'all') {
                     card.style.display = 'block';
                 } else {
-                    const statusBadge = card.querySelector('.status-badge');
+                    const statusBadge = card.querySelector('.status-badge-responsive');
                     if (statusBadge) {
                         const badgeStatus = statusBadge.textContent.toLowerCase().replace(/\s+/g, '-');
-                        if (badgeStatus === status.toLowerCase()) {
-                            card.style.display = 'block';
-                        } else {
-                            card.style.display = 'none';
-                        }
+                        card.style.display = badgeStatus === status ? 'block' : 'none';
                     }
                 }
             });
         }
 
-
-        // Initialize upload area
-        document.addEventListener('DOMContentLoaded', function () {
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('receiptFile');
-
-            // Initially hide the no results message
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('noResultsMessage').style.display = 'none';
 
-            uploadArea.addEventListener('click', function () {
-                fileInput.click();
-            });
+            // Upload area handlers
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('receiptFile');
+            if (uploadArea) {
+                uploadArea.addEventListener('click', () => fileInput.click());
+                uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = 'var(--navy)'; });
+                uploadArea.addEventListener('dragleave', () => uploadArea.style.borderColor = 'var(--border)');
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.borderColor = 'var(--border)';
+                    if (e.dataTransfer.files.length) handleFileSelection(e.dataTransfer.files[0]);
+                });
+            }
+            if (fileInput) {
+                fileInput.addEventListener('change', function() { if (this.files.length) handleFileSelection(this.files[0]); });
+            }
 
-            uploadArea.addEventListener('dragover', function (e) {
-                e.preventDefault();
-                uploadArea.style.borderColor = '#007bff';
-            });
-
-            uploadArea.addEventListener('dragleave', function () {
-                uploadArea.style.borderColor = '#ccc';
-            });
-
-            uploadArea.addEventListener('drop', function (e) {
-                e.preventDefault();
-                uploadArea.style.borderColor = '#ccc';
-
-                if (e.dataTransfer.files.length) {
-                    handleFileSelection(e.dataTransfer.files[0]);
-                }
-            });
-
-            fileInput.addEventListener('change', function () {
-                if (this.files.length) {
-                    handleFileSelection(this.files[0]);
-                }
-            });
-            // Set up filter dropdown - use more specific selector
-            const resultsSection = document.getElementById('resultsSection');
-            if (resultsSection) {
-                resultsSection.addEventListener('click', function (e) {
+            // Filter dropdown
+            const filterBtn = document.getElementById('filterDropdownBtn');
+            const filterMenu = document.getElementById('filterDropdownMenu');
+            if (filterBtn && filterMenu) {
+                filterBtn.addEventListener('click', () => filterMenu.classList.toggle('show'));
+                document.addEventListener('click', (e) => {
+                    if (!filterBtn.contains(e.target) && !filterMenu.contains(e.target)) {
+                        filterMenu.classList.remove('show');
+                    }
+                });
+                filterMenu.addEventListener('click', (e) => {
                     if (e.target.classList.contains('dropdown-item')) {
                         e.preventDefault();
                         const status = e.target.getAttribute('data-status');
                         filterRequisitions(status);
-
-                        const dropdownBtn = resultsSection.querySelector('.dropdown-toggle');
-                        if (dropdownBtn && status === 'all') {
-                            dropdownBtn.textContent = 'Filter by';
-                        } else if (dropdownBtn) {
-                            dropdownBtn.textContent = 'Filter: ' + e.target.textContent;
-                        }
+                        filterBtn.innerHTML = `<i class="fas fa-filter"></i> Filter: ${status === 'all' ? 'All' : e.target.textContent}`;
+                        filterMenu.classList.remove('show');
                     }
                 });
             }
 
-            // Set up cancel confirmation button
+            // Cancel confirmation
             const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-            if (confirmCancelBtn) {
-                confirmCancelBtn.addEventListener('click', cancelRequest);
-            }
+            if (confirmCancelBtn) confirmCancelBtn.addEventListener('click', cancelRequest);
 
             fetchStatuses();
         });

@@ -8,6 +8,7 @@
     td.title-col {
       white-space: normal !important;
     }
+
     #confirmDeleteBtn {
       min-width: 120px;
     }
@@ -241,226 +242,229 @@
   </style>
 
   <main id="main">
+    <div class="container-fluid px-4">
 
-    <!-- Existing Admins Card -->
-    <section class="card border-0 shadow-sm mb-3">
+      <!-- Existing Admins Card -->
+      <section class="card border-0 shadow-sm mb-3">
 
-      <div class="card-header bg-white py-2 d-flex align-items-center justify-content-between">
-        <span class="mb-0 fw-bold">Existing Admins</span>
+        <div class="card-header bg-white py-2 d-flex align-items-center justify-content-between">
+          <span class="mb-0 fw-bold">Existing Admins</span>
 
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAdminModal">
-          <i class="bi bi-plus-circle me-2"></i>Add New
-        </button>
-      </div>
-
-      <div class="card-body p-4">
-
-        <!-- Loading indicator -->
-        <div id="adminLoading" class="text-center my-4">
-          <p class="mb-2">Loading admins...</p>
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAdminModal">
+            <i class="bi bi-plus-circle me-2"></i>Add New
+          </button>
         </div>
 
-        <div class="table-responsive" id="adminTableWrapper" style="display: none;">
-          <table class="table table-hover align-middle mb-0 text-nowrap">
-            <thead>
-              <tr>
-                <th>Admin ID</th>
-                <th>School ID</th>
-                <th>Full Name</th>
-                <th class="title-col">Title</th>
-                <th>Email</th>
-                <th>Phone Number</th>
-                <th>Role</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+        <div class="card-body p-4">
 
-            <tbody id="adminListBody">
-              <!-- Dynamic content -->
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-
-    </section>
-
-    <!-- Managing Resources Card -->
-    <section class="card border-0 shadow-sm mb-4">
-
-      <div class="card-header bg-white fw-bold py-3 d-flex align-items-center">
-        Managing Departments & Services
-      </div>
-
-      <div class="card-body p-4">
-
-        <!-- Loading indicator -->
-        <div id="resourcesLoading" class="text-center my-4" style="display: none;">
-          <p class="mb-2">Loading resources...</p>
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-        </div>
-
-        <div id="resourcesGrid" class="row g-3">
-          <!-- Dynamic content will be loaded here -->
-        </div>
-
-      </div>
-
-    </section>
-
-    <!-- Add Admin Modal -->
-    <div class="modal fade" id="addAdminModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Add New Admin</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div id="addModalLoading" class="text-center py-5" style="display: none;">
-              <div class="spinner-border text-primary mb-3" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-              <p class="text-muted">Loading form data...</p>
+          <!-- Loading indicator -->
+          <div id="adminLoading" class="text-center my-4">
+            <p class="mb-2">Loading admins...</p>
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
             </div>
+          </div>
 
-            <div id="addModalContent">
-              <form id="addAdminForm" novalidate>
-                @csrf
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <label for="first_name" class="form-label">First Name</label>
-                    <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First Name"
-                      required>
-                  </div>
-                  <div class="col-md-4">
-                    <label for="middle_name" class="form-label">Middle Name</label>
-                    <input type="text" class="form-control" id="middle_name" name="middle_name" placeholder="Middle Name">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="last_name" class="form-label">Last Name</label>
-                    <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last Name"
-                      required>
-                  </div>
+          <div class="table-responsive" id="adminTableWrapper" style="display: none;">
+            <table class="table table-hover align-middle mb-0 text-nowrap">
+              <thead>
+                <tr>
+                  <th>Admin ID</th>
+                  <th>School ID</th>
+                  <th>Full Name</th>
+                  <th class="title-col">Title</th>
+                  <th>Email</th>
+                  <th>Phone Number</th>
+                  <th>Role</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
 
-                  <!-- Title Field -->
-                  <div class="col-md-6">
-                    <label for="title" class="form-label">Title</label>
-                    <input type="text" class="form-control" id="title" name="title"
-                      placeholder="e.g., Dr., Prof., Mr., Ms." maxlength="100">
-                  </div>
+              <tbody id="adminListBody">
+                <!-- Dynamic content -->
+              </tbody>
+            </table>
+          </div>
 
-                  <div class="col-md-6">
-                    <label for="school_id" class="form-label d-flex align-items-center">
-                      School ID
-                      <small class="text-muted ms-2">(Optional)</small>
-                    </label>
-                    <input type="text" class="form-control" id="school_id" name="school_id" placeholder="00-0000-00"
-                      pattern="\d{2}-\d{4}-\d{2}" maxlength="10" minlength="10">
-                  </div>
-                  <div class="col-md-6">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="samplemail@gmail.com"
-                      required minlength="6" maxlength="150" autocomplete="off">
-                  </div>
+        </div>
 
-                  <div class="col-md-6">
-                    <label for="contact_number" class="form-label">Phone Number</label>
-                    <input type="tel" class="form-control" id="contact_number" name="contact_number"
-                      placeholder="e.g. 09123456789" pattern="\d{11,20}" minlength="11" maxlength="20">
-                  </div>
+      </section>
 
-                  <div class="col-md-6">
-                    <label for="role_id" class="form-label">Role</label>
-                    <select class="form-select" id="role_id" name="role_id" required>
-                      <option value="">Select a role</option>
-                    </select>
-                  </div>
+      <!-- Managing Resources Card -->
+      <section class="card border-0 shadow-sm mb-4">
 
-                  <div class="col-12">
-                    <label for="password" class="form-label d-flex align-items-center">
-                      Temporary Password
-                      <small class="text-muted ms-2">(Admin will be prompted to change this upon first login.)</small>
-                    </label>
-                    <input type="password" class="form-control" id="password" name="password"
-                      placeholder="Temporary Password" required minlength="8" maxlength="12">
-                  </div>
+        <div class="card-header bg-white fw-bold py-3 d-flex align-items-center">
+          Managing Departments & Services
+        </div>
 
-                  <!-- Departments Checklist Section -->
-                  <div class="col-12">
-                    <label class="form-label fw-bold">Departments</label>
-                    <div class="row">
-                      <div class="col-md-6">
-                        <div class="card border">
-                          <div class="card-header bg-light py-2">
-                            <h6 class="mb-0">Select Departments</h6>
-                          </div>
-                          <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                            <div id="add-departments-checklist" class="d-flex flex-column gap-2">
-                              <div class="text-muted">Loading departments...</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="card border">
-                          <div class="card-header bg-light py-2">
-                            <h6 class="mb-0">Selected Departments</h6>
-                          </div>
-                          <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                            <div id="add-selected-departments-preview" class="d-flex flex-column gap-2">
-                              <div class="text-muted">No departments selected</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <input type="hidden" id="add-selected-departments" name="department_ids">
-                  </div>
+        <div class="card-body p-4">
 
-                  <!-- Services Checklist Section -->
-                  <div class="col-12 mt-3">
-                    <label class="form-label fw-bold">Services</label>
-                    <div class="row">
-                      <div class="col-md-6">
-                        <div class="card border">
-                          <div class="card-header bg-light py-2">
-                            <h6 class="mb-0">Select Services</h6>
-                          </div>
-                          <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                            <div id="add-services-checklist" class="d-flex flex-column gap-2">
-                              <div class="text-muted">Loading services...</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="card border">
-                          <div class="card-header bg-light py-2">
-                            <h6 class="mb-0">Selected Services</h6>
-                          </div>
-                          <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                            <div id="add-selected-services-preview" class="d-flex flex-column gap-2">
-                              <div class="text-muted">No services selected</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <input type="hidden" id="add-selected-services" name="service_ids">
-                  </div>
+          <!-- Loading indicator -->
+          <div id="resourcesLoading" class="text-center my-4" style="display: none;">
+            <p class="mb-2">Loading resources...</p>
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+
+          <div id="resourcesGrid" class="row g-3">
+            <!-- Dynamic content will be loaded here -->
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- Add Admin Modal -->
+      <div class="modal fade" id="addAdminModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Add New Admin</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div id="addModalLoading" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-primary mb-3" role="status">
+                  <span class="visually-hidden">Loading...</span>
                 </div>
-              </form>
+                <p class="text-muted">Loading form data...</p>
+              </div>
+
+              <div id="addModalContent">
+                <form id="addAdminForm" novalidate>
+                  @csrf
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label for="first_name" class="form-label">First Name</label>
+                      <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First Name"
+                        required>
+                    </div>
+                    <div class="col-md-4">
+                      <label for="middle_name" class="form-label">Middle Name</label>
+                      <input type="text" class="form-control" id="middle_name" name="middle_name"
+                        placeholder="Middle Name">
+                    </div>
+                    <div class="col-md-4">
+                      <label for="last_name" class="form-label">Last Name</label>
+                      <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last Name"
+                        required>
+                    </div>
+
+                    <!-- Title Field -->
+                    <div class="col-md-6">
+                      <label for="title" class="form-label">Title</label>
+                      <input type="text" class="form-control" id="title" name="title"
+                        placeholder="e.g., Dr., Prof., Mr., Ms." maxlength="100">
+                    </div>
+
+                    <div class="col-md-6">
+                      <label for="school_id" class="form-label d-flex align-items-center">
+                        School ID
+                        <small class="text-muted ms-2">(Optional)</small>
+                      </label>
+                      <input type="text" class="form-control" id="school_id" name="school_id" placeholder="00-0000-00"
+                        pattern="\d{2}-\d{4}-\d{2}" maxlength="10" minlength="10">
+                    </div>
+                    <div class="col-md-6">
+                      <label for="email" class="form-label">Email</label>
+                      <input type="email" class="form-control" id="email" name="email" placeholder="samplemail@gmail.com"
+                        required minlength="6" maxlength="150" autocomplete="off">
+                    </div>
+
+                    <div class="col-md-6">
+                      <label for="contact_number" class="form-label">Phone Number</label>
+                      <input type="tel" class="form-control" id="contact_number" name="contact_number"
+                        placeholder="e.g. 09123456789" pattern="\d{11,20}" minlength="11" maxlength="20">
+                    </div>
+
+                    <div class="col-md-6">
+                      <label for="role_id" class="form-label">Role</label>
+                      <select class="form-select" id="role_id" name="role_id" required>
+                        <option value="">Select a role</option>
+                      </select>
+                    </div>
+
+                    <div class="col-12">
+                      <label for="password" class="form-label d-flex align-items-center">
+                        Temporary Password
+                        <small class="text-muted ms-2">(Admin will be prompted to change this upon first login.)</small>
+                      </label>
+                      <input type="password" class="form-control" id="password" name="password"
+                        placeholder="Temporary Password" required minlength="8" maxlength="12">
+                    </div>
+
+                    <!-- Departments Checklist Section -->
+                    <div class="col-12">
+                      <label class="form-label fw-bold">Departments</label>
+                      <div class="row">
+                        <div class="col-md-6">
+                          <div class="card border">
+                            <div class="card-header bg-light py-2">
+                              <h6 class="mb-0">Select Departments</h6>
+                            </div>
+                            <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                              <div id="add-departments-checklist" class="d-flex flex-column gap-2">
+                                <div class="text-muted">Loading departments...</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="card border">
+                            <div class="card-header bg-light py-2">
+                              <h6 class="mb-0">Selected Departments</h6>
+                            </div>
+                            <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                              <div id="add-selected-departments-preview" class="d-flex flex-column gap-2">
+                                <div class="text-muted">No departments selected</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <input type="hidden" id="add-selected-departments" name="department_ids">
+                    </div>
+
+                    <!-- Services Checklist Section -->
+                    <div class="col-12">
+                      <label class="form-label fw-bold">Services</label>
+                      <div class="row">
+                        <div class="col-md-6">
+                          <div class="card border">
+                            <div class="card-header bg-light py-2">
+                              <h6 class="mb-0">Select Services</h6>
+                            </div>
+                            <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                              <div id="add-services-checklist" class="d-flex flex-column gap-2">
+                                <div class="text-muted">Loading services...</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="card border">
+                            <div class="card-header bg-light py-2">
+                              <h6 class="mb-0">Selected Services</h6>
+                            </div>
+                            <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                              <div id="add-selected-services-preview" class="d-flex flex-column gap-2">
+                                <div class="text-muted">No services selected</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <input type="hidden" id="add-selected-services" name="service_ids">
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" form="addAdminForm" class="btn btn-primary">Add Admin</button>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" form="addAdminForm" class="btn btn-primary">Add Admin</button>
+            </div>
           </div>
         </div>
       </div>
@@ -577,7 +581,7 @@
                 </div>
 
                 <!-- Services Checklist Section -->
-                <div class="col-12 mt-3">
+                <div class="col-12">
                   <label class="form-label fw-bold">Services</label>
                   <div class="row">
                     <div class="col-md-6">
@@ -678,12 +682,12 @@
         const div = document.createElement('div');
         div.className = 'form-check';
         div.innerHTML = `
-                  <input class="form-check-input add-department-checkbox" type="checkbox" 
-                         value="${dept.department_id}" id="add_dept_${dept.department_id}">
-                  <label class="form-check-label" for="add_dept_${dept.department_id}">
-                    ${dept.department_name} (${dept.department_code})
-                  </label>
-                `;
+                    <input class="form-check-input add-department-checkbox" type="checkbox" 
+                           value="${dept.department_id}" id="add_dept_${dept.department_id}">
+                    <label class="form-check-label" for="add_dept_${dept.department_id}">
+                      ${dept.department_name} (${dept.department_code})
+                    </label>
+                  `;
 
         div.querySelector('.add-department-checkbox').addEventListener('change', updateAddDepartmentsPreview);
         checklistContainer.appendChild(div);
@@ -709,12 +713,12 @@
         const div = document.createElement('div');
         div.className = 'form-check';
         div.innerHTML = `
-                  <input class="form-check-input add-service-checkbox" type="checkbox" 
-                         value="${serviceId}" id="add_service_${serviceId}">
-                  <label class="form-check-label" for="add_service_${serviceId}">
-                    ${serviceName}
-                  </label>
-                `;
+                    <input class="form-check-input add-service-checkbox" type="checkbox" 
+                           value="${serviceId}" id="add_service_${serviceId}">
+                    <label class="form-check-label" for="add_service_${serviceId}">
+                      ${serviceName}
+                    </label>
+                  `;
 
         div.querySelector('.add-service-checkbox').addEventListener('change', updateAddServicesPreview);
         checklistContainer.appendChild(div);
@@ -739,10 +743,10 @@
         const dept = window.departmentsData.find(d => d.department_id.toString() === deptId.toString());
         if (dept) {
           previewHtml += `
-                    <div class="p-2 bg-light rounded mb-1">
-                      ${dept.department_name} (${dept.department_code})
-                    </div>
-                  `;
+                      <div class="p-2 bg-light rounded mb-1">
+                        ${dept.department_name} (${dept.department_code})
+                      </div>
+                    `;
         }
       });
       previewContainer.innerHTML = previewHtml;
@@ -767,10 +771,10 @@
         if (service) {
           const serviceName = service.service_name || service.name || 'Unknown';
           previewHtml += `
-                    <div class="p-2 bg-light rounded mb-1">
-                      ${serviceName}
-                    </div>
-                  `;
+                      <div class="p-2 bg-light rounded mb-1">
+                        ${serviceName}
+                      </div>
+                    `;
         }
       });
       previewContainer.innerHTML = previewHtml;
@@ -797,13 +801,13 @@
         const div = document.createElement('div');
         div.className = 'form-check';
         div.innerHTML = `
-                            <input class="form-check-input department-checkbox" type="checkbox" 
-                                   value="${dept.department_id}" id="dept_${dept.department_id}"
-                                   ${isChecked ? 'checked' : ''}>
-                            <label class="form-check-label" for="dept_${dept.department_id}">
-                              ${dept.department_name} (${dept.department_code})
-                            </label>
-                          `;
+                              <input class="form-check-input department-checkbox" type="checkbox" 
+                                     value="${dept.department_id}" id="dept_${dept.department_id}"
+                                     ${isChecked ? 'checked' : ''}>
+                              <label class="form-check-label" for="dept_${dept.department_id}">
+                                ${dept.department_name} (${dept.department_code})
+                              </label>
+                            `;
 
         div.querySelector('.department-checkbox').addEventListener('change', updateSelectedDepartmentsPreview);
         checklistContainer.appendChild(div);
@@ -967,20 +971,20 @@
             const card = document.createElement('div');
             card.className = 'col-md-6 col-lg-4';
             card.innerHTML = `
-                            <div class="card h-100 border">
-                              <div class="card-body">
-                                <h6 class="card-title fw-bold mb-3">${fullName}</h6>
-                                <div class="mb-2">
-                                  <small class="text-muted d-block mb-1">Departments:</small>
-                                  <div>${departmentsHtml}</div>
-                                </div>
-                                <div>
-                                  <small class="text-muted d-block mb-1">Services:</small>
-                                  <div>${servicesHtml}</div>
+                              <div class="card h-100 border">
+                                <div class="card-body">
+                                  <h6 class="card-title fw-bold mb-3">${fullName}</h6>
+                                  <div class="mb-2">
+                                    <small class="text-muted d-block mb-1">Departments:</small>
+                                    <div>${departmentsHtml}</div>
+                                  </div>
+                                  <div>
+                                    <small class="text-muted d-block mb-1">Services:</small>
+                                    <div>${servicesHtml}</div>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          `;
+                            `;
             resourcesGrid.appendChild(card);
           });
         } catch (error) {
@@ -1026,22 +1030,22 @@
 
               const row = document.createElement('tr');
               row.innerHTML = `
-                              <td>${admin.admin_id}</td>
-                              <td>${admin.school_id || 'N/A'}</td>
-                              <td>${admin.full_name || `${admin.first_name} ${admin.middle_name ? admin.middle_name + ' ' : ''}${admin.last_name}`}</td>
-                              <td class="title-col">${admin.title || 'N/A'}</td>
-                              <td title="${admin.email}">${admin.email}</td>
-                              <td>${admin.contact_number || 'N/A'}</td>
-                              <td>${admin.role ? admin.role.role_title : 'N/A'}</td>
-                              <td>
-                                <button class="btn btn-sm btn-info me-1" onclick="openEditModal(${admin.admin_id})" title="Edit">
-                                  <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteAdmin(${admin.admin_id})" title="Delete">
-                                  <i class="bi bi-trash"></i>
-                                </button>
-                              </td>
-                            `;
+                                <td>${admin.admin_id}</td>
+                                <td>${admin.school_id || 'N/A'}</td>
+                                <td>${admin.full_name || `${admin.first_name} ${admin.middle_name ? admin.middle_name + ' ' : ''}${admin.last_name}`}</td>
+                                <td class="title-col">${admin.title || 'N/A'}</td>
+                                <td title="${admin.email}">${admin.email}</td>
+                                <td>${admin.contact_number || 'N/A'}</td>
+                                <td>${admin.role ? admin.role.role_title : 'N/A'}</td>
+                                <td>
+                                  <button class="btn btn-sm btn-info me-1" onclick="openEditModal(${admin.admin_id})" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                  </button>
+                                  <button class="btn btn-sm btn-danger" onclick="deleteAdmin(${admin.admin_id})" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                  </button>
+                                </td>
+                              `;
               adminListBody.appendChild(row);
             });
           }
@@ -1081,19 +1085,19 @@
           .then(admin => {
             // Populate admin details in modal
             document.getElementById('deleteAdminDetails').innerHTML = `
-                      <div class="row">
-                        <div class="col-4 fw-bold">School ID:</div>
-                        <div class="col-8">${admin.school_id || 'N/A'}</div>
-                        <div class="col-4 fw-bold">Name:</div>
-                        <div class="col-8">${admin.first_name} ${admin.middle_name ? admin.middle_name + ' ' : ''}${admin.last_name}</div>
-                        <div class="col-4 fw-bold">Title:</div>
-                        <div class="col-8">${admin.title || 'N/A'}</div>
-                        <div class="col-4 fw-bold">Email:</div>
-                        <div class="col-8">${admin.email}</div>
-                        <div class="col-4 fw-bold">Role:</div>
-                        <div class="col-8">${admin.role ? admin.role.role_title : 'N/A'}</div>
-                      </div>
-                    `;
+                        <div class="row">
+                          <div class="col-4 fw-bold">School ID:</div>
+                          <div class="col-8">${admin.school_id || 'N/A'}</div>
+                          <div class="col-4 fw-bold">Name:</div>
+                          <div class="col-8">${admin.first_name} ${admin.middle_name ? admin.middle_name + ' ' : ''}${admin.last_name}</div>
+                          <div class="col-4 fw-bold">Title:</div>
+                          <div class="col-8">${admin.title || 'N/A'}</div>
+                          <div class="col-4 fw-bold">Email:</div>
+                          <div class="col-8">${admin.email}</div>
+                          <div class="col-4 fw-bold">Role:</div>
+                          <div class="col-8">${admin.role ? admin.role.role_title : 'N/A'}</div>
+                        </div>
+                      `;
 
             // Show the modal
             const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
@@ -1103,11 +1107,11 @@
             console.error('Error fetching admin details:', error);
             // Fallback: show modal with basic info if details fetch fails
             document.getElementById('deleteAdminDetails').innerHTML = `
-                      <div class="text-center">
-                        <p class="mb-0">Admin ID: ${adminId}</p>
-                        <p class="text-muted">Unable to load full details</p>
-                      </div>
-                    `;
+                        <div class="text-center">
+                          <p class="mb-0">Admin ID: ${adminId}</p>
+                          <p class="text-muted">Unable to load full details</p>
+                        </div>
+                      `;
             const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
             deleteModal.show();
           });
@@ -1431,13 +1435,13 @@
           const div = document.createElement('div');
           div.className = 'form-check';
           div.innerHTML = `
-                              <input class="form-check-input department-checkbox" type="checkbox" 
-                                     value="${dept.department_id}" id="dept_${dept.department_id}"
-                                     ${isChecked ? 'checked' : ''}>
-                              <label class="form-check-label" for="dept_${dept.department_id}">
-                                ${dept.department_name} (${dept.department_code})
-                              </label>
-                            `;
+                                <input class="form-check-input department-checkbox" type="checkbox" 
+                                       value="${dept.department_id}" id="dept_${dept.department_id}"
+                                       ${isChecked ? 'checked' : ''}>
+                                <label class="form-check-label" for="dept_${dept.department_id}">
+                                  ${dept.department_name} (${dept.department_code})
+                                </label>
+                              `;
 
           div.querySelector('.department-checkbox').addEventListener('change', updateSelectedDepartmentsPreview);
           checklistContainer.appendChild(div);
@@ -1467,13 +1471,13 @@
           const div = document.createElement('div');
           div.className = 'form-check';
           div.innerHTML = `
-                            <input class="form-check-input service-checkbox" type="checkbox" 
-                                   value="${serviceId}" id="service_${serviceId}"
-                                   ${isChecked ? 'checked' : ''}>
-                            <label class="form-check-label" for="service_${serviceId}">
-                              ${serviceName}
-                            </label>
-                          `;
+                              <input class="form-check-input service-checkbox" type="checkbox" 
+                                     value="${serviceId}" id="service_${serviceId}"
+                                     ${isChecked ? 'checked' : ''}>
+                              <label class="form-check-label" for="service_${serviceId}">
+                                ${serviceName}
+                              </label>
+                            `;
 
           div.querySelector('.service-checkbox').addEventListener('change', updateSelectedServicesPreview);
           checklistContainer.appendChild(div);
@@ -1500,10 +1504,10 @@
           const dept = window.departmentsData.find(d => d.department_id.toString() === deptId.toString());
           if (dept) {
             previewHtml += `
-                                <div class="p-2 bg-light rounded mb-1">
-                                  ${dept.department_name} (${dept.department_code})
-                                </div>
-                              `;
+                                  <div class="p-2 bg-light rounded mb-1">
+                                    ${dept.department_name} (${dept.department_code})
+                                  </div>
+                                `;
           }
         });
         previewContainer.innerHTML = previewHtml;
@@ -1533,10 +1537,10 @@
           if (service) {
             const serviceName = service.service_name || service.name || 'Unknown';
             previewHtml += `
-                          <div class="p-2 bg-light rounded mb-1">
-                            ${serviceName}
-                          </div>
-                        `;
+                            <div class="p-2 bg-light rounded mb-1">
+                              ${serviceName}
+                            </div>
+                          `;
           }
         });
         previewContainer.innerHTML = previewHtml;

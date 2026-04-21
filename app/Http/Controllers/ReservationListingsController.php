@@ -43,7 +43,387 @@ class ReservationListingsController extends Controller
     // ------------------------------------------------------------------------
     // Requisition API Methods
     // ------------------------------------------------------------------------
+/**
+ * OPTIMIZED: Get all data needed for the request view page in a single query
+ * This reduces 5-6 separate API calls into 1 efficient database query
+ *
+ * @param string|int $requestId
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function getRequestViewData($requestId)
+{   
+    try {
+        $startTime = microtime(true);
+        
+        // Single efficient query with all necessary relationships
+        $form = RequisitionForm::with([
+            'formStatus',
+            'purpose',
+            'finalizedBy',
+            'closedBy',
+            'requestedFacilities.facility',
+            'requestedEquipment.equipment',
+            'requestedServices.service',
+            'requisitionApprovals' => function ($query) {
+                $query->with(['approvedBy', 'rejectedBy'])
+                      ->orderBy('date_updated', 'desc')
+                      ->limit(50);
+            },
+            'requisitionComments' => function ($query) {
+                $query->with('admin')
+                      ->orderBy('created_at', 'desc')
+                      ->limit(100);
+            },
+            'requisitionFees' => function ($query) {
+                $query->with('addedBy')
+                      ->orderBy('created_at', 'desc');
+            }
+        ])->findOrFail($requestId);
+        
+        // Use the existing calculateDurationHours method
+        $durationHours = $this->calculateDurationHours($form);
+        
+        // Calculate base fees from items
+        $feeCalculation = $this->calculateFeesFromItems($form, $durationHours);
+        
+        // Format schedule
+        $scheduleFormatted = $this->scheduleFormatter->forApi($form);
+        
+        // Build the complete response
+        $response = [
+            'success' => true,
+            'data' => [
+                'request_id' => $form->request_id,
+                'access_code' => $form->access_code,
+                'user_details' => [
+                    'user_type' => $form->user_type,
+                    'first_name' => $form->first_name,
+                    'last_name' => $form->last_name,
+                    'email' => $form->email,
+                    'school_id' => $form->school_id,
+                    'organization_name' => $form->organization_name,
+                    'contact_number' => $form->contact_number,
+                ],
+                'form_details' => [
+                    'num_participants' => $form->num_participants,
+                    'num_tables' => $form->num_tables,
+                    'num_chairs' => $form->num_chairs,
+                    'num_microphones' => $form->num_microphones,
+                    'purpose' => $form->purpose?->purpose_name,
+                    'additional_requests' => $form->additional_requests,
+                    'endorser' => $form->endorser,
+                    'date_endorsed' => $form->date_endorsed,
+                    'status' => [
+                        'id' => $form->formStatus?->status_id,
+                        'name' => $form->formStatus?->status_name,
+                        'color' => $form->formStatus?->color_code,
+                    ],
+                    'calendar_info' => [
+                        'title' => $form->calendar_title,
+                        'description' => $form->calendar_description,
+                    ],
+                    'official_receipt_num' => $form->official_receipt_num,
+                ],
+                'schedule' => $scheduleFormatted,
+                'duration_hours' => $durationHours,
+                'is_multi_day' => $form->start_date !== $form->end_date,
+                'requested_items' => [
+                    'facilities' => $this->formatFacilitiesWithFees($form->requestedFacilities, $durationHours),
+                    'equipment' => $this->formatEquipmentWithFees($form->requestedEquipment, $durationHours),
+                ],
+                'fees' => $feeCalculation,
+                'documents' => [
+                    'endorser' => $form->endorser,
+                    'date_endorsed' => $form->date_endorsed,
+                    'formal_letter' => [
+                        'url' => $form->formal_letter_url,
+                        'public_id' => $form->formal_letter_public_id,
+                    ],
+                    'facility_layout' => [
+                        'url' => $form->facility_layout_url,
+                        'public_id' => $form->facility_layout_public_id,
+                    ],
+                    'proof_of_payment' => [
+                        'url' => $form->proof_of_payment_url,
+                        'public_id' => $form->proof_of_payment_public_id,
+                    ],
+                    'official_receipt' => [
+                        'number' => $form->official_receipt_num,
+                        'url' => null,
+                        'public_id' => null,
+                    ],
+                ],
+                'approval_info' => [
+                    'approval_count' => $form->requisitionApprovals->whereNotNull('approved_by')->count(),
+                    'rejection_count' => $form->requisitionApprovals->whereNotNull('rejected_by')->count(),
+                    'is_finalized' => $form->is_finalized,
+                    'finalized_at' => $form->finalized_at,
+                    'finalized_by' => $form->finalizedBy ? [
+                        'id' => $form->finalizedBy->admin_id,
+                        'name' => $form->finalizedBy->first_name . ' ' . $form->finalizedBy->last_name,
+                        'photo' => $form->finalizedBy->photo_url,
+                    ] : null,
+                    'is_closed' => $form->is_closed,
+                    'closed_at' => $form->closed_at,
+                    'closed_by' => $form->closedBy ? [
+                        'id' => $form->closedBy->admin_id,
+                        'name' => $form->closedBy->first_name . ' ' . $form->closedBy->last_name,
+                    ] : null,
+                ],
+                'approval_history' => $this->formatApprovalHistory($form->requisitionApprovals),
+                'comments' => $this->formatComments($form->requisitionComments),
+                'requisition_fees' => $this->formatRequisitionFees($form->requisitionFees),
+                'status_tracking' => [
+                    'is_late' => $form->is_late,
+                    'late_penalty_fee' => $form->late_penalty_fee,
+                    'returned_at' => $form->returned_at,
+                    'created_at' => $form->created_at,
+                    'updated_at' => $form->updated_at,
+                ],
+            ]
+        ];
+        
+        $executionTime = round((microtime(true) - $startTime) * 1000, 2);
+        \Log::info("Request view data loaded in {$executionTime}ms for request #{$requestId}");
+        
+        return response()->json($response);
+        
+    } catch (\Exception $e) {
+        \Log::error('Failed to load request view data', [
+            'request_id' => $requestId,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'error' => 'Failed to load request data',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
 
+/**
+ * Calculate duration in hours based on all_day flag
+ */
+private function calculateDurationHours($form)
+{
+    if ($form->all_day) {
+        $startDate = Carbon::parse($form->start_date);
+        $endDate = Carbon::parse($form->end_date);
+        $days = $startDate->diffInDays($endDate) + 1;
+        return $days * 8; // 8 hours per day
+    }
+    
+    try {
+        $startDateTime = Carbon::parse($form->start_date . ' ' . $form->start_time);
+        $endDateTime = Carbon::parse($form->end_date . ' ' . $form->end_time);
+        return max(1, $startDateTime->diffInHours($endDateTime));
+    } catch (\Exception $e) {
+        return 1;
+    }
+}
+
+/**
+ * Calculate fees from requested items
+ */
+private function calculateFeesFromItems($form, $durationHours)
+{
+    $facilityBaseTotal = 0;
+    $facilityWaivedTotal = 0;
+    $equipmentBaseTotal = 0;
+    $equipmentWaivedTotal = 0;
+    
+    // Calculate facility fees
+    foreach ($form->requestedFacilities as $facility) {
+        $fee = $facility->facility->base_fee;
+        $total = $facility->facility->rate_type === 'Per Hour' ? $fee * $durationHours : $fee;
+        
+        if ($facility->is_waived) {
+            $facilityWaivedTotal += $total;
+        } else {
+            $facilityBaseTotal += $total;
+        }
+    }
+    
+    // Calculate equipment fees
+    foreach ($form->requestedEquipment as $equipment) {
+        $fee = $equipment->equipment->base_fee;
+        $quantity = $equipment->quantity;
+        $total = $equipment->equipment->rate_type === 'Per Hour' 
+            ? ($fee * $durationHours) * $quantity 
+            : $fee * $quantity;
+        
+        if ($equipment->is_waived) {
+            $equipmentWaivedTotal += $total;
+        } else {
+            $equipmentBaseTotal += $total;
+        }
+    }
+    
+    $baseTotal = $facilityBaseTotal + $equipmentBaseTotal;
+    $waivedTotal = $facilityWaivedTotal + $equipmentWaivedTotal;
+    
+    // Calculate additional fees and discounts
+    $additionalFeesTotal = 0;
+    $discountsTotal = 0;
+    
+    foreach ($form->requisitionFees as $fee) {
+        if ($fee->fee_amount > 0) {
+            $additionalFeesTotal += $fee->fee_amount;
+        }
+        if ($fee->discount_amount > 0) {
+            if ($fee->discount_type === 'Percentage') {
+                $discountsTotal += ($fee->discount_amount / 100) * ($baseTotal + $additionalFeesTotal);
+            } else {
+                $discountsTotal += $fee->discount_amount;
+            }
+        }
+    }
+    
+    $approvedFee = $baseTotal + $additionalFeesTotal - $discountsTotal;
+    if ($form->is_late) {
+        $approvedFee += $form->late_penalty_fee;
+    }
+    
+    return [
+        'base_fee' => $baseTotal,
+        'waived_fee' => $waivedTotal,
+        'tentative_fee' => $baseTotal + $waivedTotal,
+        'additional_fees_total' => $additionalFeesTotal,
+        'discounts_total' => $discountsTotal,
+        'late_penalty_fee' => $form->late_penalty_fee,
+        'approved_fee' => max(0, $approvedFee),
+        'breakdown' => [
+            'facilities_base' => $facilityBaseTotal,
+            'facilities_waived' => $facilityWaivedTotal,
+            'equipment_base' => $equipmentBaseTotal,
+            'equipment_waived' => $equipmentWaivedTotal,
+        ]
+    ];
+}
+
+/**
+ * Format facilities with fee calculations
+ */
+private function formatFacilitiesWithFees($facilities, $durationHours)
+{
+    return $facilities->map(function ($item) use ($durationHours) {
+        $fee = $item->facility->base_fee;
+        $total = $item->facility->rate_type === 'Per Hour' ? $fee * $durationHours : $fee;
+        $rateDescription = $item->facility->rate_type === 'Per Hour' 
+            ? "₱" . number_format($fee, 2) . "/hr × " . $durationHours . " hrs"
+            : "₱" . number_format($fee, 2) . "/event";
+        
+        return [
+            'requested_facility_id' => $item->requested_facility_id,
+            'facility_id' => $item->facility_id,
+            'name' => $item->facility->facility_name,
+            'fee' => $fee,
+            'rate_type' => $item->facility->rate_type,
+            'is_waived' => (bool) $item->is_waived,
+            'total_fee' => $total,
+            'rate_description' => $rateDescription,
+        ];
+    })->values();
+}
+
+/**
+ * Format equipment with fee calculations
+ */
+private function formatEquipmentWithFees($equipment, $durationHours)
+{
+    return $equipment->map(function ($item) use ($durationHours) {
+        $fee = $item->equipment->base_fee;
+        $quantity = $item->quantity;
+        $total = $item->equipment->rate_type === 'Per Hour' 
+            ? ($fee * $durationHours) * $quantity 
+            : $fee * $quantity;
+        $rateDescription = $item->equipment->rate_type === 'Per Hour'
+            ? "₱" . number_format($fee, 2) . "/hr × " . $durationHours . " hrs × " . $quantity
+            : "₱" . number_format($fee, 2) . "/event × " . $quantity;
+        
+        return [
+            'requested_equipment_id' => $item->requested_equipment_id,
+            'equipment_id' => $item->equipment_id,
+            'name' => $item->equipment->equipment_name,
+            'fee' => $fee,
+            'quantity' => $quantity,
+            'rate_type' => $item->equipment->rate_type,
+            'is_waived' => (bool) $item->is_waived,
+            'total_fee' => $total,
+            'rate_description' => $rateDescription,
+        ];
+    })->values();
+}
+
+/**
+ * Format approval history for display
+ */
+private function formatApprovalHistory($approvals)
+{
+    return $approvals->map(function ($approval) {
+        $admin = $approval->approvedBy ?: $approval->rejectedBy;
+        $action = $approval->approved_by ? 'approved' : 'rejected';
+        
+        return [
+            'admin_id' => $admin?->admin_id,
+            'admin_name' => $admin ? $admin->first_name . ' ' . $admin->last_name : 'Unknown Admin',
+            'admin_photo' => $admin?->photo_url,
+            'action' => $action,
+            'action_class' => $approval->approved_by ? 'text-success' : 'text-danger',
+            'action_icon' => $approval->approved_by ? 'fa-thumbs-up' : 'fa-thumbs-down',
+            'remarks' => $approval->remarks,
+            'date_updated' => $approval->date_updated,
+            'formatted_date' => Carbon::parse($approval->date_updated)->format('M j, Y g:i A'),
+        ];
+    })->values();
+}
+
+/**
+ * Format comments for activity timeline
+ */
+private function formatComments($comments)
+{
+    return $comments->map(function ($comment) {
+        return [
+            'comment_id' => $comment->comment_id,
+            'comment' => $comment->comment,
+            'admin' => [
+                'admin_id' => $comment->admin?->admin_id,
+                'first_name' => $comment->admin?->first_name,
+                'last_name' => $comment->admin?->last_name,
+                'photo_url' => $comment->admin?->photo_url,
+            ],
+            'created_at' => $comment->created_at,
+            'formatted_date' => Carbon::parse($comment->created_at)->diffForHumans(),
+        ];
+    })->values();
+}
+
+/**
+ * Format requisition fees for display
+ */
+private function formatRequisitionFees($fees)
+{
+    return $fees->map(function ($fee) {
+        return [
+            'fee_id' => $fee->fee_id,
+            'label' => $fee->label,
+            'account_num' => $fee->account_num,
+            'fee_amount' => (float) $fee->fee_amount,
+            'discount_amount' => (float) $fee->discount_amount,
+            'discount_type' => $fee->discount_type,
+            'type' => $fee->fee_amount > 0 ? ($fee->discount_amount > 0 ? 'mixed' : 'fee') : 'discount',
+            'added_by' => $fee->addedBy ? [
+                'admin_id' => $fee->addedBy->admin_id,
+                'name' => $fee->addedBy->first_name . ' ' . $fee->addedBy->last_name,
+            ] : null,
+            'created_at' => $fee->created_at,
+            'formatted_date' => Carbon::parse($fee->created_at)->diffForHumans(),
+        ];
+    })->values();
+}
     public function getSingleRequest($requestId)
     {
         $form = RequisitionForm::with($this->getStandardRelations())

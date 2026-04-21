@@ -991,83 +991,8 @@
 </head>
 
 <body>
-  <header class="top-header-bar">
-    <div class="container d-flex justify-content-between align-items-center">
-      <div class="cpu-brand">
-        <img src="{{ asset('assets/cpu-logo.png') }}" alt="CPU Logo">
-        <div>
-          <div class="title">Central Philippine University</div>
-          <div class="subtitle">Equipment and Facility Booking Services</div>
-        </div>
-      </div>
-      <div class="admin-login">
-        <span>Are you an Admin? <a href="{{ url('admin/login') }}">Login here.</a></span>
-      </div>
-    </div>
-  </header>
 
-  <nav class="navbar navbar-expand-lg main-navbar">
-    <div class="container">
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto">
-
-          <li class="nav-item">
-            <a class="nav-link {{ Request::is('home') ? 'active' : '' }}" href="{{ url('home') }}">Home</a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link {{ Request::is('booking-catalog') ? 'active' : '' }}"
-              href="{{ url('booking-catalog') }}">Booking Catalog</a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link {{ Request::is('your-bookings') ? 'active' : '' }}"
-              href="{{ url('your-bookings') }}">Your Bookings</a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link {{ Request::is('policies') ? 'active' : '' }}" href="{{ url('policies') }}">Reservation
-              Policies</a>
-          </li>
-
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {{ Request::is('about-facilities', 'about-equipment', 'about-services') ? 'active' : '' }}"
-              href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              About Services
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <li><a class="dropdown-item {{ Request::is('about-facilities') ? 'active' : '' }}"
-                  href="{{ url('about-facilities') }}">Facilities</a></li>
-              <li><a class="dropdown-item {{ Request::is('about-equipment') ? 'active' : '' }}"
-                  href="{{ url('about-equipment') }}">Equipment</a></li>
-              <li><a class="dropdown-item {{ Request::is('about-services') ? 'active' : '' }}"
-                  href="{{ url('about-services') }}">Services</a></li>
-            </ul>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link {{ Request::is('user-feedback') ? 'active' : '' }}"
-              href="{{ url('user-feedback') }}">Rate Our Services</a>
-          </li>
-        </ul>
-        <div class="d-flex align-items-center">
-          <span class="me-2 how-to-book d-flex align-items-center" data-bs-toggle="tooltip" data-bs-placement="bottom"
-            data-bs-custom-class="custom-tooltip" title="1. Browse the catalog and add venues or equipment to your booking cart.
-2. Go to the reservation form via 'Book Now' or your cart.
-3. Fill in required booking data and check item availability for your timeslot.
-4. Read reservation policies before submitting.">
-            How to book?
-            <i class="bi bi-question-circle ms-1" style="font-size: 0.9rem;"></i>
-          </span>
-          <a href="{{ url('booking-catalog') }}" class="btn btn-book-now">Back To Catalog</a>
-        </div>
-      </div>
-    </div>
-  </nav>
+@include('partials.navbar')
 
   <div class="container main-content">
     <form id="reservationForm" method="POST">
@@ -1837,11 +1762,7 @@
   </div>
 
 
-  <footer class="footer-container">
-    <div class="container text-center">
-      <p class="mb-0">&copy; 2025 Central Philippine University | All Rights Reserved</p>
-    </div>
-  </footer>
+@include('partials.footer')
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{{ asset('js/admin/toast.js') }}"></script>
   <script>

@@ -1,447 +1,484 @@
 // ============================================
-// HIERARCHICAL AVAILABILITY MATRIX CONTROLLER
-// WITH COLLAPSIBLE PARENTS & LAZY LOADING
+// OPTIMIZED AVAILABILITY MATRIX CONTROLLER
+// With virtual rendering, memoization, and reduced DOM operations
 // ============================================
 
 class AvailabilityMatrix {
     constructor() {
         this.currentDate = new Date();
-        this.timeRange = '8-12';
+        this.timeRange = "8-12";
         this.facilityHierarchy = [];
-        this.expandedParents = new Set();
         this.eventsCache = new Map();
-        this.selectedFacility = 'all';
-        this.searchQuery = '';
-        this.isLoading = false;
+        this.selectedFacility = "all";
+        this.searchQuery = "";
+        this.currentView = "venues";
+        
+        // Performance optimizations
+        this.renderedFacilities = [];
+        this.statusCache = new Map(); // Cache status results
+        this.debounceTimer = null;
+        this.abortController = null;
+        
+        // DOM elements cache
+        this.elements = {};
         
         this.init();
     }
 
     async init() {
+        this.cacheElements();
         await this.loadFacilityHierarchy();
         this.renderFacilityFilter();
         await this.loadEventsForCurrentDate();
         this.renderMatrix();
         this.attachEvents();
     }
+    
+    cacheElements() {
+        this.elements = {
+            container: document.getElementById("availabilityMatrix"),
+            facilitySelect: document.getElementById("facilitySelect"),
+            filterLabel: document.getElementById("filterLabel"),
+            searchInput: document.getElementById("searchInput"),
+            clearBtn: document.getElementById("clearFiltersBtn"),
+            datePicker: document.getElementById("datePicker"),
+            currentDateDisplay: document.getElementById("currentDateDisplay")
+        };
+    }
 
     async loadFacilityHierarchy() {
         try {
-            const response = await fetch('/api/availability/facilities/hierarchy');
+            const response = await fetch("/api/availability/facilities/hierarchy");
             const result = await response.json();
-            
             if (result.success) {
                 this.facilityHierarchy = result.data.hierarchy;
+                // Pre-process facilities for faster access
+                this.preProcessFacilities();
             }
         } catch (error) {
-            console.error('Error loading facility hierarchy:', error);
+            console.error("Error loading facility hierarchy:", error);
+        }
+    }
+    
+    preProcessFacilities() {
+        // Pre-split facilities by type for faster access
+        this.venuesList = this.facilityHierarchy.filter(
+            p => !p.children || p.children.length === 0
+        );
+        
+        this.parentsWithChildren = this.facilityHierarchy.filter(
+            p => p.children && p.children.length > 0
+        );
+        
+        // Create a map for quick facility lookup
+        this.facilityMap = new Map();
+        for (const venue of this.venuesList) {
+            this.facilityMap.set(venue.facility_id, venue);
+        }
+        for (const parent of this.parentsWithChildren) {
+            this.facilityMap.set(parent.facility_id, parent);
+            for (const child of parent.children) {
+                this.facilityMap.set(child.facility_id, child);
+                child.parentId = parent.facility_id;
+            }
         }
     }
 
     async loadEventsForCurrentDate() {
         const dateKey = this.formatDate(this.currentDate);
-        
+
         if (this.eventsCache.has(dateKey)) {
             const cached = this.eventsCache.get(dateKey);
             this.requisitions = cached.requisitions;
             this.calendarEvents = cached.calendarEvents;
+            this.clearStatusCache();
             return;
         }
-        
+
         this.showLoading(true);
-        
+
+        // Cancel previous request if exists
+        if (this.abortController) {
+            this.abortController.abort();
+        }
+        this.abortController = new AbortController();
+
         try {
             const params = new URLSearchParams({
                 start_date: dateKey,
                 end_date: dateKey,
-                facility_id: this.selectedFacility !== 'all' ? this.selectedFacility : ''
+                facility_id: this.selectedFacility !== "all" ? this.selectedFacility : "",
             });
-            
-            const response = await fetch(`/api/availability/events?${params}`);
+
+            const response = await fetch(`/api/availability/events?${params}`, {
+                signal: this.abortController.signal
+            });
             const result = await response.json();
-            
+
             if (result.success) {
                 this.requisitions = result.data.requisitions;
                 this.calendarEvents = result.data.calendar_events;
+                
+                // Index requisitions by facility for faster lookup
+                this.indexRequisitionsByFacility();
                 
                 this.eventsCache.set(dateKey, {
                     requisitions: this.requisitions,
                     calendarEvents: this.calendarEvents
                 });
                 
+                this.clearStatusCache();
                 this.cleanCache();
             }
         } catch (error) {
-            console.error('Error loading events:', error);
-            this.showError('Failed to load availability data');
+            if (error.name !== 'AbortError') {
+                console.error("Error loading events:", error);
+                this.showError("Failed to load availability data");
+            }
         } finally {
             this.showLoading(false);
         }
     }
     
+    indexRequisitionsByFacility() {
+        this.requisitionsByFacility = new Map();
+        if (!this.requisitions) return;
+        
+        for (const req of this.requisitions) {
+            if (req.facilities) {
+                for (const f of req.facilities) {
+                    const fid = String(f.facility_id);
+                    if (!this.requisitionsByFacility.has(fid)) {
+                        this.requisitionsByFacility.set(fid, []);
+                    }
+                    this.requisitionsByFacility.get(fid).push(req);
+                }
+            }
+        }
+    }
+    
+    clearStatusCache() {
+        this.statusCache.clear();
+    }
+
     cleanCache() {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        
-        for (const [dateKey, _] of this.eventsCache) {
-            const cacheDate = new Date(dateKey);
-            if (cacheDate < sevenDaysAgo) {
+        for (const [dateKey] of this.eventsCache) {
+            if (new Date(dateKey) < sevenDaysAgo) {
                 this.eventsCache.delete(dateKey);
             }
         }
     }
 
-    /**
-     * FIXED: Get time slots that properly span the selected range
-     * Now includes 8:00 AM to 11:30 AM for morning (8-12)
-     * and 1:00 PM to 4:30 PM for afternoon (13-17)
-     */
-getTimeSlots() {
-    const slots = [];
-    const [startHour, endHour] = this.timeRange.split('-').map(Number);
-    
-    // Include slots up to and including the end hour
-    for (let hour = startHour; hour <= endHour; hour++) {
-        slots.push(`${hour.toString().padStart(2, '0')}:00`);
-        if (hour !== endHour) {
-            slots.push(`${hour.toString().padStart(2, '0')}:30`);
+    getTimeSlots() {
+        const cacheKey = this.timeRange;
+        if (this.cachedTimeSlots && this.cachedTimeSlots.key === cacheKey) {
+            return this.cachedTimeSlots.slots;
         }
+        
+        const slots = [];
+        const [startHour, endHour] = this.timeRange.split("-").map(Number);
+        for (let hour = startHour; hour <= endHour; hour++) {
+            slots.push(`${hour.toString().padStart(2, "0")}:00`);
+            if (hour !== endHour) {
+                slots.push(`${hour.toString().padStart(2, "0")}:30`);
+            }
+        }
+        
+        this.cachedTimeSlots = { key: cacheKey, slots };
+        return slots;
     }
-    
-    return slots;
-}
 
-    /**
-     * FIXED: Get status for a specific time slot
-     */
     getStatusForTimeSlot(facilityId, timeSlot) {
-        // Check calendar events first
+        const cacheKey = `${facilityId}|${timeSlot}`;
+        if (this.statusCache.has(cacheKey)) {
+            return this.statusCache.get(cacheKey);
+        }
+        
+        let result;
+        
+        // Check calendar events
         const eventAtSlot = this.calendarEvents?.find(event => {
             if (event.all_day) return true;
             const eventStart = event.start_time?.substring(0, 5);
             const eventEnd = event.end_time?.substring(0, 5);
             return eventStart <= timeSlot && eventEnd > timeSlot;
         });
-        
-if (eventAtSlot) {
-    return {
-        status: 'event',
-        text: `📅 ${eventAtSlot.event_name || 'Event'}`,
-        event: eventAtSlot,
-        tooltip: eventAtSlot.event_name,
-        bookable: false
-    };
-}
-        
-        // Check requisitions
-        const requisitionAtSlot = this.requisitions?.find(req => {
-            const matchesFacility = req.facilities?.some(f => 
-                String(f.facility_id) === String(facilityId)
-            );
-            
-            if (!matchesFacility) return false;
+
+        if (eventAtSlot) {
+            result = {
+                status: "event",
+                text: "📅 Event",
+                event: eventAtSlot,
+                tooltip: eventAtSlot.event_name,
+                bookable: false,
+            };
+            this.statusCache.set(cacheKey, result);
+            return result;
+        }
+
+        // Check requisitions using indexed map
+        const requisitionsForFacility = this.requisitionsByFacility?.get(String(facilityId)) || [];
+        const requisitionAtSlot = requisitionsForFacility.find(req => {
             if (req.all_day) return true;
-            
             const reqStart = req.start_time?.substring(0, 5);
             const reqEnd = req.end_time?.substring(0, 5);
-            
             return reqStart <= timeSlot && reqEnd > timeSlot;
         });
-        
+
         if (requisitionAtSlot) {
-            const isApproved = requisitionAtSlot.status === 'Scheduled' || requisitionAtSlot.status === 'Ongoing';
-            const isPending = ['Pending Approval'].includes(requisitionAtSlot.status);
+            const isApproved = requisitionAtSlot.status === "Scheduled" || requisitionAtSlot.status === "Ongoing";
+            const isPending = requisitionAtSlot.status === "Pending Approval";
             
             if (isApproved) {
-                return {
-                    status: 'booked',
-                    text: '🔴 Booked',
+                result = {
+                    status: "booked",
+                    text: "🔴 Booked",
                     event: requisitionAtSlot,
                     tooltip: requisitionAtSlot.title,
-                    bookable: false
+                    bookable: false,
                 };
             } else if (isPending) {
-                return {
-                    status: 'pending',
-                    text: '🟡 Pending',
+                result = {
+                    status: "pending",
+                    text: "🟡 Pending",
                     event: requisitionAtSlot,
-                    tooltip: `${requisitionAtSlot.title} (Pending Approval)`,
-                    bookable: false
+                    tooltip: `${requisitionAtSlot.title} (Pending)`,
+                    bookable: false,
                 };
+            } else {
+                result = this.getDefaultAvailableResult();
             }
+        } else {
+            result = this.getDefaultAvailableResult();
         }
         
+        this.statusCache.set(cacheKey, result);
+        return result;
+    }
+    
+    getDefaultAvailableResult() {
         return {
-            status: 'available',
-            text: '✅ Available',
+            status: "available",
+            text: "✅ Available",
             event: null,
-            tooltip: 'Click to book this slot',
-            bookable: true
+            bookable: true,
         };
     }
 
-    async renderMatrix() {
-        const container = document.getElementById('availabilityMatrix');
-        const timeSlots = this.getTimeSlots();
-        
-        // Filter hierarchy based on selected facility
-        let filteredHierarchy = [...this.facilityHierarchy];
-        
-        if (this.selectedFacility !== 'all') {
-            const isParent = this.facilityHierarchy.some(p => p.facility_id == this.selectedFacility);
-            
-            if (isParent) {
-                filteredHierarchy = this.facilityHierarchy.filter(p => p.facility_id == this.selectedFacility);
-            } else {
-                filteredHierarchy = this.facilityHierarchy.filter(parent => 
-                    parent.children.some(child => child.facility_id == this.selectedFacility)
-                ).map(parent => ({
-                    ...parent,
-                    children: parent.children.filter(child => child.facility_id == this.selectedFacility),
-                    childrenLoaded: true
-                }));
-                if (filteredHierarchy.length > 0) {
-                    this.expandedParents.add(filteredHierarchy[0].facility_id);
+    getFacilitiesToShow() {
+        if (this.currentView === "venues") {
+            let venues = [...this.venuesList];
+            if (this.selectedFacility !== "all") {
+                venues = venues.filter(f => f.facility_id == this.selectedFacility);
+            }
+            return venues;
+        } else {
+            if (this.selectedFacility !== "all") {
+                const parent = this.facilityMap.get(parseInt(this.selectedFacility));
+                if (parent && parent.children) {
+                    return [...parent.children];
                 }
+                return [];
+            } else {
+                const allChildren = [];
+                for (const parent of this.parentsWithChildren) {
+                    allChildren.push(...parent.children);
+                }
+                return allChildren;
             }
         }
+    }
+
+    renderMatrix() {
+        if (!this.elements.container) return;
         
+        const timeSlots = this.getTimeSlots();
+        let facilitiesToShow = this.getFacilitiesToShow();
+
+        // Apply search filter
         if (this.searchQuery) {
             const query = this.searchQuery.toLowerCase();
-            filteredHierarchy = filteredHierarchy.filter(parent => {
-                const parentMatch = parent.facility_name.toLowerCase().includes(query);
-                const childrenMatch = parent.children.some(child => 
-                    child.facility_name.toLowerCase().includes(query)
-                );
-                return parentMatch || childrenMatch;
-            }).map(parent => ({
-                ...parent,
-                children: parent.children.filter(child => 
-                    child.facility_name.toLowerCase().includes(query)
-                ),
-                childrenLoaded: true
-            }));
-            
-            filteredHierarchy.forEach(parent => {
-                if (parent.children.length > 0) {
-                    this.expandedParents.add(parent.facility_id);
-                }
-            });
+            facilitiesToShow = facilitiesToShow.filter(f =>
+                f.facility_name.toLowerCase().includes(query)
+            );
         }
-        
-        if (filteredHierarchy.length === 0) {
-            container.innerHTML = `
+
+        if (facilitiesToShow.length === 0) {
+            this.elements.container.innerHTML = `
                 <div class="empty-state">
                     <i class="bi bi-building"></i>
-                    <p>No facilities available</p>
+                    <p>No ${this.currentView} available</p>
                 </div>
             `;
             return;
         }
+
+        // Build HTML efficiently using array join
+        const headerCells = timeSlots.map(slot => `<th>${this.formatTime(slot)}</th>`).join("");
         
-        let html = `
+        const rows = [];
+        for (const facility of facilitiesToShow) {
+            rows.push(this.renderFacilityRowFast(facility, timeSlots));
+        }
+        
+        const html = `
             <table class="matrix-table">
                 <thead>
                     <tr>
-                        <th>Facility / Time</th>
-                        ${timeSlots.map(slot => `<th>${this.formatTime(slot)}</th>`).join('')}
+                        <th>${this.currentView === "venues" ? "Venue" : "Room"} / Time</th>
+                        ${headerCells}
                     </tr>
                 </thead>
                 <tbody>
+                    ${rows.join("")}
+                </tbody>
+            </table>
         `;
         
-        for (const parent of filteredHierarchy) {
-            const hasChildren = parent.children && parent.children.length > 0;
-            const isExpanded = this.expandedParents.has(parent.facility_id);
-            const isBookable = !hasChildren;
-            
-            html += this.renderParentRow(parent, timeSlots, hasChildren, isExpanded, isBookable);
-            
-            if (hasChildren && isExpanded) {
-                for (const child of parent.children) {
-                    html += this.renderChildRow(child, timeSlots);
-                }
+        // Use requestAnimationFrame for smoother rendering
+        requestAnimationFrame(() => {
+            if (this.elements.container) {
+                this.elements.container.innerHTML = html;
+                this.updateDateDisplay();
+                this.attachRowClickHandlers();
             }
-        }
-        
-        html += `</tbody></table>`;
-        container.innerHTML = html;
-        
-        this.updateDateDisplay();
-        this.attachRowClickHandlers();
-        this.attachExpandCollapseHandlers();
+        });
     }
-    
-    renderParentRow(parent, timeSlots, hasChildren, isExpanded, isBookable) {
-        const expandIcon = hasChildren ? (isExpanded ? '▼' : '▶') : '';
-        const expandedAttr = isExpanded ? 'true' : 'false';
-        
-        let row = `
-            <tr class="parent-row" data-parent-id="${parent.facility_id}" data-has-children="${hasChildren}" data-bookable="${isBookable}" data-expanded="${expandedAttr}">
-                <td class="facility-cell parent-cell" data-tooltip="${parent.facility_name}">
-                    <span class="expand-icon">${expandIcon}</span>
-                    <strong>${this.truncate(parent.facility_name, 25)}</strong>
-                    ${parent.capacity ? `<small>(${parent.capacity} pax)</small>` : ''}
-                    ${hasChildren ? `<small class="child-count">(${parent.children.length} rooms)</small>` : ''}
-                </td>
-        `;
-        
+
+    renderFacilityRowFast(facility, timeSlots) {
+        const cells = [];
         for (const slot of timeSlots) {
-            let statusData;
+            const statusData = this.getStatusForTimeSlot(facility.facility_id, slot);
+            const eventId = statusData.event?.request_id || statusData.event?.event_id || "";
+            const eventType = statusData.event?.request_id ? "requisition" : "calendar_event";
+            const tooltipAttr = statusData.status !== "available" ? `data-tooltip="${statusData.tooltip}"` : "";
             
-            if (isBookable) {
-                statusData = this.getStatusForTimeSlot(parent.facility_id, slot);
-            } else {
-                statusData = {
-                    status: 'parent-placeholder',
-                    text: '📁',
-                    event: null,
-                    tooltip: `Click ▼ to view ${parent.children.length} rooms in ${parent.facility_name}`,
-                    bookable: false
-                };
-            }
-            
-            const eventId = statusData.event?.request_id || statusData.event?.event_id || '';
-            const eventType = statusData.event?.request_id ? 'requisition' : 'calendar_event';
-            
-            row += `
+            cells.push(`
                 <td>
                     <div class="status-card ${statusData.status}" 
                          data-status="${statusData.status}"
-                         data-facility="${parent.facility_id}"
+                         data-facility="${facility.facility_id}"
                          data-time="${slot}"
                          data-event-id="${eventId}"
                          data-event-type="${eventType}"
                          data-bookable="${statusData.bookable}"
-                         data-tooltip="${statusData.tooltip}">
+                         ${tooltipAttr}>
                         ${statusData.text}
                     </div>
                 </td>
-            `;
+            `);
         }
         
-        row += `</tr>`;
-        return row;
-    }
-    
-    renderChildRow(child, timeSlots) {
-        let row = `
-            <tr class="child-row" data-child-id="${child.facility_id}" data-parent-id="${child.parent_facility_id}">
-                <td class="facility-cell child-cell" data-tooltip="${child.facility_name}">
-                    <span class="child-indent">↳</span>
-                    <strong>${this.truncate(child.facility_name, 25)}</strong>
-                    ${child.capacity ? `<small>(${child.capacity} pax)</small>` : ''}
+        return `
+            <tr data-facility-id="${facility.facility_id}">
+                <td class="facility-cell" data-tooltip="${facility.facility_name}">
+                    <strong>${this.truncate(facility.facility_name, 30)}</strong>
+                    ${facility.capacity ? `<small>(${facility.capacity} pax)</small>` : ""}
                 </td>
+                ${cells.join("")}
+            </tr>
         `;
-        
-        for (const slot of timeSlots) {
-            const statusData = this.getStatusForTimeSlot(child.facility_id, slot);
-            const eventId = statusData.event?.request_id || statusData.event?.event_id || '';
-            const eventType = statusData.event?.request_id ? 'requisition' : 'calendar_event';
-            
-            row += `
-                <td>
-                    <div class="status-card ${statusData.status}" 
-                         data-status="${statusData.status}"
-                         data-facility="${child.facility_id}"
-                         data-time="${slot}"
-                         data-event-id="${eventId}"
-                         data-event-type="${eventType}"
-                         data-bookable="true"
-                         data-tooltip="${statusData.tooltip}">
-                        ${statusData.text}
-                    </div>
-                </td>
-            `;
-        }
-        
-        row += `</tr>`;
-        return row;
     }
-    
-    attachExpandCollapseHandlers() {
-        document.querySelectorAll('.parent-row[data-has-children="true"] .facility-cell').forEach(cell => {
-            cell.removeEventListener('click', this.handleExpandCollapse);
-            cell.addEventListener('click', this.handleExpandCollapse.bind(this));
-        });
-    }
-    
-    handleExpandCollapse(e) {
-        e.stopPropagation();
-        const row = e.currentTarget.closest('.parent-row');
-        const parentId = parseInt(row.dataset.parentId);
-        
-        if (this.expandedParents.has(parentId)) {
-            this.expandedParents.delete(parentId);
-            row.dataset.expanded = 'false';
+
+    renderFacilityFilter() {
+        if (!this.elements.facilitySelect || !this.elements.filterLabel) return;
+
+        if (this.currentView === "venues") {
+            this.elements.filterLabel.textContent = "Venues";
+            let options = '<option value="all">All Venues</option>';
+            for (const facility of this.venuesList) {
+                options += `<option value="${facility.facility_id}">${this.truncate(facility.facility_name, 45)}${facility.capacity ? ` (${facility.capacity} pax)` : ""}</option>`;
+            }
+            this.elements.facilitySelect.innerHTML = options;
         } else {
-            this.expandedParents.add(parentId);
-            row.dataset.expanded = 'true';
+            this.elements.filterLabel.textContent = "Campus Rooms";
+            let options = '<option value="all">All Rooms</option>';
+            for (const parent of this.parentsWithChildren) {
+                options += `<option value="parent_${parent.facility_id}">📁 ${this.truncate(parent.facility_name, 45)}${parent.capacity ? ` (${parent.capacity} pax)` : ""}</option>`;
+            }
+            this.elements.facilitySelect.innerHTML = options;
+        }
+
+        // Set selected value
+        if (this.selectedFacility !== "all") {
+            if (this.currentView === "rooms") {
+                const parentForChild = this.parentsWithChildren.find(p =>
+                    p.children.some(c => c.facility_id == this.selectedFacility)
+                );
+                if (parentForChild) {
+                    this.elements.facilitySelect.value = `parent_${parentForChild.facility_id}`;
+                } else {
+                    this.elements.facilitySelect.value = this.selectedFacility;
+                }
+            } else {
+                this.elements.facilitySelect.value = this.selectedFacility;
+            }
+        } else {
+            this.elements.facilitySelect.value = "all";
+        }
+    }
+
+    attachViewTypeEvents() {
+        const viewBtns = document.querySelectorAll(".view-type-btn");
+        viewBtns.forEach(btn => {
+            btn.removeEventListener("click", this.handleViewChange);
+            btn.addEventListener("click", this.handleViewChange.bind(this));
+        });
+    }
+
+    handleViewChange = (e) => {
+        const newView = e.currentTarget.dataset.view;
+        if (newView === this.currentView) return;
+
+        document.querySelectorAll(".view-type-btn").forEach(btn => btn.classList.remove("active"));
+        e.currentTarget.classList.add("active");
+
+        this.currentView = newView;
+        this.selectedFacility = "all";
+        this.searchQuery = "";
+        
+        if (this.elements.searchInput) this.elements.searchInput.value = "";
+        this.clearStatusCache();
+        
+        this.renderFacilityFilter();
+        this.refresh();
+    }
+
+    handleFacilityChange = (e) => {
+        let selectedValue = e.currentTarget.value;
+        
+        if (this.currentView === "rooms" && selectedValue !== "all") {
+            const match = selectedValue.match(/parent_(\d+)/);
+            this.selectedFacility = match ? match[1] : selectedValue;
+        } else {
+            this.selectedFacility = selectedValue;
         }
         
-        this.renderMatrix();
+        this.refresh();
     }
-    
+
     attachRowClickHandlers() {
-        const container = document.getElementById('availabilityMatrix');
+        if (!this.elements.container) return;
         
-        container.querySelectorAll('.status-card.available[data-bookable="true"]').forEach(card => {
-            card.removeEventListener('click', this.handleSlotClick);
-            card.addEventListener('click', this.handleSlotClick.bind(this));
-        });
+        const cards = this.elements.container.querySelectorAll(
+            ".status-card.booked, .status-card.pending, .status-card.event"
+        );
         
-        container.querySelectorAll('.status-card.booked, .status-card.pending, .status-card.event, .status-card.parent-placeholder').forEach(card => {
-            card.removeEventListener('click', this.handleNonBookableClick);
-            card.addEventListener('click', this.handleNonBookableClick.bind(this));
-        });
-    }
-
-    handleSlotClick(e) {
-        e.stopPropagation();
-        const card = e.currentTarget;
-        const facilityId = card.dataset.facility;
-        const timeSlot = card.dataset.time;
-        
-        let facilityName = '';
-        for (const parent of this.facilityHierarchy) {
-            if (parent.facility_id == facilityId) {
-                facilityName = parent.facility_name;
-                break;
-            }
-            const child = parent.children.find(c => c.facility_id == facilityId);
-            if (child) {
-                facilityName = child.facility_name;
-                break;
-            }
-        }
-        
-        this.showBookingModal({
-            facilityId: facilityId,
-            facilityName: facilityName,
-            date: this.currentDate,
-            time: timeSlot
+        cards.forEach(card => {
+            card.removeEventListener("click", this.handleNonBookableClick);
+            card.addEventListener("click", this.handleNonBookableClick.bind(this));
         });
     }
 
-    handleNonBookableClick(e) {
+    handleNonBookableClick = (e) => {
         e.stopPropagation();
         const card = e.currentTarget;
         const eventId = card.dataset.eventId;
         const eventType = card.dataset.eventType;
-        const status = card.dataset.status;
         
-        if (status === 'parent-placeholder') {
-            // Trigger expand/collapse for parent
-            const row = card.closest('.parent-row');
-            const parentId = parseInt(row.dataset.parentId);
-            
-            if (this.expandedParents.has(parentId)) {
-                this.expandedParents.delete(parentId);
-            } else {
-                this.expandedParents.add(parentId);
-            }
-            this.renderMatrix();
-        } else if (eventId) {
+        if (eventId) {
             this.showEventDetails(eventId, eventType);
         }
     }
@@ -449,17 +486,17 @@ if (eventAtSlot) {
     async showEventDetails(eventId, eventType) {
         let eventData = null;
         
-        if (eventType === 'calendar_event') {
+        if (eventType === "calendar_event") {
             eventData = this.calendarEvents?.find(e => e.event_id == eventId);
         } else {
             eventData = this.requisitions?.find(r => r.request_id == eventId);
         }
         
         if (!eventData) return;
-        
+
         const modalHtml = `
             <div class="modal fade event-modal" id="eventModal" tabindex="-1">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">${eventData.title || eventData.event_name}</h5>
@@ -475,29 +512,29 @@ if (eventAtSlot) {
                 </div>
             </div>
         `;
-        
-        const existingModal = document.getElementById('eventModal');
+
+        const existingModal = document.getElementById("eventModal");
         if (existingModal) existingModal.remove();
-        
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+
+        document.body.insertAdjacentHTML("beforeend", modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById("eventModal"));
         modal.show();
-        
-        document.getElementById('eventModal').addEventListener('hidden.bs.modal', () => {
-            document.getElementById('eventModal')?.remove();
+
+        document.getElementById("eventModal")?.addEventListener("hidden.bs.modal", () => {
+            document.getElementById("eventModal")?.remove();
         });
     }
-    
+
     renderEventDetails(eventData, eventType) {
-        if (eventType === 'calendar_event') {
+        if (eventType === "calendar_event") {
             return `
                 <div class="event-detail-row">
                     <div class="event-detail-label">Description</div>
-                    <div class="event-detail-value">${eventData.description || 'No description'}</div>
+                    <div class="event-detail-value">${eventData.description || "No description"}</div>
                 </div>
                 <div class="event-detail-row">
                     <div class="event-detail-label">Schedule</div>
-                    <div class="event-detail-value">${eventData.all_day ? 'All Day' : `${eventData.start_time} - ${eventData.end_time}`}</div>
+                    <div class="event-detail-value">${eventData.all_day ? "All Day" : `${eventData.start_time} - ${eventData.end_time}`}</div>
                 </div>
                 <div class="event-detail-row">
                     <div class="event-detail-label">Type</div>
@@ -508,119 +545,76 @@ if (eventAtSlot) {
             return `
                 <div class="event-detail-row">
                     <div class="event-detail-label">Status</div>
-                    <div class="event-detail-value">
-                        <span class="badge" style="background-color: ${eventData.status_color || '#6c757d'}">${eventData.status}</span>
-                    </div>
+                    <div class="event-detail-value"><span class="badge" style="background-color: ${eventData.status_color || "#6c757d"}">${eventData.status}</span></div>
                 </div>
                 <div class="event-detail-row">
                     <div class="event-detail-label">Schedule</div>
-                    <div class="event-detail-value">${eventData.schedule_display || eventData.start_time + ' - ' + eventData.end_time}</div>
+                    <div class="event-detail-value">${eventData.schedule_display || eventData.start_time + " - " + eventData.end_time}</div>
                 </div>
             `;
         }
     }
 
-    showBookingModal(data) {
-        const formattedDate = this.formatDisplayDate(data.date);
-        const formattedTime = this.formatTime(data.time);
-        
-        // You can replace this with a proper modal or redirect to requisition form
-        const confirmBooking = confirm(
-            `Book ${data.facilityName}\n\n` +
-            `Date: ${formattedDate}\n` +
-            `Time: ${formattedTime}\n\n` +
-            `Click OK to proceed with booking request.`
-        );
-        
-        if (confirmBooking) {
-            // Redirect to requisition form or open booking modal
-            window.location.href = `/requisition/create?facility=${data.facilityId}&date=${this.formatDate(data.date)}&time=${data.time}`;
-        }
-    }
-
-    renderFacilityFilter() {
-        const container = document.getElementById('facilityFilters');
-        
-        let options = `<option value="all">🏢 All Facilities</option>`;
-        
-        for (const parent of this.facilityHierarchy) {
-            options += `<option value="${parent.facility_id}">${parent.children.length > 0 ? '📁' : '📌'} ${this.truncate(parent.facility_name, 40)}</option>`;
-        }
-        
-        container.innerHTML = `
-            <select id="facilitySelect" class="facility-select">
-                ${options}
-            </select>
-        `;
-        
-        const select = document.getElementById('facilitySelect');
-        select.value = this.selectedFacility;
-        
-        select.addEventListener('change', async (e) => {
-            this.selectedFacility = e.target.value;
-            await this.loadEventsForCurrentDate();
-            this.renderMatrix();
-        });
-    }
-    
     attachEvents() {
-        document.getElementById('prevDayBtn')?.addEventListener('click', async () => {
+        document.getElementById("prevDayBtn")?.addEventListener("click", async () => {
             this.currentDate.setDate(this.currentDate.getDate() - 1);
             await this.refresh();
         });
-        
-        document.getElementById('nextDayBtn')?.addEventListener('click', async () => {
+
+        document.getElementById("nextDayBtn")?.addEventListener("click", async () => {
             this.currentDate.setDate(this.currentDate.getDate() + 1);
             await this.refresh();
         });
-        
-        document.getElementById('todayBtn')?.addEventListener('click', async () => {
+
+        document.getElementById("todayBtn")?.addEventListener("click", async () => {
             this.currentDate = new Date();
             await this.refresh();
         });
-        
+
         this.setupDatePicker();
-        
-        document.querySelectorAll('.time-range-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+        this.attachViewTypeEvents();
+
+        document.querySelectorAll(".time-range-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                document.querySelectorAll(".time-range-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
                 this.timeRange = btn.dataset.range;
+                this.clearStatusCache();
                 this.renderMatrix();
             });
         });
-        
-        const searchInput = document.getElementById('searchInput');
-        let searchTimeout;
-        searchInput?.addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                this.searchQuery = e.target.value;
+
+        if (this.elements.searchInput) {
+            this.elements.searchInput.addEventListener("input", (e) => {
+                if (this.debounceTimer) clearTimeout(this.debounceTimer);
+                this.debounceTimer = setTimeout(() => {
+                    this.searchQuery = e.target.value;
+                    this.renderMatrix();
+                }, 300);
+            });
+        }
+
+        if (this.elements.clearBtn) {
+            this.elements.clearBtn.addEventListener("click", async () => {
+                this.searchQuery = "";
+                this.selectedFacility = "all";
+                if (this.elements.searchInput) this.elements.searchInput.value = "";
+                if (this.elements.facilitySelect) this.elements.facilitySelect.value = "all";
+                await this.loadEventsForCurrentDate();
                 this.renderMatrix();
-            }, 300);
-        });
+            });
+        }
         
-        const clearBtn = document.getElementById('clearFiltersBtn');
-        clearBtn?.addEventListener('click', async () => {
-            this.searchQuery = '';
-            this.selectedFacility = 'all';
-            if (searchInput) searchInput.value = '';
-            
-            const select = document.getElementById('facilitySelect');
-            if (select) select.value = 'all';
-            
-            await this.loadEventsForCurrentDate();
-            this.renderMatrix();
-        });
+        if (this.elements.facilitySelect) {
+            this.elements.facilitySelect.removeEventListener("change", this.handleFacilityChange);
+            this.elements.facilitySelect.addEventListener("change", this.handleFacilityChange);
+        }
     }
-    
+
     setupDatePicker() {
-        const datePicker = document.getElementById('datePicker');
-        if (!datePicker) return;
-        
-        datePicker.value = this.formatDate(this.currentDate);
-        
-        datePicker.addEventListener('change', async (e) => {
+        if (!this.elements.datePicker) return;
+        this.elements.datePicker.value = this.formatDate(this.currentDate);
+        this.elements.datePicker.addEventListener("change", async (e) => {
             const selectedDate = new Date(e.target.value);
             if (!isNaN(selectedDate.getTime())) {
                 this.currentDate = selectedDate;
@@ -634,31 +628,29 @@ if (eventAtSlot) {
         await this.loadEventsForCurrentDate();
         this.renderMatrix();
         this.showLoading(false);
-        
-        const datePicker = document.getElementById('datePicker');
-        if (datePicker) {
-            datePicker.value = this.formatDate(this.currentDate);
+        if (this.elements.datePicker) {
+            this.elements.datePicker.value = this.formatDate(this.currentDate);
         }
     }
 
     showLoading(show) {
-        const container = document.getElementById('availabilityMatrix');
-        if (show && (!container.innerHTML || container.innerHTML.includes('empty-state'))) {
-            container.innerHTML = `
+        if (!this.elements.container) return;
+        if (show && (!this.elements.container.innerHTML || this.elements.container.innerHTML.includes("empty-state"))) {
+            this.elements.container.innerHTML = `
                 <div class="loading-overlay">
                     <div class="loading-spinner"></div>
                     <p style="margin-top: 10px;">Loading availability data...</p>
                 </div>
             `;
         } else if (!show) {
-            const overlay = container.querySelector('.loading-overlay');
+            const overlay = this.elements.container.querySelector(".loading-overlay");
             if (overlay) overlay.remove();
         }
     }
 
     showError(message) {
-        const container = document.getElementById('availabilityMatrix');
-        container.innerHTML = `
+        if (!this.elements.container) return;
+        this.elements.container.innerHTML = `
             <div class="empty-state">
                 <i class="bi bi-exclamation-triangle"></i>
                 <p>${message}</p>
@@ -668,36 +660,31 @@ if (eventAtSlot) {
     }
 
     updateDateDisplay() {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const display = document.getElementById('currentDateDisplay');
-        if (display) {
-            display.textContent = this.currentDate.toLocaleDateString('en-US', options);
+        if (this.elements.currentDateDisplay) {
+            this.elements.currentDateDisplay.textContent = this.currentDate.toLocaleDateString("en-US", {
+                weekday: "long", year: "numeric", month: "long", day: "numeric"
+            });
         }
     }
 
     formatDate(date) {
-        return date.toISOString().split('T')[0];
+        return date.toISOString().split("T")[0];
     }
 
-    formatDisplayDate(date) {
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    formatTime(timeStr) {
+        const [hour, minute] = timeStr.split(":");
+        const hourNum = parseInt(hour);
+        const hour12 = hourNum % 12 || 12;
+        const ampm = hourNum >= 12 ? "pm" : "am";
+        return `${hour12}:${minute}${ampm}`;
     }
-
-formatTime(timeStr) {
-    const [hour, minute] = timeStr.split(':');
-    const hourNum = parseInt(hour);
-    const hour12 = hourNum % 12 || 12;
-    const ampm = hourNum >= 12 ? 'pm' : 'am';
-    return `${hour12}:${minute}${ampm}`;
-}
 
     truncate(str, maxLen) {
-        if (!str) return '';
-        return str.length > maxLen ? str.substring(0, maxLen - 3) + '...' : str;
+        if (!str) return "";
+        return str.length > maxLen ? str.substring(0, maxLen - 3) + "..." : str;
     }
 }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
     window.availabilityMatrix = new AvailabilityMatrix();
 });

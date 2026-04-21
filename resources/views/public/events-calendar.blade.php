@@ -8,20 +8,224 @@
 @section('content')
     <style>
         /* ============================================
-                   AVAILABILITY MATRIX VIEW - MAIN STYLES
-                   ============================================ */
+                       REFINED INSTITUTIONAL THEME - AVAILABILITY MATRIX
+                       Matching catalog.css design system
+                       ============================================ */
 
+        /* Import Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fraunces:wght@600;700&display=swap');
+
+        /* Design Tokens */
         :root {
-            --status-available: #28a745;
-            --status-available-bg: #d4edda;
-            --status-pending: #ffc107;
-            --status-pending-bg: #fff3cd;
-            --status-booked: #dc3545;
-            --status-booked-bg: #f8d7da;
+            --navy: #041a4b;
+            --navy-mid: #0b2d72;
+            --navy-light: #e8edf8;
+            --amber: #f5bc40;
+            --amber-dark: #d9a12a;
+            --white: #ffffff;
+            --surface: #f5f6fa;
+            --border: #e2e6f0;
+            --text-base: #1e2d4a;
+            --text-muted: #6b7a99;
+            --text-light: #9aaac5;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --shadow-sm: 0 1px 3px rgba(4, 26, 75, .06), 0 1px 2px rgba(4, 26, 75, .04);
+            --shadow-md: 0 4px 16px rgba(4, 26, 75, .10), 0 2px 6px rgba(4, 26, 75, .06);
+            --shadow-lg: 0 12px 40px rgba(4, 26, 75, .16), 0 4px 12px rgba(4, 26, 75, .08);
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            --status-available: #22c55e;
+            --status-available-bg: #e8f7ef;
+            --status-pending: #f5bc40;
+            --status-pending-bg: #fef8e8;
+            --status-booked: #ef4444;
+            --status-booked-bg: #fee8e8;
             --status-event: #6f42c1;
-            --status-event-bg: #e2d9f3;
-            --primary-color: #0a336c;
-            --border-color: #dee2e6;
+            --status-event-bg: #ede7f6;
+        }
+
+        /* Filter Row - All in one horizontal row */
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        /* View Type Tabs */
+        .view-type-bar {
+            display: flex;
+            gap: 4px;
+            background: var(--white);
+            padding: 4px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .view-type-btn {
+            background: transparent;
+            border: none;
+            padding: 8px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'DM Sans', sans-serif;
+            white-space: nowrap;
+        }
+
+        .view-type-btn:hover {
+            background: var(--navy-light);
+            color: var(--navy);
+        }
+
+        .view-type-btn.active {
+            background: var(--navy);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Filter Group */
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--white);
+            padding: 4px 12px 4px 16px;
+            border-radius: 60px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .facility-select {
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            font-size: 0.85rem;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            color: var(--text-base);
+            cursor: pointer;
+            min-width: 180px;
+            outline: none;
+        }
+
+        .facility-select:focus {
+            outline: none;
+        }
+
+        /* Right Actions */
+        .right-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 220px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 16px;
+            padding-right: 36px;
+            border: 1px solid var(--border);
+            border-radius: 60px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            transition: var(--transition);
+            background: var(--white);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 3px rgba(4, 26, 75, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .clear-filters-btn {
+            background: var(--white);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .clear-filters-btn:hover {
+            background: #fee8e8;
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .right-actions {
+                margin-left: 0;
+                justify-content: stretch;
+            }
+
+            .search-box {
+                flex: 1;
+            }
+
+            .view-type-bar {
+                justify-content: center;
+            }
+
+            .filter-group {
+                justify-content: space-between;
+            }
+
+            .facility-select {
+                min-width: auto;
+                flex: 1;
+            }
+        }
+
+        /* Base */
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface);
+            margin: 0;
+            padding: 0;
         }
 
         main {
@@ -38,80 +242,111 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 0;
         }
 
+        /* Container - Glassmorphic */
         .availability-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            margin: 20px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(2px);
+            border-radius: var(--radius-xl);
+            margin: 24px;
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
-        /* Navigation Bar */
+        /* Navigation Header */
         .nav-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 16px;
         }
 
         .date-nav {
             display: flex;
             align-items: center;
             gap: 12px;
-            background: #f8f9fa;
-            padding: 8px 16px;
-            border-radius: 50px;
+            background: var(--white);
+            padding: 6px 12px;
+            border-radius: 60px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
         }
 
         .date-nav-btn {
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 50%;
+            background: transparent;
+            border: none;
             width: 36px;
             height: 36px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--transition);
+            color: var(--text-base);
             font-size: 18px;
         }
 
         .date-nav-btn:hover {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
+            background: var(--navy-light);
+            color: var(--navy);
         }
 
         .current-date {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
-            color: #333;
-            min-width: 200px;
+            color: var(--navy);
+            min-width: 220px;
             text-align: center;
+            font-family: 'Fraunces', serif;
+        }
+
+        .date-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .date-picker-input {
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 60px;
+            font-size: 0.85rem;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--white);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .date-picker-input:focus {
+            outline: none;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 3px rgba(4, 26, 75, 0.1);
         }
 
         .today-btn {
-            background: var(--primary-color);
+            background: var(--navy);
             color: white;
             border: none;
             padding: 8px 20px;
-            border-radius: 50px;
+            border-radius: 60px;
             font-weight: 500;
+            font-size: 0.85rem;
             cursor: pointer;
-            transition: opacity 0.2s;
+            transition: var(--transition);
         }
 
         .today-btn:hover {
-            opacity: 0.9;
+            background: var(--navy-mid);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
 
-        /* Time Range Selector */
+        /* Time Range Bar */
         .time-range-bar {
             display: flex;
             gap: 12px;
@@ -120,28 +355,36 @@
         }
 
         .time-range-btn {
-            background: #f8f9fa;
-            border: 1px solid var(--border-color);
+            background: var(--white);
+            border: 1px solid var(--border);
             padding: 8px 20px;
-            border-radius: 50px;
+            border-radius: 60px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--transition);
             font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--text-base);
         }
 
         .time-range-btn.active {
-            background: var(--primary-color);
+            background: var(--navy);
             color: white;
-            border-color: var(--primary-color);
+            border-color: var(--navy);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .time-range-btn:hover:not(.active) {
+            background: var(--navy-light);
+            border-color: var(--navy);
         }
 
         /* Legend */
         .legend-bar {
             display: flex;
-            gap: 24px;
+            gap: 28px;
             margin-bottom: 24px;
             padding-bottom: 16px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
             flex-wrap: wrap;
         }
 
@@ -149,12 +392,13 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
         }
 
         .legend-color {
-            width: 20px;
-            height: 20px;
+            width: 14px;
+            height: 14px;
             border-radius: 4px;
         }
 
@@ -178,182 +422,100 @@
             border: 1px solid var(--status-event);
         }
 
-        /* Facility Filters - Enhanced with Dropdowns */
+        /* Filters Bar - Split Venues & Campus Rooms */
         .filters-bar {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 16px;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
             flex-wrap: wrap;
         }
 
-        .facility-filter-group {
+        .filter-group {
             display: flex;
             align-items: center;
             gap: 12px;
-            flex-wrap: wrap;
-            flex: 1;
+            background: var(--white);
+            padding: 4px 12px 4px 16px;
+            border-radius: 60px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
         }
 
-        /* Parent Facility Button Styles */
-        .facility-filter-parent {
-            position: relative;
-            display: inline-block;
+        .filter-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
         }
 
-        .facility-filter-badge {
-            background: #f8f9fa;
-            padding: 6px 12px;
-            border-radius: 50px;
+        /* Clear filters button */
+        .clear-filters-btn {
+            background: var(--white);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 60px;
             font-size: 0.8rem;
             cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid var(--border-color);
-            display: inline-flex;
+            transition: var(--transition);
+            display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .facility-filter-badge.has-children {
-            padding-right: 8px;
-        }
-
-        .facility-filter-badge.has-children::after {
-            content: '▼';
-            font-size: 0.7rem;
-            margin-left: 4px;
-        }
-
-        .facility-filter-badge:hover {
-            background: #e9ecef;
-        }
-
-        .facility-filter-badge.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        /* Dropdown Menu for Child Facilities */
-        .facility-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            margin-top: 4px;
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            min-width: 200px;
-            z-index: 1000;
-            display: none;
-        }
-
-        .facility-dropdown.show {
-            display: block;
-        }
-
-        .facility-dropdown-header {
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        .facility-dropdown-item {
-            padding: 8px 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .facility-dropdown-item:hover {
-            background: #f0f0f0;
-        }
-
-        .facility-dropdown-item.selected {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .facility-dropdown-item .facility-capacity {
-            font-size: 0.7rem;
-            color: #999;
-            margin-left: auto;
-        }
-
-        .facility-dropdown-item.selected .facility-capacity {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* Child facility indicator in matrix */
-        .facility-cell.child-facility {
-            padding-left: 20px;
-            position: relative;
-        }
-
-        .facility-cell.child-facility::before {
-            content: '↳';
-            position: absolute;
-            left: 8px;
-            color: #999;
+        .clear-filters-btn:hover {
+            background: #fee8e8;
+            border-color: var(--danger);
+            color: var(--danger);
         }
 
         .search-box {
             position: relative;
-            min-width: 250px;
+            min-width: 220px;
+            flex: 1;
+            max-width: 280px;
         }
 
         .search-box input {
             width: 100%;
             padding: 8px 16px;
-            padding-right: 35px;
-            border: 1px solid var(--border-color);
-            border-radius: 50px;
+            padding-right: 36px;
+            border: 1px solid var(--border);
+            border-radius: 60px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+
+        .search-box input:focus {
             outline: none;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 3px rgba(4, 26, 75, 0.1);
         }
 
         .search-box i {
             position: absolute;
-            right: 12px;
+            right: 14px;
             top: 50%;
             transform: translateY(-50%);
-            color: #999;
+            color: var(--text-light);
         }
 
-        /* Clear Filters Button */
-        .clear-filters-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 50px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .clear-filters-btn:hover {
-            background: #5a6268;
-        }
-
-        /* Main Matrix Table */
+        /* Matrix Wrapper - Modern Table */
         .matrix-wrapper {
             overflow-x: auto;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            background: white;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            background: var(--white);
             position: relative;
             min-height: 400px;
+            box-shadow: var(--shadow-sm);
         }
 
         .availability-matrix {
-            min-width: 800px;
+            min-width: 700px;
         }
 
         .matrix-table {
@@ -363,15 +525,17 @@
         }
 
         .matrix-table th {
-            background: #f8f9fa;
-            padding: 14px 8px;
+            background: var(--surface);
+            padding: 14px 10px;
             text-align: center;
             font-weight: 600;
-            border-bottom: 2px solid var(--border-color);
-            border-right: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            color: var(--navy);
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
             position: sticky;
             top: 0;
-            background: #f8f9fa;
+            z-index: 5;
         }
 
         .matrix-table th:last-child {
@@ -381,8 +545,8 @@
         .matrix-table td {
             padding: 8px;
             text-align: center;
-            border-bottom: 1px solid var(--border-color);
-            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
             vertical-align: middle;
         }
 
@@ -391,82 +555,142 @@
         }
 
         .matrix-table .facility-cell {
-            background: #f8f9fa;
+            background: var(--white);
             font-weight: 600;
             text-align: left;
             position: sticky;
             left: 0;
-            background: #f8f9fa;
+            background: var(--white);
             min-width: 180px;
+            font-size: 0.85rem;
+            color: var(--navy);
+            border-right: 1px solid var(--border);
         }
 
-        /* Status Cards */
+        /* Parent Row Styles */
+        .parent-row .facility-cell {
+            cursor: pointer;
+            background: var(--surface);
+            font-weight: 600;
+        }
+
+        .parent-row .facility-cell:hover {
+            background: var(--navy-light);
+        }
+
+        .expand-icon {
+            display: inline-block;
+            width: 20px;
+            font-size: 11px;
+            margin-right: 6px;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .parent-row[data-expanded="true"] .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .child-count {
+            margin-left: 6px;
+            color: var(--text-muted);
+            font-weight: normal;
+            font-size: 0.7rem;
+        }
+
+        .child-row .facility-cell {
+            padding-left: 28px;
+            background: var(--white);
+        }
+
+        .child-indent {
+            display: inline-block;
+            width: 20px;
+            color: var(--text-light);
+            margin-right: 4px;
+        }
+
+        /* Status Cards - Modern Redesign */
         .status-card {
             display: inline-block;
-            padding: 8px 12px;
-            border-radius: 8px;
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
             font-size: 0.75rem;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: var(--transition);
             width: 100%;
-            max-width: 100px;
+            max-width: 90px;
+            text-align: center;
+            letter-spacing: 0.01em;
         }
 
         .status-card.available {
             background: var(--status-available-bg);
-            color: #155724;
+            color: #166534;
             border: 1px solid var(--status-available);
         }
 
         .status-card.available:hover {
             transform: scale(1.02);
-            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
         }
 
         .status-card.pending {
             background: var(--status-pending-bg);
-            color: #856404;
+            color: #854d0e;
             border: 1px solid var(--status-pending);
-            cursor: default;
         }
 
         .status-card.booked {
             background: var(--status-booked-bg);
-            color: #721c24;
+            color: #991b1b;
             border: 1px solid var(--status-booked);
-            cursor: default;
         }
 
         .status-card.event {
             background: var(--status-event-bg);
             color: #4a148c;
             border: 1px solid var(--status-event);
-            cursor: default;
         }
 
-        /* Loading States */
+        .status-card.parent-placeholder {
+            background: var(--surface);
+            color: var(--text-muted);
+            border: 1px dashed var(--border);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 6px 0;
+        }
+
+        .status-card.parent-placeholder:hover {
+            background: var(--navy-light);
+            border-color: var(--navy);
+        }
+
+        /* Loading Overlay */
         .loading-overlay {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(4px);
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 12px;
-            z-index: 10;
+            border-radius: var(--radius-md);
+            z-index: 20;
         }
 
         .loading-spinner {
             width: 40px;
             height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary-color);
+            border: 3px solid var(--navy-light);
+            border-top: 3px solid var(--navy);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
@@ -479,14 +703,42 @@
             }
         }
 
-        /* Modal Styles */
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: var(--text-light);
+        }
+
+        /* Modal Styles - Matching Theme */
         .event-modal .modal-dialog {
-            max-width: 600px;
+            max-width: 520px;
+        }
+
+        .event-modal .modal-content {
+            border: none;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
         }
 
         .event-modal .modal-header {
-            background: var(--primary-color);
+            background: var(--navy);
             color: white;
+            border-bottom: none;
+            padding: 1.2rem 1.5rem;
+        }
+
+        .event-modal .modal-title {
+            font-family: 'Fraunces', serif;
+            font-weight: 600;
+            font-size: 1.2rem;
         }
 
         .event-modal .btn-close-white {
@@ -496,58 +748,33 @@
         .event-detail-row {
             margin-bottom: 16px;
             padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .event-detail-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
 
         .event-detail-label {
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            color: #666;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
             margin-bottom: 4px;
         }
 
         .event-detail-value {
-            font-size: 1rem;
+            font-size: 0.95rem;
+            color: var(--text-base);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .availability-container {
-                margin: 10px;
-                padding: 15px;
-            }
-
-            .facility-cell {
-                min-width: 140px !important;
-            }
-
-            .status-card {
-                padding: 6px 8px;
-                font-size: 0.7rem;
-            }
-
-            .time-range-btn {
-                padding: 6px 14px;
-                font-size: 0.8rem;
-            }
-
-            .current-date {
-                font-size: 0.9rem;
-                min-width: 150px;
-            }
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #999;
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 16px;
+        .event-modal .modal-footer {
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+            padding: 1rem 1.5rem;
         }
 
         /* Tooltip */
@@ -562,158 +789,23 @@
             bottom: 100%;
             left: 50%;
             transform: translateX(-50%);
-            padding: 5px 10px;
-            background: #333;
+            padding: 6px 12px;
+            background: var(--navy);
             color: white;
             font-size: 0.7rem;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             white-space: nowrap;
             display: none;
             z-index: 100;
+            font-weight: 400;
+            box-shadow: var(--shadow-sm);
         }
 
         [data-tooltip]:hover:before {
             display: block;
         }
 
-        /* Date Picker Styles */
-        .date-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .date-picker-input {
-            padding: 8px 12px;
-            border: 1px solid var(--border-color, #dee2e6);
-            border-radius: 50px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            background: white;
-        }
-
-        .date-picker-input:focus {
-            outline: none;
-            border-color: var(--primary-color, #0a336c);
-        }
-
-        /* Facility Group Toggle */
-        .facility-group-toggle {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            border-radius: 50px;
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .facility-group-toggle:hover {
-            background: #f8f9fa;
-        }
-
-        .facility-group-toggle.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        /* Parent Row Styles */
-        .parent-row .facility-cell {
-            cursor: pointer;
-            background-color: #f8f9fa;
-            font-weight: 600;
-        }
-
-        .parent-row .facility-cell:hover {
-            background-color: #e9ecef;
-        }
-
-        .expand-icon {
-            display: inline-block;
-            width: 20px;
-            font-size: 12px;
-            margin-right: 4px;
-            color: #666;
-        }
-
-        .child-count {
-            margin-left: 6px;
-            color: #666;
-            font-weight: normal;
-        }
-
-        .child-row .facility-cell {
-            padding-left: 28px;
-            background-color: #fff;
-        }
-
-        .child-indent {
-            display: inline-block;
-            width: 20px;
-            color: #999;
-            margin-right: 4px;
-        }
-
-        /* Parent placeholder cards */
-        .status-card.parent-placeholder {
-            background: #f0f0f0;
-            color: #999;
-            border: 1px dashed #ccc;
-            cursor: pointer;
-            font-size: 1.1rem;
-            padding: 8px 0;
-        }
-
-        .status-card.parent-placeholder:hover {
-            background: #e8e8e8;
-        }
-
-        /* Facility Select Dropdown */
-        .facility-select {
-            padding: 8px 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 50px;
-            background: white;
-            font-size: 0.85rem;
-            min-width: 250px;
-            cursor: pointer;
-            outline: none;
-        }
-
-        .facility-select:focus {
-            border-color: var(--primary-color);
-        }
-
-        .facility-select option.parent-option {
-            font-weight: 600;
-            background-color: #f8f9fa;
-        }
-
-        .facility-select option.child-option {
-            padding-left: 20px;
-            color: #555;
-        }
-
-        /* Non-bookable cells */
-        .status-card[data-bookable="false"] {
-            cursor: default;
-            opacity: 0.8;
-        }
-
-        /* Filters bar adjustments */
-        .filters-bar {
-            align-items: center;
-        }
-
-        .facility-filter-group {
-            flex: 0 0 auto;
-        }
-                /* ============================================
-           SMOOTH DROPDOWN & EXPAND ANIMATIONS
-           ============================================ */
-
-        /* Child row slide down animation */
+        /* Child row animation */
         .child-row {
             animation: slideDown 0.2s ease-out;
         }
@@ -721,94 +813,81 @@
         @keyframes slideDown {
             from {
                 opacity: 0;
-                transform: translateY(-8px);
+                transform: translateY(-6px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        /* Expand icon rotation */
-        .expand-icon {
-            transition: transform 0.2s ease;
-            display: inline-block;
-        }
-
-        .parent-row[data-expanded="true"] .expand-icon {
-            transform: rotate(90deg);
-        }
-
-        /* Facility dropdown fade in animation */
-        .facility-dropdown {
-            transition: opacity 0.15s ease, visibility 0.15s ease;
-        }
-
-        .facility-dropdown.show {
-            display: block;
-            animation: dropdownFadeIn 0.15s ease-out;
-        }
-
-        @keyframes dropdownFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-5px);
+        /* Responsive */
+        @media (max-width: 768px) {
+            .availability-container {
+                margin: 16px;
+                padding: 18px;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            .facility-cell {
+                min-width: 140px !important;
             }
-        }
 
-        /* Modal slide animation */
-        .event-modal .modal-dialog {
-            animation: modalSlideIn 0.2s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
+            .status-card {
+                padding: 6px 6px;
+                font-size: 0.7rem;
+                max-width: 75px;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            .time-range-btn {
+                padding: 6px 14px;
+                font-size: 0.75rem;
             }
-        }
 
-        /* Event details fade in */
-        .event-detail-row {
-            animation: fadeIn 0.2s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
+            .current-date {
+                font-size: 0.85rem;
+                min-width: 160px;
             }
-            to {
-                opacity: 1;
+
+            .legend-bar {
+                gap: 16px;
             }
-        }
 
-        /* Tooltip - remove cursor:help to fix ? cursor bug */
-        [data-tooltip] {
-            position: relative;
-            cursor: default;
-        }
+            .filter-group {
+                width: 100%;
+                flex-wrap: wrap;
+            }
 
-        /* Parent row expand/collapse cursor */
-        .parent-row .facility-cell {
-            cursor: pointer;
+            .venues-filter {
+                overflow-x: auto;
+                padding-bottom: 4px;
+            }
+
+            .search-box {
+                max-width: 100%;
+                flex: auto;
+            }
         }
     </style>
+
     <main>
         <div class="availability-container">
             <!-- Navigation Header -->
             <div class="nav-header">
                 <div class="date-nav">
-                    <button class="date-nav-btn" id="prevDayBtn">←</button>
+                    <button class="date-nav-btn" id="prevDayBtn" aria-label="Previous day">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
                     <span class="current-date" id="currentDateDisplay"></span>
-                    <button class="date-nav-btn" id="nextDayBtn">→</button>
+                    <button class="date-nav-btn" id="nextDayBtn" aria-label="Next day">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
                 </div>
                 <div class="date-actions">
                     <input type="date" id="datePicker" class="date-picker-input">
@@ -840,20 +919,34 @@
                 </div>
             </div>
 
-            <!-- Filters Bar -->
-            <div class="filters-bar">
-                <div class="facility-filter-group" id="facilityFilters">
-                    <!-- Will be populated with select dropdown -->
+            <!-- View Type Tabs & Filters Bar - All in one row -->
+            <div class="filter-row">
+                <!-- View Type Tabs -->
+                <div class="view-type-bar">
+                    <button class="view-type-btn active" data-view="venues">Venues</button>
+                    <button class="view-type-btn" data-view="rooms">Campus Rooms</button>
                 </div>
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search facility or event...">
-                    <i class="bi bi-search"></i>
+
+                <!-- Facility Filter Dropdown -->
+                <div class="filter-group">
+                    <span class="filter-label" id="filterLabel">Venues</span>
+                    <select class="facility-select" id="facilitySelect">
+                        <option value="all">All Venues</option>
+                    </select>
                 </div>
-                <button class="clear-filters-btn" id="clearFiltersBtn">
-                    <i class="bi bi-x-circle"></i> Clear Filters
-                </button>
+
+                <!-- Right-aligned group -->
+                <div class="right-actions">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search facility or event...">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <button class="clear-filters-btn" id="clearFiltersBtn">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </button>
+                </div>
             </div>
-            
+
             <!-- Main Matrix View -->
             <div class="matrix-wrapper" id="matrixWrapper">
                 <div class="availability-matrix" id="availabilityMatrix">
@@ -865,17 +958,16 @@
         </div>
     </main>
 
-    <!-- Event Modal - Centered -->
+    <!-- Event Modal -->
     <div class="modal fade event-modal" id="eventModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="eventModalTitle">Event Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="eventModalBody">
-                    <!-- Dynamic content -->
-                </div>
+                <div class="modal-body" id="eventModalBody"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
