@@ -50,6 +50,18 @@ class DepartmentSeeder extends Seeder
                 'department_name' => 'Schedule Coordinator',
                 'department_code' => 'SC',
             ],
+            [
+                'department_name' => 'Vice President of Academic Affairs',
+                'department_code' => 'VPAA',
+            ],
+            [
+                'department_name' => 'Vice President of Student Affairs',
+                'department_code' => 'VPSA',
+            ],
+            [
+                'department_name' => 'Alumni Affairs',
+                'department_code' => 'AA',
+            ]
         ]);
     }
 }

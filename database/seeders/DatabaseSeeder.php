@@ -34,7 +34,9 @@ class DatabaseSeeder extends Seeder
             RequisitionPurposeSeeder::class,
             FormStatusSeeder::class,
             RequisitionFormsSeeder::class,
-            CalendarEventSeeder::class
+            CalendarEventSeeder::class,
+            RequisitionCommentSeeder::class,
+            UserFeedbackSeeder::class,
         ]);
     }
 }

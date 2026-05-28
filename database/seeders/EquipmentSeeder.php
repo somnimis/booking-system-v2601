@@ -12,23 +12,23 @@ class EquipmentSeeder extends Seeder
         DB::table('equipment')->insert([
             // --- SOUND SYSTEMS ---
             [
-                'equipment_name' => 'Sound System (Basic with 2 mics, Player)',
+                'equipment_name' => 'Sound System (Small)',
                 'base_fee' => 5000.00,
                 'rate_type' => 'Per Hour',
                 'category_id' => 1, // Please change to your actual category ID
                 'status_id' => 1,   // Please change to your actual status ID
-                'department_id' => 1, // Please change to your actual department ID
+                'managed_by' => 4, // Please change to your actual department ID
                 'created_by' => 1, // Please change to an existing admin_id
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'equipment_name' => 'Sound System (Large with Sub, Digital Mixer, Processors)',
+                'equipment_name' => 'Sound System (Large)',
                 'base_fee' => 10000.00,
                 'rate_type' => 'Per Hour',
                 'category_id' => 1,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -39,18 +39,18 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Hour',
                 'category_id' => 1,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [ // 4
-                'equipment_name' => 'Additional Mics',
+                'equipment_name' => 'Wireless Microphone',
                 'base_fee' => 700.00, // Was null in image
                 'rate_type' => 'Per Hour',
                 'category_id' => 1,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -58,23 +58,23 @@ class EquipmentSeeder extends Seeder
 
             // --- LIGHTS & EFFECTS ---
             [ // 5
-                'equipment_name' => 'Lights (RGB Parled with Dimmer)',
+                'equipment_name' => 'RGB Lights',
                 'base_fee' => 600.00,
                 'rate_type' => 'Per Event', // Was 'Per Piece, Show'
                 'category_id' => 2, // Assuming new category
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [ // 6
-                'equipment_name' => 'Moving Heads (with Controller)',
+                'equipment_name' => 'Moving Heads',
                 'base_fee' => 1200.00,
                 'rate_type' => 'Per Event', // Was 'Per Piece, Show'
                 'category_id' => 2,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -85,7 +85,7 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event', // Was 'Piece, Show'
                 'category_id' => 2,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -96,7 +96,7 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event', // Was 'Show'
                 'category_id' => 2,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -104,34 +104,34 @@ class EquipmentSeeder extends Seeder
 
             // --- VISUAL & CONFERENCE ---
             [
-                'equipment_name' => 'Projector (3200 Ansi Lumens)',
+                'equipment_name' => 'Projector',
                 'base_fee' => 5000.00,
                 'rate_type' => 'Per Hour', // Default
                 'category_id' => 3, // Assuming new category
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'equipment_name' => 'TV (65 inch)',
+                'equipment_name' => '65 Inch Television',
                 'base_fee' => 0.00, // Was null in image
                 'rate_type' => 'Per Hour', // Default
                 'category_id' => 3,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'equipment_name' => 'Conference System (16 Delegates)',
+                'equipment_name' => 'Conference System',
                 'base_fee' => 200.00, // Was null in image
                 'rate_type' => 'Per Event',
                 'category_id' => 3,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -139,34 +139,34 @@ class EquipmentSeeder extends Seeder
 
             // --- MUSICAL INSTRUMENTS & ACCESSORIES ---
             [
-                'equipment_name' => 'Drum Set (Yamaha, 6 piece with throne)',
+                'equipment_name' => 'Drum Set',
                 'base_fee' => 3500.00,
                 'rate_type' => 'Per Event', // Was 'Per Show'
                 'category_id' => 4, // Assuming new category
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'equipment_name' => 'Guitar Amplifier (Base, Guitar, Keyboard)',
+                'equipment_name' => 'Guitar Amplifier',
                 'base_fee' => 3000.00,
                 'rate_type' => 'Per Event', // Was 'Per Show'
                 'category_id' => 4,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'equipment_name' => 'HDMI Splitter and Accessories',
+                'equipment_name' => 'HDMI Splitter',
                 'base_fee' => 0.00, // Was null in image
                 'rate_type' => 'Per Event',
                 'category_id' => 5, // Assuming new category
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -177,18 +177,18 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event',
                 'category_id' => 5,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'equipment_name' => 'Mic Stand',
+                'equipment_name' => 'Microphone Stand',
                 'base_fee' => 100.00, // Was null in image
                 'rate_type' => 'Per Event',
                 'category_id' => 5,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -199,29 +199,29 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event',
                 'category_id' => 4,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'equipment_name' => 'Lapel Mic/Hedworn Mic',
+                'equipment_name' => 'Lapel Microphone',
                 'base_fee' => 100.00, // Was null in image
                 'rate_type' => 'Per Hour', // Default
                 'category_id' => 1,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'equipment_name' => 'Wireless Mic',
+                'equipment_name' => 'Wired Microphone',
                 'base_fee' => 100.00, // Was null in image
                 'rate_type' => 'Per Hour', // Default
                 'category_id' => 1,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -232,7 +232,7 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event', // Was 'Per Show'
                 'category_id' => 1,
                 'status_id' => 1,
-                'department_id' => 1,
+                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
