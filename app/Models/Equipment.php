@@ -17,6 +17,7 @@ class Equipment extends Model
         'brand',
         'storage_location',
         'category_id',
+        'managed_by',
         'department_id',
         'base_fee',
         'rate_type',
@@ -28,6 +29,17 @@ class Equipment extends Model
     ];
 
     // Relationships
+    public function events()
+    {
+        return $this->belongsToMany(CalendarEvent::class, 'event_equipment', 'equipment_id', 'event_id')
+            ->withTimestamps()
+            ->withPivot('quantity', 'notes')
+            ->using(EventEquipment::class);
+    }
+    public function manager()
+    {
+        return $this->belongsTo(Admin::class, 'managed_by', 'admin_id');
+    }
 
     public function category()
     {

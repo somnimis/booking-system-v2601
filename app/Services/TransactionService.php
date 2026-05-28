@@ -16,27 +16,32 @@ class TransactionService
         ?string $destinationName = null,
         ?string $notes = null
     ): EquipmentTransaction {
-        // Business rule: Can't release if already released
         if ($transaction->released_at) {
             throw new \Exception('Item already released');
         }
 
-        // Business rule: Check for existing active transactions
         $this->ensureNoActiveTransaction($transaction->item_id, $transaction->id);
 
-        // Update transaction
-        $transaction->update([
+        $updated = $transaction->update([
             'released_at' => now(),
             'facility_id' => $facilityId,
             'destination_name' => $destinationName,
             'release_notes' => $notes,
-            'status_id' => 1 // active
+            'status_id' => 1
         ]);
 
-        // Update equipment item status
-        $transaction->equipmentItem->update(['status' => 'in_use']);
+        if (!$updated) {
+            throw new \Exception('Failed to update transaction');
+        }
 
-        // Simple log instead of event
+        // ONLY update the item's condition to 'In Use' (condition_id = 6)
+        // Do NOT touch the status_id - that belongs to the equipment type level
+        if ($transaction->equipmentItem) {
+            $transaction->equipmentItem->update([
+                'condition_id' => 6  // 6 = 'In Use' in conditions table
+            ]);
+        }
+
         Log::info('Equipment released', [
             'transaction_id' => $transaction->id,
             'item_id' => $transaction->item_id,
@@ -45,7 +50,7 @@ class TransactionService
 
         return $transaction->fresh();
     }
-
+    
     /**
      * Return an equipment item (scan in)
      */
@@ -54,28 +59,33 @@ class TransactionService
         int $conditionId,
         ?string $notes = null
     ): EquipmentTransaction {
-        // Business rule: Can't return if already returned
         if ($transaction->returned_at) {
             throw new \Exception('Item already returned');
         }
 
-        // Business rule: Can't return if not released
         if (!$transaction->released_at) {
             throw new \Exception('Cannot return an item that was never released');
         }
 
-        // Update transaction
-        $transaction->update([
+        $updated = $transaction->update([
             'returned_at' => now(),
             'condition_id' => $conditionId,
             'return_notes' => $notes,
             'status_id' => 3 // completed
         ]);
 
-        // Update equipment item status
-        $transaction->equipmentItem->update(['status' => 'available']);
+        if (!$updated) {
+            throw new \Exception('Failed to update transaction');
+        }
 
-        // Simple log
+        // Update the item's condition to what was selected on return
+        // Do NOT touch status_id
+        if ($transaction->equipmentItem) {
+            $transaction->equipmentItem->update([
+                'condition_id' => $conditionId
+            ]);
+        }
+
         Log::info('Equipment returned', [
             'transaction_id' => $transaction->id,
             'item_id' => $transaction->item_id,
@@ -83,7 +93,6 @@ class TransactionService
             'condition_id' => $conditionId
         ]);
 
-        // Check if return is late and log it
         if ($this->isOverdue($transaction)) {
             Log::warning('Equipment returned late', [
                 'transaction_id' => $transaction->id,
