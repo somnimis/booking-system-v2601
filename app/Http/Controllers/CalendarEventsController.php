@@ -176,8 +176,8 @@ public function getAllForCalendar(Request $request)
             ]);
 
             $validatedData = $request->validate([
-                'calendar_title' => 'sometimes|string|max:50|nullable',
-                'calendar_description' => 'sometimes|string|max:100|nullable',
+                'event_title' => 'sometimes|string|max:50|nullable',
+                'event_details' => 'sometimes|string|max:100|nullable',
             ]);
 
             $adminId = auth()->id();
@@ -188,27 +188,27 @@ public function getAllForCalendar(Request $request)
             $form = RequisitionForm::findOrFail($requestId);
 
             // Update only the provided fields
-            if (array_key_exists('calendar_title', $validatedData)) {
-                $form->calendar_title = $validatedData['calendar_title'];
+            if (array_key_exists('event_title', $validatedData)) {
+                $form->event_title = $validatedData['event_title'];
             }
 
-            if (array_key_exists('calendar_description', $validatedData)) {
-                $form->calendar_description = $validatedData['calendar_description'];
+            if (array_key_exists('event_details', $validatedData)) {
+                $form->event_details = $validatedData['event_details'];
             }
 
             $form->save();
 
             \Log::info('Calendar info updated successfully', [
                 'request_id' => $requestId,
-                'calendar_title' => $form->calendar_title,
-                'calendar_description' => $form->calendar_description,
+                'event_title' => $form->event_title,
+                'event_details' => $form->event_details,
                 'admin_id' => $adminId
             ]);
 
             return response()->json([
                 'message' => 'Calendar information updated successfully',
-                'calendar_title' => $form->calendar_title,
-                'calendar_description' => $form->calendar_description
+                'event_title' => $form->event_title,
+                'event_details' => $form->event_details
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Calendar info update validation failed', [

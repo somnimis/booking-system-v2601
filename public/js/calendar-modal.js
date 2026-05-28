@@ -108,10 +108,9 @@ function setupCharacterCounters() {
         { selector: 'input[name="contact_number"]', max: 15, id: 'contactCounter' },
         { selector: '#organizationInput', max: 100, id: 'organizationCounter' },
         { selector: '#schoolIdInput', max: 20, id: 'schoolIdCounter' },
-        { selector: 'input[name="endorser"]', max: 50, id: 'endorserCounter' },
         { selector: 'textarea[name="additional_requests"]', max: 250, id: 'additionalRequestsCounter' },
-        { selector: 'input[name="calendar_title"]', max: 50, id: 'calendarTitleCounter' },
-        { selector: 'textarea[name="calendar_description"]', max: 100, id: 'calendarDescriptionCounter' }
+        { selector: 'input[name="event_title"]', max: 50, id: 'calendarTitleCounter' },
+        { selector: 'textarea[name="event_details"]', max: 100, id: 'calendarDescriptionCounter' }
     ];
     
     fields.forEach(field => {
@@ -473,10 +472,6 @@ function updateReviewSummary() {
     const numMicrophones = document.querySelector('input[name="num_microphones"]')?.value || '0';
     const reviewMicrophones = document.getElementById('reviewMicrophones');
     if (reviewMicrophones) reviewMicrophones.textContent = numMicrophones;
-
-    // Endorser
-    const endorser = document.querySelector('input[name="endorser"]')?.value || 'None';
-    document.getElementById('reviewEndorser').textContent = endorser;
 
     // Status
     const statusSelect = document.getElementById('initialStatusSelect');

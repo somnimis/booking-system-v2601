@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class CalendarEvent extends Model
 {
     protected $primaryKey = 'event_id';
-    
+
     protected $fillable = [
         'event_name',
         'description',
@@ -56,5 +56,26 @@ class CalendarEvent extends Model
             return substr($value, 0, 8);
         }
         return $value;
+    }
+
+    /**
+     * Get the venues for this event.
+     */
+    public function venues()
+    {
+        return $this->belongsToMany(Facility::class, 'event_venues', 'event_id', 'facility_id')
+            ->withTimestamps()
+            ->using(EventVenue::class);
+    }
+
+    /**
+     * Get the equipment for this event.
+     */
+    public function equipment()
+    {
+        return $this->belongsToMany(Equipment::class, 'event_equipment', 'event_id', 'equipment_id')
+            ->withTimestamps()
+            ->withPivot('quantity', 'notes')
+            ->using(EventEquipment::class);
     }
 }

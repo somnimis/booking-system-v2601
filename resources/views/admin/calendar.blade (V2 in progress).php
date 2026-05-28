@@ -2101,7 +2101,7 @@
                     <!-- Calendar Title -->
                     <div class="col-md-6">
                       <label class="form-label fw-medium">Calendar Title</label>
-                      <input type="text" class="form-control" name="calendar_title"
+                      <input type="text" class="form-control" name="event_title"
                         placeholder="e.g., Quarterly Meeting - Sales Team" maxlength="50">
                       <small class="text-muted"><span id="calendarTitleCounter">0/50 characters</span></small>
                     </div>
@@ -2109,7 +2109,7 @@
                     <!-- Calendar Description -->
                     <div class="col-md-6">
                       <label class="form-label fw-medium">Calendar Description</label>
-                      <textarea class="form-control" name="calendar_description" rows="2" maxlength="100"
+                      <textarea class="form-control" name="event_details" rows="2" maxlength="100"
                         placeholder="Brief description visible on calendar..."></textarea>
                       <small class="text-muted"><span id="calendarDescriptionCounter">0/100 characters</span></small>
                     </div>
@@ -3012,8 +3012,8 @@
         const schoolId = document.querySelector('input[name="school_id"]')?.value || '';
         const endorser = document.querySelector('input[name="endorser"]')?.value || '';
         const additionalRequests = document.querySelector('textarea[name="additional_requests"]')?.value || '';
-        const calendarTitle = document.querySelector('input[name="calendar_title"]')?.value || '';
-        const calendarDescription = document.querySelector('textarea[name="calendar_description"]')?.value || '';
+        const calendarTitle = document.querySelector('input[name="event_title"]')?.value || '';
+        const calendarDescription = document.querySelector('textarea[name="event_details"]')?.value || '';
         const accessCode = document.querySelector('input[name="access_code"]')?.value || '';
 
         // Get purpose value
@@ -3224,8 +3224,8 @@
           additional_requests: additionalRequests || null,
           endorser: endorser || null,
           date_endorsed: document.querySelector('input[name="date_endorsed"]')?.value || null,
-          calendar_title: calendarTitle || null,
-          calendar_description: calendarDescription || null,
+          event_title: calendarTitle || null,
+          event_details: calendarDescription || null,
           facilities: selectedFacilities,
           equipment: selectedEquipment,
           services: selectedServices,
