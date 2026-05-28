@@ -50,7 +50,7 @@ class CalendarEventService
         $baseSchedule = $this->scheduleFormatter->getBaseSchedule($requisition);
 
         // Event title
-        $title = $requisition->calendar_title ?: "Booking #{$requisition->request_id}";
+        $title = $requisition->event_title ?: "Booking #{$requisition->request_id}";
 
         // Status color
         $statusColor = $requisition->formStatus->color_code;
@@ -159,8 +159,8 @@ class CalendarEventService
                 'num_participants' => $requisition->num_participants,
                 'facilities' => $facilities,
                 'equipment' => $equipment,
-                'calendar_title' => $title,
-                'calendar_description' => $requisition->calendar_description,
+                'event_title' => $title,
+                'event_details' => $requisition->event_details,
                 'all_day' => $requisition->all_day,
                 'category_ids' => $categoryIds,
                 'subcategory_ids' => $subcategoryIds,
