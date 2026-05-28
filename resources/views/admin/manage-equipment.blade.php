@@ -4,6 +4,49 @@
 
 @section('content')
   <style>
+    .layout-select {
+      min-width: 180px;
+    }
+
+    /* Loading overlay styles */
+    .equipment-container-loading {
+      position: relative;
+      min-height: 400px;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+    }
+
+    .loading-spinner {
+      text-align: center;
+    }
+
+    .loading-spinner .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    .pagination.disabled-pagination {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .pagination.disabled-pagination .page-link {
+      cursor: not-allowed;
+      background-color: #e9ecef;
+    }
+
     /* Pagination stays at bottom */
     .d-flex.justify-content-center.mt-auto.pt-3 {
       flex-shrink: 0;
@@ -14,15 +57,11 @@
     #equipmentDropdownToggle+.dropdown-menu.show {
       z-index: 9999 !important;
       position: absolute !important;
-      /* Optional: Add a visual debug to confirm it's working */
-      /* border: 2px solid red !important; */
     }
 
     .btn-outline-danger {
       background-color: #ffe5e5;
-      /* light red */
       border-color: #dc3545;
-      /* default Bootstrap danger border */
       color: #dc3545;
     }
 
@@ -61,26 +100,20 @@
     /* Custom pagination colors using CPU theme */
     .pagination .page-link {
       color: var(--cpu-primary);
-      /* dark blue text */
     }
 
     .pagination .page-link:hover {
       color: var(--cpu-primary-hover);
-      /* hover text color */
     }
 
-    /* Active page */
     .pagination .page-item.active .page-link {
       background-color: var(--cpu-primary);
       border-color: var(--cpu-primary);
       color: #fff;
-      /* white text for contrast */
     }
 
-    /* Disabled state */
     .pagination .page-item.disabled .page-link {
       color: #6c757d;
-      /* gray */
       pointer-events: none;
       background-color: var(--light-gray);
       border-color: #dee2e6;
@@ -96,6 +129,24 @@
       border-top-left-radius: 0 !important;
       border-bottom-left-radius: 0 !important;
     }
+
+    /* Loading skeleton styles */
+    .skeleton-card {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 8px;
+    }
+
+    @keyframes loading {
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
+    }
   </style>
 
   <!-- Main Content -->
@@ -104,14 +155,14 @@
       <!-- Header & Controls -->
       <div>
         <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-center">
-          <h2 class="card-title m-0 fw-bold"></h2>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="card-title m-0 fw-bold">Manage Equipment</h2>
         </div>
 
         <!-- Filters, Search Bar & Buttons (single scrollable row) -->
         <div class="row mb-3 g-2 align-items-center filters-row">
           <div class="col-auto flex-shrink-0">
-            <select id="layoutSelect" class="form-select">
+            <select id="layoutSelect" class="form-select layout-select">
               <option value="grid">Grid Layout</option>
               <option value="list">List Layout</option>
             </select>
@@ -154,23 +205,13 @@
                 </li>
               </ul>
             </div>
-            <a href="{{ url('/admin/scan-equipment') }}" class="btn btn-primary ms-2">
-              <i class="fa-solid fa-camera me-2"></i>Barcode Scanner
-            </a>
           </div>
         </div>
 
         <!-- Equipment List (scrollable) -->
         <div id="equipmentContainer">
           <div class="row g-2" id="equipmentCardsContainer">
-            <div class="col-12 text-center py-5" id="loadingIndicator">
-              <div class="spinner-border text-primary" role="status"></div>
-              <p class="mt-2">Loading equipment...</p>
-            </div>
-            <div class="col-12 text-center py-5 d-none" id="noResultsMessage">
-              <i class="bi bi-exclamation-circle fs-1 text-muted"></i>
-              <p class="mt-2 text-muted">No equipment found matching your criteria</p>
-            </div>
+            <!-- Loading skeletons will be shown here -->
           </div>
         </div>
       </div>
@@ -178,23 +219,7 @@
       <!-- Pagination Controls (fixed at bottom) -->
       <div class="d-flex justify-content-center mt-auto pt-3">
         <nav aria-label="Equipment pagination">
-          <ul class="pagination" id="paginationContainer">
-            <li class="page-item disabled" id="prevPage">
-              <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
-                <span aria-hidden="true">&laquo;</span>
-                <span class="visually-hidden">Previous</span>
-              </a>
-            </li>
-            <li class="page-item active">
-              <a class="page-link" href="#" data-page="1">1</a>
-            </li>
-            <li class="page-item" id="nextPage">
-              <a class="page-link" href="#" data-page="2">
-                <span aria-hidden="true">&raquo;</span>
-                <span class="visually-hidden">Next</span>
-              </a>
-            </li>
-          </ul>
+          <ul class="pagination" id="paginationContainer"></ul>
         </nav>
       </div>
 
@@ -204,7 +229,7 @@
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="massAssignDepartmentsModalLabel" style="color: #003366;">Mass Assign Departments
+              <h5 class="modal-title" id="massAssignDepartmentsModalLabel" style="color: #003366;">Mass Assign Department
                 to Equipment</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -212,20 +237,30 @@
               <form id="massAssignForm">
                 <!-- Equipment Selection -->
                 <div class="mb-4">
-                  <label class="form-label fw-bold" style="color: #003366;">Select Equipment</label>
-                  <select id="equipmentMultiSelect" class="form-select" multiple size="6" style="border-color: #003366;">
-                    <!-- Will be populated dynamically -->
+                  <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <label class="form-label fw-bold mb-0" style="color: #003366;">Select Equipment</label>
+                    <div>
+                      <button type="button" id="selectAllEquipment" class="btn btn-sm btn-primary me-2"
+                        style="background-color: #003366; color: white;">
+                        <i class="bi bi-check-all"></i> Select All
+                      </button>
+                      <button type="button" id="clearAllEquipment" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Clear All
+                      </button>
+                    </div>
+                  </div>
+                  <select id="equipmentMultiSelect" class="form-select" multiple size="8" style="border-color: #003366;">
                   </select>
                   <div class="form-text text-muted">Hold Ctrl/Cmd to select multiple equipment</div>
                 </div>
 
-                <!-- Department Selection -->
+                <!-- Department Selection - Changed to single select -->
                 <div class="mb-4">
-                  <label class="form-label fw-bold" style="color: #003366;">Select Departments to Assign</label>
-                  <select id="departmentMultiSelect" class="form-select" multiple size="6" style="border-color: #003366;">
-                    <!-- Will be populated dynamically -->
+                  <label class="form-label fw-bold" style="color: #003366;">Select Department to Assign</label>
+                  <select id="departmentSingleSelect" class="form-select" style="border-color: #003366;">
+                    <option value="">Select Department</option>
                   </select>
-                  <div class="form-text text-muted">Hold Ctrl/Cmd to select multiple departments</div>
+                  <div class="form-text text-muted">Select the department that will manage the selected equipment</div>
                 </div>
 
                 <!-- Summary -->
@@ -240,7 +275,7 @@
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
               <button type="button" class="btn" id="executeMassAssignBtn" style="background-color: #003366; color: white;"
                 onmouseover="this.style.backgroundColor='#004080'" onmouseout="this.style.backgroundColor='#003366'">
-                <i class="bi bi-check-circle me-2"></i>Assign Departments
+                <i class="bi bi-check-circle me-2"></i>Assign Department
               </button>
             </div>
           </div>
@@ -284,7 +319,6 @@
 @endsection
 
 @section('scripts')
-  <!-- Combined JS resources -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
 
@@ -301,45 +335,63 @@
       const layoutSelect = document.getElementById("layoutSelect");
       const statusFilter = document.getElementById("statusFilter");
       const categoryFilter = document.getElementById("categoryFilter");
-      const loadingIndicator = document.getElementById("loadingIndicator");
-      const noResultsMessage = document.getElementById("noResultsMessage");
       const paginationContainer = document.getElementById("paginationContainer");
-      const addEquipmentBtn = document.getElementById("addEquipmentBtn");
 
       // State variables
       let allEquipment = [];
       let filteredEquipment = [];
-      let categories = [];
-      let itemsPerPage = 12;
       let currentPage = 1;
       let totalPages = 1;
+      let totalItems = 0;
+      let itemsPerPage = 12;
+      let isLoading = false;
 
-      // Update the init function to fetch statuses
-      // Update the init function
+      // Filter state
+      let currentFilters = {
+        status_id: 'all',
+        category_id: 'all',
+        search: ''
+      };
+
+      // Debounce timer for search
+      let searchDebounceTimer;
+
+      // Initialize the page
       async function init() {
         try {
-          // Fetch equipment data
-          await fetchEquipment();
-
-          // Fetch and populate dropdowns
-          await fetchStatuses();
-          await fetchCategories();
-
-          // Set up event listeners
+          await fetchEquipmentData();
           setupEventListeners();
-
-          // Initialize pagination
-          initializePagination();
         } catch (error) {
           console.error("Initialization error:", error);
-          alert("Failed to initialize page. Please try again.");
+          showToast("Failed to initialize page. Please refresh and try again.", "error");
         }
       }
 
-      // Fetch and populate availability statuses
-      async function fetchStatuses() {
+      // Fetch equipment data from merged API
+      async function fetchEquipmentData(page = 1) {
+        if (isLoading) return;
+
+        isLoading = true;
+        showLoadingOverlay(); // Changed from showLoadingSkeletons()
+
         try {
-          const response = await fetch("/api/availability-statuses", {
+          // Build query parameters
+          const params = new URLSearchParams();
+          params.append('page', page);
+
+          if (currentFilters.status_id && currentFilters.status_id !== 'all') {
+            params.append('status_id', currentFilters.status_id);
+          }
+
+          if (currentFilters.category_id && currentFilters.category_id !== 'all') {
+            params.append('category_id', currentFilters.category_id);
+          }
+
+          if (currentFilters.search && currentFilters.search.trim()) {
+            params.append('search', currentFilters.search.trim());
+          }
+
+          const response = await fetch(`/api/admin/manage-equipment?${params.toString()}`, {
             headers: {
               Authorization: `Bearer ${token}`,
               Accept: "application/json",
@@ -347,9 +399,8 @@
           });
 
           if (response.status === 401) {
-            console.error("Unauthorized: Invalid or expired token.");
             localStorage.removeItem("adminToken");
-            alert("Your session has expired. Please log in again.");
+            showToast("Your session has expired. Please log in again.", "error");
             setTimeout(() => {
               window.location.href = "/admin/login";
             }, 2000);
@@ -357,16 +408,95 @@
           }
 
           if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
 
-          const data = await response.json();
+          const result = await response.json();
 
-          // Populate dropdown with status data
-          populateStatusFilter(data);
+          if (!result.success) {
+            throw new Error(result.message || "Failed to fetch equipment");
+          }
+
+          // Store equipment data
+          allEquipment = result.data || [];
+          filteredEquipment = [...allEquipment];
+
+          // Update pagination info
+          totalPages = result.pagination.last_page;
+          currentPage = result.pagination.current_page;
+          totalItems = result.pagination.total;
+
+          // Populate filter dropdowns on first load only
+          if (page === 1 && result.filters) {
+            populateStatusFilter(result.filters.statuses);
+            populateCategoryFilter(result.filters.categories);
+          }
+
+          // Render equipment
+          renderEquipment();
+
+          // Update pagination controls
+          updatePagination();
 
         } catch (error) {
-          console.error("Error fetching statuses:", error);
+          console.error("Error fetching equipment:", error);
+          showToast(error.message || "Failed to load equipment", "error");
+          showEmptyState("Failed to load equipment. Please try again.");
+        } finally {
+          isLoading = false;
+          hideLoadingOverlay(); // Changed from setting isLoading false
+        }
+      }
+
+      // Show loading overlay
+      function showLoadingOverlay() {
+        const container = document.getElementById('equipmentContainer');
+        if (!container) return;
+
+        // Add loading class to container
+        container.classList.add('equipment-container-loading');
+
+        // Check if overlay already exists
+        let overlay = container.querySelector('.loading-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.className = 'loading-overlay';
+          overlay.innerHTML = `
+                      <div class="loading-spinner">
+                        <div class="spinner-border text-primary" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading equipment...</p>
+                      </div>
+                    `;
+          container.appendChild(overlay);
+        } else {
+          overlay.style.display = 'flex';
+        }
+
+        // Disable pagination
+        const pagination = document.getElementById('paginationContainer');
+        if (pagination) {
+          pagination.classList.add('disabled-pagination');
+        }
+      }
+
+      // Hide loading overlay
+      function hideLoadingOverlay() {
+        const container = document.getElementById('equipmentContainer');
+        if (!container) return;
+
+        container.classList.remove('equipment-container-loading');
+
+        const overlay = container.querySelector('.loading-overlay');
+        if (overlay) {
+          overlay.style.display = 'none';
+        }
+
+        // Re-enable pagination
+        const pagination = document.getElementById('paginationContainer');
+        if (pagination) {
+          pagination.classList.remove('disabled-pagination');
         }
       }
 
@@ -374,84 +504,13 @@
       function populateStatusFilter(statuses) {
         statusFilter.innerHTML = '<option value="all">All Statuses</option>';
 
-        statuses.forEach((status) => {
-          const option = document.createElement("option");
-          option.value = status.status_id;
-          option.textContent = status.status_name;
-          statusFilter.appendChild(option);
-        });
-      }
-
-      // Fetch equipment data from API
-      async function fetchEquipment() {
-        try {
-          loadingIndicator.classList.remove("d-none");
-          noResultsMessage.classList.add("d-none");
-
-          const response = await fetch(
-            "/api/equipment",
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json",
-              },
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(
-              `Error ${response.status}: ${response.statusText}`
-            );
-          }
-
-          const data = await response.json();
-          allEquipment = data.data || [];
-          filteredEquipment = [...allEquipment];
-
-          // Render equipment dynamically
-          renderEquipment(allEquipment);
-        } catch (error) {
-          console.error("Error fetching equipment:", error);
-          loadingIndicator.classList.add("d-none");
-          noResultsMessage.classList.remove("d-none");
-          noResultsMessage.innerHTML = `<p class="text-danger">Failed to load equipment. Please try again later.</p>`;
-        }
-      }
-
-      // Fetch and populate equipment categories
-      async function fetchCategories() {
-        try {
-          const response = await fetch("/api/equipment-categories", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
+        if (statuses && Array.isArray(statuses)) {
+          statuses.forEach((status) => {
+            const option = document.createElement("option");
+            option.value = status.status_id;
+            option.textContent = status.status_name;
+            statusFilter.appendChild(option);
           });
-
-          if (response.status === 401) {
-            console.error("Unauthorized: Invalid or expired token.");
-            localStorage.removeItem("adminToken");
-            alert("Your session has expired. Please log in again.");
-            setTimeout(() => {
-              window.location.href = "/admin/login";
-            }, 2000);
-            return;
-          }
-
-          if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
-          }
-
-          const data = await response.json();
-
-          // Log to inspect
-          console.log("Equipment categories:", data);
-
-          // Populate dropdown directly with API data
-          populateCategoryFilter(data);
-
-        } catch (error) {
-          console.error("Error fetching categories:", error);
         }
       }
 
@@ -459,59 +518,39 @@
       function populateCategoryFilter(categories) {
         categoryFilter.innerHTML = '<option value="all">All Categories</option>';
 
-        categories.forEach((category) => {
-          const option = document.createElement("option");
-          option.value = category.category_id;      // Use category_id for value
-          option.textContent = category.category_name;
-          categoryFilter.appendChild(option);
-        });
+        if (categories && Array.isArray(categories)) {
+          categories.forEach((category) => {
+            const option = document.createElement("option");
+            option.value = category.category_id;
+            option.textContent = category.category_name;
+            categoryFilter.appendChild(option);
+          });
+        }
       }
 
       // Render equipment cards
-      function renderEquipment(equipmentList) {
-        loadingIndicator.classList.add("d-none");
-
-        // Clear existing content
+      function renderEquipment() {
         const container = document.getElementById('equipmentCardsContainer');
+        if (!container) return;
+
         container.innerHTML = "";
 
-        if (equipmentList.length === 0) {
-          // Show no equipment found message with icon
-          container.innerHTML = `
-                        <div class="col-12 text-center py-5">
-                          <i class="bi bi-tools fs-1 text-muted" style="font-size: 4rem !important;"></i>
-                          <p class="mt-2 text-muted">No equipment found.</p>
-                        </div>
-                      `;
-          // Clear pagination when no results
-          paginationContainer.innerHTML = '';
+        if (!filteredEquipment || filteredEquipment.length === 0) {
+          showEmptyState("No equipment found matching your criteria");
           return;
         }
 
-        noResultsMessage.classList.add("d-none");
-
-        // Calculate pagination
-        totalPages = Math.ceil(equipmentList.length / itemsPerPage);
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = Math.min(startIndex + itemsPerPage, equipmentList.length);
-
-        // Get layout selection
         const layout = layoutSelect.value;
-
-        // Set container class based on layout
         container.className = layout === "list" ? "row g-3" : "row g-2";
 
-        // Render only the current page's items
-        for (let i = startIndex; i < endIndex; i++) {
-          const equipment = equipmentList[i];
+        filteredEquipment.forEach((equipment) => {
           const statusClass = getStatusClass(equipment.status.status_name);
 
-          // Find primary image - check if images array exists and has valid images
+          // Find primary image
           let primaryImage = "https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png";
 
           if (equipment.images && equipment.images.length > 0) {
             const validImages = equipment.images.filter(img => img.image_url && img.image_url.trim() !== '');
-
             if (validImages.length > 0) {
               const sortOrder1Image = validImages.find(img => img.sort_order === 1);
               const primaryTypeImage = validImages.find(img => img.image_type === "Primary");
@@ -524,90 +563,112 @@
           }
 
           const card = document.createElement("div");
-          card.dataset.status = equipment.status.status_id.toString();
-          card.dataset.category = equipment.category.category_id.toString();
-          card.dataset.title = equipment.equipment_name.toLowerCase();
 
           if (layout === "list") {
-            // List layout
             card.className = "col-12 equipment-card mb-0";
             card.innerHTML = `
-                      <div class="card h-100 shadow-sm rounded-3">
-                        <div class="row g-0">
-                          <div class="col-md-2" style="max-width: 120px; flex: 0 0 120px;">
-                            <img src="${primaryImage}" 
-                                 class="img-fluid rounded-start" 
-                                 style="width: 120px; height: 120px; object-fit: cover;" 
-                                 alt="${equipment.equipment_name}">
-                          </div>
-                          <div class="col-md-8">
-                            <div class="card-body py-3">
-                              <h5 class="card-title fw-bold mb-2">${equipment.equipment_name}</h5>
-                              <p class="card-text mb-2">
-                                <span class="badge ${statusClass} me-2">${equipment.status.status_name}</span>
-                  <small class="text-muted">
-                    <i class="bi bi-tag-fill text-primary me-1"></i>${equipment.category.category_name}
-                    <i class="bi bi-box-fill text-primary ms-2 me-1"></i>${equipment.available_quantity}/${equipment.total_quantity} available
-                  </small>
-                              </p>
-                              <p class="card-text text-muted mb-0">
-                                ${equipment.description || "No description available"}
-                              </p>
+                          <div class="card h-100 shadow-sm rounded-3">
+                            <div class="row g-0">
+                              <div class="col-md-2" style="max-width: 120px; flex: 0 0 120px;">
+                                <img src="${primaryImage}" 
+                                     class="img-fluid rounded-start" 
+                                     style="width: 120px; height: 120px; object-fit: cover;" 
+                                     alt="${escapeHtml(equipment.equipment_name)}"
+                                     onerror="this.src='https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png'">
+                              </div>
+                              <div class="col-md-8">
+                                <div class="card-body py-3">
+                                  <h5 class="card-title fw-bold mb-2">${escapeHtml(equipment.equipment_name)}</h5>
+                                  <p class="card-text mb-2">
+                                    <span class="badge ${statusClass} me-2">${escapeHtml(equipment.status.status_name)}</span>
+                                    <small class="text-muted">
+                                      <i class="bi bi-tag-fill text-primary me-1"></i>${escapeHtml(equipment.category.category_name)}
+                                      <i class="bi bi-box-fill text-primary ms-2 me-1"></i>${equipment.available_quantity}/${equipment.total_quantity} available
+                                    </small>
+                                  </p>
+                                  <p class="card-text text-muted mb-0">
+                                    ${escapeHtml(equipment.description || "No description available")}
+                                  </p>
+                                </div>
+                              </div>
+                              <div class="col-md-2 d-flex align-items-center justify-content-center">
+                                <div class="d-grid gap-2 w-100 px-2">
+                                  <a href="/admin/edit-equipment?id=${equipment.equipment_id}" 
+                                     class="btn btn-sm btn-primary">
+                                     Manage
+                                  </a>
+                                  <button class="btn btn-sm btn-outline-danger btn-delete" 
+                                          data-id="${equipment.equipment_id}"
+                                          data-name="${escapeHtml(equipment.equipment_name)}">
+                                    Delete
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div class="col-md-2 d-flex align-items-center justify-content-center">
-                            <div class="d-grid gap-2 w-100 px-2">
-                              <a href="/admin/edit-equipment?id=${equipment.equipment_id}" 
-                                 class="btn btn-sm btn-primary">
-                                 Manage
-                              </a>
-                              <button class="btn btn-sm btn-outline-danger btn-delete" 
-                                      data-id="${equipment.equipment_id}">
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    `;
+                        `;
           } else {
-            // Grid layout
             card.className = "col-md-4 col-lg-3 equipment-card mb-3";
             card.innerHTML = `
-                      <div class="card h-100">
-                        <img src="${primaryImage}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="${equipment.equipment_name}">
-                        <div class="card-body d-flex flex-column p-2">
-                          <div>
-                            <h6 class="card-title mb-1 fw-bold">${equipment.equipment_name}</h6>
-                  <p class="card-text text-muted mb-1 small">
-                    <i class="bi bi-tag-fill text-primary me-1"></i>${equipment.category.category_name}
-                    <i class="bi bi-box-fill text-primary ms-2 me-1"></i>${equipment.available_quantity}/${equipment.total_quantity}
-                  </p>
-                            <span class="badge ${statusClass} mb-2">${equipment.status.status_name}</span>
-                            <p class="card-text mb-2 small text-truncate">${equipment.description || "No description available"}</p>
+                          <div class="card h-100">
+                            <img src="${primaryImage}" 
+                                 class="card-img-top" 
+                                 style="height: 150px; object-fit: cover;" 
+                                 alt="${escapeHtml(equipment.equipment_name)}"
+                                 onerror="this.src='https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png'">
+                            <div class="card-body d-flex flex-column p-2">
+                              <div>
+                                <h6 class="card-title mb-1 fw-bold">${escapeHtml(equipment.equipment_name)}</h6>
+                                <p class="card-text text-muted mb-1 small">
+                                  <i class="bi bi-tag-fill text-primary me-1"></i>${escapeHtml(equipment.category.category_name)}
+                                  <i class="bi bi-box-fill text-primary ms-2 me-1"></i>${equipment.available_quantity}/${equipment.total_quantity}
+                                </p>
+                                <span class="badge ${statusClass} mb-2">${escapeHtml(equipment.status.status_name)}</span>
+                                <p class="card-text mb-2 small text-truncate">${escapeHtml(equipment.description || "No description available")}</p>
+                              </div>
+                              <div class="equipment-actions mt-auto d-grid gap-1">
+                                <a href="/admin/edit-equipment?id=${equipment.equipment_id}" class="btn btn-sm btn-primary btn-manage">Manage</a>
+                                <button class="btn btn-sm btn-outline-danger btn-delete" 
+                                        data-id="${equipment.equipment_id}"
+                                        data-name="${escapeHtml(equipment.equipment_name)}">Delete</button>
+                              </div>
+                            </div>
                           </div>
-                          <div class="equipment-actions mt-auto d-grid gap-1">
-                            <a href="/admin/edit-equipment?id=${equipment.equipment_id}" class="btn btn-sm btn-primary btn-manage">Manage</a>
-                            <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${equipment.equipment_id}">Delete</button>
-                          </div>
-                        </div>
-                      </div>
-                    `;
+                        `;
           }
 
           container.appendChild(card);
+        });
+
+        // Add event listeners to delete buttons
+        addDeleteButtonListeners();
+      }
+
+      // Helper function to escape HTML
+      function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Show empty state
+      function showEmptyState(message = "No equipment found.") {
+        const container = document.getElementById('equipmentCardsContainer');
+        if (container) {
+          container.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                          <i class="bi bi-tools fs-1 text-muted" style="font-size: 4rem !important;"></i>
+                          <p class="mt-2 text-muted">${escapeHtml(message)}</p>
+                        </div>
+                      `;
         }
-
-        // Add event listeners to new buttons
-        addButtonEventListeners();
-
-        // Update pagination controls
-        updatePagination();
+        paginationContainer.innerHTML = '';
       }
 
       // Get appropriate status class
       function getStatusClass(status) {
-        switch (status.toLowerCase()) {
+        switch (status?.toLowerCase()) {
           case "available":
             return "bg-success";
           case "reserved":
@@ -622,96 +683,102 @@
       }
 
       // Set up event listeners
-      // Set up event listeners
       function setupEventListeners() {
-        // Filter controls
-        searchInput.addEventListener("input", filterEquipment);
-        statusFilter.addEventListener("change", filterEquipment);
-        categoryFilter.addEventListener("change", filterEquipment);
+        // Search with debounce
+        searchInput.addEventListener("input", function () {
+          clearTimeout(searchDebounceTimer);
+          searchDebounceTimer = setTimeout(() => {
+            currentFilters.search = searchInput.value;
+            fetchEquipmentData(1);
+          }, 500);
+        });
 
-        // Simple layout switch
+        // Status filter
+        statusFilter.addEventListener("change", function () {
+          currentFilters.status_id = statusFilter.value;
+          fetchEquipmentData(1);
+        });
+
+        // Category filter
+        categoryFilter.addEventListener("change", function () {
+          currentFilters.category_id = categoryFilter.value;
+          fetchEquipmentData(1);
+        });
+
+        // Layout switch
         layoutSelect.addEventListener("change", function () {
-          filterEquipment();
+          renderEquipment();
         });
       }
 
-      // Add event listeners to manage and delete buttons
-      function addButtonEventListeners() {
-        // Delete buttons
+      // Add event listeners to delete buttons
+      function addDeleteButtonListeners() {
         document.querySelectorAll(".btn-delete").forEach((button) => {
-          button.addEventListener("click", function () {
-            const equipmentId = this.dataset.id;
-            const equipmentName = this.closest('.card').querySelector('.card-title').textContent.trim();
-
-            // Show confirmation modal instead of confirm()
-            showDeleteConfirmationModal(equipmentId, equipmentName);
-          });
+          button.removeEventListener('click', handleDeleteClick);
+          button.addEventListener('click', handleDeleteClick);
         });
+      }
+
+      function handleDeleteClick(e) {
+        const button = e.currentTarget;
+        const equipmentId = button.dataset.id;
+        const equipmentName = button.dataset.name;
+        showDeleteConfirmationModal(equipmentId, equipmentName);
       }
 
       function showDeleteConfirmationModal(equipmentId, equipmentName) {
-        // Create modal HTML
         const modalHtml = `
                       <div class="modal fade" id="deleteEquipmentModal" tabindex="-1" aria-hidden="true">
-                          <div class="modal-dialog modal-dialog-centered">
-                              <div class="modal-content">
-                                  <div class="modal-header">
-                                      <h5 class="modal-title">Confirm Deletion</h5>
-                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                  </div>
-                                  <div class="modal-body text-center">
-                                      <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 2.5rem;"></i>
-                                      <p class="mt-3 mb-1">Are you sure you want to delete <strong>"${equipmentName}"</strong>?</p>
-                                      <p class="text-danger mt-1">This action cannot be undone.</p>
-                                  </div>
-                                  <div class="modal-footer">
-                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                      <button type="button" class="btn btn-danger" id="confirmDeleteEquipmentBtn">Delete Equipment</button>
-                                  </div>
-                              </div>
+                        <div class="modal-dialog modal-dialog-centered">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title">Confirm Deletion</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                              <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 2.5rem;"></i>
+                              <p class="mt-3 mb-1">Are you sure you want to delete <strong>"${escapeHtml(equipmentName)}"</strong>?</p>
+                              <p class="text-danger mt-1">This action cannot be undone.</p>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                              <button type="button" class="btn btn-danger" id="confirmDeleteEquipmentBtn">Delete Equipment</button>
+                            </div>
                           </div>
+                        </div>
                       </div>
-                  `;
+                    `;
 
-
-        // Add modal to DOM
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-        // Initialize and show modal
         const modal = new bootstrap.Modal(document.getElementById('deleteEquipmentModal'));
         modal.show();
 
-        // Handle confirm button click
         document.getElementById('confirmDeleteEquipmentBtn').addEventListener('click', async function () {
           try {
             const success = await deleteEquipment(equipmentId);
             if (success) {
               showToast('Equipment deleted successfully!', 'success');
-              await fetchEquipment(); // Refresh the list
+              await fetchEquipmentData(currentPage);
             }
           } catch (error) {
             console.error("Error deleting equipment:", error);
             showToast('Failed to delete equipment: ' + error.message, 'error');
           } finally {
             modal.hide();
-            // Remove modal from DOM after hiding
             setTimeout(() => {
               document.getElementById('deleteEquipmentModal')?.remove();
             }, 300);
           }
         });
 
-        // Remove modal from DOM when hidden
         document.getElementById('deleteEquipmentModal').addEventListener('hidden.bs.modal', function () {
           this.remove();
         });
       }
 
-      // Toast notification function (copied from edit-equipment)
+      // Toast notification function
       window.showToast = function (message, type = 'success', duration = 3000) {
         const toast = document.createElement('div');
-
-        // Toast base styles
         toast.className = `toast align-items-center border-0 position-fixed start-0 mb-2`;
         toast.style.zIndex = '1100';
         toast.style.bottom = '0';
@@ -724,7 +791,6 @@
         toast.setAttribute('aria-live', 'assertive');
         toast.setAttribute('aria-atomic', 'true');
 
-        // Colors
         const bgColor = type === 'success' ? '#004183ff' : '#dc3545';
         toast.style.backgroundColor = bgColor;
         toast.style.color = '#fff';
@@ -732,43 +798,31 @@
         toast.style.borderRadius = '0.3rem';
 
         toast.innerHTML = `
-                          <div class="d-flex align-items-center px-3 py-1"> 
-                              <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                              <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                              <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                          </div>
-                          <div class="loading-bar" style="
-                              height: 3px;
-                              background: rgba(255,255,255,0.7);
-                              width: 100%;
-                              transition: width ${duration}ms linear;
-                          "></div>
-                      `;
+                      <div class="d-flex align-items-center px-3 py-1"> 
+                        <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                        <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${escapeHtml(message)}</div>
+                        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                      </div>
+                      <div class="loading-bar" style="height: 3px; background: rgba(255,255,255,0.7); width: 100%; transition: width ${duration}ms linear;"></div>
+                    `;
 
         document.body.appendChild(toast);
-
-        // Bootstrap toast instance
         const bsToast = new bootstrap.Toast(toast, { autohide: false });
         bsToast.show();
 
-        // Float up appear animation
         requestAnimationFrame(() => {
           toast.style.opacity = '1';
           toast.style.transform = 'translateY(0)';
         });
 
-        // Start loading bar animation
         const loadingBar = toast.querySelector('.loading-bar');
         requestAnimationFrame(() => {
           loadingBar.style.width = '0%';
         });
 
-        // Remove after duration
         setTimeout(() => {
-          // Float down disappear animation
           toast.style.opacity = '0';
           toast.style.transform = 'translateY(20px)';
-
           setTimeout(() => {
             bsToast.hide();
             toast.remove();
@@ -779,37 +833,18 @@
       // Delete equipment
       async function deleteEquipment(id) {
         try {
-          console.log('Starting equipment deletion process', {
-            equipmentId: id,
-            timestamp: new Date().toISOString()
-          });
-
-          const response = await fetch(
-            `/api/admin/equipment/${id}`,
-            {
-              method: "DELETE",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json",
-                'Content-Type': 'application/json'
-              },
-            }
-          );
-
-          console.log('Delete request completed', {
-            equipmentId: id,
-            status: response.status,
-            statusText: response.statusText,
-            ok: response.ok
+          const response = await fetch(`/api/admin/equipment/${id}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+              'Content-Type': 'application/json'
+            },
           });
 
           if (response.status === 401) {
-            console.error('Authentication failed during deletion', {
-              equipmentId: id,
-              status: 401
-            });
             localStorage.removeItem("adminToken");
-            alert("Your session has expired. Please log in again.");
+            showToast("Your session has expired. Please log in again.", "error");
             setTimeout(() => {
               window.location.href = "/admin/login";
             }, 2000);
@@ -817,128 +852,25 @@
           }
 
           if (!response.ok) {
-            // Try to get detailed error message from response
             let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
             try {
               const errorData = await response.json();
               errorMessage = errorData.message || errorMessage;
-              console.error('Backend error response', {
-                equipmentId: id,
-                errorData: errorData,
-                status: response.status
-              });
-            } catch (parseError) {
-              console.error('Failed to parse error response', {
-                equipmentId: id,
-                parseError: parseError.message,
-                status: response.status
-              });
-            }
-
+            } catch (parseError) { }
             throw new Error(errorMessage);
           }
 
-          const result = await response.json();
-          console.log('Equipment deletion successful', {
-            equipmentId: id,
-            backendResponse: result,
-            cloudinaryImagesDeleted: result.cloudinary_images_deleted || 0
-          });
-
           return true;
-
         } catch (error) {
-          console.error('Equipment deletion failed', {
-            equipmentId: id,
-            error: error.message,
-            stack: error.stack,
-            timestamp: new Date().toISOString()
-          });
-
-          // Show more detailed error message to user
-          const userMessage = error.message.includes('Failed to fetch')
-            ? 'Network error: Could not connect to server. Please check your connection.'
-            : error.message;
-
-          alert(userMessage);
+          console.error('Equipment deletion failed:', error);
           throw error;
         }
       }
 
-      // Filter Equipment based on all criteria
-      // Filter Equipment based on all criteria
-      function filterEquipment() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const status = statusFilter.value;
-        const category = categoryFilter.value;
-        const layout = layoutSelect.value;
-
-        // Reset to first page when filters change
-        currentPage = 1;
-
-        // Filter the equipment array
-        filteredEquipment = allEquipment.filter(equipment => {
-          const equipmentStatus = equipment.status.status_id.toString();
-          const equipmentCategory = equipment.category.category_id.toString();
-          const equipmentTitle = equipment.equipment_name.toLowerCase();
-
-          const matchesSearch = equipmentTitle.includes(searchTerm);
-          const matchesStatus = status === "all" || equipmentStatus === status;
-          const matchesCategory = category === "all" || equipmentCategory === category;
-
-          return matchesSearch && matchesStatus && matchesCategory;
-        });
-
-        // Re-render with filtered results
-        renderEquipment(filteredEquipment);
-      }
-
-
-      // Initialize pagination
-      function initializePagination() {
-        updatePagination();
-        showPage(1);
-
-        // Event delegation for pagination (handles dynamically created elements)
-        paginationContainer.addEventListener("click", function (e) {
-          if (e.target.classList.contains("page-link")) {
-            e.preventDefault();
-
-            const page = parseInt(e.target.getAttribute("data-page"));
-            if (!isNaN(page)) {
-              showPage(page);
-            } else if (e.target.closest("#prevPage")) {
-              // Previous page button
-              if (currentPage > 1) {
-                showPage(currentPage - 1);
-              }
-            } else if (e.target.closest("#nextPage")) {
-              // Next page button
-              if (currentPage < totalPages) {
-                showPage(currentPage + 1);
-              }
-            }
-          }
-        });
-      }
-
-      // Show a specific page
-      function showPage(page) {
-        currentPage = page;
-
-        // Re-render the equipment with the new page
-        renderEquipment(filteredEquipment);
-      }
-
       // Update pagination controls
       function updatePagination() {
-        const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
-
-        // Clear existing pagination
         paginationContainer.innerHTML = "";
 
-
-        // Don't show pagination if there's only 1 page or no items
         if (totalPages <= 1) {
           return;
         }
@@ -946,13 +878,19 @@
         // Previous button
         const prevLi = document.createElement("li");
         prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
-        prevLi.id = "prevPage";
         prevLi.innerHTML = `
-                              <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
-                                <span aria-hidden="true">&laquo;</span>
-                                <span class="visually-hidden">Previous</span>
-                              </a>
-                            `;
+                      <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="visually-hidden">Previous</span>
+                      </a>
+                    `;
+
+        prevLi.addEventListener("click", (e) => {
+          e.preventDefault();
+          if (currentPage > 1) {
+            fetchEquipmentData(currentPage - 1);
+          }
+        });
         paginationContainer.appendChild(prevLi);
 
         // Page numbers
@@ -960,7 +898,6 @@
         let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
         let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
-        // Adjust start page if we're near the end
         if (endPage - startPage + 1 < maxVisiblePages) {
           startPage = Math.max(1, endPage - maxVisiblePages + 1);
         }
@@ -969,65 +906,95 @@
           const pageLi = document.createElement("li");
           pageLi.className = `page-item ${i === currentPage ? "active" : ""}`;
           pageLi.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
+          pageLi.addEventListener("click", (e) => {
+            e.preventDefault();
+            fetchEquipmentData(i);
+          });
           paginationContainer.appendChild(pageLi);
         }
+
         // Next button
         const nextLi = document.createElement("li");
         nextLi.className = `page-item ${currentPage === totalPages ? "disabled" : ""}`;
-        nextLi.id = "nextPage";
         nextLi.innerHTML = `
-                                      <a class="page-link" href="#" data-page="${currentPage + 1}">
-                                        <span aria-hidden="true">&raquo;</span>
-                                        <span class="visually-hidden">Next</span>
-                                      </a>
-                                    `;
-        paginationContainer.appendChild(nextLi);
-
-        // Add event listeners
-        paginationContainer.querySelectorAll(".page-link[data-page]").forEach((link) => {
-          link.addEventListener("click", function (e) {
-            e.preventDefault();
-            const page = parseInt(this.getAttribute("data-page"));
-            if (page >= 1 && page <= totalPages) {
-              showPage(page);
-            }
-          });
-        });
-
-        // Previous page event
-        prevLi.querySelector(".page-link").addEventListener("click", function (e) {
-          e.preventDefault();
-          if (currentPage > 1) {
-            showPage(currentPage - 1);
-          }
-        });
-
-        // Next page event
-        nextLi.querySelector(".page-link").addEventListener("click", function (e) {
+                      <a class="page-link" href="#" data-page="${currentPage + 1}">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="visually-hidden">Next</span>
+                      </a>
+                    `;
+        nextLi.addEventListener("click", (e) => {
           e.preventDefault();
           if (currentPage < totalPages) {
-            showPage(currentPage + 1);
+            fetchEquipmentData(currentPage + 1);
           }
         });
+        paginationContainer.appendChild(nextLi);
       }
 
-      // Mass Assignment Modal functionality for Equipment
+      document.getElementById('selectAllEquipment')?.addEventListener('click', function () {
+        const select = document.getElementById('equipmentMultiSelect');
+        if (select) {
+          Array.from(select.options).forEach(option => {
+            option.selected = true;
+          });
+          updateSelectionSummary();
+        }
+      });
+
+      document.getElementById('clearAllEquipment')?.addEventListener('click', function () {
+        const select = document.getElementById('equipmentMultiSelect');
+        if (select) {
+          Array.from(select.options).forEach(option => {
+            option.selected = false;
+          });
+          updateSelectionSummary();
+        }
+      });
+
+      // Mass Assignment Modal functionality
       let equipmentList = [];
       let departmentsList = [];
 
-      // Fetch equipment for dropdown
       async function fetchEquipmentForDropdown() {
         try {
-          // Use the existing filteredEquipment from the main scope
-          equipmentList = window.filteredEquipment || [];
+          const select = document.getElementById('equipmentMultiSelect');
+          if (!select) return;
+
+          // Show loading state
+          select.innerHTML = '<option disabled>Loading equipment...</option>';
+
+          // Fetch ALL equipment only when modal opens
+          const response = await fetch("/api/admin/equipment/all", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch equipment");
+          }
+
+          const result = await response.json();
+
+          if (!result.success) {
+            throw new Error(result.message || "Failed to fetch equipment");
+          }
+
+          equipmentList = result.data || [];
           populateEquipmentMultiSelect();
+
         } catch (error) {
           console.error("Error loading equipment:", error);
-          showToast('Failed to load equipment', 'error');
+          showToast('Failed to load equipment: ' + error.message, 'error');
+
+          const select = document.getElementById('equipmentMultiSelect');
+          if (select) {
+            select.innerHTML = '<option disabled>Failed to load equipment. Please try again.</option>';
+          }
         }
       }
 
-      // Fetch departments for dropdown
       async function fetchDepartmentsForModal() {
         try {
           const response = await fetch("/api/departments", {
@@ -1041,18 +1008,23 @@
 
           const result = await response.json();
           departmentsList = Array.isArray(result) ? result : (result.data || []);
-          populateDepartmentMultiSelect();
+          populateDepartmentSingleSelect();
         } catch (error) {
           console.error("Error fetching departments:", error);
           showToast('Failed to load departments', 'error');
         }
       }
 
-      // Populate equipment multi-select
       function populateEquipmentMultiSelect() {
         const select = document.getElementById('equipmentMultiSelect');
         if (!select) return;
+
         select.innerHTML = '';
+
+        if (equipmentList.length === 0) {
+          select.innerHTML = '<option disabled>No equipment found</option>';
+          return;
+        }
 
         equipmentList.forEach(equipment => {
           const option = document.createElement('option');
@@ -1062,11 +1034,10 @@
         });
       }
 
-      // Populate department multi-select
-      function populateDepartmentMultiSelect() {
-        const select = document.getElementById('departmentMultiSelect');
+      function populateDepartmentSingleSelect() {
+        const select = document.getElementById('departmentSingleSelect');
         if (!select) return;
-        select.innerHTML = '';
+        select.innerHTML = '<option value="">Select Department</option>';
 
         departmentsList.forEach(dept => {
           const option = document.createElement('option');
@@ -1076,64 +1047,56 @@
         });
       }
 
-      // Update selection summary
       function updateSelectionSummary() {
         const equipmentSelect = document.getElementById('equipmentMultiSelect');
-        const departmentSelect = document.getElementById('departmentMultiSelect');
+        const departmentSelect = document.getElementById('departmentSingleSelect');
 
         const equipmentCount = equipmentSelect ? equipmentSelect.selectedOptions.length : 0;
-        const departmentCount = departmentSelect ? departmentSelect.selectedOptions.length : 0;
+        const departmentId = departmentSelect ? departmentSelect.value : '';
 
         const summarySpan = document.getElementById('summaryText');
         if (summarySpan) {
-          if (equipmentCount === 0 && departmentCount === 0) {
-            summarySpan.textContent = 'No equipment or departments selected';
-          } else if (equipmentCount === 0) {
+          if (equipmentCount === 0) {
             summarySpan.textContent = 'Please select at least one equipment item';
-          } else if (departmentCount === 0) {
-            summarySpan.textContent = 'Please select at least one department';
+          } else if (!departmentId) {
+            summarySpan.textContent = 'Please select a department to assign';
           } else {
-            summarySpan.textContent = `${equipmentCount} equipment item(s) and ${departmentCount} department(s) selected. Current department assignments will be replaced.`;
+            const departmentName = departmentSelect.options[departmentSelect.selectedIndex]?.text || '';
+            summarySpan.textContent = `${equipmentCount} equipment item(s) will be assigned to ${departmentName}. Current department assignments will be replaced.`;
           }
         }
       }
-
-      // Show warning modal before execution
       document.getElementById('executeMassAssignBtn')?.addEventListener('click', function () {
         const equipmentSelect = document.getElementById('equipmentMultiSelect');
-        const departmentSelect = document.getElementById('departmentMultiSelect');
+        const departmentSelect = document.getElementById('departmentSingleSelect');
 
         const equipmentIds = equipmentSelect ? Array.from(equipmentSelect.selectedOptions).map(opt => parseInt(opt.value)) : [];
-        const departmentIds = departmentSelect ? Array.from(departmentSelect.selectedOptions).map(opt => parseInt(opt.value)) : [];
+        const departmentId = departmentSelect ? departmentSelect.value : '';
 
         if (equipmentIds.length === 0) {
           showToast('Please select at least one equipment item', 'error');
           return;
         }
 
-        if (departmentIds.length === 0) {
-          showToast('Please select at least one department', 'error');
+        if (!departmentId) {
+          showToast('Please select a department', 'error');
           return;
         }
 
-        // Store data for confirmation
         window.pendingAssignment = {
           equipmentIds: equipmentIds,
-          departmentIds: departmentIds
+          departmentId: departmentId
         };
 
-        // Show warning modal
         const warningModal = new bootstrap.Modal(document.getElementById('assignmentWarningModal'));
         warningModal.show();
       });
 
-      // Execute mass assignment after confirmation
       document.getElementById('confirmAssignBtn')?.addEventListener('click', async function () {
         if (!window.pendingAssignment) return;
 
-        const { equipmentIds, departmentIds } = window.pendingAssignment;
+        const { equipmentIds, departmentId } = window.pendingAssignment;
 
-        // Disable button and show loading
         const btn = this;
         const originalText = btn.innerHTML;
         btn.disabled = true;
@@ -1149,8 +1112,7 @@
             },
             body: JSON.stringify({
               equipment_ids: equipmentIds,
-              department_ids: departmentIds,
-              action: 'replace' // Always replace existing assignments
+              department_id: departmentId  // Changed from department_ids to department_id
             })
           });
 
@@ -1160,26 +1122,17 @@
           }
 
           const result = await response.json();
-
-          // Show success message
           showToast(result.message, 'success');
 
-          // Close both modals
           const warningModal = bootstrap.Modal.getInstance(document.getElementById('assignmentWarningModal'));
           const massModal = bootstrap.Modal.getInstance(document.getElementById('massAssignDepartmentsModal'));
 
           if (warningModal) warningModal.hide();
           if (massModal) massModal.hide();
 
-          // Clear pending data
           window.pendingAssignment = null;
 
-          // Refresh equipment data
-          if (typeof window.fetchEquipment === 'function') {
-            await window.fetchEquipment();
-          } else {
-            location.reload();
-          }
+          await fetchEquipmentData(currentPage);
 
         } catch (error) {
           console.error('Error in mass assignment:', error);
@@ -1190,69 +1143,54 @@
         }
       });
 
-      // Add event listeners for changes that update summary
       document.getElementById('equipmentMultiSelect')?.addEventListener('change', updateSelectionSummary);
-      document.getElementById('departmentMultiSelect')?.addEventListener('change', updateSelectionSummary);
+      document.getElementById('departmentSingleSelect')?.addEventListener('change', updateSelectionSummary);
 
-      // Fetch data when modal is opened
       const massAssignModal = document.getElementById('massAssignDepartmentsModal');
       if (massAssignModal) {
         massAssignModal.addEventListener('show.bs.modal', function () {
-          // Get filteredEquipment from window if available
-          window.filteredEquipment = window.filteredEquipment || filteredEquipment;
-
-          fetchEquipmentForDropdown();
+          // This will fetch ALL equipment only when modal opens
+          fetchEquipmentForDropdown();  // This now fetches all equipment
           fetchDepartmentsForModal();
 
-          // Reset selections
           const equipmentSelect = document.getElementById('equipmentMultiSelect');
-          const departmentSelect = document.getElementById('departmentMultiSelect');
+          const departmentSelect = document.getElementById('departmentSingleSelect');
 
           if (equipmentSelect) equipmentSelect.selectedIndex = -1;
-          if (departmentSelect) departmentSelect.selectedIndex = -1;
+          if (departmentSelect) departmentSelect.selectedIndex = 0;
 
           updateSelectionSummary();
         });
       }
 
-
-      // Start the application
-      init();
-
-      // Fix dropdown placement - append to body to avoid clipping
+      // Fix dropdown placement
       const equipmentDropdownToggle = document.getElementById('equipmentDropdownToggle');
       if (equipmentDropdownToggle) {
-        // Initialize dropdown with custom options to append to body
         new bootstrap.Dropdown(equipmentDropdownToggle, {
           popperConfig: {
             modifiers: [
               {
                 name: 'preventOverflow',
-                options: {
-                  boundary: 'viewport'  // Use viewport as boundary
-                }
+                options: { boundary: 'viewport' }
               },
               {
                 name: 'flip',
-                options: {
-                  fallbackPlacements: ['bottom-start', 'bottom-end', 'top-start', 'top-end']
-                }
+                options: { fallbackPlacements: ['bottom-start', 'bottom-end', 'top-start', 'top-end'] }
               }
             ]
           }
         });
 
-        // Force the dropdown to be appended to body when shown
         equipmentDropdownToggle.addEventListener('show.bs.dropdown', function () {
           const dropdownMenu = document.querySelector('#equipmentDropdownToggle + .dropdown-menu');
           if (dropdownMenu && dropdownMenu.parentElement !== document.body) {
-            // Move the dropdown menu to body
             document.body.appendChild(dropdownMenu);
           }
         });
       }
 
+      // Start the application
+      init();
     });
-
   </script>
 @endsection

@@ -411,14 +411,11 @@
                                             </div>
 
                                             <div class="col-md-4">
-                                                <label for="departments" class="form-label fw-bold">Owning
-                                                    Departments</label>
-                                                <select class="form-select" id="departments" name="departments[]" multiple
-                                                    required size="4">
+                                                <label for="department" class="form-label fw-bold">Owning Department</label>
+                                                <select class="form-select" id="department" required>
+                                                    <option value="">Select Department</option>
                                                     <!-- Departments will be populated dynamically -->
                                                 </select>
-                                                <small class="text-muted">Hold Ctrl/Cmd to select multiple
-                                                    departments</small>
                                             </div>
 
                                             <div class="col-md-4">
@@ -743,18 +740,18 @@
                 toast.style.borderRadius = '0.3rem';
 
                 toast.innerHTML = `
-                                                                                                                            <div class="d-flex align-items-center px-3 py-1"> 
-                                                                                                                                <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                                                                                                                                <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                                                                                                                                <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                                                                                                                            </div>
-                                                                                                                            <div class="loading-bar" style="
-                                                                                                                                height: 3px;
-                                                                                                                                background: rgba(255,255,255,0.7);
-                                                                                                                                width: 100%;
-                                                                                                                                transition: width ${duration}ms linear;
-                                                                                                                            "></div>
-                                                                                                                        `;
+                                                                                                                                <div class="d-flex align-items-center px-3 py-1"> 
+                                                                                                                                    <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                                                                                                                                    <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
+                                                                                                                                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                                                                                                </div>
+                                                                                                                                <div class="loading-bar" style="
+                                                                                                                                    height: 3px;
+                                                                                                                                    background: rgba(255,255,255,0.7);
+                                                                                                                                    width: 100%;
+                                                                                                                                    transition: width ${duration}ms linear;
+                                                                                                                                "></div>
+                                                                                                                            `;
 
                 document.body.appendChild(toast);
 
@@ -1321,8 +1318,8 @@
                                 if (removePhotoBtn) removePhotoBtn.classList.remove('d-none');
                                 if (itemPhotoPreview) {
                                     itemPhotoPreview.innerHTML = `
-                                                                                                                            <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px;">
-                                                                                                                        `;
+                                                                                                                                <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px;">
+                                                                                                                            `;
                                 }
 
                                 // Store the file for later processing
@@ -1758,28 +1755,28 @@
 
                 // Update the existing element's content
                 itemElement.innerHTML = `
-                                                                <div class="card-body">
-                                                                    <div class="photo-container">
-                                                                        <img src="${updatedItem.image_url}" class="img-thumbnail">
-                                                                    </div>
-                                                                    <div class="flex-grow-1">
-                                                                        <h6 class="card-title">${updatedItem.item_name}</h6>
-                                                                        <div class="d-flex flex-wrap gap-3">
-                                                                            <span class="badge ${conditionColors[updatedItem.condition.condition_name] || 'bg-secondary'}">${updatedItem.condition.condition_name}</span>
+                                                                    <div class="card-body">
+                                                                        <div class="photo-container">
+                                                                            <img src="${updatedItem.image_url}" class="img-thumbnail">
                                                                         </div>
-                                                                        ${updatedItem.barcode_number ? `<div class="mt-2"><strong>Barcode:</strong> ${updatedItem.barcode_number}</div>` : ''}
-                                                                        ${updatedItem.item_notes ? `<p class="mt-2 mb-0"><strong>Notes:</strong> ${updatedItem.item_notes.substring(0, 50)}${updatedItem.item_notes.length > 50 ? '...' : ''}</p>` : ''}
+                                                                        <div class="flex-grow-1">
+                                                                            <h6 class="card-title">${updatedItem.item_name}</h6>
+                                                                            <div class="d-flex flex-wrap gap-3">
+                                                                                <span class="badge ${conditionColors[updatedItem.condition.condition_name] || 'bg-secondary'}">${updatedItem.condition.condition_name}</span>
+                                                                            </div>
+                                                                            ${updatedItem.barcode_number ? `<div class="mt-2"><strong>Barcode:</strong> ${updatedItem.barcode_number}</div>` : ''}
+                                                                            ${updatedItem.item_notes ? `<p class="mt-2 mb-0"><strong>Notes:</strong> ${updatedItem.item_notes.substring(0, 50)}${updatedItem.item_notes.length > 50 ? '...' : ''}</p>` : ''}
+                                                                        </div>
+                                                                        <div class="d-flex align-self-start">
+                                                                            <button type="button" class="btn btn-sm btn-primary me-1" onclick="openEditItemModal(${updatedItem.item_id}, event)">
+                                                                                <i class="bi bi-pencil"></i>
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem(${updatedItem.item_id}, '${updatedItem.cloudinary_public_id}', event)">
+                                                                                <i class="bi bi-trash"></i>
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
-                                                                    <div class="d-flex align-self-start">
-                                                                        <button type="button" class="btn btn-sm btn-primary me-1" onclick="openEditItemModal(${updatedItem.item_id}, event)">
-                                                                            <i class="bi bi-pencil"></i>
-                                                                        </button>
-                                                                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem(${updatedItem.item_id}, '${updatedItem.cloudinary_public_id}', event)">
-                                                                            <i class="bi bi-trash"></i>
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            `;
+                                                                `;
 
                 // Update the item in the equipmentItems array
                 const itemIndex = equipmentItems.findIndex(i => i.item_id == updatedItem.item_id);
@@ -1822,28 +1819,28 @@
                 itemCard.dataset.itemId = item.item_id;
 
                 itemCard.innerHTML = `
-                        <div class="card-body">
-                            <div class="photo-container">
-                                <img src="${item.image_url}" class="img-thumbnail">
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="card-title">${item.item_name}</h6>
-                                <div class="d-flex flex-wrap gap-3">
-                                    <span class="badge ${conditionColors[item.condition.condition_name] || 'bg-secondary'}">${item.condition.condition_name}</span>
+                            <div class="card-body">
+                                <div class="photo-container">
+                                    <img src="${item.image_url}" class="img-thumbnail">
                                 </div>
-                                ${item.barcode_number ? `<div class="mt-2"><strong>Barcode:</strong> ${item.barcode_number}</div>` : ''}
-                                ${item.item_notes ? `<p class="mt-2 mb-0"><strong>Notes:</strong> ${item.item_notes.substring(0, 50)}${item.item_notes.length > 50 ? '...' : ''}</p>` : ''}
+                                <div class="flex-grow-1">
+                                    <h6 class="card-title">${item.item_name}</h6>
+                                    <div class="d-flex flex-wrap gap-3">
+                                        <span class="badge ${conditionColors[item.condition.condition_name] || 'bg-secondary'}">${item.condition.condition_name}</span>
+                                    </div>
+                                    ${item.barcode_number ? `<div class="mt-2"><strong>Barcode:</strong> ${item.barcode_number}</div>` : ''}
+                                    ${item.item_notes ? `<p class="mt-2 mb-0"><strong>Notes:</strong> ${item.item_notes.substring(0, 50)}${item.item_notes.length > 50 ? '...' : ''}</p>` : ''}
+                                </div>
+                                <div class="d-flex align-self-start">
+                                    <button type="button" class="btn btn-sm btn-primary me-1" onclick="openEditItemModal(${item.item_id}, event)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem(${item.item_id}, '${item.cloudinary_public_id}', event)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="d-flex align-self-start">
-                                <button type="button" class="btn btn-sm btn-primary me-1" onclick="openEditItemModal(${item.item_id}, event)">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem(${item.item_id}, '${item.cloudinary_public_id}', event)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
+                        `;
 
                 itemsContainer.appendChild(itemCard);
 
@@ -1977,10 +1974,10 @@
                     if (itemsEmptyState) {
                         itemsEmptyState.classList.remove('d-none');
                         itemsEmptyState.innerHTML = `
-                                <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
-                                <p class="mt-2 text-muted">Failed to load equipment data</p>
-                                <p class="text-muted small">${error.message}</p>
-                            `;
+                                    <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
+                                    <p class="mt-2 text-muted">Failed to load equipment data</p>
+                                    <p class="text-muted small">${error.message}</p>
+                                `;
                     }
                 }
             }
@@ -2050,10 +2047,10 @@
                     if (itemsEmptyState) {
                         itemsEmptyState.classList.remove('d-none');
                         itemsEmptyState.innerHTML = `
-                                <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
-                                <p class="mt-2 text-muted">Failed to load items</p>
-                                <p class="text-muted small">${error.message}</p>
-                            `;
+                                    <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
+                                    <p class="mt-2 text-muted">Failed to load items</p>
+                                    <p class="text-muted small">${error.message}</p>
+                                `;
                     }
 
                     showToast('Failed to load equipment items: ' + error.message, 'error');
@@ -2109,7 +2106,7 @@
                         }
                     }
 
-                    // FETCH DEPARTMENTS FOR MULTIPLE SELECT
+                    // FETCH DEPARTMENTS FOR SINGLE SELECT
                     const departmentsResponse = await fetch('/api/departments', {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -2121,7 +2118,7 @@
                         const departmentsData = await departmentsResponse.json();
                         console.log('Departments data:', departmentsData);
                         if (Array.isArray(departmentsData)) {
-                            populateDepartmentsDropdown(departmentsData, equipment.department_ids || [equipment.department_id]);
+                            populateDropdown('department', departmentsData, equipment.department_id, 'department_id', 'department_name');
                         }
                     }
 
@@ -2129,9 +2126,9 @@
                     const rateTypeDropdown = document.getElementById('rateType');
                     if (rateTypeDropdown) {
                         rateTypeDropdown.innerHTML = `
-                            <option value="Per Hour" ${equipment.rate_type === 'Per Hour' ? 'selected' : ''}>Per Hour</option>
-                            <option value="Per Event" ${equipment.rate_type === 'Per Event' ? 'selected' : ''}>Per Event</option>
-                        `;
+                    <option value="Per Hour" ${equipment.rate_type === 'Per Hour' ? 'selected' : ''}>Per Hour</option>
+                    <option value="Per Event" ${equipment.rate_type === 'Per Event' ? 'selected' : ''}>Per Event</option>
+                `;
                     }
 
                     // Fetch conditions for inventory items
@@ -2328,11 +2325,7 @@
                         }
                     }
 
-                    // 4. Update equipment details
-                    // Get selected departments from multiple select
-                    const departmentsSelect = document.getElementById('departments');
-                    const selectedDepartments = Array.from(departmentsSelect.selectedOptions).map(option => option.value);
-
+                    // 4. Update equipment details - Use single managed_by field
                     const formData = {
                         equipment_name: document.getElementById('equipmentName').value,
                         description: document.getElementById('description').value,
@@ -2342,7 +2335,7 @@
                         base_fee: document.getElementById('companyFee').value,
                         rate_type: document.getElementById('rateType').value,
                         status_id: document.getElementById('availabilityStatus').value,
-                        departments: selectedDepartments, // Send array of department IDs
+                        managed_by: document.getElementById('department').value, // Single department ID
                         maximum_rental_hour: document.getElementById('minRentalHours').value,
                     };
 

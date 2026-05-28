@@ -22,7 +22,7 @@ class ScannerService
     public function findItemByBarcode(string $barcode): ?EquipmentItem
     {
         $barcode = $this->cleanBarcode($barcode);
-        
+
         // Try exact match first
         $item = EquipmentItem::with([
             'equipment.category',
@@ -36,7 +36,7 @@ class ScannerService
             // Try partial match
             $item = EquipmentItem::with([
                 'equipment.category',
-                'equipment.department', 
+                'equipment.department',
                 'equipment.status',
                 'equipment.images',
                 'condition'
@@ -49,7 +49,7 @@ class ScannerService
             if ($barcodeWithoutPrefix !== $barcode) {
                 $item = EquipmentItem::with([
                     'equipment.category',
-                    'equipment.department', 
+                    'equipment.department',
                     'equipment.status',
                     'equipment.images',
                     'condition'
@@ -68,7 +68,7 @@ class ScannerService
         $barcode = trim($barcode);
         $barcode = preg_replace('/^(EQ-)+/', 'EQ-', $barcode);
         $barcode = preg_replace('/[^A-Z0-9\-]/', '', $barcode);
-        
+
         return $barcode;
     }
 
@@ -78,15 +78,15 @@ class ScannerService
     public function getCurrentBookings(int $equipmentId)
     {
         return RequestedEquipment::with([
-            'requisitionForm' => function($query) {
+            'requisitionForm' => function ($query) {
                 $query->where('is_closed', false)
-                      ->where('is_finalized', true);
+                    ->where('is_finalized', true);
             }
         ])->where('equipment_id', $equipmentId)
-          ->get()
-          ->filter(function($requestedEquipment) {
-              return $requestedEquipment->requisitionForm !== null;
-          });
+            ->get()
+            ->filter(function ($requestedEquipment) {
+                return $requestedEquipment->requisitionForm !== null;
+            });
     }
 
     /**
@@ -99,14 +99,14 @@ class ScannerService
         }
 
         $totalItems = EquipmentItem::where('equipment_id', $equipmentId)
-                                 ->where('status_id', '!=', 5)
-                                 ->count();
+            ->where('status_id', '!=', 5)
+            ->count();
 
         $availableCount = EquipmentItem::where('equipment_id', $equipmentId)
-                                     ->where('status_id', 1)
-                                     ->whereIn('condition_id', [1, 2, 3])
-                                     ->where('status_id', '!=', 5)
-                                     ->count();
+            ->where('status_id', 1)
+            ->whereIn('condition_id', [1, 2, 3])
+            ->where('status_id', '!=', 5)
+            ->count();
 
         $bookedItems = $currentBookings->sum('quantity');
         $availableStock = max(0, $availableCount - $bookedItems);
@@ -122,31 +122,34 @@ class ScannerService
     /**
      * Get active transaction for an item
      */
-    public function getActiveTransaction(int $itemId)
-    {
-        return EquipmentTransaction::where('item_id', $itemId)
-            ->where('status_id', 1)
-            ->with(['requisitionForm', 'releasedBy', 'facility'])
-            ->first();
-    }
+public function getActiveTransaction(int $itemId)
+{
+    return EquipmentTransaction::where('item_id', $itemId)
+        ->where('status_id', 1)
+        ->with(['facility'])  // Load facility relationship
+        ->first();
+}
 
     /**
      * Validate item can be borrowed
      */
-    public function validateBorrowRequest(string $barcode, int $requisitionFormId): array
+    public function validateBorrowRequest(string $barcode, ?int $requisitionFormId = null): array
     {
         $item = $this->findItemByBarcode($barcode);
-        
+
         if (!$item) {
             return ['error' => 'Equipment item not found'];
         }
 
-        $requestedEquipment = RequestedEquipment::where('request_id', $requisitionFormId)
-            ->where('equipment_id', $item->equipment_id)
-            ->first();
+        // Only validate against request if requisitionFormId is provided
+        if ($requisitionFormId) {
+            $requestedEquipment = RequestedEquipment::where('request_id', $requisitionFormId)
+                ->where('equipment_id', $item->equipment_id)
+                ->first();
 
-        if (!$requestedEquipment) {
-            return ['error' => 'This equipment is not part of the selected booking'];
+            if (!$requestedEquipment) {
+                return ['error' => 'This equipment is not part of the selected booking'];
+            }
         }
 
         $activeTransaction = $this->getActiveTransaction($item->item_id);
@@ -158,7 +161,7 @@ class ScannerService
         return [
             'success' => true,
             'item' => $item,
-            'requested_equipment' => $requestedEquipment
+            'requested_equipment' => $requestedEquipment ?? null  // May be null if no request_id
         ];
     }
 
@@ -168,7 +171,7 @@ class ScannerService
     public function validateReturnRequest(string $barcode): array
     {
         $item = $this->findItemByBarcode($barcode);
-        
+
         if (!$item) {
             return ['error' => 'Equipment item not found'];
         }
@@ -224,15 +227,16 @@ class ScannerService
                 ],
                 'current_transaction' => $activeTransaction ? [
                     'id' => $activeTransaction->id,
-                    'released_at' => $activeTransaction->released_at,
                     'request_id' => $activeTransaction->request_id,
-                    'destination_name' => $activeTransaction->destination_name
+                    'released_at' => $activeTransaction->released_at ? $activeTransaction->released_at->toISOString() : null,
+                    'destination_name' => $activeTransaction->destination_name,
+                    'facility_name' => $activeTransaction->facility ? $activeTransaction->facility->facility_name : null
                 ] : null
             ],
-            'current_bookings' => $currentBookings->map(function($booking) {
+            'current_bookings' => $currentBookings->map(function ($booking) {
                 return [
                     'request_id' => $booking->requisitionForm->request_id,
-                    'title' => $booking->requisitionForm->calendar_title,
+                    'title' => $booking->requisitionForm->event_title,
                     'start_date' => $booking->requisitionForm->start_date,
                     'end_date' => $booking->requisitionForm->end_date,
                     'start_time' => $booking->requisitionForm->start_time,
@@ -288,7 +292,7 @@ class ScannerService
                 'id' => $transaction->id,
                 'released_at' => $transaction->released_at,
                 'request_id' => $transaction->request_id,
-                'booking_title' => $transaction->requisitionForm->calendar_title ?? 'N/A',
+                'booking_title' => $transaction->requisitionForm->event_title ?? 'N/A',
                 'released_by_name' => $transaction->releasedBy->name ?? 'Unknown',
                 'destination_name' => $transaction->destination_name,
                 'release_notes' => $transaction->release_notes
