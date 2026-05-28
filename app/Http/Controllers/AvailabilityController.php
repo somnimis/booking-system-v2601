@@ -142,103 +142,118 @@ public function getFacilitiesHierarchy(Request $request)
         }
     }
 
-    /**
-     * Get events for a specific date range (optimized query)
-     */
-    public function getEventsForDate(Request $request)
-    {
-        try {
-            $startDate = $request->input('start_date', Carbon::now()->format('Y-m-d'));
-            $endDate = $request->input('end_date', $startDate);
-            $facilityId = $request->input('facility_id');
-            
-            // Get active status IDs once
-            $activeStatusIds = FormStatus::whereIn('status_name', [
-                'Pending Approval', 'Scheduled', 'Ongoing'
-            ])->pluck('status_id');
-            
-            $response = [
-                'requisitions' => [],
-                'calendar_events' => []
-            ];
-            
-            // Fetch requisitions for the date range
-            $requisitionQuery = RequisitionForm::with(['formStatus', 'requestedFacilities.facility'])
-                ->whereIn('status_id', $activeStatusIds)
-                ->where(function ($q) use ($startDate, $endDate) {
-                    $q->where('start_date', '<=', $endDate)
-                      ->where('end_date', '>=', $startDate);
-                });
-            
-            if ($facilityId) {
-                $requisitionQuery->whereHas('requestedFacilities', function ($q) use ($facilityId) {
-                    $q->where('facility_id', $facilityId);
-                });
-            }
-            
-            $requisitions = $requisitionQuery->get();
-            
-            foreach ($requisitions as $req) {
-                $schedule = $this->scheduleFormatter->getBaseSchedule($req);
-                $response['requisitions'][] = [
-                    'request_id' => $req->request_id,
-                    'title' => $req->calendar_title ?: "Booking #{$req->request_id}",
-                    'status' => $req->formStatus->status_name,
-                    'status_color' => $req->formStatus->color_code,
-                    'start_date' => $req->start_date,
-                    'end_date' => $req->end_date,
-                    'start_time' => $req->start_time,
-                    'end_time' => $req->end_time,
-                    'all_day' => $req->all_day,
-                    'facilities' => $req->requestedFacilities->map(fn($rf) => [
-                        'facility_id' => $rf->facility_id,
-                        'facility_name' => $rf->facility->facility_name
-                    ]),
-                    'schedule_display' => $schedule['formatted_start_date'] . 
-                        ($req->all_day ? ' (All Day)' : ' ' . $schedule['formatted_start_time'])
-                ];
-            }
-            
-            // Fetch calendar events
-            $calendarEvents = CalendarEvent::where(function ($q) use ($startDate, $endDate) {
-                $q->where('start_date', '<=', $endDate)
-                  ->where('end_date', '>=', $startDate);
+/**
+ * Get events for a specific date range (optimized query)
+ */
+public function getEventsForDate(Request $request)
+{
+    try {
+        $startDate = $request->input('start_date', Carbon::now()->format('Y-m-d'));
+        $endDate = $request->input('end_date', $startDate);
+        $facilityId = $request->input('facility_id');
+        
+        // Get active status IDs once
+        $activeStatusIds = FormStatus::whereIn('status_name', [
+            'Pending Approval', 'Scheduled', 'Ongoing'
+        ])->pluck('status_id');
+        
+        $response = [
+            'requisitions' => [],
+            'calendar_events' => []
+        ];
+        
+        // Fetch requisitions for the date range with equipment relationship
+        $requisitionQuery = RequisitionForm::with([
+            'formStatus', 
+            'requestedFacilities.facility',
+            'requestedEquipment.equipment'  // ← ADD THIS: load equipment with their details
+        ])->whereIn('status_id', $activeStatusIds)
+        ->where(function ($q) use ($startDate, $endDate) {
+            $q->where('start_date', '<=', $endDate)
+              ->where('end_date', '>=', $startDate);
+        });
+        
+        if ($facilityId) {
+            $requisitionQuery->whereHas('requestedFacilities', function ($q) use ($facilityId) {
+                $q->where('facility_id', $facilityId);
             });
+        }
+        
+        $requisitions = $requisitionQuery->get();
+        
+        foreach ($requisitions as $req) {
+            $schedule = $this->scheduleFormatter->getBaseSchedule($req);
             
-            if ($facilityId) {
-                // If facility-specific, only get events that might affect this facility
-                // You may need to adjust based on your event-facility relationship
-                $calendarEvents->where('event_type', '!=', 'hall_booking');
-            }
-            
-            $calendarEvents = $calendarEvents->get();
-            
-            foreach ($calendarEvents as $event) {
-                $response['calendar_events'][] = [
-                    'event_id' => $event->event_id,
-                    'event_name' => $event->event_name,
-                    'event_type' => $event->event_type,
-                    'description' => $event->description,
-                    'color' => $event->color,
-                    'start_date' => $event->start_date,
-                    'end_date' => $event->end_date,
-                    'start_time' => $event->start_time,
-                    'end_time' => $event->end_time,
-                    'all_day' => $event->all_day
-                ];
-            }
-            
-            return response()->json([
-                'success' => true,
-                'data' => $response,
-                'date_range' => ['start' => $startDate, 'end' => $endDate]
+            // Get facilities with names (already have this)
+            $facilities = $req->requestedFacilities->map(fn($rf) => [
+                'facility_id' => $rf->facility_id,
+                'facility_name' => $rf->facility->facility_name ?? 'Unknown Facility'
             ]);
             
-        } catch (\Exception $e) {
-            \Log::error('Availability events error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            // ← ADD THIS: Get equipment with names
+            $equipment = $req->requestedEquipment->map(fn($re) => [
+                'requested_equipment_id' => $re->requested_equipment_id,
+                'equipment_id' => $re->equipment_id,
+                'equipment_name' => $re->equipment->equipment_name ?? 'Unknown Equipment',
+                'quantity' => $re->quantity,
+                'is_waived' => $re->is_waived
+            ]);
+            
+            $response['requisitions'][] = [
+                'request_id' => $req->request_id,
+                'title' => $req->event_title ?: "Booking #{$req->request_id}",
+                'status' => $req->formStatus->status_name,
+                'status_color' => $req->formStatus->color_code,
+                'start_date' => $req->start_date,
+                'end_date' => $req->end_date,
+                'start_time' => $req->start_time,
+                'end_time' => $req->end_time,
+                'all_day' => $req->all_day,
+                'facilities' => $facilities,
+                'equipment' => $equipment,  // ← ADD THIS: include equipment in response
+                'schedule_display' => $schedule['formatted_start_date'] . 
+                    ($req->all_day ? ' (All Day)' : ' ' . $schedule['formatted_start_time'])
+            ];
         }
+        
+        // Fetch calendar events (unchanged)
+        $calendarEvents = CalendarEvent::where(function ($q) use ($startDate, $endDate) {
+            $q->where('start_date', '<=', $endDate)
+              ->where('end_date', '>=', $startDate);
+        });
+        
+        if ($facilityId) {
+            $calendarEvents->where('event_type', '!=', 'hall_booking');
+        }
+        
+        $calendarEvents = $calendarEvents->get();
+        
+        foreach ($calendarEvents as $event) {
+            $response['calendar_events'][] = [
+                'event_id' => $event->event_id,
+                'event_name' => $event->event_name,
+                'event_type' => $event->event_type,
+                'description' => $event->description,
+                'color' => $event->color,
+                'start_date' => $event->start_date,
+                'end_date' => $event->end_date,
+                'start_time' => $event->start_time,
+                'end_time' => $event->end_time,
+                'all_day' => $event->all_day
+            ];
+        }
+        
+        return response()->json([
+            'success' => true,
+            'data' => $response,
+            'date_range' => ['start' => $startDate, 'end' => $endDate]
+        ]);
+        
+    } catch (\Exception $e) {
+        \Log::error('Availability events error: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
+}
 
     /**
      * Get single facility's schedule for a date (lightweight)
@@ -268,7 +283,7 @@ public function getFacilitiesHierarchy(Request $request)
                     $timeSlots[] = [
                         'type' => 'requisition',
                         'request_id' => $req->request_id,
-                        'title' => $req->calendar_title ?: "Booking #{$req->request_id}",
+                        'title' => $req->event_title ?: "Booking #{$req->request_id}",
                         'status' => $req->formStatus->status_name,
                         'all_day' => true
                     ];
@@ -276,7 +291,7 @@ public function getFacilitiesHierarchy(Request $request)
                     $timeSlots[] = [
                         'type' => 'requisition',
                         'request_id' => $req->request_id,
-                        'title' => $req->calendar_title ?: "Booking #{$req->request_id}",
+                        'title' => $req->event_title ?: "Booking #{$req->request_id}",
                         'status' => $req->formStatus->status_name,
                         'start_time' => substr($req->start_time, 0, 5),
                         'end_time' => substr($req->end_time, 0, 5)
