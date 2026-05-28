@@ -33,8 +33,25 @@ class AdminSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            
+            // ------- Issuing Officer ------- //
+            [
+                'first_name' => 'Dany',
+                'last_name' => 'Molina',
+                'middle_name' => null,
+                'title' => 'Vice President of Administration',
+                'signature_url' => null,
+                'signature_public_id' => null,
+                'role_id' => 5,
+                'school_id' => null,
+                'email' => 'ovpa@example.test',
+                'contact_number' => null,
+                'hashed_password' => Hash::make('password123'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
 
-            // ------- Chief Approval Officer ------- //
+            // ------- Final Approval Officer ------- //
             [
                 'first_name' => 'Earnest',
                 'last_name' => 'Dagohoy',
@@ -50,21 +67,7 @@ class AdminSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            [
-                'first_name' => 'Dany',
-                'last_name' => 'Molina',
-                'middle_name' => null,
-                'title' => 'Vice President of Administration',
-                'signature_url' => null,
-                'signature_public_id' => null,
-                'role_id' => 2,
-                'school_id' => null,
-                'email' => 'ovpa@example.test',
-                'contact_number' => null,
-                'hashed_password' => Hash::make('password123'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+
 
             // ------- Approving Officers ------- //
             [
@@ -189,6 +192,53 @@ class AdminSeeder extends Seeder
                 'role_id' => 4,
                 'school_id' => null,
                 'email' => 'staff@example.test',
+                'contact_number' => null,
+                'hashed_password' => Hash::make('password123'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // ------- Route Target Offices ------- //
+            [
+                'first_name' => 'Academic',
+                'last_name' => 'Affairs',
+                'middle_name' => null,
+                'title' => 'Vice President for Academic Affairs',
+                'signature_url' => null,
+                'signature_public_id' => null,
+                'role_id' => 3, // Assuming Approving Officer role
+                'school_id' => null,
+                'email' => 'vpaa@example.test',
+                'contact_number' => null,
+                'hashed_password' => Hash::make('password123'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'first_name' => 'Student',
+                'last_name' => 'Affairs',
+                'middle_name' => null,
+                'title' => 'Vice President for Student Affairs',
+                'signature_url' => null,
+                'signature_public_id' => null,
+                'role_id' => 3,
+                'school_id' => null,
+                'email' => 'vpsa@example.test',
+                'contact_number' => null,
+                'hashed_password' => Hash::make('password123'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'first_name' => 'Alumni',
+                'last_name' => 'Office',
+                'middle_name' => null,
+                'title' => 'Alumni Affairs Director',
+                'signature_url' => null,
+                'signature_public_id' => null,
+                'role_id' => 3,
+                'school_id' => null,
+                'email' => 'alumni@example.test',
                 'contact_number' => null,
                 'hashed_password' => Hash::make('password123'),
                 'created_at' => now(),

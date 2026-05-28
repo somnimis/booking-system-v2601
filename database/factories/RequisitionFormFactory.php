@@ -29,12 +29,9 @@ class RequisitionFormFactory extends Factory
             'additional_requests' => $this->faker->optional(0.5)->sentence(),
             
             // Formal letter details
-            'formal_letter_url' => $this->faker->url(),
-            'formal_letter_public_id' => $this->faker->uuid(),
-            
-            // Facility layout details
-            'facility_layout_url' => $this->faker->url(),
-            'facility_layout_public_id' => $this->faker->uuid(),
+            'event_documents_url' => $this->faker->url(),
+            'event_documents_public_id' => $this->faker->uuid(),
+    
             
             'status_id' => \App\Models\FormStatus::inRandomOrder()->value('status_id') ?? 1,
             
@@ -68,13 +65,9 @@ class RequisitionFormFactory extends Factory
             'closed_at' => null,
             'closed_by' => null,
             
-            // Endorsement
-            'endorser' => $this->faker->optional()->name(),
-            'date_endorsed' => $this->faker->optional()->date(),
-            
             // Calendar details
-            'calendar_title' => 'Rental Request',
-            'calendar_description' => 'Rental request for facility usage',
+            'event_title' => 'Rental Request',
+            'event_details' => 'Rental request for facility usage',
             
             'created_at' => now(),
             'updated_at' => now(),
