@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>CPU Facility Booking - Admin Login</title>
-    
+
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fraunces:wght@600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
+
     <style>
         /* ============================================
            REFINED INSTITUTIONAL THEME - ADMIN LOGIN
@@ -48,8 +51,12 @@
         }
 
         /* Allow border-radius on specific elements */
-        .profile-img, .login-container, .login-container input, 
-        .login-button, .home-button, .error-box {
+        .profile-img,
+        .login-container,
+        .login-container input,
+        .login-button,
+        .home-button,
+        .error-box {
             border-radius: var(--radius-md) !important;
         }
 
@@ -96,6 +103,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -272,7 +280,9 @@
         }
 
         @keyframes spinner-border {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Shake Animation */
@@ -281,9 +291,21 @@
         }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-6px); }
-            40%, 80% { transform: translateX(6px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20%,
+            60% {
+                transform: translateX(-6px);
+            }
+
+            40%,
+            80% {
+                transform: translateX(6px);
+            }
         }
 
         /* Responsive */
@@ -305,7 +327,8 @@
                 padding: 0.75rem 0.875rem;
             }
 
-            .login-button, .home-button {
+            .login-button,
+            .home-button {
                 padding: 0.75rem;
             }
         }
@@ -349,6 +372,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="login-container">
         <div class="title-container">
@@ -376,21 +400,21 @@
     </div>
 
     <script>
-        document.getElementById('loginBtn').addEventListener('click', async function(e) {
+        document.getElementById('loginBtn').addEventListener('click', async function (e) {
             e.preventDefault();
             e.stopImmediatePropagation();
-            
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorBox = document.getElementById('errorBox');
             const loginBtn = this;
             const loginContainer = document.querySelector('.login-container');
-        
+
             // Clear previous error
             errorBox.style.display = 'none';
             errorBox.innerHTML = '';
             loginContainer.classList.remove('shake');
-        
+
             // Basic validation
             if (!email || !password) {
                 errorBox.textContent = 'Please enter both email and password.';
@@ -399,11 +423,11 @@
                 setTimeout(() => loginContainer.classList.remove('shake'), 500);
                 return;
             }
-        
+
             // Disable button and show loading state
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="spinner-border"></span> Authenticating...';
-        
+
             try {
                 const response = await fetch('/api/admin/login', {
                     method: 'POST',
@@ -414,33 +438,23 @@
                     body: JSON.stringify({ email, password }),
                     redirect: 'manual'
                 });
-        
+
                 if (response.status === 0) {
                     throw new Error('Network error. Please check your connection.');
                 }
-        
+
                 const data = await response.json();
-        
+
                 if (!response.ok) {
                     throw new Error(data.message || 'Invalid email or password.');
                 }
-        
+
                 // Successful login - store token
                 localStorage.setItem('adminToken', data.token);
-                
-                // Check user role from the login response
-                const userRole = data.admin?.role;
-                
-                // Redirect based on role title using absolute paths from root
-                if (userRole && (
-                    userRole.role_title === "Vice President of Administration" || 
-                    userRole.role_title === "Approving Officer"
-                )) {
-                    window.location.href = '/admin/signatory/dashboard';
-                } else {
-                    window.location.href = '/admin/dashboard';
-                }
-        
+
+                // Remove conditional routing - always go to dashboard
+                window.location.href = '/admin/dashboard';
+
             } catch (error) {
                 errorBox.textContent = error.message;
                 errorBox.style.display = 'block';
@@ -452,27 +466,28 @@
                 loginBtn.textContent = 'Login';
             }
         });
-        
+
         // Allow Enter key to submit form
-        document.getElementById('loginForm').addEventListener('keypress', function(e) {
+        document.getElementById('loginForm').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 document.getElementById('loginBtn').click();
             }
         });
-        
+
         // Clear error when user starts typing
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
-        
+
         function clearError() {
             const errorBox = document.getElementById('errorBox');
             errorBox.style.display = 'none';
             document.querySelector('.login-container').classList.remove('shake');
         }
-        
+
         emailInput.addEventListener('input', clearError);
         passwordInput.addEventListener('input', clearError);
     </script>
 </body>
+
 </html>
