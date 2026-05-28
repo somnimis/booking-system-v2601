@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('admin_roles', function (Blueprint $table) {
             $table->tinyIncrements('role_id');
             $table->string('role_title', 50);
-            $table->string('description', 80)->nullable();
+            $table->string('description', 200)->nullable();
         });
     }
 
