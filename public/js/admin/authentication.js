@@ -57,6 +57,26 @@ function clearAdminRoleCache() {
     localStorage.removeItem('adminRole');
 }
 
+// Helper function to verify token in background
+async function verifyTokenInBackground(token) {
+    try {
+        const response = await fetch("/api/admin/profile", {
+            headers: { 
+                Authorization: `Bearer ${token}`, 
+                Accept: "application/json" 
+            },
+            credentials: "include",
+        });
+        
+        if (!response.ok) {
+            localStorage.removeItem("adminToken");
+            window.location.href = "/admin/login";
+        }
+    } catch (error) {
+        console.error("Token verification failed:", error);
+    }
+}
+
 // Single DOMContentLoaded event listener
 document.addEventListener("DOMContentLoaded", async () => {
     console.log("Checking token...");
@@ -66,6 +86,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!token) {
         window.location.href = "/admin/login";
         return;
+    }
+
+    // Check cache first
+    const cached = sessionStorage.getItem('admin_profile');
+    if (cached) {
+        try {
+            const data = JSON.parse(cached);
+            if (Date.now() - data.timestamp < 30 * 60 * 1000) {
+                console.log("Using cached profile");
+                // Still verify token in background
+                verifyTokenInBackground(token);
+                return;
+            }
+        } catch (e) {}
     }
 
     try {
@@ -144,6 +178,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 document.getElementById("logoutLink")?.addEventListener("click", async (e) => {
     e.preventDefault();
     clearAdminRoleCache();
+    
+    // Clear profile cache
+    sessionStorage.removeItem('admin_profile');
 
     const token = localStorage.getItem("adminToken");
     if (!token) {
