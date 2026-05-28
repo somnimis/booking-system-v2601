@@ -993,772 +993,774 @@
 <body>
 
   @include('partials.navbar')
+  <main class="flex-grow-1">
+    <div class="container main-content">
+      <form id="reservationForm" method="POST">
+        @csrf
 
-  <div class="container main-content">
-    <form id="reservationForm" method="POST">
-      @csrf
-
-      <!-- Complete Your Reservation Section -->
-      <div class="row">
-        <div class="col-12">
-          <style>
-            .btn-transparent {
-              background-color: transparent !important;
-              border: none !important;
-              box-shadow: none !important;
-            }
-
-            .btn-transparent i {
-              display: inline-block;
-              color: #6c757d;
-              transition: transform 0.25s ease-in-out;
-            }
-
-            button.btn-transparent[aria-expanded="true"] i.bi-chevron-down {
-              transform: rotate(0deg);
-            }
-
-            button.btn-transparent[aria-expanded="false"] i.bi-chevron-down {
-              transform: rotate(180deg);
-            }
-
-            .step-section {
-              display: none;
-            }
-
-            .step-section.active {
-              display: block;
-            }
-
-            .navigation-buttons {
-              display: flex;
-              justify-content: space-between;
-              padding: 15px;
-              background-color: #fff;
-              border: 1px solid #dee2e6;
-              border-radius: 0.25rem;
-              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-              margin-bottom: 1rem;
-            }
-          </style>
-
-          <div class="form-section-card">
-            <div class="d-flex justify-content-between align-items-center">
-              <h5 class="mb-0">Complete Your Reservation</h5>
-              <button id="toggleReservationBtn" type="button" class="btn btn-sm btn-secondary btn-transparent"
-                style="height: 100%; align-self: center" data-bs-toggle="collapse" data-bs-target="#reservationContent"
-                aria-expanded="true" aria-controls="reservationContent">
-                <i class="bi bi-chevron-down"></i>
-              </button>
-            </div>
-
-            <div id="reservationContent" class="collapse show" style="padding-top: 10px">
-              <p class="text-muted">
-                To confirm your request, please fill out the necessary details below.
-                We need this information to process your booking efficiently and provide
-                complete details on how to proceed. A confirmation email will be sent
-                to your registered email address once your submission is reviewed and approved.
-              </p>
-              <div class="d-flex justify-content-start gap-2">
-                <a href="policies" class="btn btn-primary">Reservation Policies</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 1: Requested Items & Booking Schedule -->
-      <div class="step-section active" id="step1">
+        <!-- Complete Your Reservation Section -->
         <div class="row">
-          <div class="col-md-6">
-            <div class="form-section-card" style="height: 400px; overflow-y: auto;">
-              <!-- Requested Facilities -->
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="mb-0">Requested Facilities</h5>
-                <a href="{{ url('/booking-catalog') }}"
-                  class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
-                  <i class="bi bi-plus"></i>
-                  <span>Add item</span>
-                </a>
-              </div>
-              <div id="facilityList" class="selected-items-container mb-3">
-                <div class="text-muted empty-message">No facilities added yet.</div>
-              </div>
+          <div class="col-12">
+            <style>
+              .btn-transparent {
+                background-color: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
 
-              <!-- Requested Equipment -->
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="mb-0">Requested Equipment</h5>
-                <a href="{{ url('/booking-catalog') }}"
-                  class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
-                  <i class="bi bi-plus"></i>
-                  <span>Add item</span>
-                </a>
-              </div>
-              <div id="equipmentList" class="selected-items-container">
-                <!-- Equipment items will be dynamically added here -->
-                <div class="text-muted empty-message">No equipment added yet.</div>
-              </div>
-            </div>
-          </div>
+              .btn-transparent i {
+                display: inline-block;
+                color: #6c757d;
+                transition: transform 0.25s ease-in-out;
+              }
 
+              button.btn-transparent[aria-expanded="true"] i.bi-chevron-down {
+                transform: rotate(0deg);
+              }
 
-          <div class="col-md-6">
-            <div class="form-section-card flex-grow-1" style="height: 400px; overflow-y: auto; padding-bottom: 15px;">
+              button.btn-transparent[aria-expanded="false"] i.bi-chevron-down {
+                transform: rotate(180deg);
+              }
+
+              .step-section {
+                display: none;
+              }
+
+              .step-section.active {
+                display: block;
+              }
+
+              .navigation-buttons {
+                display: flex;
+                justify-content: space-between;
+                padding: 15px;
+                background-color: #fff;
+                border: 1px solid #dee2e6;
+                border-radius: 0.25rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                margin-bottom: 1rem;
+              }
+            </style>
+
+            <div class="form-section-card">
               <div class="d-flex justify-content-between align-items-center">
-                <h5>Step 1: Booking Schedule</h5>
-              </div>
-              <p id="selectedDateTime" class="text-muted">
-                Add items to form first in order to check schedule availability.
-              </p>
-              <div class="row">
-                <div class="col-md-6">
-                  <label for="startDateField" class="form-label">Start Date</label>
-                  <input name="start_date" type="date" id="startDateField" class="form-control mb-2" />
-                </div>
-                <div class="col-md-6">
-                  <label for="startTimeField" class="form-label">Start Time</label>
-                  <select id="startTimeField" name="start_time" class="form-select mb-2" onchange="adjustEndTime()">
-                    <!-- Predefined 12-hour intervals -->
-                    <option value="12:00 AM">12:00 AM</option>
-                    <option value="12:30 AM">12:30 AM</option>
-                    <option value="01:00 AM">01:00 AM</option>
-                    <option value="01:30 AM">01:30 AM</option>
-                    <option value="02:00 AM">02:00 AM</option>
-                    <option value="02:30 AM">02:30 AM</option>
-                    <option value="03:00 AM">03:00 AM</option>
-                    <option value="03:30 AM">03:30 AM</option>
-                    <option value="04:00 AM">04:00 AM</option>
-                    <option value="04:30 AM">04:30 AM</option>
-                    <option value="05:00 AM">05:00 AM</option>
-                    <option value="05:30 AM">05:30 AM</option>
-                    <option value="06:00 AM">06:00 AM</option>
-                    <option value="06:30 AM">06:30 AM</option>
-                    <option value="07:00 AM">07:00 AM</option>
-                    <option value="07:30 AM">07:30 AM</option>
-                    <option value="08:00 AM">08:00 AM</option>
-                    <option value="08:30 AM">08:30 AM</option>
-                    <option value="09:00 AM">09:00 AM</option>
-                    <option value="09:30 AM">09:30 AM</option>
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="10:30 AM">10:30 AM</option>
-                    <option value="11:00 AM">11:00 AM</option>
-                    <option value="11:30 AM">11:30 AM</option>
-                    <option value="12:00 PM">12:00 PM</option>
-                    <option value="12:30 PM">12:30 PM</option>
-                    <option value="01:00 PM">01:00 PM</option>
-                    <option value="01:30 PM">01:30 PM</option>
-                    <option value="02:00 PM">02:00 PM</option>
-                    <option value="02:30 PM">02:30 PM</option>
-                    <option value="03:00 PM">03:00 PM</option>
-                    <option value="03:30 PM">03:30 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                    <option value="04:30 PM">04:30 PM</option>
-                    <option value="05:00 PM">05:00 PM</option>
-                    <option value="05:30 PM">05:30 PM</option>
-                    <option value="06:00 PM">06:00 PM</option>
-                    <option value="06:30 PM">06:30 PM</option>
-                    <option value="07:00 PM">07:00 PM</option>
-                    <option value="07:30 PM">07:30 PM</option>
-                    <option value="08:00 PM">08:00 PM</option>
-                    <option value="08:30 PM">08:30 PM</option>
-                    <option value="09:00 PM">09:00 PM</option>
-                    <option value="09:30 PM">09:30 PM</option>
-                    <option value="10:00 PM">10:00 PM</option>
-                    <option value="10:30 PM">10:30 PM</option>
-                    <option value="11:00 PM">11:00 PM</option>
-                    <option value="11:30 PM">11:30 PM</option>
-                  </select>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <label for="endDateField" class="form-label">End Date</label>
-                  <input name="end_date" type="date" id="endDateField" class="form-control mb-2" />
-                </div>
-                <div class="col-md-6">
-                  <label for="endTimeField" class="form-label">End Time</label>
-                  <select id="endTimeField" name="end_time" class="form-select mb-3">
-                    <!-- Predefined 12-hour intervals -->
-                    <option value="12:00 AM">12:00 AM</option>
-                    <option value="12:30 AM">12:30 AM</option>
-                    <option value="01:00 AM">01:00 AM</option>
-                    <option value="01:30 AM">01:30 AM</option>
-                    <option value="02:00 AM">02:00 AM</option>
-                    <option value="02:30 AM">02:30 AM</option>
-                    <option value="03:00 AM">03:00 AM</option>
-                    <option value="03:30 AM">03:30 AM</option>
-                    <option value="04:00 AM">04:00 AM</option>
-                    <option value="04:30 AM">04:30 AM</option>
-                    <option value="05:00 AM">05:00 AM</option>
-                    <option value="05:30 AM">05:30 AM</option>
-                    <option value="06:00 AM">06:00 AM</option>
-                    <option value="06:30 AM">06:30 AM</option>
-                    <option value="07:00 AM">07:00 AM</option>
-                    <option value="07:30 AM">07:30 AM</option>
-                    <option value="08:00 AM">08:00 AM</option>
-                    <option value="08:30 AM">08:30 AM</option>
-                    <option value="09:00 AM">09:00 AM</option>
-                    <option value="09:30 AM">09:30 AM</option>
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="10:30 AM">10:30 AM</option>
-                    <option value="11:00 AM">11:00 AM</option>
-                    <option value="11:30 AM">11:30 AM</option>
-                    <option value="12:00 PM">12:00 PM</option>
-                    <option value="12:30 PM">12:30 PM</option>
-                    <option value="01:00 PM">01:00 PM</option>
-                    <option value="01:30 PM">01:30 PM</option>
-                    <option value="02:00 PM">02:00 PM</option>
-                    <option value="02:30 PM">02:30 PM</option>
-                    <option value="03:00 PM">03:00 PM</option>
-                    <option value="03:30 PM">03:30 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                    <option value="04:30 PM">04:30 PM</option>
-                    <option value="05:00 PM">05:00 PM</option>
-                    <option value="05:30 PM">05:30 PM</option>
-                    <option value="06:00 PM">06:00 PM</option>
-                    <option value="06:30 PM">06:30 PM</option>
-                    <option value="07:00 PM">07:00 PM</option>
-                    <option value="07:30 PM">07:30 PM</option>
-                    <option value="08:00 PM">08:00 PM</option>
-                    <option value="08:30 PM">08:30 PM</option>
-                    <option value="09:00 PM">09:00 PM</option>
-                    <option value="09:30 PM">09:30 PM</option>
-                    <option value="10:00 PM">10:00 PM</option>
-                    <option value="10:30 PM">10:30 PM</option>
-                    <option value="11:00 PM">11:00 PM</option>
-                    <option value="11:30 PM">11:30 PM</option>
-                  </select>
-                </div>
-              </div>
-              <div class="d-flex justify-content-start gap-2">
-                <button id="clearSelectionBtn" class="btn btn-outline-secondary">
-                  Clear Selection
+                <h5 class="mb-0">Complete Your Reservation</h5>
+                <button id="toggleReservationBtn" type="button" class="btn btn-sm btn-secondary btn-transparent"
+                  style="height: 100%; align-self: center" data-bs-toggle="collapse"
+                  data-bs-target="#reservationContent" aria-expanded="true" aria-controls="reservationContent">
+                  <i class="bi bi-chevron-down"></i>
                 </button>
-                <button id="checkAvailabilityBtn" type="button" class="btn btn-primary" onclick="checkAvailability()">
-                  Check Availability
-                </button>
-                <span id="availabilityResult" style="margin-left: 1px; font-weight: bold;"></span>
               </div>
-              <p class="text-muted mt-4" style="font-size: 0.875rem;">
-                In case of emergency, please ensure to cancel reservations at least 5 days before the scheduled date to
-                avoid complications.
-              </p>
 
+              <div id="reservationContent" class="collapse show" style="padding-top: 10px">
+                <p class="text-muted">
+                  To confirm your request, please fill out the necessary details below.
+                  We need this information to process your booking efficiently and provide
+                  complete details on how to proceed. A confirmation email will be sent
+                  to your registered email address once your submission is reviewed and approved.
+                </p>
+                <div class="d-flex justify-content-start gap-2">
+                  <a href="policies" class="btn btn-primary">Reservation Policies</a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Navigation Buttons for Step 1 -->
-        <div class="navigation-buttons">
-          <button type="button" class="btn btn-secondary" disabled>Previous</button>
-          <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next</button>
-        </div>
-      </div>
+        <!-- Step 1: Requested Items & Booking Schedule -->
+        <div class="step-section active" id="step1">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-section-card" style="height: 400px; overflow-y: auto;">
+                <!-- Requested Facilities -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h5 class="mb-0">Requested Facilities</h5>
+                  <a href="{{ url('/booking-catalog') }}"
+                    class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+                    <i class="bi bi-plus"></i>
+                    <span>Add item</span>
+                  </a>
+                </div>
+                <div id="facilityList" class="selected-items-container mb-3">
+                  <div class="text-muted empty-message">No facilities added yet.</div>
+                </div>
 
-      <!-- Step 2: Contact Information & Reservation Details -->
-      <div class="step-section" id="step2">
-        <div class="row">
-          <div class="col-md-6 d-flex flex-column">
-            <div class="form-section-card flex-grow-1" style="height: 485px;">
-              <h5>Step 2: Your Contact Information</h5>
-              <div class="row">
-                <div class="col-md-12">
-                  <label class="form-label">Applicant Type <span style="color: red;">*</span></label>
-                  <select id="applicantType" name="user_type" class="form-select mb-2" aria-label="Type of Applicant"
-                    required>
-                    <option value="" selected disabled>Type of Applicant</option>
-                    <option value="Internal">Internal</option>
-                    <option value="External">External</option>
-                  </select>
+                <!-- Requested Equipment -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h5 class="mb-0">Requested Equipment</h5>
+                  <a href="{{ url('/booking-catalog') }}"
+                    class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+                    <i class="bi bi-plus"></i>
+                    <span>Add item</span>
+                  </a>
                 </div>
-                <div class="col-md-6">
-                  <label class="form-label">
-                    First Name <span style="color: red;">*</span>
-                  </label>
-                  <input name="first_name" type="text" class="form-control" placeholder="First Name" required
-                    maxlength="50" />
+                <div id="equipmentList" class="selected-items-container">
+                  <!-- Equipment items will be dynamically added here -->
+                  <div class="text-muted empty-message">No equipment added yet.</div>
                 </div>
-                <div class="col-md-6">
-                  <label class="form-label">
-                    Last Name <span style="color: red;">*</span>
-                  </label>
-                  <input name="last_name" type="text" class="form-control" placeholder="Last Name" required
-                    maxlength="50" />
+              </div>
+            </div>
+
+
+            <div class="col-md-6">
+              <div class="form-section-card flex-grow-1" style="height: 400px; overflow-y: auto; padding-bottom: 15px;">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5>Step 1: Booking Schedule</h5>
                 </div>
-                <div id="studentIdField" class="col-md-6">
-                  <label class="form-label">CPU School ID <span id="schoolIdRequired"
-                      style="color:red;display:none">*</span></label>
-                  <input name="school_id" id="school_id" type="text" class="form-control" placeholder="School ID"
-                    maxlength="20" />
+                <p id="selectedDateTime" class="text-muted">
+                  Add items to form first in order to check schedule availability.
+                </p>
+                <div class="row">
+                  <div class="col-md-6">
+                    <label for="startDateField" class="form-label">Start Date</label>
+                    <input name="start_date" type="date" id="startDateField" class="form-control mb-2" />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="startTimeField" class="form-label">Start Time</label>
+                    <select id="startTimeField" name="start_time" class="form-select mb-2" onchange="adjustEndTime()">
+                      <!-- Predefined 12-hour intervals -->
+                      <option value="12:00 AM">12:00 AM</option>
+                      <option value="12:30 AM">12:30 AM</option>
+                      <option value="01:00 AM">01:00 AM</option>
+                      <option value="01:30 AM">01:30 AM</option>
+                      <option value="02:00 AM">02:00 AM</option>
+                      <option value="02:30 AM">02:30 AM</option>
+                      <option value="03:00 AM">03:00 AM</option>
+                      <option value="03:30 AM">03:30 AM</option>
+                      <option value="04:00 AM">04:00 AM</option>
+                      <option value="04:30 AM">04:30 AM</option>
+                      <option value="05:00 AM">05:00 AM</option>
+                      <option value="05:30 AM">05:30 AM</option>
+                      <option value="06:00 AM">06:00 AM</option>
+                      <option value="06:30 AM">06:30 AM</option>
+                      <option value="07:00 AM">07:00 AM</option>
+                      <option value="07:30 AM">07:30 AM</option>
+                      <option value="08:00 AM">08:00 AM</option>
+                      <option value="08:30 AM">08:30 AM</option>
+                      <option value="09:00 AM">09:00 AM</option>
+                      <option value="09:30 AM">09:30 AM</option>
+                      <option value="10:00 AM">10:00 AM</option>
+                      <option value="10:30 AM">10:30 AM</option>
+                      <option value="11:00 AM">11:00 AM</option>
+                      <option value="11:30 AM">11:30 AM</option>
+                      <option value="12:00 PM">12:00 PM</option>
+                      <option value="12:30 PM">12:30 PM</option>
+                      <option value="01:00 PM">01:00 PM</option>
+                      <option value="01:30 PM">01:30 PM</option>
+                      <option value="02:00 PM">02:00 PM</option>
+                      <option value="02:30 PM">02:30 PM</option>
+                      <option value="03:00 PM">03:00 PM</option>
+                      <option value="03:30 PM">03:30 PM</option>
+                      <option value="04:00 PM">04:00 PM</option>
+                      <option value="04:30 PM">04:30 PM</option>
+                      <option value="05:00 PM">05:00 PM</option>
+                      <option value="05:30 PM">05:30 PM</option>
+                      <option value="06:00 PM">06:00 PM</option>
+                      <option value="06:30 PM">06:30 PM</option>
+                      <option value="07:00 PM">07:00 PM</option>
+                      <option value="07:30 PM">07:30 PM</option>
+                      <option value="08:00 PM">08:00 PM</option>
+                      <option value="08:30 PM">08:30 PM</option>
+                      <option value="09:00 PM">09:00 PM</option>
+                      <option value="09:30 PM">09:30 PM</option>
+                      <option value="10:00 PM">10:00 PM</option>
+                      <option value="10:30 PM">10:30 PM</option>
+                      <option value="11:00 PM">11:00 PM</option>
+                      <option value="11:30 PM">11:30 PM</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="col-md-6">
-                  <label class="form-label">Contact Number</label>
-                  <input name="contact_number" type="text" class="form-control" placeholder="Contact Number"
-                    maxlength="15" pattern="\d{1,15}" inputmode="numeric" id="contactNumberField" autocomplete="off" />
+                <div class="row">
+                  <div class="col-md-6">
+                    <label for="endDateField" class="form-label">End Date</label>
+                    <input name="end_date" type="date" id="endDateField" class="form-control mb-2" />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="endTimeField" class="form-label">End Time</label>
+                    <select id="endTimeField" name="end_time" class="form-select mb-3">
+                      <!-- Predefined 12-hour intervals -->
+                      <option value="12:00 AM">12:00 AM</option>
+                      <option value="12:30 AM">12:30 AM</option>
+                      <option value="01:00 AM">01:00 AM</option>
+                      <option value="01:30 AM">01:30 AM</option>
+                      <option value="02:00 AM">02:00 AM</option>
+                      <option value="02:30 AM">02:30 AM</option>
+                      <option value="03:00 AM">03:00 AM</option>
+                      <option value="03:30 AM">03:30 AM</option>
+                      <option value="04:00 AM">04:00 AM</option>
+                      <option value="04:30 AM">04:30 AM</option>
+                      <option value="05:00 AM">05:00 AM</option>
+                      <option value="05:30 AM">05:30 AM</option>
+                      <option value="06:00 AM">06:00 AM</option>
+                      <option value="06:30 AM">06:30 AM</option>
+                      <option value="07:00 AM">07:00 AM</option>
+                      <option value="07:30 AM">07:30 AM</option>
+                      <option value="08:00 AM">08:00 AM</option>
+                      <option value="08:30 AM">08:30 AM</option>
+                      <option value="09:00 AM">09:00 AM</option>
+                      <option value="09:30 AM">09:30 AM</option>
+                      <option value="10:00 AM">10:00 AM</option>
+                      <option value="10:30 AM">10:30 AM</option>
+                      <option value="11:00 AM">11:00 AM</option>
+                      <option value="11:30 AM">11:30 AM</option>
+                      <option value="12:00 PM">12:00 PM</option>
+                      <option value="12:30 PM">12:30 PM</option>
+                      <option value="01:00 PM">01:00 PM</option>
+                      <option value="01:30 PM">01:30 PM</option>
+                      <option value="02:00 PM">02:00 PM</option>
+                      <option value="02:30 PM">02:30 PM</option>
+                      <option value="03:00 PM">03:00 PM</option>
+                      <option value="03:30 PM">03:30 PM</option>
+                      <option value="04:00 PM">04:00 PM</option>
+                      <option value="04:30 PM">04:30 PM</option>
+                      <option value="05:00 PM">05:00 PM</option>
+                      <option value="05:30 PM">05:30 PM</option>
+                      <option value="06:00 PM">06:00 PM</option>
+                      <option value="06:30 PM">06:30 PM</option>
+                      <option value="07:00 PM">07:00 PM</option>
+                      <option value="07:30 PM">07:30 PM</option>
+                      <option value="08:00 PM">08:00 PM</option>
+                      <option value="08:30 PM">08:30 PM</option>
+                      <option value="09:00 PM">09:00 PM</option>
+                      <option value="09:30 PM">09:30 PM</option>
+                      <option value="10:00 PM">10:00 PM</option>
+                      <option value="10:30 PM">10:30 PM</option>
+                      <option value="11:00 PM">11:00 PM</option>
+                      <option value="11:30 PM">11:30 PM</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="col-md-12">
-                  <label class="form-label">Email Address <span style="color: red;">*</span></label>
-                  <input name="email" type="email" class="form-control mb-2" placeholder="Email Address" required
-                    maxlength="100" />
+                <div class="d-flex justify-content-start gap-2">
+                  <button id="clearSelectionBtn" class="btn btn-outline-secondary">
+                    Clear Selection
+                  </button>
+                  <button id="checkAvailabilityBtn" type="button" class="btn btn-primary" onclick="checkAvailability()">
+                    Check Availability
+                  </button>
+                  <span id="availabilityResult" style="margin-left: 1px; font-weight: bold;"></span>
                 </div>
-                <div class="col-md-12">
-                  <label class="form-label">Department/Organization Name</label>
-                  <input name="organization_name" type="text" class="form-control mb-2" placeholder="Organization Name"
-                    maxlength="100" />
+                <p class="text-muted mt-4" style="font-size: 0.875rem;">
+                  In case of emergency, please ensure to cancel reservations at least 5 days before the scheduled date
+                  to
+                  avoid complications.
+                </p>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation Buttons for Step 1 -->
+          <div class="navigation-buttons">
+            <button type="button" class="btn btn-secondary" disabled>Previous</button>
+            <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Contact Information & Reservation Details -->
+        <div class="step-section" id="step2">
+          <!-- Contact Information Card -->
+          <div class="row mb-2">
+            <div class="col-12">
+              <div class="form-section-card">
+                <h5>Step 2: Your Contact Information</h5>
+                <div class="row">
+                  <div class="col-md-4">
+                    <label class="form-label">Applicant Type <span style="color: red;">*</span></label>
+                    <select id="applicantType" name="user_type" class="form-select mb-2" aria-label="Type of Applicant"
+                      required>
+                      <option value="" selected disabled>Type of Applicant</option>
+                      <option value="Internal">Internal</option>
+                      <option value="External">External</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">First Name <span style="color: red;">*</span></label>
+                    <input name="first_name" type="text" class="form-control" placeholder="First Name" required
+                      maxlength="50" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Last Name <span style="color: red;">*</span></label>
+                    <input name="last_name" type="text" class="form-control" placeholder="Last Name" required
+                      maxlength="50" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">CPU School ID <span id="schoolIdRequired"
+                        style="color:red;display:none">*</span></label>
+                    <input name="school_id" id="school_id" type="text" class="form-control" placeholder="School ID"
+                      maxlength="20" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Contact Number</label>
+                    <input name="contact_number" type="text" class="form-control" placeholder="Contact Number"
+                      maxlength="15" pattern="\d{1,15}" inputmode="numeric" id="contactNumberField"
+                      autocomplete="off" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Email Address <span style="color: red;">*</span></label>
+                    <input name="email" type="email" class="form-control mb-2" placeholder="Email Address" required
+                      maxlength="100" />
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label">Department/Organization Name</label>
+                    <input name="organization_name" type="text" class="form-control mb-2"
+                      placeholder="Organization Name" maxlength="100" />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="col-6">
-            <div class="form-section-card" style="height: 485px; overflow-y: auto; padding-bottom: 15px;">
-              <h5>Step 3: Reservation Details</h5>
-              <div class="row g-3">
-                <!-- Activity/Purpose and Attach Formal Letter in same row -->
-                <div class="col-md-6">
-                  <label class="form-label required">Activity/Purpose</label>
-                  <select id="activityPurposeField" name="purpose_id" class="form-select" aria-label="Activity/Purpose"
-                    required>
-                    <option value="" selected disabled>Select Activity/Purpose</option>
-                    <option value="8">Alumni - Class Reunion</option>
-                    <option value="9">Alumni - Personal Events</option>
-                    <option value="7">Alumni-Organized Events</option>
-                    <option value="5">CPU Organization Led Activity</option>
-                    <option value="2">Equipment Rental</option>
-                    <option value="10">External Event</option>
-                    <option value="1">Facility Rental</option>
-                    <option value="6">Student-Organized Activity</option>
-                    <option value="3">Subject Requirement - Class, Seminar, Conference</option>
-                    <option value="4">University Program/Activity</option>
-                  </select>
-                </div>
-
-                <div class="col-md-6">
-                  <label class="form-label">Attach Formal Letter</label>
-                  <div class="position-relative">
-                    <input type="file" class="form-control" id="attachLetter" onchange="uploadToCloudinary(this)"
-                      required />
-                    <input type="hidden" name="formal_letter_url" id="formal_letter_url">
-                    <input type="hidden" name="formal_letter_public_id" id="formal_letter_public_id">
-                    <button type="button" id="removeAttachLetterBtn"
-                      class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 d-none"
-                      style="color: black; background: none; border: none"
-                      onclick="removeFile('attachLetter', 'removeAttachLetterBtn')">
-                      x
-                    </button>
+          <!-- Reservation Details Card -->
+          <div class="row">
+            <div class="col-12">
+              <div class="form-section-card">
+                <h5>Step 3: Reservation Details</h5>
+                <div class="row g-3">
+                  <!-- Event Title -->
+                  <div class="col-md-6">
+                    <label class="form-label required">Event Title</label>
+                    <input name="event_title" type="text" class="form-control"
+                      placeholder="e.g., University Day Celebration" required maxlength="100" />
                   </div>
-                  <div id="uploadProgress" class="progress mt-2 d-none">
-                    <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+
+                  <!-- Activity/Purpose -->
+                  <div class="col-md-6">
+                    <label class="form-label required">Activity/Purpose</label>
+                    <select id="activityPurposeField" name="purpose_id" class="form-select"
+                      aria-label="Activity/Purpose" required>
+                      <option value="" selected disabled>Select Activity/Purpose</option>
+                      <option value="8">Alumni - Class Reunion</option>
+                      <option value="9">Alumni - Personal Events</option>
+                      <option value="7">Alumni-Organized Events</option>
+                      <option value="5">CPU Organization Led Activity</option>
+                      <option value="2">Equipment Rental</option>
+                      <option value="10">External Event</option>
+                      <option value="1">Facility Rental</option>
+                      <option value="6">Student-Organized Activity</option>
+                      <option value="3">Subject Requirement - Class, Seminar, Conference</option>
+                      <option value="4">University Program/Activity</option>
+                    </select>
                   </div>
-                </div>
 
-                <!-- Number of Participants, Chairs, Tables, and Microphones in same row -->
-                <div class="col-md-3">
-                  <label class="form-label required">Participants</label>
-                  <input name="num_participants" type="number" class="form-control" value="1" min="1" required />
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label required">Chairs</label>
-                  <input name="num_chairs" type="number" class="form-control" value="0" min="0" required />
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label required">Tables</label>
-                  <input name="num_tables" type="number" class="form-control" value="0" min="0" required />
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label required">Microphones</label>
-                  <input name="num_microphones" type="number" class="form-control" value="0" min="0" required />
-                </div>
+                  <!-- Event Details -->
+                  <div class="col-md-12">
+                    <label class="form-label">Event Details</label>
+                    <textarea name="event_details" class="form-control" rows="3" maxlength="500"
+                      placeholder="Provide more details about your event (optional)"></textarea>
+                  </div>
 
-                <!-- Endorser Name and Date Endorsed side by side -->
-                <div class="col-md-6">
-                  <label class="form-label d-flex align-items-center">
-                    Endorser Name
-                    <i class="bi bi-question-circle ms-1 endorser-tooltip" data-bs-toggle="tooltip"
-                      data-bs-placement="right" data-bs-custom-class="custom-tooltip"
-                      title="Provide the name of the individual who endorsed or authorized your planned event."></i>
-                  </label>
-                  <input name="endorser" type="text" class="form-control" placeholder="Endorser Name" maxlength="50" />
-                </div>
+                  <!-- Attach Event Documents -->
+                  <div class="col-md-12">
+                    <label class="form-label">Attach Event Documents</label>
+                    <div class="position-relative">
+                      <input type="file" class="form-control" id="eventDocuments" onchange="uploadToCloudinary(this)" />
+                      <input type="hidden" name="event_documents_url" id="event_documents_url">
+                      <input type="hidden" name="event_documents_public_id" id="event_documents_public_id">
+                      <button type="button" id="removeEventDocumentsBtn"
+                        class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 d-none"
+                        style="color: black; background: none; border: none"
+                        onclick="removeFile('eventDocuments', 'removeEventDocumentsBtn')">
+                        x
+                      </button>
+                    </div>
+                    <div id="uploadProgress" class="progress mt-2 d-none">
+                      <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted">Upload supporting documents (PDF, DOC, or image files)</small>
+                  </div>
 
-                <div class="col-md-6">
-                  <label class="form-label">Date Endorsed</label>
-                  <input name="date_endorsed" type="date" class="form-control" />
-                </div>
+                  <!-- Number of Participants, Chairs, Tables, and Microphones -->
+                  <div class="col-md-3">
+                    <label class="form-label required">Participants</label>
+                    <input name="num_participants" type="number" class="form-control" value="1" min="1" required />
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label required">Chairs</label>
+                    <input name="num_chairs" type="number" class="form-control" value="0" min="0" required />
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label required">Tables</label>
+                    <input name="num_tables" type="number" class="form-control" value="0" min="0" required />
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label required">Microphones</label>
+                    <input name="num_microphones" type="number" class="form-control" value="0" min="0" required />
+                  </div>
 
-                <!-- Additional Requests -->
-                <div class="col-12">
-                  <label class="form-label">Additional Requests</label>
-                  <textarea name="additional_requests" class="form-control" rows="3" maxlength="250"
-                    placeholder="Write a brief description of any additional requests you may have (e.g., WiFi, special seating arrangement, security personnel, technical support, logistics, etc.)."></textarea>
-                </div>
+                  <!-- Additional Requests -->
+                  <div class="col-12">
+                    <label class="form-label">Additional Requests</label>
+                    <textarea name="additional_requests" class="form-control" rows="3" maxlength="250"
+                      placeholder="Write a brief description of any additional requests you may have (e.g., WiFi, special seating arrangement, security personnel, technical support, logistics, etc.)."></textarea>
+                  </div>
 
-                <!-- Extra Services Needed - Fixed to prevent overflow -->
-                <div class="col-12">
-                  <label class="form-label mb-2">Extra Resources or Services Needed</label>
-                  <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                    <div class="row">
-                      <div class="col-md-6">
-                        <div class="form-check mb-2">
-                          <input class="form-check-input" type="checkbox" name="extra_services[]" value="1"
-                            id="service_projector">
-                          <label class="form-check-label" for="service_projector">
-                            Projector
-                          </label>
+                  <!-- Extra Services Needed -->
+                  <div class="col-12">
+                    <label class="form-label mb-2">Extra Resources or Services Needed</label>
+                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                      <div class="row">
+                        <div class="col-md-6">
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="1"
+                              id="service_projector">
+                            <label class="form-check-label" for="service_projector">Projector</label>
+                          </div>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="2"
+                              id="service_screen">
+                            <label class="form-check-label" for="service_screen">Projection Screen</label>
+                          </div>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="3"
+                              id="service_sound">
+                            <label class="form-check-label" for="service_sound">Sound Reinforcement System</label>
+                          </div>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="4"
+                              id="service_led">
+                            <label class="form-check-label" for="service_led">LED Wall</label>
+                          </div>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="5"
+                              id="service_electrical">
+                            <label class="form-check-label" for="service_electrical">Electrical</label>
+                          </div>
                         </div>
-                        <div class="form-check mb-2">
-                          <input class="form-check-input" type="checkbox" name="extra_services[]" value="2"
-                            id="service_screen">
-                          <label class="form-check-label" for="service_screen">
-                            Projection Screen
-                          </label>
-                        </div>
-                        <div class="form-check mb-2">
-                          <input class="form-check-input" type="checkbox" name="extra_services[]" value="3"
-                            id="service_sound">
-                          <label class="form-check-label" for="service_sound">
-                            Sound Reinforcement System
-                          </label>
-                        </div>
-                        <div class="form-check mb-2">
-                          <input class="form-check-input" type="checkbox" name="extra_services[]" value="4"
-                            id="service_led">
-                          <label class="form-check-label" for="service_led">
-                            LED Wall
-                          </label>
-                        </div>
-                        <div class="form-check mb-2">
-                          <input class="form-check-input" type="checkbox" name="extra_services[]" value="5"
-                            id="service_electrical">
-                          <label class="form-check-label" for="service_electrical">
-                            Electrical
-                          </label>
+                        <div class="col-md-6">
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="6"
+                              id="service_internet">
+                            <label class="form-check-label" for="service_internet">Internet Connection</label>
+                          </div>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="7"
+                              id="service_plants">
+                            <label class="form-check-label" for="service_plants">Plants for Decoration</label>
+                          </div>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="8"
+                              id="service_platform">
+                            <label class="form-check-label" for="service_platform">Platform</label>
+                          </div>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="9"
+                              id="service_security">
+                            <label class="form-check-label" for="service_security">Security Guard</label>
+                          </div>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="10"
+                              id="service_emergency">
+                            <label class="form-check-label" for="service_emergency">Emergency Response Team</label>
+                          </div>
                         </div>
                       </div>
-                      <div class="col-md-6">
-                        <div class="form-check mb-2">
-                          <input class="form-check-input" type="checkbox" name="extra_services[]" value="6"
-                            id="service_internet">
-                          <label class="form-check-label" for="service_internet">
-                            Internet Connection
-                          </label>
+                    </div>
+                    <small class="text-muted mt-2 d-block">Select any additional resource/services you need for your
+                      event.</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation Buttons for Step 2 -->
+          <div class="navigation-buttons">
+            <button type="button" class="btn btn-secondary" onclick="previousStep(1)">Previous</button>
+            <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Form Summary -->
+        <div class="step-section" id="step3">
+          <!-- Requisition Summary Card with two-column layout -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="form-section-card">
+                <!-- Centered Title -->
+                <h5 class="fw-bold text-center mb-2">Requisition Summary</h5>
+
+                <!-- Warning/Info message below title -->
+                <small class="d-block text-center text-muted mb-4">
+                  Please review all information carefully. Submitted requests cannot be edited.
+                </small>
+
+                <!-- Two column layout: Left side for Contact Info & Reservation Details, Right side for Fee Breakdown -->
+                <div class="row">
+                  <!-- LEFT COLUMN - Contact Information and Reservation Details -->
+                  <div class="col-md-7">
+                    <!-- Contact Information Row -->
+                    <div class="row mb-4">
+                      <div class="col-12">
+                        <h6 class="border-bottom pb-2">Contact Information</h6>
+                        <div class="summary-item">
+                          <strong>Applicant Type:</strong>
+                          <span id="summary-applicant-type"></span>
                         </div>
-                        <div class="form-check mb-2">
-                          <input class="form-check-input" type="checkbox" name="extra_services[]" value="7"
-                            id="service_plants">
-                          <label class="form-check-label" for="service_plants">
-                            Plants for Decoration
-                          </label>
+                        <div class="summary-item">
+                          <strong>Name:</strong>
+                          <span id="summary-name"></span>
                         </div>
-                        <div class="form-check mb-2">
-                          <input class="form-check-input" type="checkbox" name="extra_services[]" value="8"
-                            id="service_platform">
-                          <label class="form-check-label" for="service_platform">
-                            Platform
-                          </label>
+                        <div class="summary-item">
+                          <strong>Email:</strong>
+                          <span id="summary-email"></span>
                         </div>
-                        <div class="form-check mb-2">
-                          <input class="form-check-input" type="checkbox" name="extra_services[]" value="9"
-                            id="service_security">
-                          <label class="form-check-label" for="service_security">
-                            Security Guard
-                          </label>
+                        <div class="summary-item">
+                          <strong>Contact Number:</strong>
+                          <span id="summary-contact"></span>
                         </div>
-                        <div class="form-check mb-2">
-                          <input class="form-check-input" type="checkbox" name="extra_services[]" value="10"
-                            id="service_emergency">
-                          <label class="form-check-label" for="service_emergency">
-                            Emergency Response Team
-                          </label>
+                        <div class="summary-item">
+                          <strong>Organization:</strong>
+                          <span id="summary-organization"></span>
+                        </div>
+                        <div class="summary-item" id="summary-school-id-container">
+                          <strong>School ID:</strong>
+                          <span id="summary-school-id"></span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Reservation Details Row -->
+                    <div class="row">
+                      <div class="col-12">
+                        <h6 class="border-bottom pb-2">Reservation Details</h6>
+                        <div class="summary-item">
+                          <strong>Event Title:</strong>
+                          <span id="summary-event-title"></span>
+                        </div>
+                        <div class="summary-item">
+                          <strong>Activity/Purpose:</strong>
+                          <span id="summary-purpose"></span>
+                        </div>
+                        <div class="summary-item">
+                          <strong>Event Details:</strong>
+                          <span id="summary-event-details"></span>
+                        </div>
+                        <div class="summary-item">
+                          <strong>Start Date & Time:</strong>
+                          <span id="summary-start"></span>
+                        </div>
+                        <div class="summary-item">
+                          <strong>End Date & Time:</strong>
+                          <span id="summary-end"></span>
+                        </div>
+                        <div class="summary-item">
+                          <strong>Participants:</strong>
+                          <span id="summary-participants"></span>
+                        </div>
+                        <div class="summary-item">
+                          <strong>Furniture & Equipment:</strong>
+                          <span id="summary-furniture"></span>
+                        </div>
+                        <div class="summary-item">
+                          <strong>Additional Requests:</strong>
+                          <span id="summary-requests"></span>
+                        </div>
+                        <div class="summary-item">
+                          <strong>Extra Services:</strong>
+                          <span id="summary-services"></span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <small class="text-muted mt-2 d-block">Select any additional resource/services you need for your
-                    event.</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Navigation Buttons for Step 2 -->
-        <div class="navigation-buttons">
-          <button type="button" class="btn btn-secondary" onclick="previousStep(1)">Previous</button>
-          <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next</button>
-        </div>
-      </div>
-
-      <!-- Step 3: Form Summary -->
-      <div class="step-section" id="step3">
-        <div class="row">
-          <div class="col-12">
-            <div class="form-section-card">
-              <h5 class="fw-bold text-center">Requisition Summary</h5>
-              <small class="d-block text-center text-muted" style="margin-bottom: 2rem;">
-                Please review all information carefully. Submitted requests cannot be edited.
-              </small>
-
-              <div class="row">
-                <!-- Contact Information Summary -->
-                <div class="col-md-6">
-                  <h6 class="border-bottom pb-2">Contact Information</h6>
-                  <div class="summary-item">
-                    <strong>Applicant Type:</strong>
-                    <span id="summary-applicant-type"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>Name:</strong>
-                    <span id="summary-name"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>Email:</strong>
-                    <span id="summary-email"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>Contact Number:</strong>
-                    <span id="summary-contact"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>Organization:</strong>
-                    <span id="summary-organization"></span>
-                  </div>
-                  <div class="summary-item" id="summary-school-id-container">
-                    <strong>School ID:</strong>
-                    <span id="summary-school-id"></span>
-                  </div>
-                </div>
-
-                <!-- Reservation Details Summary -->
-                <div class="col-md-6">
-                  <h6 class="border-bottom pb-2">Reservation Details</h6>
-                  <div class="summary-item">
-                    <strong>Activity/Purpose:</strong>
-                    <span id="summary-purpose"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>Start Date & Time:</strong>
-                    <span id="summary-start"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>End Date & Time:</strong>
-                    <span id="summary-end"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>Participants:</strong>
-                    <span id="summary-participants"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>Furniture & Equipment:</strong>
-                    <span id="summary-furniture"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>Endorser:</strong>
-                    <span id="summary-endorser"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>Date Endorsed:</strong>
-                    <span id="summary-date-endorsed"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>Additional Requests:</strong>
-                    <span id="summary-requests"></span>
-                  </div>
-                  <div class="summary-item">
-                    <strong>Extra Services:</strong>
-                    <span id="summary-services"></span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Fee Breakdown Summary -->
-              <div class="row mt-3">
-                <div class="col-12">
-                  <h6 class="border-bottom pb-2">Fee Breakdown</h6>
-                  <div id="summary-fees" style="max-height: 300px; overflow-y: auto;">
-                    <!-- Fees will be dynamically populated -->
+                  <!-- RIGHT COLUMN - Fee Breakdown (No scroll, expands naturally) -->
+                  <div class="col-md-5">
+                    <div class="border rounded p-3 bg-light" style="height: 100%;">
+                      <h6 class="border-bottom pb-2 mb-3">Fee Breakdown</h6>
+                      <div id="summary-fees" style="min-height: 200px;">
+                        <!-- Fees will be dynamically populated -->
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Navigation Buttons for Step 3 -->
-        <div class="navigation-buttons">
-          <button type="button" class="btn btn-secondary" onclick="previousStep(2)">Previous</button>
-          <button type="button" class="btn btn-primary" onclick="openTermsModal(event)">Submit Form</button>
-        </div>
-      </div>
-    </form>
-  </div>
-
-  <!-- Success Modal -->
-  <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header" style="padding: 0.25rem 1rem;">
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-            style="width: 1rem; height: 1rem; margin-top: 0.2rem;"></button>
-        </div>
-        <div class="modal-body text-center">
-          <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
-          <h5 class="mt-3">Request Submitted Successfully!</h5>
-          <small class="text-muted d-block mt-2">
-            A confirmation email has been sent to <span id="userEmail" class="fw-bold"></span>.
-          </small>
-          <small class="text-muted d-block">
-            Please monitor your email for updates on your request status.
-          </small>
-          <div id="successDetails" class="mt-3 p-3 bg-light rounded text-start"></div>
-        </div>
-        <div class="modal-footer justify-content-center">
-          <button type="button" class="btn btn-primary" onclick="window.location.href='{{ asset('home') }}'">
-            Back to Home
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Conflict Items Modal -->
-  <div class="modal fade" id="conflictModal" tabindex="-1" aria-labelledby="conflictModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-warning text-dark">
-          <h5 class="modal-title" id="conflictModalLabel">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            Scheduling Conflict Detected
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p class="text-muted mb-3">
-            The selected time slot conflicts with the following items that are already booked:
-          </p>
-
-          <div id="conflictItemsList" class="mb-3">
-            <!-- Conflict items will be dynamically inserted here -->
+          <!-- Navigation Buttons for Step 3 -->
+          <div class="navigation-buttons">
+            <button type="button" class="btn btn-secondary" onclick="previousStep(2)">Previous</button>
+            <button type="button" class="btn btn-primary" onclick="openTermsModal(event)">Submit Form</button>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            Close
-          </button>
-          <button type="button" class="btn btn-primary" onclick="window.location.href='{{ asset("booking-catalog") }}'">
-            View Catalog
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-md">
-      <div class="modal-content text-center">
-        <div class="modal-header">
-          <h5 class="modal-title text-primary mb-0" id="termsModalLabel">Terms and Conditions</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-            style="width: 1rem; height: 1rem; margin-top: 0.2rem;"></button>
-        </div>
-
-
-
-        <div class="modal-body">
-          <div class="terms-content mb-0 mx-auto" style="max-height: 50vh; overflow-y: auto; text-align: center;">
-            <small class="d-block text-start mb-3" style="padding-left: 17px;">
-              By using our booking service, you agree to comply with the following terms and conditions, as well as all
-              campus policies set by Central Philippine University (CPU):
-            </small>
-
-
-            <ol class="text-start">
-              <li>
-                <strong class="text-primary">Approval Process</strong>
-                <small>All booking requests are subject to review and approval by the CPU Administration. Submission of
-                  a
-                  requisition form does not guarantee approval.</small>
-              </li>
-
-              <li>
-                <strong class="text-primary">Confirmation and Payment</strong>
-                <small>
-                  Requesters will receive a confirmation email after submitting their form. Once the booking has been
-                  reviewed and approved, a follow-up notification will be sent containing finalized booking details and
-                  payment instructions. All payments must be settled
-                  <span class="fw-bold">in person</span> at the CPU Business Office within
-                  <span class="fw-bold">three (3) business days</span> after approval.
+        <!-- Success Modal -->
+        <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header" style="padding: 0.25rem 1rem;">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                  style="width: 1rem; height: 1rem; margin-top: 0.2rem;"></button>
+              </div>
+              <div class="modal-body text-center">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                <h5 class="mt-3">Request Submitted Successfully!</h5>
+                <small class="text-muted d-block mt-2">
+                  A confirmation email has been sent to <span id="userEmail" class="fw-bold"></span>.
                 </small>
-              </li>
-
-              <li>
-                <strong class="text-primary">Cancellations</strong>
-                <small>
-                  Requesters may cancel their booking <span class="fw-bold">up to five (5) days before the scheduled
-                    event</span>
-                  through the system using the access code provided via email after submission. Cancellations made
-                  beyond
-                  this period may not be honored.
+                <small class="text-muted d-block">
+                  Please monitor your email for updates on your request status.
                 </small>
-              </li>
-
-
-              <li>
-                <strong class="text-primary">Facility and Equipment Responsibility</strong>
-                <small>Requesters are responsible for the proper use and care of all facilities and equipment. Any
-                  damage,
-                  loss, or misuse may incur corresponding repair or replacement fees.</small>
-              </li>
-
-              <li>
-                <strong class="text-primary">Return Policy and Penalties</strong>
-                <small>
-                  All borrowed equipment must be returned within the specified booking period. A
-                  <span class="fw-bold">grace period of up to 4 hours</span> after the event may be allowed for clean-up
-                  or coordination.
-                  Failure to return items within this timeframe may result in <span class="fw-bold">late penalty
-                    fees</span> or temporary suspension of booking privileges.
-                </small>
-              </li>
-
-
-
-              <li>
-                <strong class="text-primary">Prohibited Acts</strong>
-                <small> Alcohol consumption and smoking are strictly prohibited within the campus premises. External
-                  users must
-                  present valid identification when required. </small>
-              </li>
-
-              <li>
-                <strong class="text-primary">Administrative Rights</strong>
-                <small> CPU reserves the right to cancel or revoke bookings for policy violations or non-compliance with
-                  these
-                  terms and conditions. </small>
-              </li>
-            </ol>
-            <div class="form-check mt-4 d-flex justify-content-center">
-              <input class="form-check-input me-2" type="checkbox" id="agreeTerms">
-              <label class="form-check-label" for="agreeTerms">
-                I have read and agree to the terms and conditions.
-              </label>
+                <div id="successDetails" class="mt-3 p-3 bg-light rounded text-start"></div>
+              </div>
+              <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-primary" onclick="window.location.href='{{ asset('home') }}'">
+                  Back to Home
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="modal-footer justify-content-end">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" id="confirmSubmitBtn" class="btn btn-primary" disabled>
-            <span class="btn-text">Accept & Submit</span>
-            <span class="btn-loading">
-              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-              Submitting Request...
-            </span>
-          </button>
+        <!-- Conflict Items Modal -->
+        <div class="modal fade" id="conflictModal" tabindex="-1" aria-labelledby="conflictModalLabel"
+          aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="conflictModalLabel">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                  Scheduling Conflict Detected
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <p class="text-muted mb-3">
+                  The selected time slot conflicts with the following items that are already booked:
+                </p>
+
+                <div id="conflictItemsList" class="mb-3">
+                  <!-- Conflict items will be dynamically inserted here -->
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                  Close
+                </button>
+                <button type="button" class="btn btn-primary"
+                  onclick="window.location.href='{{ asset("booking-catalog") }}'">
+                  View Catalog
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
+
+        <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-md">
+            <div class="modal-content text-center">
+              <div class="modal-header">
+                <h5 class="modal-title text-primary mb-0" id="termsModalLabel">Terms and Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                  style="width: 1rem; height: 1rem; margin-top: 0.2rem;"></button>
+              </div>
+
+
+
+              <div class="modal-body">
+                <div class="terms-content mb-0 mx-auto" style="max-height: 50vh; overflow-y: auto; text-align: center;">
+                  <small class="d-block text-start mb-3" style="padding-left: 17px;">
+                    By using our booking service, you agree to comply with the following terms and conditions, as well
+                    as all
+                    campus policies set by Central Philippine University (CPU):
+                  </small>
+
+
+                  <ol class="text-start">
+                    <li>
+                      <strong class="text-primary">Approval Process</strong>
+                      <small>All booking requests are subject to review and approval by the CPU Administration.
+                        Submission of
+                        a
+                        requisition form does not guarantee approval.</small>
+                    </li>
+
+                    <li>
+                      <strong class="text-primary">Confirmation and Payment</strong>
+                      <small>
+                        Requesters will receive a confirmation email after submitting their form. Once the booking has
+                        been
+                        reviewed and approved, a follow-up notification will be sent containing finalized booking
+                        details and
+                        payment instructions. All payments must be settled
+                        <span class="fw-bold">in person</span> at the CPU Business Office within
+                        <span class="fw-bold">three (3) business days</span> after approval.
+                      </small>
+                    </li>
+
+                    <li>
+                      <strong class="text-primary">Cancellations</strong>
+                      <small>
+                        Requesters may cancel their booking <span class="fw-bold">up to five (5) days before the
+                          scheduled
+                          event</span>
+                        through the system using the access code provided via email after submission. Cancellations made
+                        beyond
+                        this period may not be honored.
+                      </small>
+                    </li>
+
+
+                    <li>
+                      <strong class="text-primary">Facility and Equipment Responsibility</strong>
+                      <small>Requesters are responsible for the proper use and care of all facilities and equipment. Any
+                        damage,
+                        loss, or misuse may incur corresponding repair or replacement fees.</small>
+                    </li>
+
+                    <li>
+                      <strong class="text-primary">Return Policy and Penalties</strong>
+                      <small>
+                        All borrowed equipment must be returned within the specified booking period. A
+                        <span class="fw-bold">grace period of up to 4 hours</span> after the event may be allowed for
+                        clean-up
+                        or coordination.
+                        Failure to return items within this timeframe may result in <span class="fw-bold">late penalty
+                          fees</span> or temporary suspension of booking privileges.
+                      </small>
+                    </li>
+
+
+
+                    <li>
+                      <strong class="text-primary">Prohibited Acts</strong>
+                      <small> Alcohol consumption and smoking are strictly prohibited within the campus premises.
+                        External
+                        users must
+                        present valid identification when required. </small>
+                    </li>
+
+                    <li>
+                      <strong class="text-primary">Administrative Rights</strong>
+                      <small> CPU reserves the right to cancel or revoke bookings for policy violations or
+                        non-compliance with
+                        these
+                        terms and conditions. </small>
+                    </li>
+                  </ol>
+                  <div class="form-check mt-4 d-flex justify-content-center">
+                    <input class="form-check-input me-2" type="checkbox" id="agreeTerms">
+                    <label class="form-check-label" for="agreeTerms">
+                      I have read and agree to the terms and conditions.
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirmSubmitBtn" class="btn btn-primary" disabled>
+                  <span class="btn-text">Accept & Submit</span>
+                  <span class="btn-loading">
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Submitting Request...
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+  </main>
 
 
   @include('partials.footer')
@@ -2112,7 +2114,7 @@
       // Add num_microphones to required fields
       const requiredFields = [
         'user_type', 'first_name', 'last_name', 'email', 'num_participants',
-        'purpose_id', 'num_chairs', 'num_tables', 'num_microphones' // Add this
+        'purpose_id', 'num_chairs', 'num_tables', 'num_microphones', 'event_title'
       ];
 
       // Clear existing errors
@@ -2349,6 +2351,7 @@
         schoolIdContainer.style.display = 'none';
       }
 
+      // Extra Services
       const extraServicesCheckboxes = document.querySelectorAll('input[name="extra_services[]"]:checked');
       let selectedServices = [];
       extraServicesCheckboxes.forEach(checkbox => {
@@ -2365,8 +2368,10 @@
       }
 
       // Reservation Details
+      const eventTitle = document.querySelector('input[name="event_title"]');
       const purposeSelect = document.getElementById('activityPurposeField');
       const purposeText = purposeSelect.options[purposeSelect.selectedIndex]?.text || 'Not specified';
+      const eventDetails = document.querySelector('textarea[name="event_details"]');
       const startDate = document.getElementById('startDateField').value;
       const endDate = document.getElementById('endDateField').value;
       const startTime = document.getElementById('startTimeField').value;
@@ -2377,11 +2382,11 @@
       const numChairs = document.querySelector('input[name="num_chairs"]');
       const numTables = document.querySelector('input[name="num_tables"]');
       const numMicrophones = document.querySelector('input[name="num_microphones"]');
-      const endorser = document.querySelector('input[name="endorser"]');
-      const dateEndorsed = document.querySelector('input[name="date_endorsed"]');
       const additionalRequests = document.querySelector('textarea[name="additional_requests"]');
 
+      document.getElementById('summary-event-title').textContent = eventTitle?.value || 'Not specified';
       document.getElementById('summary-purpose').textContent = purposeText;
+      document.getElementById('summary-event-details').textContent = eventDetails?.value || 'None';
 
       // Helper function to format date
       const formatDate = (dateString) => {
@@ -2434,27 +2439,17 @@
         document.getElementById('summary-end').textContent = 'Not specified';
       }
 
-
       document.getElementById('summary-participants').textContent = numParticipants.value || '0';
 
       // Furniture summary including microphones
       const furnitureText = `${numChairs.value || '0'} chairs, ${numTables.value || '0'} tables, ${numMicrophones.value || '0'} microphones`;
       document.getElementById('summary-furniture').textContent = furnitureText;
 
-      document.getElementById('summary-endorser').textContent = endorser.value || 'Not specified';
-
-      if (dateEndorsed && dateEndorsed.value) {
-        document.getElementById('summary-date-endorsed').textContent = formatDate(dateEndorsed.value);
-      } else {
-        document.getElementById('summary-date-endorsed').textContent = 'Not specified';
-      }
-
       document.getElementById('summary-requests').textContent = additionalRequests.value || 'None';
 
       // Generate fee breakdown
       generateFeeBreakdownForSummary();
     }
-
     // ========== TOAST FUNCTION ==========
     window.showToast = function (message, type = 'success', duration = 3000) {
       const toast = document.createElement('div');
@@ -2513,153 +2508,153 @@
     };
 
     // ========== INITIALIZATION ==========
-   document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOMContentLoaded fired - Initializing page');
-    
-    // ========== 1. INITIALIZE ALL BOOTSTRAP COMPONENTS ==========
-    // Check if Bootstrap is loaded
-    if (typeof bootstrap !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log('DOMContentLoaded fired - Initializing page');
+
+      // ========== 1. INITIALIZE ALL BOOTSTRAP COMPONENTS ==========
+      // Check if Bootstrap is loaded
+      if (typeof bootstrap !== 'undefined') {
         // Initialize tooltips
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
-        
+
         // Initialize dropdowns
         const dropdownElements = document.querySelectorAll('.dropdown-toggle');
         dropdownElements.forEach(dropdown => {
-            new bootstrap.Dropdown(dropdown);
+          new bootstrap.Dropdown(dropdown);
         });
-        
+
         console.log('Bootstrap components initialized');
-    } else {
+      } else {
         console.warn('Bootstrap not loaded yet');
-    }
+      }
 
-    // ========== 2. INITIALIZE STEP SYSTEM ==========
-    showStep(1);
+      // ========== 2. INITIALIZE STEP SYSTEM ==========
+      showStep(1);
 
-    // ========== 3. INITIALIZE LOCAL STORAGE AUTO-SAVE ==========
-    window.autoSave = new LocalStorageAutoSave({
+      // ========== 3. INITIALIZE LOCAL STORAGE AUTO-SAVE ==========
+      window.autoSave = new LocalStorageAutoSave({
         formSelector: '#reservationForm',
         formId: 'reservation_form',
         saveInterval: 2000,
         excludedFields: ['password', '_token', 'csrf_token']
-    });
+      });
 
-    // ========== 4. SET UP EVENT LISTENERS ==========
-    // Clear localStorage on successful form submission
-    window.addEventListener('formSubmitted', () => {
+      // ========== 4. SET UP EVENT LISTENERS ==========
+      // Clear localStorage on successful form submission
+      window.addEventListener('formSubmitted', () => {
         if (window.autoSave) {
-            window.autoSave.clearProgress();
+          window.autoSave.clearProgress();
         }
-    });
+      });
 
-    // ========== 5. APPLICANT TYPE CHANGE HANDLER ==========
-    const applicantType = document.getElementById('applicantType');
-    const schoolIdInput = document.getElementById('school_id');
-    const schoolIdRequired = document.getElementById('schoolIdRequired');
+      // ========== 5. APPLICANT TYPE CHANGE HANDLER ==========
+      const applicantType = document.getElementById('applicantType');
+      const schoolIdInput = document.getElementById('school_id');
+      const schoolIdRequired = document.getElementById('schoolIdRequired');
 
-    if (applicantType) {
+      if (applicantType) {
         applicantType.addEventListener('change', function () {
-            if (this.value === 'Internal') {
-                schoolIdInput.required = true;
-                schoolIdInput.disabled = false;
-                if (schoolIdRequired) schoolIdRequired.style.display = '';
-                schoolIdInput.placeholder = 'School ID';
-            } else {
-                schoolIdInput.required = false;
-                schoolIdInput.disabled = true;
-                if (schoolIdRequired) schoolIdRequired.style.display = 'none';
-                schoolIdInput.value = '';
-                schoolIdInput.placeholder = 'School ID';
-            }
-        });
-
-        // Initialize applicant type state
-        if (applicantType.value === 'Internal') {
+          if (this.value === 'Internal') {
             schoolIdInput.required = true;
             schoolIdInput.disabled = false;
             if (schoolIdRequired) schoolIdRequired.style.display = '';
-        } else {
+            schoolIdInput.placeholder = 'School ID';
+          } else {
             schoolIdInput.required = false;
             schoolIdInput.disabled = true;
             if (schoolIdRequired) schoolIdRequired.style.display = 'none';
             schoolIdInput.value = '';
+            schoolIdInput.placeholder = 'School ID';
+          }
+        });
+
+        // Initialize applicant type state
+        if (applicantType.value === 'Internal') {
+          schoolIdInput.required = true;
+          schoolIdInput.disabled = false;
+          if (schoolIdRequired) schoolIdRequired.style.display = '';
+        } else {
+          schoolIdInput.required = false;
+          schoolIdInput.disabled = true;
+          if (schoolIdRequired) schoolIdRequired.style.display = 'none';
+          schoolIdInput.value = '';
         }
-    }
+      }
 
-    // ========== 6. CLEAR SELECTION BUTTON ==========
-    const clearSelectionBtn = document.getElementById('clearSelectionBtn');
-    if (clearSelectionBtn) {
+      // ========== 6. CLEAR SELECTION BUTTON ==========
+      const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+      if (clearSelectionBtn) {
         clearSelectionBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            const startDateField = document.getElementById('startDateField');
-            const endDateField = document.getElementById('endDateField');
-            const startTimeField = document.getElementById('startTimeField');
-            const endTimeField = document.getElementById('endTimeField');
-            const availabilityResult = document.getElementById('availabilityResult');
-            
-            if (startDateField) startDateField.value = '';
-            if (endDateField) endDateField.value = '';
-            if (startTimeField) startTimeField.selectedIndex = 0;
-            if (endTimeField) endTimeField.selectedIndex = 0;
-            if (availabilityResult) {
-                availabilityResult.textContent = '';
-                availabilityResult.style.color = '';
-            }
+          e.preventDefault();
+          const startDateField = document.getElementById('startDateField');
+          const endDateField = document.getElementById('endDateField');
+          const startTimeField = document.getElementById('startTimeField');
+          const endTimeField = document.getElementById('endTimeField');
+          const availabilityResult = document.getElementById('availabilityResult');
 
-            if (typeof calculateAndDisplayFees === 'function') {
-                calculateAndDisplayFees();
-            }
+          if (startDateField) startDateField.value = '';
+          if (endDateField) endDateField.value = '';
+          if (startTimeField) startTimeField.selectedIndex = 0;
+          if (endTimeField) endTimeField.selectedIndex = 0;
+          if (availabilityResult) {
+            availabilityResult.textContent = '';
+            availabilityResult.style.color = '';
+          }
 
-            if (typeof showToast === 'function') {
-                showToast('Booking schedule cleared successfully', 'success');
-            }
+          if (typeof calculateAndDisplayFees === 'function') {
+            calculateAndDisplayFees();
+          }
+
+          if (typeof showToast === 'function') {
+            showToast('Booking schedule cleared successfully', 'success');
+          }
         });
-    }
+      }
 
-    // ========== 7. CONTACT NUMBER VALIDATION ==========
-    const contactNumberField = document.getElementById('contactNumberField');
-    if (contactNumberField) {
+      // ========== 7. CONTACT NUMBER VALIDATION ==========
+      const contactNumberField = document.getElementById('contactNumberField');
+      if (contactNumberField) {
         contactNumberField.addEventListener('input', function (e) {
-            this.value = this.value.replace(/\D/g, '');
+          this.value = this.value.replace(/\D/g, '');
         });
-    }
+      }
 
-    // ========== 8. TIME SELECTOR HANDLERS ==========
-    const startTimeSelect = document.getElementById('startTimeField');
-    if (startTimeSelect) {
+      // ========== 8. TIME SELECTOR HANDLERS ==========
+      const startTimeSelect = document.getElementById('startTimeField');
+      if (startTimeSelect) {
         startTimeSelect.addEventListener('change', updateEndTimeOptions);
         setTimeout(updateEndTimeOptions, 100);
-    }
+      }
 
-    // ========== 9. SCHEDULE FIELD CHANGE LISTENERS ==========
-    const scheduleFields = [
+      // ========== 9. SCHEDULE FIELD CHANGE LISTENERS ==========
+      const scheduleFields = [
         'startDateField', 'endDateField', 'startTimeField', 'endTimeField'
-    ];
-    scheduleFields.forEach(fieldId => {
+      ];
+      scheduleFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         if (field) {
-            field.addEventListener('change', function () {
-                if (typeof calculateAndDisplayFees === 'function') {
-                    calculateAndDisplayFees();
-                }
-            });
+          field.addEventListener('change', function () {
+            if (typeof calculateAndDisplayFees === 'function') {
+              calculateAndDisplayFees();
+            }
+          });
         }
-    });
+      });
 
-    // ========== 10. INITIALIZE FORM ITEMS (MOST IMPORTANT) ==========
-    // Small delay to ensure everything is ready
-    setTimeout(() => {
+      // ========== 10. INITIALIZE FORM ITEMS (MOST IMPORTANT) ==========
+      // Small delay to ensure everything is ready
+      setTimeout(() => {
         console.log('Calling initForm...');
         if (typeof initForm === 'function') {
-            initForm();
+          initForm();
         } else {
-            console.error('initForm function not defined');
+          console.error('initForm function not defined');
         }
-    }, 100);
+      }, 100);
 
-    console.log('DOMContentLoaded initialization complete');
-});
+      console.log('DOMContentLoaded initialization complete');
+    });
     // ========== AVAILABILITY CHECK ==========
     window.checkAvailability = async function () {
       const checkBtn = document.getElementById('checkAvailabilityBtn');
@@ -3103,30 +3098,30 @@
             if (item.rate_type === 'Per Hour' && durationHours > 0) {
               fee = fee * durationHours;
               htmlContent += `
-                <div class="fee-item d-flex justify-content-between mb-2">
-                    <span>${item.name} (${durationHours.toFixed(1)} hrs)</span>
-                    <div class="text-end">
-                        <small>₱${parseFloat(item.base_fee).toLocaleString()}/hr</small>
-                        <div><strong>₱${fee.toLocaleString()}</strong></div>
-                    </div>
+            <div class="fee-item d-flex justify-content-between mb-2">
+                <span>${item.name} (${durationHours.toFixed(1)} hrs)</span>
+                <div class="text-end">
+                    <small>₱${parseFloat(item.base_fee).toLocaleString()}/hr</small>
+                    <div><strong>₱${fee.toLocaleString()}</strong></div>
                 </div>
-            `;
+            </div>
+          `;
             } else {
               htmlContent += `
-                <div class="fee-item d-flex justify-content-between mb-2">
-                    <span>${item.name}</span>
-                    <span>₱${fee.toLocaleString()}</span>
-                </div>
-            `;
+            <div class="fee-item d-flex justify-content-between mb-2">
+                <span>${item.name}</span>
+                <span>₱${fee.toLocaleString()}</span>
+            </div>
+          `;
             }
             facilityTotal += fee;
           });
           htmlContent += `
-            <div class="subtotal d-flex justify-content-between mt-2 pt-2 border-top">
-                <strong>Subtotal</strong>
-                <strong>₱${facilityTotal.toLocaleString()}</strong>
-            </div>
-        </div>`;
+        <div class="subtotal d-flex justify-content-between mt-2 pt-2 border-top">
+            <strong>Subtotal</strong>
+            <strong>₱${facilityTotal.toLocaleString()}</strong>
+        </div>
+      </div>`;
         }
 
         // Equipment breakdown
@@ -3140,44 +3135,46 @@
             if (item.rate_type === 'Per Hour' && durationHours > 0) {
               itemTotal = itemTotal * durationHours;
               htmlContent += `
-                <div class="fee-item d-flex justify-content-between mb-2">
-                    <span>${item.name} ${quantity > 1 ? `(x${quantity})` : ''} (${durationHours.toFixed(1)} hrs)</span>
-                    <div class="text-end">
-                        <small>₱${unitFee.toLocaleString()}/hr × ${quantity}</small>
-                        <div><strong>₱${itemTotal.toLocaleString()}</strong></div>
-                    </div>
+            <div class="fee-item d-flex justify-content-between mb-2">
+                <span>${item.name} ${quantity > 1 ? `(x${quantity})` : ''} (${durationHours.toFixed(1)} hrs)</span>
+                <div class="text-end">
+                    <small>₱${unitFee.toLocaleString()}/hr × ${quantity}</small>
+                    <div><strong>₱${itemTotal.toLocaleString()}</strong></div>
                 </div>
-            `;
+            </div>
+          `;
             } else {
               htmlContent += `
-                <div class="fee-item d-flex justify-content-between mb-2">
-                    <span>${item.name} ${quantity > 1 ? `(x${quantity})` : ''}</span>
-                    <div class="text-end">
-                        <div>₱${unitFee.toLocaleString()} × ${quantity}</div>
-                        <strong>₱${itemTotal.toLocaleString()}</strong>
-                    </div>
+            <div class="fee-item d-flex justify-content-between mb-2">
+                <span>${item.name} ${quantity > 1 ? `(x${quantity})` : ''}</span>
+                <div class="text-end">
+                    <div>₱${unitFee.toLocaleString()} × ${quantity}</div>
+                    <strong>₱${itemTotal.toLocaleString()}</strong>
                 </div>
-            `;
+            </div>
+          `;
             }
             equipmentTotal += itemTotal;
           });
           htmlContent += `
-            <div class="subtotal d-flex justify-content-between mt-2 pt-2 border-top">
-                <strong>Subtotal</strong>
-                <strong>₱${equipmentTotal.toLocaleString()}</strong>
-            </div>
-        </div>`;
+        <div class="subtotal d-flex justify-content-between mt-2 pt-2 border-top">
+            <strong>Subtotal</strong>
+            <strong>₱${equipmentTotal.toLocaleString()}</strong>
+        </div>
+      </div>`;
         }
 
-        // Total
+        // Total with prominent dark navy blue background
         const total = facilityTotal + equipmentTotal;
         if (total > 0) {
           htmlContent += `
-            <div class="total-fee d-flex justify-content-between mt-4 pt-3 border-top">
-                <h6 class="mb-0">Total Amount</h6>
-                <h6 class="mb-0">₱${total.toLocaleString()}</h6>
-            </div>
-        `;
+        <div class="total-fee mt-4 pt-3 border-top">
+          <div class="d-flex justify-content-between align-items-center p-3" style="background-color: #003366; border-radius: 8px;">
+            <h6 class="mb-0 text-white fw-bold">TOTAL AMOUNT</h6>
+            <h5 class="mb-0 text-white fw-bold">₱${total.toLocaleString()}</h5>
+          </div>
+        </div>
+      `;
         } else {
           htmlContent += '<div class="text-muted text-center">No items added yet.</div>';
         }
@@ -3711,6 +3708,8 @@
 
         // Prepare form data with all_day support
         const formData = {
+          event_title: document.querySelector('input[name="event_title"]')?.value || '',
+          event_details: document.querySelector('textarea[name="event_details"]')?.value || null,
           start_date: document.getElementById('startDateField').value,
           end_date: document.getElementById('endDateField').value,
           start_time: isAllDay ? null : convertTo24Hour(document.getElementById('startTimeField').value),
@@ -3721,13 +3720,9 @@
           num_chairs: document.querySelector('input[name="num_chairs"]')?.value || 0,
           num_tables: document.querySelector('input[name="num_tables"]')?.value || 0,
           num_microphones: document.querySelector('input[name="num_microphones"]')?.value || 0,
-          endorser: document.querySelector('input[name="endorser"]')?.value || null,
-          date_endorsed: document.querySelector('input[name="date_endorsed"]')?.value || null,
           additional_requests: document.querySelector('textarea[name="additional_requests"]')?.value || '',
-          formal_letter_url: document.getElementById('formal_letter_url')?.value || null,
-          formal_letter_public_id: document.getElementById('formal_letter_public_id')?.value || null,
-          facility_layout_url: document.getElementById('facility_layout_url')?.value || null,
-          facility_layout_public_id: document.getElementById('facility_layout_public_id')?.value || null,
+          event_documents_url: document.getElementById('event_documents_url')?.value || null,
+          event_documents_public_id: document.getElementById('event_documents_public_id')?.value || null,
           first_name: document.querySelector('input[name="first_name"]').value,
           last_name: document.querySelector('input[name="last_name"]').value,
           email: document.querySelector('input[name="email"]').value,
@@ -3998,6 +3993,7 @@
     };
 
     // ========== FILE UPLOAD FUNCTIONS ==========
+
     async function uploadToCloudinary(input) {
       const file = input.files[0];
       if (!file) return;
@@ -4008,8 +4004,8 @@
 
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', 'formal-letters');
-      formData.append('folder', 'user-uploads/user-letters');
+      formData.append('upload_preset', 'event-documents'); // Changed from 'formal-letters'
+      formData.append('folder', 'user-uploads/event-documents'); // Changed from 'user-letters'
 
       if (file.type === 'application/pdf') {
         formData.append('resource_type', 'raw');
@@ -4030,11 +4026,14 @@
         const data = await response.json();
         console.log('Upload successful:', data);
 
-        document.getElementById('formal_letter_url').value = data.secure_url;
-        document.getElementById('formal_letter_public_id').value = data.public_id;
+        document.getElementById('event_documents_url').value = data.secure_url;
+        document.getElementById('event_documents_public_id').value = data.public_id;
 
         showToast('File uploaded successfully!', 'success');
-        document.getElementById('removeAttachLetterBtn').classList.remove('d-none');
+
+        // Get the button ID dynamically from the input's associated button
+        const buttonId = input.id === 'eventDocuments' ? 'removeEventDocumentsBtn' : 'removeAttachLetterBtn';
+        document.getElementById(buttonId)?.classList.remove('d-none');
 
       } catch (error) {
         console.error('Upload error:', error);
@@ -4051,8 +4050,8 @@
       const button = document.getElementById(buttonId);
 
       input.value = '';
-      document.getElementById('formal_letter_url').value = '';
-      document.getElementById('formal_letter_public_id').value = '';
+      document.getElementById('event_documents_url').value = '';
+      document.getElementById('event_documents_public_id').value = '';
       button.classList.add('d-none');
 
       showToast('File removed', 'info');

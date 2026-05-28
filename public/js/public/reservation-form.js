@@ -527,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const formData = new FormData();
-        formData.append('formal_letter_url', file);
+        formData.append('event_documents_url', file);
 
         try {
             showToast('Uploading file...', 'info');
@@ -640,8 +640,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 end_date: document.getElementById('endDateField').value,
                 start_time: convertTo24Hour(document.getElementById('startTimeField').value),
                 end_time: convertTo24Hour(document.getElementById('endTimeField').value),
-                endorser: document.querySelector('input[name="endorser"]')?.value || null,
-                date_endorsed: document.querySelector('input[name="date_endorsed"]')?.value || null
             };
 
             // First save request info
