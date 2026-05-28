@@ -2072,8 +2072,8 @@
                         },
                         body: JSON.stringify({
                             official_receipt_num: officialReceiptNum,
-                            calendar_title: calendarTitle || null,
-                            calendar_description: calendarDescription || null
+                            event_title: calendarTitle || null,
+                            event_details: calendarDescription || null
                         })
                     });
 
@@ -2841,8 +2841,8 @@
                             'Accept': 'application/json'
                         },
                         body: JSON.stringify({
-                            calendar_title: calendarTitle,
-                            calendar_description: calendarDescription
+                            event_title: calendarTitle,
+                            event_details: calendarDescription
                         })
                     });
 
@@ -4050,8 +4050,8 @@
                             'Accept': 'application/json'
                         },
                         body: JSON.stringify({
-                            calendar_title: newTitle,
-                            calendar_description: newDescription
+                            event_title: newTitle,
+                            event_details: newDescription
                         })
                     });
 

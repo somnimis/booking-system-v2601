@@ -465,7 +465,7 @@ class RequiredApprovalsController extends Controller
             'services_count' => $requisition->requestedServices->count(),
             'request_details' => [
                 'request_id' => $requisition->request_id,
-                'title' => $requisition->calendar_title,
+                'title' => $requisition->event_title,
                 'requester' => $requisition->first_name . ' ' . $requisition->last_name
             ]
         ]);

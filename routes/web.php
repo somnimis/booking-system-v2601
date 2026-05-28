@@ -150,9 +150,16 @@ Route::middleware('web')->group(function () {
     Route::get('/admin/requisition/{requestId}', function ($requestId) {
         return view('admin.request-view', ['requestId' => $requestId]);
     });
+    Route::get('/admin/requisition/{requestId}/financials', function ($requestId) {
+        return view('admin.financials-edit', ['requestId' => $requestId]);
+    });
 
     Route::get('/admin/form-review/{requestId}', function ($requestId) {
         return view('admin.form-review', ['requestId' => $requestId]);
+    });
+
+    Route::get('/admin/reservations/create', function () {
+        return view('admin.create-reservation');
     });
 
     // Feedback Management

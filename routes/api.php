@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminApprovalController;
 use App\Http\Controllers\AdminActionsController;
 use App\Http\Controllers\RequisitionFormController;
@@ -18,6 +19,8 @@ use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\ScannerController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AdminFacilityController;
+use App\Http\Controllers\ManageFacilitiesController;
+use App\Http\Controllers\ManageEquipmentController;
 use App\Http\Controllers\Dropdowns\FacilityCategoryController;
 use App\Http\Controllers\Dropdowns\FacilitySubcategoryController;
 use App\Http\Controllers\Dropdowns\EquipmentCategoryController;
@@ -31,6 +34,7 @@ use App\Http\Controllers\ExtraServicesController;
 use App\Http\Controllers\ReservationListingsController;
 use App\Http\Controllers\EquipmentTransactionController;
 use App\Http\Controllers\AvailabilityController;
+use App\Http\Controllers\CreateReservationController;
 use Illuminate\Support\Facades\Log;
 
 // ==================== PUBLIC ROUTES ==================== //
@@ -119,6 +123,8 @@ Route::get('/facility-categories', [FacilityCategoryController::class, 'index'])
 Route::get('/facility-categories/index', [FacilityCategoryController::class, 'indexWithSubcategories']);
 Route::get('/facility-subcategories/{category}', [FacilitySubcategoryController::class, 'index']);
 Route::get('/requisition-purposes', [RequisitionPurposeController::class, 'index']);
+
+
 // ---------------- Extra Services ---------------- //
 Route::get('/extra-services', [ExtraServicesController::class, 'index']);
 Route::post('/extra-services', [ExtraServicesController::class, 'store']);
@@ -143,7 +149,6 @@ Route::prefix('requisition')->middleware(['web'])->group(function () {
 // ---------------- Requester Routes (public) ---------------- //
 Route::prefix('requester')->middleware(['web'])->group(function () {
     Route::get('/form/{accessCode}', [UserRequisitionController::class, 'getFormByAccessCode']);
-    Route::get('/{requestId}/receipt', [AdminApprovalController::class, 'getOfficialReceipt']);
 });
 
 // ---------------- User Actions (public) ---------------- //
@@ -160,9 +165,6 @@ Route::prefix('admin')->group(function () {
 
 // Admin equipment tracking routes
 Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
-    // Existing routes...
-
-    // New routes for equipment tracking
     Route::get('/equipment/to-release', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'getToRelease']);
     Route::get('/equipment/to-return', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'getToReturn']);
     Route::get('/equipment/available-items/{equipmentId}', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'getAvailableItems']);
@@ -173,9 +175,11 @@ Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
 // Equipment mass department assignment
 Route::post('/admin/equipment/mass-assign-departments', [EquipmentController::class, 'massAssignDepartments']);
 
-// Facility mass department assignment
-Route::post('/admin/facilities/mass-assign-departments', [FacilityController::class, 'massAssignDepartments']);
+// Get all equipment for dropdown (used in mass assign modal)
+Route::get('/admin/equipment/all', [EquipmentController::class, 'getAllEquipmentForDropdown']);
 
+// Facility mass department assignment
+Route::post('/admin/facilities/mass-assign-department', [FacilityController::class, 'massAssignDepartment']);
 
 // ---------------- Scanner Routes ---------------- //
 Route::prefix('scanner')->group(function () {
@@ -210,6 +214,13 @@ Route::post('/admin/generate-barcode', function (Request $request) {
 
 Route::middleware('auth:sanctum')->group(function () {
 
+// ---------------- Admin Dashboard ---------------- //
+Route::get('/admin/dashboard-data', [DashboardController::class, 'getDashboardData'])->middleware('auth:sanctum');
+// Dashboard lazy-loading endpoints
+Route::get('/admin/dashboard-data', [DashboardController::class, 'getDashboardData'])->middleware('auth:sanctum');
+Route::get('/admin/today-events', [DashboardController::class, 'getTodayEventsPaginated'])->middleware('auth:sanctum');
+Route::get('/admin/activity-timeline', [DashboardController::class, 'getActivityTimelinePaginated'])->middleware('auth:sanctum');
+
     // ---------------- Admin Management ---------------- //
     Route::get('/admins', [AdminController::class, 'getAllAdmins']);
     Route::get('/admins/{admin}/edit', [AdminController::class, 'getAdminForEdit']);
@@ -232,9 +243,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/notifications/mark-read/{notificationId?}', [NotificationController::class, 'markAsRead']);
     Route::post('/admin/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     Route::get('/feedback', [FeedbackController::class, 'index']);
+    Route::get('/dashboard-stats', [ReservationListingsController::class, 'getDashboardStats']);
     Route::post('/admin/notifications/requisition/{requisitionId}/mark-as-read', [NotificationController::class, 'markRequisitionAsRead']);
 
     // ---------------- Equipment Management ---------------- //
+    Route::get('admin/manage-equipment', [ManageEquipmentController::class, 'index']);
     Route::post('admin/equipment', [EquipmentController::class, 'store']);
     Route::put('admin/equipment/{equipmentId}', [EquipmentController::class, 'update']);
     Route::delete('/admin/equipment/{equipmentId}', [EquipmentController::class, 'destroy']);
@@ -253,6 +266,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('admin/equipment/{equipmentId}/items/{itemId}', [EquipmentController::class, 'deleteItem']);
 
     // ---------------- Facility Management ---------------- //
+    // Merged endpoint for manage-facilities.blade.php
+    // Returns paginated facilities + filter metadata (statuses, categories, parent buildings)
+    // in a single request. Replaces the previous 3 separate bootstrap calls.
+    Route::get('admin/manage-facilities', [ManageFacilitiesController::class, 'index']);
+
     Route::post('admin/add-facility', [FacilityController::class, 'store']);
     Route::put('admin/facilities/{facilityId}', [FacilityController::class, 'update']);
     Route::delete('/admin/facilities/{facilityId}', [FacilityController::class, 'destroy']);
@@ -296,11 +314,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/requisition/{requestId}/approval-history', [ReservationListingsController::class, 'getApprovalHistory']);
     Route::get('/admin/requisition/{requestId}/equipment-status', [AdminApprovalController::class, 'getEquipmentStatus']);
 
+    
+
     // Form Management
     Route::prefix('admin/requisition')->group(function () {
 
         // Make manual reservation
         Route::post('create', [AdminActionsController::class, 'createReservation']);
+        Route::get('/form-init-data', [CreateReservationController::class, 'getFormInitData']);
         // Fees & Payments
         Route::post('/{requestId}/fee', [AdminActionsController::class, 'addFee']);
         Route::post('/{requestId}/discount', [AdminActionsController::class, 'addDiscount']);
@@ -311,9 +332,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{requestId}/waive', [AdminActionsController::class, 'waiveItems']);
 
         // Status Management
-        Route::post('/{requestId}/update-status', [AdminActionsController::class, 'updateStatus']); // UPDATED
-        Route::post('/{requestId}/approve', [AdminApprovalController::class, 'approveRequest']);
-        Route::post('/{requestId}/reject', [AdminActionsController::class, 'rejectRequest']);
+        Route::post('/{requestId}/update-status', [AdminActionsController::class, 'updateStatus']); // for manual overrides
+        Route::post('/{requestId}/{action}', [AdminApprovalController::class, 'actionRequest'])->where('action', 'approve|reject'); 
         Route::post('{requestId}/cancel', [AdminActionsController::class, 'cancelForm']);
         Route::post('/{requestId}/finalize', [AdminActionsController::class, 'finalizeForm']);
         Route::post('/{requestId}/close', [AdminActionsController::class, 'closeForm']);
@@ -327,9 +347,6 @@ Route::middleware('auth:sanctum')->group(function () {
         // Comments
         Route::post('/{requestId}/comment', [AdminActionsController::class, 'addComment']);
         Route::get('/{requestId}/comments', [AdminActionsController::class, 'getComments']);
-
-        // Receipt
-        Route::get('/{requestId}/receipt', [AdminApprovalController::class, 'getOfficialReceipt']);
     });
 
     // ---------------- Cloudinary Management ---------------- //

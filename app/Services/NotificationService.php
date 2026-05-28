@@ -817,8 +817,8 @@ class NotificationService
                 'purpose' => $form->purpose->purpose_name ?? 'N/A',
                 'num_participants' => $form->num_participants,
                 'access_code' => $form->access_code,
-                'calendar_title' => $form->calendar_title ?? 'Booking #' . $form->request_id,
-                'calendar_description' => $form->calendar_description,
+                'event_title' => $form->event_title ?? 'Booking #' . $form->request_id,
+                'event_details' => $form->event_details,
                 'is_multi_day' => $baseSchedule['is_multi_day']
             ];
 

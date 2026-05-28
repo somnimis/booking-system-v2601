@@ -65,8 +65,8 @@ class RequisitionFormatterService
                     'color' => $form->formStatus->color_code,
                 ],
                 'calendar_info' => [
-                    'title' => $form->calendar_title,
-                    'description' => $form->calendar_description,
+                    'title' => $form->event_title,
+                    'description' => $form->event_details,
                 ],
                 'official_receipt_num' => $form->official_receipt_num,
             ],
@@ -213,8 +213,8 @@ class RequisitionFormatterService
             'formatted_start_time' => $formattedStartTime,
             'formatted_end_time' => $formattedEndTime,
             'formatted_schedule' => $formattedSchedule,
-            'calendar_title' => $form->calendar_title,
-            'calendar_description' => $form->calendar_description,
+            'event_title' => $form->event_title,
+            'event_details' => $form->event_details,
             'requested_facilities' => $form->requestedFacilities->map(fn($rf) => [
                 'requested_facility_id' => $rf->requested_facility_id,
                 'facility_id' => $rf->facility_id,
@@ -285,8 +285,8 @@ class RequisitionFormatterService
                 'color' => $form->formStatus->color_code,
             ],
             'calendar_info' => [
-                'title' => $form->calendar_title,
-                'description' => $form->calendar_description,
+                'title' => $form->event_title,
+                'description' => $form->event_details,
             ],
             'official_receipt_num' => $form->official_receipt_num,
         ];
@@ -373,15 +373,9 @@ class RequisitionFormatterService
     public function getDocumentDetails($form): array
     {
         return [
-            'endorser' => $form->endorser,
-            'date_endorsed' => $form->date_endorsed,
             'formal_letter' => [
-                'url' => $form->formal_letter_url,
-                'public_id' => $form->formal_letter_public_id,
-            ],
-            'facility_layout' => [
-                'url' => $form->facility_layout_url,
-                'public_id' => $form->facility_layout_public_id,
+                'url' => $form->event_documents_url,
+                'public_id' => $form->event_documents_public_id,
             ],
             'official_receipt' => [
                 'number' => $form->official_receipt_no,
