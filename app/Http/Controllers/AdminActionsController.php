@@ -8,6 +8,7 @@ use App\Models\RequestedFacility;
 use App\Models\RequestedEquipment;
 use App\Models\EquipmentItem;
 use App\Models\RequisitionFee;
+use App\Models\RequestedService;
 use App\Models\FormStatus;
 use App\Models\CompletedTransaction;
 use App\Models\RequisitionForm;
@@ -15,6 +16,7 @@ use App\Models\RequisitionComment;
 use App\Services\FeeCalculatorService;
 use App\Services\CheckAvailabilityService;
 use App\Services\NotificationService;
+use App\Services\AccessCodeService;
 use App\Services\ReceiptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +40,8 @@ class AdminActionsController extends Controller
         $this->receiptService = $receiptService;
     }
 
-/**
+
+    /**
  * Create a new admin reservation
  */
 public function createReservation(Request $request)
@@ -51,12 +54,59 @@ public function createReservation(Request $request)
         // Validate request
         $validatedData = $this->validateReservationRequest($request);
 
-        // Check for conflicts
-        $conflictItems = $this->checkReservationConflicts($validatedData);
+        // Generate unique access code
+        $accessCodeService = app(AccessCodeService::class);
+        $validatedData['access_code'] = $accessCodeService->generateUniqueAccessCode();
 
+        // Check for facility conflicts
+        $conflictItems = [];
+        
+        foreach ($validatedData['facilities'] as $facility) {
+            $facilityConflicts = $this->availabilityChecker->checkFacilityAvailability(
+                $facility['facility_id'],
+                $validatedData['start_date'],
+                $validatedData['end_date'],
+                $validatedData['start_time'] ?? '00:00:00',
+                $validatedData['end_time'] ?? '23:59:59',
+                $validatedData['all_day']
+            );
+            
+            if (!empty($facilityConflicts)) {
+                $conflictItems = array_merge($conflictItems, $facilityConflicts);
+            }
+        }
+
+        // Check for equipment conflicts
+        if (!empty($validatedData['equipment'])) {
+            foreach ($validatedData['equipment'] as $equipment) {
+                $availableCount = $this->availabilityChecker->checkEquipmentAvailability(
+                    $equipment['equipment_id'],
+                    $validatedData['start_date'],
+                    $validatedData['end_date'],
+                    $validatedData['all_day']
+                );
+
+                if ($availableCount < $equipment['quantity']) {
+                    $equipmentName = EquipmentItem::find($equipment['equipment_id'])->equipment_name ?? 'Unknown';
+                    $conflictItems[] = [
+                        'type' => 'equipment',
+                        'id' => $equipment['equipment_id'],
+                        'name' => $equipmentName,
+                        'source' => 'requisition',
+                        'status' => null,
+                        'message' => "Only {$availableCount} available, requested {$equipment['quantity']}"
+                    ];
+                }
+            }
+        }
+
+        // If conflicts exist, return them
         if (!empty($conflictItems)) {
             DB::rollBack();
-            return $this->conflictResponse($conflictItems);
+            return response()->json([
+                'error' => 'Scheduling conflicts detected',
+                'conflict_items' => $conflictItems
+            ], 409);
         }
 
         // Create the reservation
@@ -65,35 +115,48 @@ public function createReservation(Request $request)
         // Add related items
         $this->addFacilities($requisitionForm->request_id, $validatedData['facilities']);
         $this->addEquipment($requisitionForm->request_id, $validatedData['equipment'] ?? []);
+        $this->addServices($requisitionForm->request_id, $validatedData['services'] ?? []);
 
         // Add comment record
         $this->addCommentRecord($requisitionForm->request_id);
 
         DB::commit();
 
-        // Send confirmation email to requester
+        // Send confirmation email
         try {
             $notificationService = app(NotificationService::class);
             $notificationService->sendConfirmationEmail($requisitionForm);
         } catch (\Exception $e) {
-            Log::error('Failed to send confirmation email for request #' . $requisitionForm->request_id . ': ' . $e->getMessage());
+            Log::error('Failed to send confirmation email: ' . $e->getMessage());
         }
 
-        // Send approval request emails to responsible admins (temporarily to your email)
+        // Send approval request emails
         try {
             $this->notificationService->sendAdminApprovalEmails($requisitionForm);
         } catch (\Exception $e) {
-            Log::error('Failed to send admin approval emails for request #' . $requisitionForm->request_id . ': ' . $e->getMessage());
+            Log::error('Failed to send admin approval emails: ' . $e->getMessage());
         }
 
-        return $this->successResponse($requisitionForm);
+        return response()->json([
+            'message' => 'Reservation created successfully',
+            'request_id' => $requisitionForm->request_id,
+            'access_code' => $requisitionForm->access_code,
+            'all_day' => $requisitionForm->all_day,
+        ], 201);
 
     } catch (\Illuminate\Validation\ValidationException $e) {
         DB::rollBack();
-        return $this->validationErrorResponse($e);
+        return response()->json([
+            'error' => 'Validation failed',
+            'details' => $e->errors(),
+        ], 422);
     } catch (\Exception $e) {
         DB::rollBack();
-        return $this->generalErrorResponse($e);
+        Log::error('Failed to create reservation: ' . $e->getMessage());
+        return response()->json([
+            'error' => 'Failed to create reservation',
+            'details' => $e->getMessage(),
+        ], 500);
     }
 }
 
@@ -107,155 +170,119 @@ public function createReservation(Request $request)
         return $request->validate($rules);
     }
 
-    /**
-     * Build validation rules dynamically based on all_day flag
-     */
-    private function buildValidationRules(Request $request): array
-    {
-        $rules = [
-            // User details
-            'user_type' => 'required|in:Internal,External',
-            'first_name' => 'required|string|max:50',
-            'last_name' => 'required|string|max:50',
-            'email' => 'required|email|max:100',
-            'organization_name' => 'nullable|string|max:100',
-            'contact_number' => ['nullable', 'regex:/^\d{1,15}$/', 'max:15'], // ADDED
+/**
+ * Build validation rules dynamically based on all_day flag
+ */
+private function buildValidationRules(Request $request): array
+{
+    $rules = [
+        // User details
+        'user_type' => 'required|in:Internal,External',
+        'first_name' => 'required|string|max:50',
+        'last_name' => 'required|string|max:50',
+        'email' => 'required|email|max:100',
+        'school_id' => 'nullable|string|max:20',
+        'organization_name' => 'nullable|string|max:100',
+        'contact_number' => ['nullable', 'regex:/^\d{1,15}$/', 'max:15'],
 
-            // Form details
-            'purpose_id' => 'required|exists:requisition_purposes,purpose_id',
-            'num_participants' => 'required|integer|min:1',
-            'num_tables' => 'required|integer|min:0',        // ADDED
-            'num_chairs' => 'required|integer|min:0',        // ADDED
-            'num_microphones' => 'required|integer|min:0',   // ADDED
-            'access_code' => 'required|string|max:10|unique:requisition_forms,access_code',
-            'additional_requests' => 'nullable|string|max:250',
-            'endorser' => 'nullable|string|max:50',          // ADDED
-            'date_endorsed' => 'nullable|date_format:Y-m-d', // ADDED
+        // Form details
+        'purpose_id' => 'required|exists:requisition_purposes,purpose_id',
+        'num_participants' => 'required|integer|min:1',
+        'num_tables' => 'required|integer|min:0',
+        'num_chairs' => 'required|integer|min:0',
+        'num_microphones' => 'required|integer|min:0',
+        'additional_requests' => 'nullable|string|max:250',
 
-            // Schedule
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'all_day' => 'required|boolean',
-            'calendar_title' => 'nullable|string|max:50',
-            'calendar_description' => 'nullable|string|max:100',
+        // Event details
+        'event_title' => 'nullable|string|max:100',
+        'event_details' => 'nullable|string|max:100',
 
-            // Requested items
-            'facilities' => 'required|array|min:1',
-            'facilities.*.facility_id' => 'required|exists:facilities,facility_id',
-            'equipment' => 'array',
-            'equipment.*.equipment_id' => 'required|exists:equipment,equipment_id',
-            'equipment.*.quantity' => 'required|integer|min:1',
+        // Schedule
+        'start_date' => 'required|date',
+        'end_date' => 'required|date|after_or_equal:start_date',
+        'all_day' => 'required|boolean',
 
-            // Status
-            'status_id' => 'required|exists:form_statuses,status_id',
-        ];
+        // Requested items
+        'facilities' => 'required|array|min:1',
+        'facilities.*.facility_id' => 'required|exists:facilities,facility_id',
+        'equipment' => 'array',
+        'equipment.*.equipment_id' => 'required|exists:equipment,equipment_id',
+        'equipment.*.quantity' => 'required|integer|min:1',
+        'services' => 'array', // ADDED
+        'services.*.service_id' => 'required|exists:extra_services,service_id', // ADDED
 
-        // Add time rules conditionally
-        if (!$request->all_day) {
-            $rules['start_time'] = 'required|date_format:H:i';
-            $rules['end_time'] = 'required|date_format:H:i|after:start_time';
-        } else {
-            $rules['start_time'] = 'nullable';
-            $rules['end_time'] = 'nullable';
-        }
+        // Status
+        'status_id' => 'required|exists:form_statuses,status_id',
+    ];
 
-        return $rules;
-    }
-    /**
-     * Check for scheduling conflicts
-     */
-    private function checkReservationConflicts(array $data): array
-    {
-        $conflictItems = [];
-
-        // Check facility conflicts using service
-        foreach ($data['facilities'] as $facility) {
-            $facilityConflicts = $this->availabilityChecker->checkFacilityAvailability(
-                $facility['facility_id'],
-                $data['start_date'],
-                $data['end_date'],
-                $data['start_time'] ?? '00:00:00',
-                $data['end_time'] ?? '23:59:59',
-                $data['all_day']
-            );
-
-            if (!empty($facilityConflicts)) {
-                $conflictItems[] = [
-                    'type' => 'facility',
-                    'id' => $facility['facility_id'],
-                    'name' => Facility::find($facility['facility_id'])->facility_name ?? 'Unknown',
-                    'conflicts' => $facilityConflicts
-                ];
-            }
-        }
-
-        // Check equipment conflicts using service
-        if (!empty($data['equipment'])) {
-            foreach ($data['equipment'] as $equipment) {
-                $availableCount = $this->availabilityChecker->checkEquipmentAvailability(
-                    $equipment['equipment_id'],
-                    $data['start_date'],
-                    $data['end_date'],
-                    $data['all_day']
-                );
-
-                if ($availableCount < $equipment['quantity']) {
-                    $equipmentName = EquipmentItem::find($equipment['equipment_id'])->equipment_name ?? 'Unknown';
-                    $conflictItems[] = [
-                        'type' => 'equipment',
-                        'id' => $equipment['equipment_id'],
-                        'name' => $equipmentName,
-                        'message' => "Only {$availableCount} available, requested {$equipment['quantity']}"
-                    ];
-                }
-            }
-        }
-
-        return $conflictItems;
+    // Add time rules conditionally
+    if (!$request->all_day) {
+        $rules['start_time'] = 'required|date_format:H:i';
+        $rules['end_time'] = 'required|date_format:H:i|after:start_time';
+    } else {
+        $rules['start_time'] = 'nullable';
+        $rules['end_time'] = 'nullable';
     }
 
-    /**
-     * Create the main requisition form record
-     */
-    private function createRequisitionForm(array $data): RequisitionForm
-    {
-        return RequisitionForm::create([
-            // User details
-            'user_type' => $data['user_type'],
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-            'email' => $data['email'],
-            'organization_name' => $data['organization_name'] ?? null,
-            'contact_number' => $data['contact_number'] ?? null,
+    return $rules;
+}
 
-            // Form details
-            'purpose_id' => $data['purpose_id'],
-            'num_participants' => $data['num_participants'],
-            'num_tables' => $data['num_tables'] ?? 0,        // ADDED
-            'num_chairs' => $data['num_chairs'] ?? 0,        // ADDED
-            'num_microphones' => $data['num_microphones'] ?? 0, // ADDED
-            'access_code' => $data['access_code'],
-            'additional_requests' => $data['additional_requests'] ?? null,
-            'endorser' => $data['endorser'] ?? null,         // ADDED
-            'date_endorsed' => $data['date_endorsed'] ?? null, // ADDED
-
-            // Schedule
-            'start_date' => $data['start_date'],
-            'end_date' => $data['end_date'],
-            'start_time' => $this->formatStartTime($data),
-            'end_time' => $this->formatEndTime($data),
-            'all_day' => $data['all_day'],
-            'calendar_title' => $data['calendar_title'] ?? 'Admin Reservation',
-            'calendar_description' => $data['calendar_description'] ?? null,
-
-            // Status
-            'status_id' => $data['status_id'],
-            'is_finalized' => true,
-            'finalized_at' => now(),
-            'finalized_by' => auth()->id(),
-            'is_admin_created' => true,  // ADDED (already present)
+/**
+ * Add service records
+ */
+private function addServices(int $requestId, array $services): void
+{
+    foreach ($services as $service) {
+        RequestedService::create([
+            'request_id' => $requestId,
+            'service_id' => $service['service_id'],
+            'is_waived' => false,
         ]);
     }
+}
+
+/**
+ * Create the main requisition form record
+ */
+private function createRequisitionForm(array $data): RequisitionForm
+{
+    return RequisitionForm::create([
+        // User details
+        'user_type' => $data['user_type'],
+        'first_name' => $data['first_name'],
+        'last_name' => $data['last_name'],
+        'email' => $data['email'],
+        'school_id' => $data['school_id'] ?? null,
+        'organization_name' => $data['organization_name'] ?? null,
+        'contact_number' => $data['contact_number'] ?? null,
+
+        // Form details
+        'purpose_id' => $data['purpose_id'],
+        'num_participants' => $data['num_participants'],
+        'num_tables' => $data['num_tables'] ?? 0,
+        'num_chairs' => $data['num_chairs'] ?? 0,
+        'num_microphones' => $data['num_microphones'] ?? 0,
+        'access_code' => $data['access_code'],
+        'additional_requests' => $data['additional_requests'] ?? null,
+
+        // Event details
+        'event_title' => $data['event_title'] ?? 'Admin Reservation',
+        'event_details' => $data['event_details'] ?? null,
+
+        // Schedule
+        'start_date' => $data['start_date'],
+        'end_date' => $data['end_date'],
+        'start_time' => $this->formatStartTime($data),
+        'end_time' => $this->formatEndTime($data),
+        'all_day' => $data['all_day'],
+
+        // Status
+        'status_id' => $data['status_id'],
+        'is_finalized' => true,
+        'finalized_at' => now(),
+        'finalized_by' => auth()->id(),
+    ]);
+}
 
     /**
      * Format start time based on all_day flag
@@ -332,62 +359,6 @@ public function createReservation(Request $request)
             'comment' => 'Admin created this reservation manually',
         ]);
     }
-
-    /**
-     * Return conflict response
-     */
-    private function conflictResponse(array $conflictItems): \Illuminate\Http\JsonResponse
-    {
-        return response()->json([
-            'error' => 'Scheduling conflicts detected',
-            'conflict_items' => $conflictItems
-        ], 409);
-    }
-
-    /**
-     * Return success response
-     */
-    private function successResponse(RequisitionForm $form): \Illuminate\Http\JsonResponse
-    {
-        return response()->json([
-            'message' => 'Reservation created successfully',
-            'request_id' => $form->request_id,
-            'access_code' => $form->access_code,
-            'all_day' => $form->all_day,
-        ], 201);
-    }
-
-    /**
-     * Return validation error response
-     */
-    private function validationErrorResponse(\Illuminate\Validation\ValidationException $e): \Illuminate\Http\JsonResponse
-    {
-        Log::error('Validation failed for admin reservation', [
-            'errors' => $e->errors(),
-        ]);
-
-        return response()->json([
-            'error' => 'Validation failed',
-            'details' => $e->errors(),
-        ], 422);
-    }
-
-    /**
-     * Return general error response
-     */
-    private function generalErrorResponse(\Exception $e): \Illuminate\Http\JsonResponse
-    {
-        Log::error('Failed to create admin reservation', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-
-        return response()->json([
-            'error' => 'Failed to create reservation',
-            'details' => $e->getMessage(),
-        ], 500);
-    }
-
 
     public function addFee(Request $request, $requestId)
     {
@@ -571,172 +542,172 @@ public function createReservation(Request $request)
         }
     }
 
-public function waiveItems(Request $request, $requestId)
-{
-    try {
-        \Log::debug('Waive items request received', [
-            'request_id' => $requestId,
-            'waive_all' => $request->waive_all,
-            'waived_facilities' => $request->waived_facilities,
-            'waived_equipment' => $request->waived_equipment
-        ]);
+    public function waiveItems(Request $request, $requestId)
+    {
+        try {
+            \Log::debug('Waive items request received', [
+                'request_id' => $requestId,
+                'waive_all' => $request->waive_all,
+                'waived_facilities' => $request->waived_facilities,
+                'waived_equipment' => $request->waived_equipment
+            ]);
 
-        // First, let's log all equipment for this request to see what should be valid
-        $validEquipmentIds = RequestedEquipment::where('request_id', $requestId)
-            ->pluck('requested_equipment_id')
-            ->toArray();
+            // First, let's log all equipment for this request to see what should be valid
+            $validEquipmentIds = RequestedEquipment::where('request_id', $requestId)
+                ->pluck('requested_equipment_id')
+                ->toArray();
 
-        $validFacilityIds = RequestedFacility::where('request_id', $requestId)
-            ->pluck('requested_facility_id')
-            ->toArray();
+            $validFacilityIds = RequestedFacility::where('request_id', $requestId)
+                ->pluck('requested_facility_id')
+                ->toArray();
 
-        \Log::debug('Valid IDs for this request', [
-            'valid_equipment_ids' => $validEquipmentIds,
-            'valid_facility_ids' => $validFacilityIds,
-            'requested_equipment' => $request->waived_equipment,
-            'requested_facilities' => $request->waived_facilities
-        ]);
-
-        // Custom validation to check if items belong to this request
-        $validator = Validator::make($request->all(), [
-            'waive_all' => 'sometimes|boolean',
-            'admin_id' => 'required|exists:admins,admin_id', // Add admin validation
-            'waived_facilities' => 'sometimes|array',
-            'waived_facilities.*' => [
-                function ($attribute, $value, $fail) use ($requestId, $validFacilityIds) {
-                    if (!in_array($value, $validFacilityIds)) {
-                        $fail("The selected facility (ID: $value) is invalid for this request. Valid facilities: " . implode(', ', $validFacilityIds));
-                    }
-                }
-            ],
-            'waived_equipment' => 'sometimes|array',
-            'waived_equipment.*' => [
-                function ($attribute, $value, $fail) use ($requestId, $validEquipmentIds) {
-                    if (!in_array($value, $validEquipmentIds)) {
-                        $fail("The selected equipment (ID: $value) is invalid for this request. Valid equipment: " . implode(', ', $validEquipmentIds));
-                    }
-                }
-            ]
-        ]);
-
-        if ($validator->fails()) {
-            \Log::error('Waive items validation failed', [
-                'errors' => $validator->errors()->toArray(),
-                'request_data' => $request->all(),
+            \Log::debug('Valid IDs for this request', [
                 'valid_equipment_ids' => $validEquipmentIds,
-                'valid_facility_ids' => $validFacilityIds
+                'valid_facility_ids' => $validFacilityIds,
+                'requested_equipment' => $request->waived_equipment,
+                'requested_facilities' => $request->waived_facilities
+            ]);
+
+            // Custom validation to check if items belong to this request
+            $validator = Validator::make($request->all(), [
+                'waive_all' => 'sometimes|boolean',
+                'admin_id' => 'required|exists:admins,admin_id', // Add admin validation
+                'waived_facilities' => 'sometimes|array',
+                'waived_facilities.*' => [
+                    function ($attribute, $value, $fail) use ($requestId, $validFacilityIds) {
+                        if (!in_array($value, $validFacilityIds)) {
+                            $fail("The selected facility (ID: $value) is invalid for this request. Valid facilities: " . implode(', ', $validFacilityIds));
+                        }
+                    }
+                ],
+                'waived_equipment' => 'sometimes|array',
+                'waived_equipment.*' => [
+                    function ($attribute, $value, $fail) use ($requestId, $validEquipmentIds) {
+                        if (!in_array($value, $validEquipmentIds)) {
+                            $fail("The selected equipment (ID: $value) is invalid for this request. Valid equipment: " . implode(', ', $validEquipmentIds));
+                        }
+                    }
+                ]
+            ]);
+
+            if ($validator->fails()) {
+                \Log::error('Waive items validation failed', [
+                    'errors' => $validator->errors()->toArray(),
+                    'request_data' => $request->all(),
+                    'valid_equipment_ids' => $validEquipmentIds,
+                    'valid_facility_ids' => $validFacilityIds
+                ]);
+
+                return response()->json([
+                    'error' => 'Validation failed',
+                    'details' => $validator->errors(),
+                    'debug' => [
+                        'valid_equipment_ids' => $validEquipmentIds,
+                        'valid_facility_ids' => $validFacilityIds
+                    ]
+                ], 422);
+            }
+            $validatedData = $validator->validated();
+
+            DB::beginTransaction();
+
+            if (isset($validatedData['waive_all']) && $validatedData['waive_all']) {
+                // Waive all facilities and equipment with waived_by
+                RequestedFacility::where('request_id', $requestId)
+                    ->update([
+                        'is_waived' => true,
+                        'waived_by' => $validatedData['admin_id']
+                    ]);
+
+                RequestedEquipment::where('request_id', $requestId)
+                    ->update([
+                        'is_waived' => true,
+                        'waived_by' => $validatedData['admin_id']
+                    ]);
+            } else {
+                // Only update waivers for specific items
+                // Update facilities based on the provided list
+                if (isset($validatedData['waived_facilities'])) {
+                    // Waive the specified facilities with waived_by
+                    RequestedFacility::where('request_id', $requestId)
+                        ->whereIn('requested_facility_id', $validatedData['waived_facilities'])
+                        ->update([
+                            'is_waived' => true,
+                            'waived_by' => $validatedData['admin_id']
+                        ]);
+
+                    // Unwaive facilities not in the list (set waived_by to null)
+                    RequestedFacility::where('request_id', $requestId)
+                        ->whereNotIn('requested_facility_id', $validatedData['waived_facilities'])
+                        ->update([
+                            'is_waived' => false,
+                            'waived_by' => null
+                        ]);
+                } else {
+                    // If no facilities specified, unwaive all facilities (set waived_by to null)
+                    RequestedFacility::where('request_id', $requestId)
+                        ->update([
+                            'is_waived' => false,
+                            'waived_by' => null
+                        ]);
+                }
+
+                // Update equipment based on the provided list
+                if (isset($validatedData['waived_equipment'])) {
+                    // Waive the specified equipment with waived_by
+                    RequestedEquipment::where('request_id', $requestId)
+                        ->whereIn('requested_equipment_id', $validatedData['waived_equipment'])
+                        ->update([
+                            'is_waived' => true,
+                            'waived_by' => $validatedData['admin_id']
+                        ]);
+
+                    // Unwaive equipment not in the list (set waived_by to null)
+                    RequestedEquipment::where('request_id', $requestId)
+                        ->whereNotIn('requested_equipment_id', $validatedData['waived_equipment'])
+                        ->update([
+                            'is_waived' => false,
+                            'waived_by' => null
+                        ]);
+                } else {
+                    // If no equipment specified, unwaive all equipment (set waived_by to null)
+                    RequestedEquipment::where('request_id', $requestId)
+                        ->update([
+                            'is_waived' => false,
+                            'waived_by' => null
+                        ]);
+                }
+            }
+
+            // Recalculate approved fee
+            $form = RequisitionForm::with(['requestedFacilities', 'requestedEquipment', 'requisitionFees'])
+                ->findOrFail($requestId);
+
+            // Use getFeeSummary() to get both approved and base fees
+            $feeSummary = $this->feeCalculator->getFeeSummary($form);
+            $form->approved_fee = $feeSummary['approved_fee'];
+            $form->save();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Items waived successfully',
+                'updated_approved_fee' => $feeSummary['approved_fee'],
+                'tentative_fee' => $feeSummary['base_fee'] + ($form->is_late ? $form->late_penalty_fee : 0) // Calculate tentative fee using base_fee from summary
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Failed to waive items', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
-                'error' => 'Validation failed',
-                'details' => $validator->errors(),
-                'debug' => [
-                    'valid_equipment_ids' => $validEquipmentIds,
-                    'valid_facility_ids' => $validFacilityIds
-                ]
-            ], 422);
+                'error' => 'Failed to waive items',
+                'details' => $e->getMessage()
+            ], 500);
         }
-        $validatedData = $validator->validated();
-
-        DB::beginTransaction();
-
-        if (isset($validatedData['waive_all']) && $validatedData['waive_all']) {
-            // Waive all facilities and equipment with waived_by
-            RequestedFacility::where('request_id', $requestId)
-                ->update([
-                    'is_waived' => true,
-                    'waived_by' => $validatedData['admin_id']
-                ]);
-
-            RequestedEquipment::where('request_id', $requestId)
-                ->update([
-                    'is_waived' => true,
-                    'waived_by' => $validatedData['admin_id']
-                ]);
-        } else {
-            // Only update waivers for specific items
-            // Update facilities based on the provided list
-            if (isset($validatedData['waived_facilities'])) {
-                // Waive the specified facilities with waived_by
-                RequestedFacility::where('request_id', $requestId)
-                    ->whereIn('requested_facility_id', $validatedData['waived_facilities'])
-                    ->update([
-                        'is_waived' => true,
-                        'waived_by' => $validatedData['admin_id']
-                    ]);
-
-                // Unwaive facilities not in the list (set waived_by to null)
-                RequestedFacility::where('request_id', $requestId)
-                    ->whereNotIn('requested_facility_id', $validatedData['waived_facilities'])
-                    ->update([
-                        'is_waived' => false,
-                        'waived_by' => null
-                    ]);
-            } else {
-                // If no facilities specified, unwaive all facilities (set waived_by to null)
-                RequestedFacility::where('request_id', $requestId)
-                    ->update([
-                        'is_waived' => false,
-                        'waived_by' => null
-                    ]);
-            }
-
-            // Update equipment based on the provided list
-            if (isset($validatedData['waived_equipment'])) {
-                // Waive the specified equipment with waived_by
-                RequestedEquipment::where('request_id', $requestId)
-                    ->whereIn('requested_equipment_id', $validatedData['waived_equipment'])
-                    ->update([
-                        'is_waived' => true,
-                        'waived_by' => $validatedData['admin_id']
-                    ]);
-
-                // Unwaive equipment not in the list (set waived_by to null)
-                RequestedEquipment::where('request_id', $requestId)
-                    ->whereNotIn('requested_equipment_id', $validatedData['waived_equipment'])
-                    ->update([
-                        'is_waived' => false,
-                        'waived_by' => null
-                    ]);
-            } else {
-                // If no equipment specified, unwaive all equipment (set waived_by to null)
-                RequestedEquipment::where('request_id', $requestId)
-                    ->update([
-                        'is_waived' => false,
-                        'waived_by' => null
-                    ]);
-            }
-        }
-
-        // Recalculate approved fee
-        $form = RequisitionForm::with(['requestedFacilities', 'requestedEquipment', 'requisitionFees'])
-            ->findOrFail($requestId);
-
-        // Use getFeeSummary() to get both approved and base fees
-        $feeSummary = $this->feeCalculator->getFeeSummary($form);
-        $form->approved_fee = $feeSummary['approved_fee'];
-        $form->save();
-
-        DB::commit();
-
-        return response()->json([
-            'message' => 'Items waived successfully',
-            'updated_approved_fee' => $feeSummary['approved_fee'],
-            'tentative_fee' => $feeSummary['base_fee'] + ($form->is_late ? $form->late_penalty_fee : 0) // Calculate tentative fee using base_fee from summary
-        ]);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error('Failed to waive items', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-
-        return response()->json([
-            'error' => 'Failed to waive items',
-            'details' => $e->getMessage()
-        ], 500);
     }
-}
 
     /**
      * Add a new comment to a requisition form
@@ -842,8 +813,8 @@ public function waiveItems(Request $request, $requestId)
 
             // Validate
             $validatedData = $request->validate([
-                'calendar_title' => 'sometimes|string|max:50|nullable',
-                'calendar_description' => 'sometimes|string|max:100|nullable',
+                'event_title' => 'sometimes|string|max:50|nullable',
+                'event_details' => 'sometimes|string|max:100|nullable',
             ]);
 
             $adminId = auth()->id();
@@ -889,11 +860,11 @@ public function waiveItems(Request $request, $requestId)
         $form->finalized_by = $adminId;
         $form->status_id = FormStatus::where('status_name', 'Awaiting Payment')->first()->status_id;
 
-        if (!empty($data['calendar_title'])) {
-            $form->calendar_title = $data['calendar_title'];
+        if (!empty($data['event_title'])) {
+            $form->event_title = $data['event_title'];
         }
-        if (!empty($data['calendar_description'])) {
-            $form->calendar_description = $data['calendar_description'];
+        if (!empty($data['event_details'])) {
+            $form->event_details = $data['event_details'];
         }
 
         $form->approved_fee = $this->feeCalculator->calculateApprovedFee($form);
@@ -1176,8 +1147,8 @@ public function waiveItems(Request $request, $requestId)
 
             $validatedData = $request->validate([
                 'official_receipt_num' => 'required|string|max:50|unique:requisition_forms,official_receipt_num',
-                'calendar_title' => 'sometimes|string|max:50|nullable',
-                'calendar_description' => 'sometimes|string|max:100|nullable',
+                'event_title' => 'sometimes|string|max:50|nullable',
+                'event_details' => 'sometimes|string|max:100|nullable',
             ]);
 
             $adminId = auth()->id();
@@ -1202,12 +1173,12 @@ public function waiveItems(Request $request, $requestId)
             $form->official_receipt_num = $validatedData['official_receipt_num'];
             $form->status_id = $scheduledStatus->status_id;
 
-            if (!empty($validatedData['calendar_title'])) {
-                $form->calendar_title = $validatedData['calendar_title'];
+            if (!empty($validatedData['event_title'])) {
+                $form->event_title = $validatedData['event_title'];
             }
 
-            if (!empty($validatedData['calendar_description'])) {
-                $form->calendar_description = $validatedData['calendar_description'];
+            if (!empty($validatedData['event_details'])) {
+                $form->event_details = $validatedData['event_details'];
             }
 
             $form->save();
