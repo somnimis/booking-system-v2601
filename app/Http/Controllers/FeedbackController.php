@@ -11,6 +11,30 @@ use Illuminate\Support\Facades\Validator;
 
 class FeedbackController extends Controller
 {
+
+    /**
+     * Get total feedback count for dashboard card
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getCount()
+    {
+        try {
+            $count = Feedback::count();
+
+            return response()->json([
+                'count' => $count
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch feedback count',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     /**
      * Get feedback data for chart visualization
      *
