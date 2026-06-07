@@ -17,6 +17,22 @@
     @endphp
     <link rel="stylesheet" href="{{ asset('css/admin/global-styles.css') . '?v=' . $cssCacheVersion }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+
+<!-- Inject authenticated admin data directly from server - this works because auth:sanctum middleware protects the route -->
+@auth('sanctum')
+<script>
+    window.Admin = {
+        admin_id: {{ auth('sanctum')->user()->admin_id }},
+        first_name: "{{ auth('sanctum')->user()->first_name }}",
+        last_name: "{{ auth('sanctum')->user()->last_name }}",
+        middle_name: "{{ auth('sanctum')->user()->middle_name ?? '' }}",
+        email: "{{ auth('sanctum')->user()->email }}",
+        photo_url: "{{ auth('sanctum')->user()->photo_url }}",
+        role_id: {{ auth('sanctum')->user()->role_id }},
+        role_title: "{{ auth('sanctum')->user()->role->role_title ?? '' }}"
+    };
+</script>
+@endauth
 </head>
 
 <body>
@@ -70,7 +86,7 @@
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-                    <li><a class="dropdown-item text-danger" href="{{ url('/admin/login') }}" id="logoutLink">
+                    <li><a class="dropdown-item text-danger" href="#" id="logoutLink">
                             <i class="bi bi-box-arrow-right me-2"></i>Logout
                         </a></li>
                 </ul>
@@ -235,16 +251,17 @@
             @yield('content')
         </div>
     </main>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('js/admin/authentication.js') }}"></script>
     @yield('scripts')
 
     <script>
+        // Notification Manager - only for notifications (separate from profile)
         class NotificationManager {
             constructor() {
                 this.pollingInterval = null;
                 this.isInitialized = false;
-                this.init();
             }
 
             init() {
@@ -305,17 +322,17 @@
                     return;
                 }
                 container.innerHTML = notifications.map(notification => `
-                <div class="notification-item ${notification.is_read ? '' : 'unread'}" 
-                     onclick="notificationManager.handleNotificationClick(${notification.notification_id}, ${notification.request_id || 'null'})">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div class="flex-grow-1">
-                            <div class="small text-muted">${this.formatTime(notification.created_at)}</div>
-                            <div class="fw-medium">${notification.message}</div>
-                            ${notification.request_id ? `<small class="text-primary">Request #${notification.request_id}</small>` : ''}
+                    <div class="notification-item ${notification.is_read ? '' : 'unread'}" 
+                         onclick="window.notificationManager?.handleNotificationClick(${notification.notification_id}, ${notification.request_id || 'null'})">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="small text-muted">${this.formatTime(notification.created_at)}</div>
+                                <div class="fw-medium">${notification.message}</div>
+                                ${notification.request_id ? `<small class="text-primary">Request #${notification.request_id}</small>` : ''}
+                            </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
             }
 
             handleNotificationClick(notificationId, requestId) {
@@ -358,97 +375,91 @@
             stopPolling() { if (this.pollingInterval) clearInterval(this.pollingInterval); }
         }
 
-        const notificationManager = new NotificationManager();
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const token = localStorage.getItem('adminToken');
-            if (!token) return;
-
-            // Check cache first
-            const cached = sessionStorage.getItem('admin_profile');
-            if (cached) {
-                try {
-                    const data = JSON.parse(cached);
-                    // Use cache if less than 30 minutes old
-                    if (Date.now() - data.timestamp < 30 * 60 * 1000) {
-                        renderProfile(data.profile);
-                        return;
-                    }
-                } catch (e) { }
+        // Initialize sidebar and profile rendering using injected data
+        document.addEventListener('DOMContentLoaded', function () {
+            // Check if admin data is injected
+            if (!window.Admin) {
+                console.error('No admin data found');
+                window.location.href = '/admin/login';
+                return;
             }
 
-            fetch('/api/admin/profile', {
-                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
-                credentials: 'include'
-            })
-                .then(response => response.json())
-                .then(data => {
-                    // Cache the profile
-                    sessionStorage.setItem('admin_profile', JSON.stringify({
-                        profile: data,
-                        timestamp: Date.now()
-                    }));
-                    renderProfile(data);
-                })
-                .catch(error => {
-                    console.error('Error fetching profile:', error);
-                    document.getElementById('profile-skeleton').style.display = 'none';
-                    document.getElementById('name-skeleton').style.display = 'none';
-                    document.getElementById('role-skeleton').style.display = 'none';
-                    showAllNavItems();
+            // Store token and admin info
+            const token = localStorage.getItem('adminToken');
+            if (token) {
+                localStorage.setItem('adminId', window.Admin.admin_id);
+                localStorage.setItem('adminRoleTitle', window.Admin.role_title);
+                localStorage.setItem('adminRoleId', window.Admin.role_id);
+            }
+
+            // Render profile from injected data
+            renderProfileFromData(window.Admin);
+
+            // Initialize notifications
+            window.notificationManager = new NotificationManager();
+            const isAdminRolesPage = window.location.pathname.includes('/admin/admin-roles');
+            if (!isAdminRolesPage) {
+                window.notificationManager.init();
+            }
+
+            // Setup sidebar toggle
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            if (sidebar && toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    sidebar.classList.toggle('active');
                 });
-
-            function renderProfile(data) {
-                if (data.photo_url) {
-                    const img = new Image();
-                    img.onload = () => {
-                        document.getElementById('profile-skeleton').style.display = 'none';
-                        document.getElementById('admin-profile-img').src = data.photo_url;
-                        document.getElementById('admin-profile-img').style.display = 'block';
-                    };
-                    img.src = data.photo_url;
-                } else {
-                    document.getElementById('profile-skeleton').style.display = 'none';
-                    document.getElementById('admin-profile-img').style.display = 'block';
-                }
-
-                document.getElementById('name-skeleton').style.display = 'none';
-                const nameElement = document.querySelector('#admin-name a');
-                nameElement.textContent = `${data.first_name} ${data.last_name}`;
-                nameElement.href = `/admin/profile/${data.admin_id}`;
-                document.getElementById('admin-name').style.display = 'block';
-
-                const accountSettingsBtn = document.getElementById('accountSettingsBtn');
-                if (accountSettingsBtn && nameElement) {
-                    accountSettingsBtn.href = nameElement.href;
-                }
-
-                document.getElementById('role-skeleton').style.display = 'none';
-                document.getElementById('admin-role').textContent = data.role ? data.role.role_title : 'Admin';
-                document.getElementById('admin-role').style.display = 'block';
-
-                const roleTitle = data.role ? data.role.role_title : '';
-                localStorage.setItem('adminRoleTitle', roleTitle);
-                hideSidebarItemsBasedOnRole(data.role ? data.role.role_id : null);
-                updateDashboardNavLink();
-                notificationManager.init();
-
-                const sidebar = document.getElementById('sidebar');
-                const toggleBtn = document.getElementById('sidebarToggle');
-                if (sidebar && toggleBtn) {
-                    toggleBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        sidebar.classList.toggle('active');
-                    });
-                    document.addEventListener('click', (e) => {
-                        if (window.innerWidth <= 991.98 && sidebar.classList.contains('active') &&
-                            !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
-                            sidebar.classList.remove('active');
-                        }
-                    });
-                }
+                document.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 991.98 && sidebar.classList.contains('active') &&
+                        !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                    }
+                });
             }
         });
+
+        function renderProfileFromData(data) {
+            const profileImg = document.getElementById('admin-profile-img');
+            const profileSkeleton = document.getElementById('profile-skeleton');
+            const nameSkeleton = document.getElementById('name-skeleton');
+            const adminName = document.getElementById('admin-name');
+            const roleSkeleton = document.getElementById('role-skeleton');
+            const adminRole = document.getElementById('admin-role');
+
+            if (profileImg && data.photo_url) {
+                if (profileSkeleton) profileSkeleton.style.display = 'none';
+                profileImg.src = data.photo_url;
+                profileImg.style.display = 'block';
+            } else if (profileImg) {
+                if (profileSkeleton) profileSkeleton.style.display = 'none';
+                profileImg.style.display = 'block';
+            }
+
+            if (nameSkeleton) nameSkeleton.style.display = 'none';
+            const nameLink = document.querySelector('#admin-name a');
+            if (nameLink) {
+                const fullName = `${data.first_name} ${data.middle_name ? data.middle_name + ' ' : ''}${data.last_name}`;
+                nameLink.textContent = fullName;
+                nameLink.href = `/admin/profile/${data.admin_id}`;
+            }
+            if (adminName) adminName.style.display = 'block';
+
+            const accountSettingsBtn = document.getElementById('accountSettingsBtn');
+            if (accountSettingsBtn && nameLink) {
+                accountSettingsBtn.href = nameLink.href;
+            }
+
+            if (roleSkeleton) roleSkeleton.style.display = 'none';
+            if (adminRole) {
+                adminRole.textContent = data.role_title || 'Admin';
+                adminRole.style.display = 'block';
+            }
+
+            // Hide sidebar items based on role
+            hideSidebarItemsBasedOnRole(data.role_id);
+            updateDashboardNavLink();
+        }
 
         function updateDashboardNavLink() {
             const dashboardLink = document.getElementById('dashboard-nav-link');
@@ -462,26 +473,12 @@
             const sections = ['management-section', 'inventories-section', 'transactions-section'];
             sections.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'block'; });
 
-            const navItems = {
-                'dashboard-nav-item': true,
-                'pending-nav-item': true,
-                'administrators-nav-item': true,
-                'facilities-nav-item': true,
-                'equipment-nav-item': true,
-                'archive-nav-item': true,
-                'feedback-nav-item': true,
-                'equipment-tracker-nav-item': true
-            };
-
-            Object.keys(navItems).forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = 'block';
-            });
+            const navItems = ['dashboard-nav-item', 'pending-nav-item', 'administrators-nav-item', 'facilities-nav-item', 'equipment-nav-item', 'archive-nav-item', 'feedback-nav-item', 'equipment-tracker-nav-item'];
+            navItems.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'block'; });
 
             if (roleId === 4) {
                 const managementSection = document.getElementById('management-section');
                 if (managementSection) managementSection.style.display = 'none';
-
                 const adminItem = document.getElementById('administrators-nav-item');
                 const pendingItem = document.getElementById('pending-nav-item');
                 if (adminItem) adminItem.style.display = 'none';
@@ -501,12 +498,7 @@
             navItems.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'block'; });
         }
 
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 991.98) {
-                document.getElementById('sidebar')?.classList.remove('active');
-            }
-        });
-
+        // Scroll behavior for topbar
         const topbar = document.getElementById('topbar');
         let lastScroll = 0;
         window.addEventListener('scroll', () => {
@@ -516,6 +508,12 @@
             lastScroll = currentScroll;
         });
         topbar?.addEventListener('mouseenter', () => topbar.classList.remove('topbar-hidden'));
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 991.98) {
+                document.getElementById('sidebar')?.classList.remove('active');
+            }
+        });
     </script>
 </body>
 

@@ -267,197 +267,196 @@
         <div class="profile-wrapper position-relative">
             <!-- Hero/Wallpaper Section -->
             <div class="profile-hero position-relative mb-5" style="height: 200px; background-color: #f8f9fa;">
+                <!-- Update wallpaper default style -->
                 <div id="wallpaper-container" class="w-100 h-100"
-                    style="background: url('https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033948/verzp7lqedwsfn3hz8xf.jpg')
-                                                                                                                        center center / cover no-repeat;">
-                    <!-- Wallpaper will be loaded here -->
+                    style="background: url('{{ asset('storage/defaults/wallpaper.png') }}') center center / cover no-repeat;">
+                    <button class="btn btn-light position-absolute bottom-0 end-0 m-3">
+                        <i class="bi bi-image me-2"></i>Change Cover
+                    </button>
                 </div>
-                <button class="btn btn-light position-absolute bottom-0 end-0 m-3">
-                    <i class="bi bi-image me-2"></i>Change Cover
-                </button>
-            </div>
-            <input type="file" id="wallpaper-upload" class="d-none" accept="image/*">
+                <input type="file" id="wallpaper-upload" class="d-none" accept="image/*">
 
-            <div class="container position-relative">
-                <!-- Profile Avatar -->
-                <div class="position-absolute" style="top: -70px; left: 50px; z-index: 10;">
-                    <div class="position-relative">
-                        <div class="avatar-container rounded-circle border border-4 border-white"
-                            style="width: 150px; height: 150px; overflow: hidden;">
-                            <img id="profile-photo"
-                                src="{{ url('https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png') }}"
-                                class="w-100 h-100 object-fit-cover">
+                <div class="container position-relative">
+                    <!-- Profile Avatar -->
+                    <div class="position-absolute" style="top: -70px; left: 50px; z-index: 10;">
+                        <div class="position-relative">
+                            <div class="avatar-container rounded-circle border border-4 border-white"
+                                style="width: 150px; height: 150px; overflow: hidden;">
+                                <img id="profile-photo" src="{{ asset('storage/defaults/admin-photo.png') }}"
+                                    class="w-100 h-100 object-fit-cover">
+                            </div>
+                            <button class="btn btn-sm btn-light rounded-circle position-absolute bottom-0 end-0 shadow-sm"
+                                style="width: 32px; height: 32px;"
+                                onclick="document.getElementById('photo-upload').click()">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <input type="file" id="photo-upload" class="d-none" accept="image/*">
                         </div>
-                        <button class="btn btn-sm btn-light rounded-circle position-absolute bottom-0 end-0 shadow-sm"
-                            style="width: 32px; height: 32px;" onclick="document.getElementById('photo-upload').click()">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <input type="file" id="photo-upload" class="d-none" accept="image/*">
                     </div>
-                </div>
 
-                <!-- Profile Content -->
-                <div class="row mt-5 pt-5 g-3">
-                    <!-- Main Info Card -->
-                    <div class="col-md-8">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-body p-3">
-                                <div id="main-info-loading" class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                </div>
-                                <div id="main-info-content" style="display: none; margin-top: 15px; margin-left: 10px;">
-                                    <h2 class="card-title mb-4" id="admin-full-name"></h2>
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <p><strong>School ID:</strong> <span id="admin-school-id"></span></p>
-                                            <p><strong>Email:</strong> <span id="admin-email"></span></p>
-                                            <p><strong>Contact:</strong> <span id="admin-contact"></span></p>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <p><strong>Member Since:</strong> <span id="admin-created"></span></p>
-                                            <p><strong>Last Updated:</strong> <span id="admin-updated"></span></p>
+                    <!-- Profile Content -->
+                    <div class="row mt-5 pt-5 g-3">
+                        <!-- Main Info Card -->
+                        <div class="col-md-8">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body p-3">
+                                    <div id="main-info-loading" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
                                         </div>
                                     </div>
+                                    <div id="main-info-content" style="display: none; margin-top: 15px; margin-left: 10px;">
+                                        <h2 class="card-title mb-4" id="admin-full-name"></h2>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <p><strong>School ID:</strong> <span id="admin-school-id"></span></p>
+                                                <p><strong>Email:</strong> <span id="admin-email"></span></p>
+                                                <p><strong>Contact:</strong> <span id="admin-contact"></span></p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>Member Since:</strong> <span id="admin-created"></span></p>
+                                                <p><strong>Last Updated:</strong> <span id="admin-updated"></span></p>
+                                            </div>
+                                        </div>
 
-                                    <!-- ✨ Edit Profile button -->
-                                    <div class="mt-3">
-                                        <button type="button" class="btn btn-primary" id="editProfileBtn">
-                                            <i class="bi bi-pencil me-1"></i> Edit Profile
-                                        </button>
+                                        <!-- ✨ Edit Profile button -->
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-primary" id="editProfileBtn">
+                                                <i class="bi bi-pencil me-1"></i> Edit Profile
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Role & Departments Card -->
-                    <div class="col-md-4 d-flex flex-column">
-                        <div class="card shadow-sm mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title mb-3">Role Details</h5>
-                                <div id="role-content"></div>
+                        <!-- Role & Departments Card -->
+                        <div class="col-md-4 d-flex flex-column">
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-3">Role Details</h5>
+                                    <div id="role-content"></div>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="card shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Managing Departments</h5>
-                                <div id="departments-content">
-                                    <div class="text-muted">No departments assigned</div>
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">Managing Departments</h5>
+                                    <div id="departments-content">
+                                        <div class="text-muted">No departments assigned</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Edit Profile Modal -->
-        <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="editProfileForm">
-                            <div class="row g-3">
-                                <!-- Names on one row -->
-                                <div class="col-md-4">
-                                    <label for="edit-first-name" class="form-label">First Name</label>
-                                    <input type="text" class="form-control" id="edit-first-name" name="first_name"
-                                        placeholder="First Name" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="edit-middle-name" class="form-label">Middle Name</label>
-                                    <input type="text" class="form-control" id="edit-middle-name" name="middle_name"
-                                        placeholder="Middle Name">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="edit-last-name" class="form-label">Last Name</label>
-                                    <input type="text" class="form-control" id="edit-last-name" name="last_name"
-                                        placeholder="Last Name" required>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="edit-school-id" class="form-label d-flex align-items-center">
-                                        School ID
-                                        <small class="text-muted ms-2">(Optional - Format: 00-0000-00)</small>
-                                    </label>
-                                    <input type="text" class="form-control" id="edit-school-id" name="school_id"
-                                        placeholder="00-0000-00" pattern="\d{2}-\d{4}-\d{2}" maxlength="10" minlength="10">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="edit-email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="edit-email" name="email"
-                                        placeholder="samplemail@gmail.com" required>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="edit-contact" class="form-label">Contact Number</label>
-                                    <input type="tel" class="form-control" id="edit-contact" name="contact_number"
-                                        placeholder="e.g. 09123456789" pattern="\d{11,}" minlength="11" required>
-                                </div>
-
-                                <!-- Password Field - Now positioned next to Contact Number -->
-                                <div class="col-md-6">
-                                    <label for="edit-password" class="form-label d-flex align-items-center">
-                                        New Password
-                                        <small class="text-muted ms-2">(Leave blank to keep current)</small>
-                                    </label>
-                                    <input type="password" class="form-control" id="edit-password" name="password"
-                                        placeholder="New Password">
-                                </div>
-
-                                <!-- Departments Section - For roles 1, 2, and 3 -->
-                                <div class="col-12" id="departments-section-container" style="display: none;">
-                                    <label class="form-label fw-bold mb-2">Departments</label>
-                                    <div class="mb-2">
-                                        <small class="text-muted">Select departments (first selected becomes
-                                            primary)</small>
+            <!-- Edit Profile Modal -->
+            <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editProfileForm">
+                                <div class="row g-3">
+                                    <!-- Names on one row -->
+                                    <div class="col-md-4">
+                                        <label for="edit-first-name" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="edit-first-name" name="first_name"
+                                            placeholder="First Name" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="edit-middle-name" class="form-label">Middle Name</label>
+                                        <input type="text" class="form-control" id="edit-middle-name" name="middle_name"
+                                            placeholder="Middle Name">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="edit-last-name" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="edit-last-name" name="last_name"
+                                            placeholder="Last Name" required>
                                     </div>
 
-                                    <!-- Search/filter for departments -->
-                                    <div class="mb-2">
-                                        <input type="text" id="department-search" class="form-control form-control-sm"
-                                            placeholder="Search departments...">
+                                    <div class="col-md-6">
+                                        <label for="edit-school-id" class="form-label d-flex align-items-center">
+                                            School ID
+                                            <small class="text-muted ms-2">(Optional - Format: 00-0000-00)</small>
+                                        </label>
+                                        <input type="text" class="form-control" id="edit-school-id" name="school_id"
+                                            placeholder="00-0000-00" pattern="\d{2}-\d{4}-\d{2}" maxlength="10"
+                                            minlength="10">
                                     </div>
 
-                                    <!-- Compact vertical department list -->
-                                    <div id="department-list-container"
-                                        style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 8px;">
-                                        <div id="department-list" class="list-group list-group-flush">
-                                            <!-- Departments will be loaded here dynamically -->
-                                            <div class="text-muted text-center py-3">Loading departments...</div>
+                                    <div class="col-md-6">
+                                        <label for="edit-email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="edit-email" name="email"
+                                            placeholder="samplemail@gmail.com" required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="edit-contact" class="form-label">Contact Number</label>
+                                        <input type="tel" class="form-control" id="edit-contact" name="contact_number"
+                                            placeholder="e.g. 09123456789" pattern="\d{11,}" minlength="11" required>
+                                    </div>
+
+                                    <!-- Password Field - Now positioned next to Contact Number -->
+                                    <div class="col-md-6">
+                                        <label for="edit-password" class="form-label d-flex align-items-center">
+                                            New Password
+                                            <small class="text-muted ms-2">(Leave blank to keep current)</small>
+                                        </label>
+                                        <input type="password" class="form-control" id="edit-password" name="password"
+                                            placeholder="New Password">
+                                    </div>
+
+                                    <!-- Departments Section - For roles 1, 2, and 3 -->
+                                    <div class="col-12" id="departments-section-container" style="display: none;">
+                                        <label class="form-label fw-bold mb-2">Departments</label>
+                                        <div class="mb-2">
+                                            <small class="text-muted">Select departments (first selected becomes
+                                                primary)</small>
                                         </div>
-                                    </div>
 
-                                    <!-- Selected departments summary -->
-                                    <div class="mt-3">
-                                        <label class="form-label small text-muted">Selected Departments:</label>
-                                        <div id="selected-departments-summary" class="d-flex flex-wrap gap-1">
-                                            <span class="text-muted small">None selected</span>
+                                        <!-- Search/filter for departments -->
+                                        <div class="mb-2">
+                                            <input type="text" id="department-search" class="form-control form-control-sm"
+                                                placeholder="Search departments...">
                                         </div>
+
+                                        <!-- Compact vertical department list -->
+                                        <div id="department-list-container"
+                                            style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 8px;">
+                                            <div id="department-list" class="list-group list-group-flush">
+                                                <!-- Departments will be loaded here dynamically -->
+                                                <div class="text-muted text-center py-3">Loading departments...</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Selected departments summary -->
+                                        <div class="mt-3">
+                                            <label class="form-label small text-muted">Selected Departments:</label>
+                                            <div id="selected-departments-summary" class="d-flex flex-wrap gap-1">
+                                                <span class="text-muted small">None selected</span>
+                                            </div>
+                                        </div>
+
+                                        <input type="hidden" id="selected-departments" name="department_ids">
                                     </div>
-
-                                    <input type="hidden" id="selected-departments" name="department_ids">
                                 </div>
-                            </div>
-                        </form>
-                    </div>
+                            </form>
+                        </div>
 
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="saveProfileChanges">Save Changes</button>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="saveProfileChanges">Save Changes</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
     </main>
 
@@ -485,14 +484,6 @@
             e.target.value = digits;
         });
 
-        // Cloudinary configuration
-        const cloudinaryConfig = {
-            cloudName: 'dn98ntlkd',
-            apiKey: '545682193957699',
-            uploadPresetPhoto: 'admin-photos',
-            uploadPresetWallpaper: 'admin-wallpapers'
-        };
-
         // Utility Functions
         function canManageDepartments(adminData) {
             // Roles that can manage departments: 1 = Head Admin, 2 = Vice President, 3 = Approving Officer
@@ -507,20 +498,20 @@
             return currentAdminData && currentAdminData.role && currentAdminData.role.role_id === 1;
         }
 
-        // Function to delete old image from Cloudinary via backend
-        async function deleteOldCloudinaryImage(publicId, type) {
-            if (!publicId) return true;
+        // Function to delete old image from local storage via backend
+        async function deleteOldLocalImage(imagePath, type) {
+            if (!imagePath) return true;
 
             // Skip deletion for default images
-            const defaultIds = ['ksdmh4mmpxdtjogdgjmm', 'verzp7lqedwsfn3hz8xf'];
-            if (defaultIds.includes(publicId)) {
-                console.log('Skipping deletion of default image:', publicId);
+            const defaultPaths = ['defaults/admin-photo.png', 'defaults/wallpaper.png'];
+            if (defaultPaths.some(defaultPath => imagePath.includes(defaultPath))) {
+                console.log('Skipping deletion of default image:', imagePath);
                 return true;
             }
 
             try {
                 const token = localStorage.getItem('adminToken');
-                const response = await fetch('/api/admin/delete-cloudinary-image', {
+                const response = await fetch('/api/admin/delete-local-image', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -529,7 +520,7 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                     },
                     body: JSON.stringify({
-                        public_id: publicId,
+                        image_path: imagePath,
                         type: type
                     })
                 });
@@ -537,7 +528,6 @@
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.warn('Failed to delete old image:', errorData);
-                    // Don't throw error - continue with upload even if deletion fails
                     return false;
                 }
 
@@ -545,8 +535,7 @@
                 console.log('Old image deleted successfully:', result);
                 return result.deleted;
             } catch (error) {
-                console.error('Error deleting old image from Cloudinary:', error);
-                // Continue with upload even if deletion fails
+                console.error('Error deleting old image:', error);
                 return false;
             }
         }
@@ -583,6 +572,7 @@
                 throw error;
             }
         }
+
         // Function to update hidden input with selected departments
         function updateSelectedDepartments() {
             const selectedItems = document.querySelectorAll('#department-list .list-group-item.active');
@@ -608,13 +598,12 @@
                 const deptName = item.querySelector('.dept-name').textContent;
                 const isPrimary = index === 0; // First selected is primary
                 html += `<span class="department-badge ${isPrimary ? 'primary' : ''}" data-dept-id="${item.dataset.deptId}">
-                        ${deptName} ${isPrimary ? '(Primary)' : ''}
-                        <span class="remove-dept" onclick="removeDepartment('${item.dataset.deptId}')">×</span>
-                    </span>`;
+                                    ${deptName} ${isPrimary ? '(Primary)' : ''}
+                                    <span class="remove-dept" onclick="removeDepartment('${item.dataset.deptId}')">×</span>
+                                </span>`;
             });
             summary.innerHTML = html;
         }
-
 
         // Function to remove a department from selection
         window.removeDepartment = function (deptId) {
@@ -625,7 +614,6 @@
                 updateSelectedDepartments();
             }
         };
-
 
         // Function to create department list
         function createDepartmentButtons() {
@@ -654,14 +642,14 @@
                 item.dataset.deptId = dept.department_id;
 
                 item.innerHTML = `
-                        <div class="form-check me-2">
-                            <input class="form-check-input" type="checkbox" value="${dept.department_id}" id="dept-${dept.department_id}">
-                        </div>
-                        <div class="flex-grow-1">
-                            <span class="dept-name">${dept.department_name}</span>
-                            <small class="department-code ms-2">${dept.department_code}</small>
-                        </div>
-                    `;
+                                    <div class="form-check me-2">
+                                        <input class="form-check-input" type="checkbox" value="${dept.department_id}" id="dept-${dept.department_id}">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <span class="dept-name">${dept.department_name}</span>
+                                        <small class="department-code ms-2">${dept.department_code}</small>
+                                    </div>
+                                `;
 
                 // Add click event to toggle selection
                 item.addEventListener('click', function (e) {
@@ -739,6 +727,30 @@
             }
         }
 
+        // Function to upload image to local storage
+        async function uploadLocalImage(file, type) {
+            const token = localStorage.getItem('adminToken');
+            const formData = new FormData();
+            formData.append(type, file);
+            formData.append('type', type);
+
+            const response = await fetch('/api/admin/update-photo', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Failed to upload ${type}`);
+            }
+
+            return await response.json();
+        }
 
         // ==================== MAIN DOM CONTENT LOADED ====================
 
@@ -790,11 +802,11 @@
                     // Update role details
                     if (data.role) {
                         document.getElementById('role-content').innerHTML = `
-                                                                    <div class="d-flex align-items-center mb-3">
-                                                                        <span class="badge bg-primary me-2">${data.role.role_title}</span>
-                                                                    </div>
-                                                                    <p class="text-muted small">${data.role.description}</p>
-                                                                `;
+                                                                                <div class="d-flex align-items-center mb-3">
+                                                                                    <span class="badge bg-primary me-2">${data.role.role_title}</span>
+                                                                                </div>
+                                                                                <p class="text-muted small">${data.role.description}</p>
+                                                                            `;
                     }
 
                     // Update departments
@@ -950,103 +962,35 @@
                     showToast('Failed to update profile: ' + error.message, 'error', 4000);
                 }
             });
-            // Handle photo upload with Cloudinary
+
+            // Handle photo upload with local storage
             document.getElementById('photo-upload').addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
 
-                let oldPublicId = null;
-
                 try {
                     // Show loading state
-                    const originalSrc = document.getElementById('profile-photo').src;
                     document.getElementById('profile-photo').src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIwLjM1ZW0iPlVwbG9hZGluZy4uLjwvdGV4dD48L3N2Zz4=';
 
-                    // Store old public_id for deletion after successful upload
-                    if (currentAdminData && currentAdminData.photo_public_id) {
-                        oldPublicId = currentAdminData.photo_public_id;
-                    }
+                    // Upload new photo (this automatically updates the database)
+                    const result = await uploadLocalImage(file, 'photo');
 
-                    // Upload new photo to Cloudinary
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('upload_preset', cloudinaryConfig.uploadPresetPhoto);
-
-                    console.log('Uploading photo to Cloudinary...');
-
-                    const uploadResponse = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/upload`, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!uploadResponse.ok) {
-                        const errorText = await uploadResponse.text();
-                        console.error('Cloudinary upload failed:', errorText);
-                        throw new Error('Failed to upload to Cloudinary');
-                    }
-
-                    const cloudinaryResult = await uploadResponse.json();
-                    console.log('Cloudinary upload result:', cloudinaryResult);
-
-                    if (!cloudinaryResult.secure_url || !cloudinaryResult.public_id) {
-                        throw new Error('Invalid response from Cloudinary');
-                    }
-
-                    // Update database records
-                    console.log('Updating database records...');
-                    const updateResponse = await fetch('/api/admin/update-photo-records', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                        },
-                        body: JSON.stringify({
-                            photo_url: cloudinaryResult.secure_url,
-                            photo_public_id: cloudinaryResult.public_id,
-                            type: 'photo'
-                        })
-                    });
-
-                    if (!updateResponse.ok) {
-                        const errorData = await updateResponse.json();
-                        console.error('Database update failed:', errorData);
-                        throw new Error(errorData.message || 'Failed to update database');
-                    }
-
-                    const updateResult = await updateResponse.json();
-                    console.log('Database update result:', updateResult);
-
-                    // Update UI and current data
-                    document.getElementById('profile-photo').src = cloudinaryResult.secure_url;
-                    currentAdminData.photo_url = cloudinaryResult.secure_url;
-                    currentAdminData.photo_public_id = cloudinaryResult.public_id;
-
-                    // Delete old image from Cloudinary after successful update
-                    if (oldPublicId) {
-                        console.log('Deleting old photo from Cloudinary:', oldPublicId);
-                        await deleteOldCloudinaryImage(oldPublicId, 'photo');
-                    }
+                    // Update UI
+                    document.getElementById('profile-photo').src = result.photo_url;
+                    currentAdminData.photo_url = result.photo_url;
 
                     showToast('Profile photo updated successfully!', 'success', 2000);
-
-                    // Refresh the entire page after 2 seconds to show the toast
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
+                    setTimeout(() => location.reload(), 2000);
 
                 } catch (error) {
                     console.error('Error uploading photo:', error);
-                    document.getElementById('profile-photo').src = originalSrc;
                     showToast('Failed to upload photo: ' + error.message, 'error', 4000);
                 } finally {
-                    // Clear the file input
                     e.target.value = '';
                 }
             });
 
-            // Handle wallpaper upload with Cloudinary
+            // Handle wallpaper upload with local storage
             document.querySelector('.profile-hero button').addEventListener('click', () => {
                 document.getElementById('wallpaper-upload').click();
             });
@@ -1055,95 +999,26 @@
                 const file = e.target.files[0];
                 if (!file) return;
 
-                let oldPublicId = null;
-
                 try {
                     // Show loading state
-                    const originalBackground = document.getElementById('wallpaper-container').style.backgroundImage;
-                    document.getElementById('wallpaper-container').style.backgroundImage = 'linear-gradient(45deg, #f8f9fa 25%, #e9ecef 25%, #e9ecef 50%, #f8f9fa 50%, #f8f9fa 75%, #e9ecef 75%, #e9ecef 100%)';
+                    document.getElementById('wallpaper-container').style.backgroundImage = 'linear-gradient(45deg, #f8f9fa 25%, #e9ecef 25%, #e9ecef 50%, #f8f8fa 50%, #f8f9fa 75%, #e9ecef 75%, #e9ecef 100%)';
                     document.getElementById('wallpaper-container').style.backgroundSize = '20px 20px';
 
-                    // Store old public_id for deletion after successful upload
-                    if (currentAdminData && currentAdminData.wallpaper_public_id) {
-                        oldPublicId = currentAdminData.wallpaper_public_id;
-                    }
+                    // Upload new wallpaper (this automatically updates the database)
+                    const result = await uploadLocalImage(file, 'wallpaper');
 
-                    // Upload new wallpaper to Cloudinary
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('upload_preset', cloudinaryConfig.uploadPresetWallpaper);
-
-                    console.log('Uploading wallpaper to Cloudinary...');
-
-                    const uploadResponse = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/upload`, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!uploadResponse.ok) {
-                        const errorText = await uploadResponse.text();
-                        console.error('Cloudinary wallpaper upload failed:', errorText);
-                        throw new Error('Failed to upload to Cloudinary');
-                    }
-
-                    const cloudinaryResult = await uploadResponse.json();
-                    console.log('Cloudinary wallpaper upload result:', cloudinaryResult);
-
-                    if (!cloudinaryResult.secure_url || !cloudinaryResult.public_id) {
-                        throw new Error('Invalid response from Cloudinary');
-                    }
-
-                    // Update database records
-                    console.log('Updating database records for wallpaper...');
-                    const updateResponse = await fetch('/api/admin/update-photo-records', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                        },
-                        body: JSON.stringify({
-                            wallpaper_url: cloudinaryResult.secure_url,
-                            wallpaper_public_id: cloudinaryResult.public_id,
-                            type: 'wallpaper'
-                        })
-                    });
-
-                    if (!updateResponse.ok) {
-                        const errorData = await updateResponse.json();
-                        console.error('Database update failed:', errorData);
-                        throw new Error(errorData.message || 'Failed to update database');
-                    }
-
-                    const updateResult = await updateResponse.json();
-                    console.log('Database update result:', updateResult);
-
-                    // Update UI and current data
-                    document.getElementById('wallpaper-container').style.backgroundImage = `url(${cloudinaryResult.secure_url})`;
+                    // Update UI
+                    document.getElementById('wallpaper-container').style.backgroundImage = `url(${result.wallpaper_url})`;
                     document.getElementById('wallpaper-container').style.backgroundSize = 'cover';
-                    currentAdminData.wallpaper_url = cloudinaryResult.secure_url;
-                    currentAdminData.wallpaper_public_id = cloudinaryResult.public_id;
-
-                    // Delete old image from Cloudinary after successful update
-                    if (oldPublicId) {
-                        console.log('Deleting old wallpaper from Cloudinary:', oldPublicId);
-                        await deleteOldCloudinaryImage(oldPublicId, 'wallpaper');
-                    }
+                    currentAdminData.wallpaper_url = result.wallpaper_url;
 
                     showToast('Wallpaper updated successfully!', 'success', 2000);
-
-                    // Refresh the entire page after 2 seconds to show the toast
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
+                    setTimeout(() => location.reload(), 2000);
 
                 } catch (error) {
                     console.error('Error uploading wallpaper:', error);
-                    document.getElementById('wallpaper-container').style.backgroundImage = originalBackground;
                     showToast('Failed to upload wallpaper: ' + error.message, 'error', 4000);
                 } finally {
-                    // Clear the file input
                     e.target.value = '';
                 }
             });

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-
+use Illuminate\Support\Facades\Storage;
 
 class Admin extends Authenticatable
 {
@@ -54,6 +54,23 @@ class Admin extends Authenticatable
     public function role()
     {
         return $this->belongsTo(LookupTables\AdminRole::class, 'role_id', 'role_id');
+    }
+
+        // Accessors for local file paths
+    public function getPhotoUrlAttribute($value)
+    {
+        if ($value && !filter_var($value, FILTER_VALIDATE_URL)) {
+            return asset('storage/' . $value);
+        }
+        return $value ?: asset('storage/defaults/admin-photo.png');
+    }
+    
+    public function getWallpaperUrlAttribute($value)
+    {
+        if ($value && !filter_var($value, FILTER_VALIDATE_URL)) {
+            return asset('storage/' . $value);
+        }
+        return $value ?: asset('storage/defaults/wallpaper.png');
     }
 
 

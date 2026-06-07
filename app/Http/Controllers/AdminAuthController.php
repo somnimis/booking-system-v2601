@@ -28,52 +28,63 @@ class AdminAuthController extends Controller
                 return response()->json(['message' => 'Invalid credentials'], 401);
             }
 
-            // Clear old tokens before issuing a new one
+            // Clear old tokens
             $admin->tokens()->delete();
             
-            // Create new token with 30-day expiration
+            // Create new token
             $token = $admin->createToken('admin-token', ['*'], now()->addDays(30))->plainTextToken;
 
-            // Add cache headers to prevent repeated requests
+            // Cache profile
+            Cache::put("admin_profile_{$admin->admin_id}", $admin->load('role'), now()->addDays(30));
+
+            // DO NOT use auth('sanctum')->login() - it doesn't exist!
+            // Just return the token - the frontend will store it
+
             return response()->json([
+                'success' => true,
                 'token' => $token,
                 'admin' => $admin->makeHidden('hashed_password')
-            ])->header('Cache-Control', 'private, max-age=3600');
+            ]);
             
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Login failed',
-                'error' => $e->getMessage()
+                'success' => false,
+                'message' => 'Login failed: ' . $e->getMessage()
             ], 500);
         }
     }
 
     public function profile(Request $request)
     {
-        // Cache profile data for 5 minutes to reduce database queries
-        $userId = $request->user()->admin_id;
+        $admin = $request->user();
         
-        $profileData = Cache::remember("admin_profile_{$userId}", 300, function () use ($request) {
-            return $request->user()->load('role');
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        
+        $userId = $admin->admin_id;
+        
+        $profileData = Cache::remember("admin_profile_{$userId}", 2592000, function () use ($admin) {
+            return $admin->load('role');
         });
         
         if ($request->expectsJson()) {
-            return response()->json([
-                'admin' => $profileData
-            ])->header('Cache-Control', 'private, max-age=300');
+            return response()->json($profileData);
         }
         
-        $adminData = $profileData;
-        return view('admin.admin-profile', ['currentAdminData' => $adminData]);
+        return view('admin.admin-profile', ['currentAdminData' => $profileData]);
     }
 
     public function logout(Request $request)
     {
-        // Clear user cache on logout
-        $userId = $request->user()->admin_id;
-        Cache::forget("admin_profile_{$userId}");
+        $admin = $request->user();
         
-        $request->user()->currentAccessToken()->delete();
+        if ($admin) {
+            $userId = $admin->admin_id;
+            Cache::forget("admin_profile_{$userId}");
+            $admin->currentAccessToken()->delete();
+        }
+        
         return response()->json(['message' => 'Logged out']);
     }
 }

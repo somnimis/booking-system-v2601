@@ -642,6 +642,9 @@ public function paginatedPendingRequests(Request $request)
             $sortOrder = 'asc';
         }
         
+        // Check if this request is for counts only
+        $getCountsOnly = $request->input('counts_only', false);
+        
         // Build query with status filter
         $query = RequisitionForm::where('status_id', $statusId);
 
@@ -660,6 +663,18 @@ public function paginatedPendingRequests(Request $request)
             });
         } elseif (!$isHeadAdmin && empty($managedDepartmentIds)) {
             // Admin has no managed departments - return empty
+            if ($getCountsOnly) {
+                return response()->json([
+                    'success' => true,
+                    'counts' => [
+                        'pending' => 0,
+                        'awaiting' => 0,
+                        'payment_submitted' => 0,
+                        'reserved' => 0,
+                    ]
+                ]);
+            }
+            
             $forms = $query->whereRaw('1 = 0')->paginate($perPage);
             return response()->json([
                 'success' => true,
@@ -675,6 +690,43 @@ public function paginatedPendingRequests(Request $request)
                     'status_id' => $statusId
                 ],
                 'links' => ['first' => null, 'last' => null, 'prev' => null, 'next' => null]
+            ]);
+        }
+
+        // If counts only, return just the counts for all statuses
+        if ($getCountsOnly) {
+            $counts = [];
+            $statuses = [1, 2, 7, 3]; // Pending, Awaiting, Payment Submitted, Reserved
+            
+            foreach ($statuses as $status) {
+                $statusQuery = RequisitionForm::where('status_id', $status);
+                
+                // Apply same department filtering
+                if (!$isHeadAdmin && !empty($managedDepartmentIds)) {
+                    $statusQuery->where(function ($subQuery) use ($managedDepartmentIds) {
+                        $subQuery->whereHas('requestedFacilities.facility', function ($q) use ($managedDepartmentIds) {
+                            $q->whereIn('managed_by', $managedDepartmentIds);
+                        })->orWhereHas('requestedEquipment.equipment', function ($q) use ($managedDepartmentIds) {
+                            $q->whereIn('managed_by', $managedDepartmentIds);
+                        })->orWhereHas('requestedServices.service', function ($q) use ($managedDepartmentIds) {
+                            $q->whereIn('managed_by', $managedDepartmentIds);
+                        })->orWhereHas('purpose', function ($q) use ($managedDepartmentIds) {
+                            $q->whereIn('routes_to', $managedDepartmentIds);
+                        });
+                    });
+                }
+                
+                $counts[$status] = $statusQuery->count();
+            }
+            
+            return response()->json([
+                'success' => true,
+                'counts' => [
+                    'pending' => $counts[1] ?? 0,
+                    'awaiting' => $counts[2] ?? 0,
+                    'payment_submitted' => $counts[7] ?? 0,
+                    'reserved' => $counts[3] ?? 0,
+                ]
             ]);
         }
 

@@ -35,6 +35,7 @@ use App\Http\Controllers\ReservationListingsController;
 use App\Http\Controllers\EquipmentTransactionController;
 use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\CreateReservationController;
+use App\Http\Controllers\ManageAdminsController;
 use Illuminate\Support\Facades\Log;
 
 // ==================== PUBLIC ROUTES ==================== //
@@ -214,14 +215,36 @@ Route::post('/admin/generate-barcode', function (Request $request) {
 
 Route::middleware('auth:sanctum')->group(function () {
 
-// ---------------- Admin Dashboard ---------------- //
-Route::get('/admin/dashboard-data', [DashboardController::class, 'getDashboardData'])->middleware('auth:sanctum');
-// Dashboard lazy-loading endpoints
-Route::get('/admin/dashboard-data', [DashboardController::class, 'getDashboardData'])->middleware('auth:sanctum');
-Route::get('/admin/today-events', [DashboardController::class, 'getTodayEventsPaginated'])->middleware('auth:sanctum');
-Route::get('/admin/activity-timeline', [DashboardController::class, 'getActivityTimelinePaginated'])->middleware('auth:sanctum');
+    // ---------------- Admin Dashboard ---------------- //
+    Route::get('/admin/dashboard-data', [DashboardController::class, 'getDashboardData'])->middleware('auth:sanctum');
+    // Dashboard lazy-loading endpoints
+    Route::get('/admin/dashboard-data', [DashboardController::class, 'getDashboardData'])->middleware('auth:sanctum');
+    Route::get('/admin/today-events', [DashboardController::class, 'getTodayEventsPaginated'])->middleware('auth:sanctum');
+    Route::get('/admin/activity-timeline', [DashboardController::class, 'getActivityTimelinePaginated'])->middleware('auth:sanctum');
 
     // ---------------- Admin Management ---------------- //
+
+    // Admin listing endpoints
+    Route::get('/manage/admins', [ManageAdminsController::class, 'index']);
+    Route::get('/manage/admins/{id}', [ManageAdminsController::class, 'show']);
+
+    // Department relationships
+    Route::get('/manage/departments/admins', [ManageAdminsController::class, 'getAdminsByDepartment']);
+    Route::get('/manage/departments', [ManageAdminsController::class, 'getDepartmentsWithAdmins']);
+
+    // Service relationships
+    Route::get('/manage/services', [ManageAdminsController::class, 'getServicesWithManager']);
+
+    // Purpose relationships
+    Route::get('/manage/purposes', [ManageAdminsController::class, 'getPurposesWithRoutes']);
+
+    // Complete dashboard data (all in one)
+    Route::get('/manage/dashboard', [ManageAdminsController::class, 'getDashboardData']);
+
+    // Combined static data endpoint
+    Route::get('/manage/static-data', [ManageAdminsController::class, 'getStaticData']);
+
+    // Admin CRUD endpoints
     Route::get('/admins', [AdminController::class, 'getAllAdmins']);
     Route::get('/admins/{admin}/edit', [AdminController::class, 'getAdminForEdit']);
     Route::get('/admins/{admin}', [AdminController::class, 'getAdminInfo']);
@@ -231,6 +254,7 @@ Route::get('/admin/activity-timeline', [DashboardController::class, 'getActivity
     Route::post('/admin/update/{admin}', [AdminController::class, 'update']);
     Route::post('/admin/update-photo', [AdminController::class, 'updatePhoto']);
     Route::post('/admin/update-photo-records', [AdminController::class, 'updatePhotoRecords']);
+    Route::post('/admin/delete-local-image', [AdminController::class, 'deleteLocalImage']);
     Route::post('/admin/delete-cloudinary-image', [AdminController::class, 'deleteCloudinaryImage']);
 
     // ---------------- Admin Profile & Notifications ---------------- //
@@ -314,7 +338,7 @@ Route::get('/admin/activity-timeline', [DashboardController::class, 'getActivity
     Route::get('/admin/requisition/{requestId}/approval-history', [ReservationListingsController::class, 'getApprovalHistory']);
     Route::get('/admin/requisition/{requestId}/equipment-status', [AdminApprovalController::class, 'getEquipmentStatus']);
 
-    
+
 
     // Form Management
     Route::prefix('admin/requisition')->group(function () {
@@ -322,6 +346,9 @@ Route::get('/admin/activity-timeline', [DashboardController::class, 'getActivity
         // Make manual reservation
         Route::post('create', [AdminActionsController::class, 'createReservation']);
         Route::get('/form-init-data', [CreateReservationController::class, 'getFormInitData']);
+        // Lazy loading endpoints for create reservation
+        Route::get('/facilities', [CreateReservationController::class, 'getFacilities']);
+        Route::get('/equipment', [CreateReservationController::class, 'getEquipment']);
         // Fees & Payments
         Route::post('/{requestId}/fee', [AdminActionsController::class, 'addFee']);
         Route::post('/{requestId}/discount', [AdminActionsController::class, 'addDiscount']);
@@ -333,7 +360,7 @@ Route::get('/admin/activity-timeline', [DashboardController::class, 'getActivity
 
         // Status Management
         Route::post('/{requestId}/update-status', [AdminActionsController::class, 'updateStatus']); // for manual overrides
-        Route::post('/{requestId}/{action}', [AdminApprovalController::class, 'actionRequest'])->where('action', 'approve|reject'); 
+        Route::post('/{requestId}/{action}', [AdminApprovalController::class, 'actionRequest'])->where('action', 'approve|reject');
         Route::post('{requestId}/cancel', [AdminActionsController::class, 'cancelForm']);
         Route::post('/{requestId}/finalize', [AdminActionsController::class, 'finalizeForm']);
         Route::post('/{requestId}/close', [AdminActionsController::class, 'closeForm']);
