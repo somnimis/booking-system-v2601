@@ -14,11 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <style>
-        /* ============================================
-           REFINED INSTITUTIONAL THEME - ADMIN LOGIN
-           Matching catalog.css design system
-           ============================================ */
-
+        /* Your existing CSS remains the same */
         :root {
             --navy: #041a4b;
             --navy-mid: #0b2d72;
@@ -50,7 +46,6 @@
             box-sizing: border-box;
         }
 
-        /* Allow border-radius on specific elements */
         .profile-img,
         .login-container,
         .login-container input,
@@ -110,7 +105,6 @@
             }
         }
 
-        /* Title Section */
         .title-container {
             display: flex;
             flex-direction: column;
@@ -157,7 +151,6 @@
             border-radius: 2px;
         }
 
-        /* Form Groups */
         .form-group {
             width: 100%;
             margin-bottom: 1.25rem;
@@ -195,7 +188,6 @@
             color: var(--text-light);
         }
 
-        /* Login Button */
         .login-button {
             width: 100%;
             padding: 0.875rem;
@@ -216,17 +208,11 @@
             box-shadow: var(--shadow-md);
         }
 
-        .login-button:active {
-            transform: translateY(0);
-        }
-
         .login-button:disabled {
             opacity: 0.7;
             cursor: not-allowed;
-            transform: none;
         }
 
-        /* Home Button */
         .home-button {
             width: 100%;
             padding: 0.875rem;
@@ -249,11 +235,6 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .home-button:active {
-            transform: translateY(0);
-        }
-
-        /* Error Box */
         .error-box {
             color: #991b1b;
             background-color: var(--danger-bg);
@@ -266,7 +247,6 @@
             text-align: left;
         }
 
-        /* Spinner */
         .spinner-border {
             display: inline-block;
             width: 1rem;
@@ -285,7 +265,6 @@
             }
         }
 
-        /* Shake Animation */
         .shake {
             animation: shake 0.5s ease-in-out;
         }
@@ -308,7 +287,6 @@
             }
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .login-container {
                 padding: 1.75rem;
@@ -368,7 +346,6 @@
                 padding: 0.7rem 0.875rem;
                 font-size: 0.85rem;
             }
-
         }
     </style>
 </head>
@@ -400,48 +377,56 @@
     </div>
 
     <script>
+        // Check if already logged in
+        (function checkExistingSession() {
+            const token = localStorage.getItem('adminToken');
+            if (token) {
+                // Verify token is still valid
+                fetch('/api/admin/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            // Already logged in, redirect to dashboard
+                            window.location.href = '/admin/dashboard';
+                        } else {
+                            // Token invalid, clear it
+                            localStorage.removeItem('adminToken');
+                            sessionStorage.removeItem('adminToken');
+                        }
+                    })
+                    .catch(() => {
+                        localStorage.removeItem('adminToken');
+                        sessionStorage.removeItem('adminToken');
+                    });
+            }
+        })();
+
         document.getElementById('loginBtn').addEventListener('click', async function (e) {
             e.preventDefault();
-            e.stopImmediatePropagation();
 
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorBox = document.getElementById('errorBox');
             const loginBtn = this;
-            const loginContainer = document.querySelector('.login-container');
 
-            // Clear previous error
             errorBox.style.display = 'none';
-            errorBox.innerHTML = '';
-            loginContainer.classList.remove('shake');
-
-            // Basic validation
-            if (!email || !password) {
-                errorBox.textContent = 'Please enter both email and password.';
-                errorBox.style.display = 'block';
-                loginContainer.classList.add('shake');
-                setTimeout(() => loginContainer.classList.remove('shake'), 500);
-                return;
-            }
-
-            // Disable button and show loading state
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="spinner-border"></span> Authenticating...';
 
             try {
+                // No need for CSRF cookie - just login directly
                 const response = await fetch('/api/admin/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ email, password }),
-                    redirect: 'manual'
+                    body: JSON.stringify({ email, password })
                 });
-
-                if (response.status === 0) {
-                    throw new Error('Network error. Please check your connection.');
-                }
 
                 const data = await response.json();
 
@@ -449,17 +434,16 @@
                     throw new Error(data.message || 'Invalid email or password.');
                 }
 
-                // Successful login - store token
+                // After successful login
                 localStorage.setItem('adminToken', data.token);
+                sessionStorage.setItem('adminToken', data.token);
 
-                // Remove conditional routing - always go to dashboard
-                window.location.href = '/admin/dashboard';
-
+                // Redirect with token in URL - the custom middleware will handle it
+                window.location.href = `/admin/dashboard?token=${data.token}`;
+                
             } catch (error) {
                 errorBox.textContent = error.message;
                 errorBox.style.display = 'block';
-                loginContainer.classList.add('shake');
-                setTimeout(() => loginContainer.classList.remove('shake'), 500);
                 console.error('Login error:', error);
             } finally {
                 loginBtn.disabled = false;

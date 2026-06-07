@@ -485,36 +485,34 @@
       </div>
     </div>
   </div>
+<!-- Storage Consent Toast -->
+<div class="toast-container position-fixed bottom-0 start-0 p-3" style="z-index: 3000;">
+  <div id="storageConsentToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"
+    data-bs-autohide="false" style="min-width: 350px;">
+    
+    <div class="toast-header" style="background-color: var(--cpu-blue); color: white;">
+      <i class="bi bi-shield-check me-2"></i>
+      <strong class="me-auto">We Value Your Privacy</strong>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"
+        id="closeToastBtn"></button>
+    </div>
 
-  <!-- Storage Consent Toast -->
-  <div class="toast-container position-fixed bottom-0 start-0 p-3" style="z-index: 3000;">
-    <div id="storageConsentToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"
-      data-bs-autohide="false" style="min-width: 350px;">
-      <div class="toast-header" style="background-color: var(--cpu-blue); color: white;">
-        <i class="bi bi-cookie me-2"></i>
-        <strong class="me-auto">We Value Your Privacy</strong>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"
-          id="closeToastBtn"></button>
-      </div>
-      <div class="toast-body p-3" style="background-color: white;">
-        <div class="text-center mb-2">
-          <i class="bi bi-shield-check" style="font-size: 2rem; color: var(--cpu-blue);"></i>
-        </div>
-        <p class="mb-2 small">
-          We use cookies and your browser's local storage to remember your activity, such as items in your cart or form
-          progress. This helps you continue where you left off without losing your selections when you refresh or leave
-          the page.
-        </p>
-        <div class="d-grid mt-2">
-          <button type="button" class="btn btn-sm fw-bold" id="acceptStorageBtn"
-            style="background-color: var(--cpu-blue); color: white;">
-            <i class="bi bi-check-lg me-1"></i>I Understand
-          </button>
-        </div>
+    <div class="toast-body" style="background-color: white;">
+      <p class="mb-2 small text-muted">
+        We use cookies and your browser's local storage to remember your activity, such as items in your cart or form
+        progress. This helps you continue where you left off without losing your selections when you refresh or leave
+        the page.
+      </p>
+
+      <div class="d-grid mt-2">
+        <button type="button" class="btn btn-sm fw-bold" id="acceptStorageBtn"
+          style="background-color: var(--cpu-blue); color: white;">
+          <i class="bi bi-check-lg me-1"></i>I Understand
+        </button>
       </div>
     </div>
   </div>
-
+</div>
   
 
   <script>

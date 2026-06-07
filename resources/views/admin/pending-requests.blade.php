@@ -366,15 +366,13 @@
 
 @section('scripts')
 <script>
-// Update the tracking variables
+// State management
 let currentTab = 'pending';
 let currentPage = 1;
 let currentPerPage = 4;
 let currentSortOrder = 'asc';
-let totalPages = 1;
-let totalItems = 0;
 
-// Track which tabs have been loaded (updated)
+// Track loaded tabs and their data
 let loadedTabs = {
     pending: false,
     awaiting: false,
@@ -382,7 +380,6 @@ let loadedTabs = {
     reserved: false
 };
 
-// Store data for each tab (updated)
 let tabData = {
     pending: null,
     awaiting: null,
@@ -390,318 +387,292 @@ let tabData = {
     reserved: null
 };
 
-// Store counts for each tab (updated)
-let tabCounts = {
-    pending: 0,
-    awaiting: 0,
-    'payment-submitted': 0,
-    reserved: 0
+let tabPagination = {
+    pending: null,
+    awaiting: null,
+    'payment-submitted': null,
+    reserved: null
 };
 
-// Function to get URL parameter
-function getUrlParameter(name) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(name);
-}
+// Status ID mapping
+const STATUS_IDS = {
+    pending: 1,
+    awaiting: 2,
+    'payment-submitted': 7,
+    reserved: 3
+};
 
-    // Helper function to escape HTML special characters
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+// DOM Elements
+let elements = {};
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const token = localStorage.getItem('adminToken');
-
-        if (!token) {
-            console.error('No authentication token found');
-            return;
-        }
-
-         const tabParam = getUrlParameter('tab');
+document.addEventListener('DOMContentLoaded', function () {
+    initializeElements();
+    setupEventListeners();
     
-    if (tabParam) {
-        // Small delay to ensure DOM is fully loaded
-        setTimeout(() => {
-            switch(tabParam) {
-                case 'pending':
-                    document.getElementById('pending-tab').click();
-                    break;
-                case 'awaiting':
-                    document.getElementById('awaiting-tab').click();
-                    break;
-                case 'payment-submitted':
-                    if (document.getElementById('payment-submitted-tab')) {
-                        document.getElementById('payment-submitted-tab').click();
-                    }
-                    break;
-                case 'reserved':
-                    document.getElementById('reserved-tab').click();
-                    break;
-                default:
-                    // Default to pending tab
-                    document.getElementById('pending-tab').click();
-                    break;
-            }
-        }, 100);
-    }
-
-        // Fetch all counters immediately (not lazy loaded)
-        fetchAllCounters();
-
-// Tab click handlers for lazy loading (content only)
-document.getElementById('pending-tab').addEventListener('shown.bs.tab', function () {
-    currentTab = 'pending';
-    if (!loadedTabs.pending) {
-        fetchRequisitionsByStatus(1, 'pending', 1); // Status ID 1 = Pending Approval
-    } else if (tabData.pending) {
-        displayRequisitions(tabData.pending.data, 'pendingRequisitionsContainer');
-        updatePaginationForTab(tabData.pending.meta, 'pendingPaginationContainer', 'pending');
-    }
+    // Load counts immediately on page load
+    fetchAllCounts();
+    
+    // Handle URL tab parameter and load initial tab content
+    handleUrlTabParameterAndLoad();
 });
 
-document.getElementById('awaiting-tab').addEventListener('shown.bs.tab', function () {
-    currentTab = 'awaiting';
-    if (!loadedTabs.awaiting) {
-        fetchRequisitionsByStatus(1, 'awaiting', 2); // Status ID 2 = Awaiting Payment
-    } else if (tabData.awaiting) {
-        displayRequisitions(tabData.awaiting.data, 'awaitingRequisitionsContainer');
-        updatePaginationForTab(tabData.awaiting.meta, 'awaitingPaginationContainer', 'awaiting');
-    }
-});
-
-document.getElementById('payment-submitted-tab').addEventListener('shown.bs.tab', function () {
-    currentTab = 'payment-submitted';
-    if (!loadedTabs['payment-submitted']) {
-        fetchRequisitionsByStatus(1, 'payment-submitted', 7); // Status ID 7 = Payment Submitted
-    } else if (tabData['payment-submitted']) {
-        displayRequisitions(tabData['payment-submitted'].data, 'paymentSubmittedRequisitionsContainer');
-        updatePaginationForTab(tabData['payment-submitted'].meta, 'paymentSubmittedPaginationContainer', 'payment-submitted');
-    }
-});
-
-document.getElementById('reserved-tab').addEventListener('shown.bs.tab', function () {
-    currentTab = 'reserved';
-    if (!loadedTabs.reserved) {
-        fetchRequisitionsByStatus(1, 'reserved', 3); // Status ID 3 = Reserved
-    } else if (tabData.reserved) {
-        displayRequisitions(tabData.reserved.data, 'reservedRequisitionsContainer');
-        updatePaginationForTab(tabData.reserved.meta, 'reservedPaginationContainer', 'reserved');
-    }
-});
-
-        // Per page selector change handler
-        document.getElementById('perPage').addEventListener('change', function () {
-            currentPerPage = parseInt(this.value);
-            currentPage = 1;
-            if (currentTab === 'pending') {
-                fetchRequisitionsByStatus(currentPage, 'pending', 1);
-            } else if (currentTab === 'awaiting') {
-                fetchRequisitionsByStatus(currentPage, 'awaiting', 2);
-            } else if (currentTab === 'reserved') {
-                fetchRequisitionsByStatus(currentPage, 'reserved', 3);
-            }
-        });
-
-        // Sort order change handler
-        document.getElementById('sortOrder').addEventListener('change', function () {
-            currentSortOrder = this.value;
-            currentPage = 1;
-            if (currentTab === 'pending') {
-                fetchRequisitionsByStatus(currentPage, 'pending', 1);
-            } else if (currentTab === 'awaiting') {
-                fetchRequisitionsByStatus(currentPage, 'awaiting', 2);
-            } else if (currentTab === 'reserved') {
-                fetchRequisitionsByStatus(currentPage, 'reserved', 3);
-            }
-        });
-
-        // Initial load for pending tab content
-        fetchRequisitionsByStatus(1, 'pending', 1);
-    });
-
-    /**
-     * Fetch counts for all statuses immediately (not lazy loaded)
-     */
-function fetchAllCounters() {
-    const token = localStorage.getItem('adminToken');
-
-    // Fetch count for Pending Approval (status_id=1)
-    fetch(`/api/admin/pending-requests?page=1&per_page=1&status_id=1`, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-        },
-        credentials: 'include'
-    })
-        .then(response => response.json())
-        .then(data => {
-            tabCounts.pending = data.meta.total;
-            updateTabBadges();
-        })
-        .catch(error => console.error('Error fetching pending count:', error));
-
-    // Fetch count for Awaiting Payment (status_id=2)
-    fetch(`/api/admin/pending-requests?page=1&per_page=1&status_id=2`, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-        },
-        credentials: 'include'
-    })
-        .then(response => response.json())
-        .then(data => {
-            tabCounts.awaiting = data.meta.total;
-            updateTabBadges();
-        })
-        .catch(error => console.error('Error fetching awaiting count:', error));
-
-    // Fetch count for Payment Submitted (status_id=7)
-    fetch(`/api/admin/pending-requests?page=1&per_page=1&status_id=7`, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-        },
-        credentials: 'include'
-    })
-        .then(response => response.json())
-        .then(data => {
-            tabCounts['payment-submitted'] = data.meta.total;
-            updateTabBadges();
-        })
-        .catch(error => console.error('Error fetching payment submitted count:', error));
-
-    // Fetch count for Reserved (status_id=3)
-    fetch(`/api/admin/pending-requests?page=1&per_page=1&status_id=3`, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-        },
-        credentials: 'include'
-    })
-        .then(response => response.json())
-        .then(data => {
-            tabCounts.reserved = data.meta.total;
-            updateTabBadges();
-        })
-        .catch(error => console.error('Error fetching reserved count:', error));
+function initializeElements() {
+    elements = {
+        pendingCount: document.getElementById('pendingCount'),
+        awaitingCount: document.getElementById('awaitingCount'),
+        paymentSubmittedCount: document.getElementById('paymentSubmittedCount'),
+        reservedCount: document.getElementById('reservedCount'),
+        pendingContainer: document.getElementById('pendingRequisitionsContainer'),
+        awaitingContainer: document.getElementById('awaitingRequisitionsContainer'),
+        paymentSubmittedContainer: document.getElementById('paymentSubmittedRequisitionsContainer'),
+        reservedContainer: document.getElementById('reservedRequisitionsContainer'),
+        pendingPagination: document.getElementById('pendingPaginationContainer'),
+        awaitingPagination: document.getElementById('awaitingPaginationContainer'),
+        paymentSubmittedPagination: document.getElementById('paymentSubmittedPaginationContainer'),
+        reservedPagination: document.getElementById('reservedPaginationContainer'),
+        perPageSelect: document.getElementById('perPage'),
+        sortOrderSelect: document.getElementById('sortOrder'),
+        pendingTab: document.getElementById('pending-tab'),
+        awaitingTab: document.getElementById('awaiting-tab'),
+        paymentSubmittedTab: document.getElementById('payment-submitted-tab'),
+        reservedTab: document.getElementById('reserved-tab')
+    };
 }
 
-    /**
-     * Fetch requisitions by status using updated API
-     */
-function fetchRequisitionsByStatus(page = 1, tab = 'pending', statusId = 1) {
-    const token = localStorage.getItem('adminToken');
-    let containerId;
-    let paginationContainerId;
+function setupEventListeners() {
+    // Tab click handlers - true lazy loading
+    elements.pendingTab.addEventListener('shown.bs.tab', () => loadTabContent('pending'));
+    elements.awaitingTab.addEventListener('shown.bs.tab', () => loadTabContent('awaiting'));
+    elements.paymentSubmittedTab.addEventListener('shown.bs.tab', () => loadTabContent('payment-submitted'));
+    elements.reservedTab.addEventListener('shown.bs.tab', () => loadTabContent('reserved'));
+    
+    // Per page change
+    elements.perPageSelect.addEventListener('change', function () {
+        currentPerPage = parseInt(this.value);
+        currentPage = 1;
+        reloadCurrentTab();
+    });
+    
+    // Sort order change
+    elements.sortOrderSelect.addEventListener('change', function () {
+        currentSortOrder = this.value;
+        currentPage = 1;
+        reloadCurrentTab();
+    });
+}
 
-    // Map tab to container IDs
-    switch (tab) {
-        case 'pending':
-            containerId = 'pendingRequisitionsContainer';
-            paginationContainerId = 'pendingPaginationContainer';
-            break;
-        case 'awaiting':
-            containerId = 'awaitingRequisitionsContainer';
-            paginationContainerId = 'awaitingPaginationContainer';
-            break;
-        case 'payment-submitted':
-            containerId = 'paymentSubmittedRequisitionsContainer';
-            paginationContainerId = 'paymentSubmittedPaginationContainer';
-            break;
-        case 'reserved':
-            containerId = 'reservedRequisitionsContainer';
-            paginationContainerId = 'reservedPaginationContainer';
-            break;
-        default:
-            containerId = 'pendingRequisitionsContainer';
-            paginationContainerId = 'pendingPaginationContainer';
+/**
+ * Handle URL tab parameter and load initial content
+ */
+function handleUrlTabParameterAndLoad() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    
+    // Determine which tab to activate
+    let activeTab = 'pending';
+    
+    if (tabParam && (tabParam === 'pending' || tabParam === 'awaiting' || tabParam === 'payment-submitted' || tabParam === 'reserved')) {
+        activeTab = tabParam;
     }
+    
+    // Activate the correct tab
+    const tabToActivate = document.getElementById(`${activeTab}-tab`);
+    if (tabToActivate) {
+        // Use Bootstrap tab API to activate
+        const bsTab = new bootstrap.Tab(tabToActivate);
+        bsTab.show();
+    }
+    
+    // Load the active tab content immediately (not just on click)
+    loadTabContent(activeTab, true); // Pass true to indicate initial load
+}
 
-        const container = document.getElementById(containerId);
+/**
+ * Load content for a specific tab (true lazy loading)
+ * @param {string} tab - The tab to load
+ * @param {boolean} isInitialLoad - Whether this is the initial page load
+ */
+function loadTabContent(tab, isInitialLoad = false) {
+    currentTab = tab;
+    
+    // If tab already loaded and this isn't forcing a reload, just display cached data
+    if (loadedTabs[tab] && tabData[tab] && !isInitialLoad) {
+        displayRequisitions(tabData[tab], tab);
+        displayPagination(tabPagination[tab], tab);
+        return;
+    }
+    
+    // Load tab content (either first time or forced reload)
+    fetchRequisitionsByStatus(1, tab);
+}
 
-        // Show loading state
+/**
+ * Fetch requisitions for a specific status
+ */
+function fetchRequisitionsByStatus(page = 1, tab) {
+    const token = localStorage.getItem('adminToken');
+    const statusId = STATUS_IDS[tab];
+    
+    if (!token || !statusId) {
+        console.error('Missing token or status ID');
+        return;
+    }
+    
+    // Show loading state
+    showTabLoading(tab);
+    
+    const url = `/api/admin/pending-requests?page=${page}&per_page=${currentPerPage}&sort_order=${currentSortOrder}&status_id=${statusId}`;
+    
+    fetch(url, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+        },
+        credentials: 'include'
+    })
+    .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    })
+    .then(data => {
+        if (data.success === false) throw new Error(data.message || 'Failed to load data');
+        
+        // Store data for this tab
+        tabData[tab] = data.data || [];
+        tabPagination[tab] = data.meta;
+        loadedTabs[tab] = true;
+        
+        // Display the data
+        displayRequisitions(data.data || [], tab);
+        displayPagination(data.meta, tab);
+    })
+    .catch(error => {
+        console.error(`Error loading ${tab} requisitions:`, error);
+        showTabError(tab, error.message);
+    });
+}
+
+function showTabLoading(tab) {
+    const container = getContainerForTab(tab);
+    if (container) {
         container.innerHTML = `
             <div class="text-center text-muted py-4">
                 <div class="spinner-border spinner-border-sm" role="status"></div>
                 <div class="mt-2">Loading requisitions...</div>
             </div>
         `;
-
-        document.getElementById(paginationContainerId).style.display = 'none';
-
-        // Build URL with status_id parameter
-        const url = `/api/admin/pending-requests?page=${page}&per_page=${currentPerPage}&sort_order=${currentSortOrder}&status_id=${statusId}`;
-
-        fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Store data for this tab
-                tabData[tab] = data;
-
-                // Update count for this specific tab from the meta.total
-                if (tab === 'pending') {
-                    tabCounts.pending = data.meta.total;
-                } else if (tab === 'awaiting') {
-                    tabCounts.awaiting = data.meta.total;
-                } else if (tab === 'reserved') {
-                    tabCounts.reserved = data.meta.total;
-                }
-
-                // Update all tab badges
-                updateTabBadges();
-
-                // Mark tab as loaded
-                loadedTabs[tab] = true;
-
-                // Display requisitions
-                displayRequisitions(data.data, containerId);
-
-                // IMPORTANT: Use the meta data from the API response
-                updatePaginationForTab(data.meta, paginationContainerId, tab);
-            })
-            .catch(error => {
-                console.error('Error fetching requisition data:', error);
-                container.innerHTML = `
-                    <div class="text-center text-danger py-4">
-                        <i class="bi bi-exclamation-triangle fs-4"></i>
-                        <div class="mt-2">Failed to load requisitions</div>
-                        <small class="text-muted">${error.message}</small>
-                    </div>
-                `;
-            });
     }
-
-    /**
-     * Update tab badge counts
-     */
-function updateTabBadges() {
-    document.getElementById('pendingCount').textContent = tabCounts.pending;
-    document.getElementById('awaitingCount').textContent = tabCounts.awaiting;
-    document.getElementById('paymentSubmittedCount').textContent = tabCounts['payment-submitted'];
-    document.getElementById('reservedCount').textContent = tabCounts.reserved;
+    
+    // Hide pagination while loading
+    const paginationContainer = getPaginationContainerForTab(tab);
+    if (paginationContainer) {
+        paginationContainer.style.display = 'none';
+    }
 }
 
-    /**
-     * Display requisitions in the specified container
-     */
-function displayRequisitions(requisitions, containerId) {
-    const container = document.getElementById(containerId);
+function showTabError(tab, errorMessage) {
+    const container = getContainerForTab(tab);
+    if (container) {
+        container.innerHTML = `
+            <div class="text-center text-danger py-4">
+                <i class="bi bi-exclamation-triangle fs-4"></i>
+                <div class="mt-2">Failed to load requisitions</div>
+                <small class="text-muted">${escapeHtml(errorMessage)}</small>
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-danger" onclick="retryLoadTab('${tab}')">
+                        <i class="bi bi-arrow-repeat"></i> Retry
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+}
 
+window.retryLoadTab = function(tab) {
+    loadedTabs[tab] = false;
+    tabData[tab] = null;
+    fetchRequisitionsByStatus(1, tab);
+};
+
+function reloadCurrentTab() {
+    if (currentTab) {
+        // Reset loaded state to force fresh load with new pagination/sort
+        loadedTabs[currentTab] = false;
+        tabData[currentTab] = null;
+        fetchRequisitionsByStatus(1, currentTab);
+    }
+}
+
+/**
+ * Fetch all tab counts using the same API with counts_only parameter
+ */
+function fetchAllCounts() {
+    const token = localStorage.getItem('adminToken');
+    
+    if (!token) {
+        console.error('No authentication token found');
+        return;
+    }
+    
+    // Show loading state on badges
+    showCountsLoading();
+    
+    // Fetch counts for all statuses in one request
+    fetch('/api/admin/pending-requests?counts_only=true', {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+        },
+        credentials: 'include'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.counts) {
+            updateTabBadges(data.counts);
+        } else {
+            throw new Error('Invalid response format');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching tab counts:', error);
+        showCountsError();
+    });
+}
+
+function showCountsLoading() {
+    const badges = ['pendingCount', 'awaitingCount', 'paymentSubmittedCount', 'reservedCount'];
+    badges.forEach(badge => {
+        if (elements[badge]) {
+            elements[badge].innerHTML = '<span class="spinner-border spinner-border-sm" style="width: 0.8rem; height: 0.8rem;"></span>';
+        }
+    });
+}
+
+function showCountsError() {
+    const badges = ['pendingCount', 'awaitingCount', 'paymentSubmittedCount', 'reservedCount'];
+    badges.forEach(badge => {
+        if (elements[badge]) {
+            elements[badge].textContent = '!';
+            elements[badge].classList.add('bg-danger');
+        }
+    });
+}
+
+function updateTabBadges(counts) {
+    if (elements.pendingCount) elements.pendingCount.textContent = counts.pending || 0;
+    if (elements.awaitingCount) elements.awaitingCount.textContent = counts.awaiting || 0;
+    if (elements.paymentSubmittedCount) elements.paymentSubmittedCount.textContent = counts.payment_submitted || 0;
+    if (elements.reservedCount) elements.reservedCount.textContent = counts.reserved || 0;
+}
+
+/**
+ * Display requisitions in the container
+ */
+function displayRequisitions(requisitions, tab) {
+    const container = getContainerForTab(tab);
+    
+    if (!container) return;
+    
     if (!requisitions || requisitions.length === 0) {
         container.innerHTML = `
             <div class="text-center text-muted py-4 small">
@@ -711,48 +682,48 @@ function displayRequisitions(requisitions, containerId) {
         `;
         return;
     }
-
+    
     const cardsHTML = requisitions.map(req => {
         const requestId = req.request_id;
-        const requesterName = req.requester.name;
-        const organization = req.requester.organization;
-        const statusName = req.status.name;
-        const statusColor = req.status.color; // Get color from API response
-        const schedule = req.schedule.display;
-
+        const requesterName = escapeHtml(req.requester.name);
+        const organization = escapeHtml(req.requester.organization);
+        const statusName = escapeHtml(req.status.name);
+        const statusColor = req.status.color;
+        const schedule = escapeHtml(req.schedule.display);
+        
         const dateSubmitted = req.created_at ? new Date(req.created_at).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
             day: 'numeric'
         }) : 'Date unknown';
-
-        const eventTitle = req.event_title && req.event_title.trim() !== '' ? req.event_title : 'No Event Title';
-        const eventDetails = req.event_details && req.event_details.trim() !== '' ? req.event_details : 'No Description';
-
+        
+        const eventTitle = escapeHtml(req.event_title && req.event_title.trim() !== '' ? req.event_title : 'No Event Title');
+        const eventDetails = escapeHtml(req.event_details && req.event_details.trim() !== '' ? req.event_details : 'No Description');
+        
         return `
             <div class="requisition-card clickable-requisition-item py-2" data-request-id="${requestId}">
                 <div class="d-flex justify-content-between align-items-start mb-1">
                     <div class="d-flex align-items-center flex-wrap gap-1">
-                        <span class="requester-name">${escapeHtml(requesterName)}</span>
-                        <span class="text-muted small">- ${escapeHtml(organization)}</span>
+                        <span class="requester-name">${requesterName}</span>
+                        <span class="text-muted small">- ${organization}</span>
                     </div>
                     <span class="status-badge" style="background-color: ${statusColor}; color: white; border: none;">
-                        ${escapeHtml(statusName)}
+                        ${statusName}
                     </span>
                 </div>
-
+                
                 <div class="mb-2 small">
-                    <strong>${escapeHtml(eventTitle)}</strong> — ${escapeHtml(eventDetails)}
+                    <strong>${eventTitle}</strong> — ${eventDetails}
                 </div>
-
+                
                 <div class="schedule-info">
-                    <i class="bi bi-calendar3 me-1"></i> ${escapeHtml(schedule)}
+                    <i class="bi bi-calendar3 me-1"></i> ${schedule}
                 </div>
-
+                
                 <div class="schedule-info mt-1">
                     <i class="bi bi-clock-history me-1"></i> Submitted: ${dateSubmitted}
                 </div>
-
+                
                 <div class="d-flex justify-content-between align-items-center mt-1">
                     <span class="request-id">#${requestId.toString().padStart(4, '0')}</span>
                     <i class="bi bi-chevron-right text-primary" style="font-size: 0.8rem;"></i>
@@ -760,121 +731,152 @@ function displayRequisitions(requisitions, containerId) {
             </div>
         `;
     }).join('');
-
+    
     container.innerHTML = cardsHTML;
     addRequisitionItemClickListeners();
 }
 
-    /**
-     * Update pagination for a specific tab
-     */
-    function updatePaginationForTab(meta, paginationContainerId, tab) {
-        const paginationContainer = document.getElementById(paginationContainerId);
-
-        if (!paginationContainer) return;
-
-        // Always show pagination container, even with one page
-        if (!meta.last_page || meta.total === 0) {
-            paginationContainer.style.display = 'none';
-            return;
-        }
-
-        paginationContainer.style.display = 'flex';
-        paginationContainer.innerHTML = `
-            <div class="pagination-info">Showing ${meta.from || 0} to ${meta.to || 0} of ${meta.total} entries</div>
-            <div class="pagination-controls" id="${tab}PaginationControls"></div>
-        `;
-
-        const controlsContainer = document.getElementById(`${tab}PaginationControls`);
-        if (!controlsContainer) return;
-
-        let buttonsHTML = '';
-
-        // Previous button
-        buttonsHTML += `
-            <button class="btn-pagination" onclick="changePageForTab(${meta.current_page - 1}, '${tab}')" ${meta.current_page === 1 ? 'disabled' : ''}>
-                <i class="bi bi-chevron-left"></i> Previous
-            </button>
-        `;
-
-        // Page numbers - show all pages if less than 5, otherwise show with ellipsis
-        if (meta.last_page <= 5) {
-            for (let i = 1; i <= meta.last_page; i++) {
-                buttonsHTML += `
-                    <button class="btn-pagination ${i === meta.current_page ? 'active' : ''}" onclick="changePageForTab(${i}, '${tab}')">
-                        ${i}
-                    </button>
-                `;
-            }
-        } else {
-            const startPage = Math.max(1, meta.current_page - 2);
-            const endPage = Math.min(meta.last_page, startPage + 4);
-
-            if (startPage > 1) {
-                buttonsHTML += `
-                    <button class="btn-pagination" onclick="changePageForTab(1, '${tab}')">1</button>
-                    ${startPage > 2 ? '<span class="px-1">...</span>' : ''}
-                `;
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                buttonsHTML += `
-                    <button class="btn-pagination ${i === meta.current_page ? 'active' : ''}" onclick="changePageForTab(${i}, '${tab}')">
-                        ${i}
-                    </button>
-                `;
-            }
-
-            if (endPage < meta.last_page) {
-                buttonsHTML += `
-                    ${endPage < meta.last_page - 1 ? '<span class="px-1">...</span>' : ''}
-                    <button class="btn-pagination" onclick="changePageForTab(${meta.last_page}, '${tab}')">${meta.last_page}</button>
-                `;
-            }
-        }
-
-        // Next button
-        buttonsHTML += `
-            <button class="btn-pagination" onclick="changePageForTab(${meta.current_page + 1}, '${tab}')" ${meta.current_page === meta.last_page ? 'disabled' : ''}>
-                Next <i class="bi bi-chevron-right"></i>
-            </button>
-        `;
-
-        controlsContainer.innerHTML = buttonsHTML;
+/**
+ * Display pagination for a specific tab
+ */
+function displayPagination(meta, tab) {
+    const paginationContainer = getPaginationContainerForTab(tab);
+    
+    if (!paginationContainer) return;
+    
+    if (!meta || meta.total === 0 || meta.last_page === 0) {
+        paginationContainer.style.display = 'none';
+        return;
     }
-
-    /**
-     * Change page for a specific tab
-     */
-function changePageForTab(page, tab) {
-    if (page < 1) return;
-
-    let statusId;
-    if (tab === 'pending') statusId = 1;
-    else if (tab === 'awaiting') statusId = 2;
-    else if (tab === 'payment-submitted') statusId = 7;
-    else if (tab === 'reserved') statusId = 3;
-
-    fetchRequisitionsByStatus(page, tab, statusId);
+    
+    paginationContainer.style.display = 'flex';
+    paginationContainer.innerHTML = `
+        <div class="pagination-info">Showing ${meta.from || 0} to ${meta.to || 0} of ${meta.total} entries</div>
+        <div class="pagination-controls" id="${tab}PaginationControls"></div>
+    `;
+    
+    const controlsContainer = document.getElementById(`${tab}PaginationControls`);
+    if (!controlsContainer) return;
+    
+    let buttonsHTML = '';
+    
+    // Previous button
+    buttonsHTML += `
+        <button class="btn-pagination" onclick="changePage('${tab}', ${meta.current_page - 1})" ${meta.current_page === 1 ? 'disabled' : ''}>
+            <i class="bi bi-chevron-left"></i> Previous
+        </button>
+    `;
+    
+    // Page numbers
+    if (meta.last_page <= 5) {
+        for (let i = 1; i <= meta.last_page; i++) {
+            buttonsHTML += `
+                <button class="btn-pagination ${i === meta.current_page ? 'active' : ''}" onclick="changePage('${tab}', ${i})">
+                    ${i}
+                </button>
+            `;
+        }
+    } else {
+        const startPage = Math.max(1, meta.current_page - 2);
+        const endPage = Math.min(meta.last_page, startPage + 4);
+        
+        if (startPage > 1) {
+            buttonsHTML += `
+                <button class="btn-pagination" onclick="changePage('${tab}', 1)">1</button>
+                ${startPage > 2 ? '<span class="px-1">...</span>' : ''}
+            `;
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            buttonsHTML += `
+                <button class="btn-pagination ${i === meta.current_page ? 'active' : ''}" onclick="changePage('${tab}', ${i})">
+                    ${i}
+                </button>
+            `;
+        }
+        
+        if (endPage < meta.last_page) {
+            buttonsHTML += `
+                ${endPage < meta.last_page - 1 ? '<span class="px-1">...</span>' : ''}
+                <button class="btn-pagination" onclick="changePage('${tab}', ${meta.last_page})">${meta.last_page}</button>
+            `;
+        }
+    }
+    
+    // Next button
+    buttonsHTML += `
+        <button class="btn-pagination" onclick="changePage('${tab}', ${meta.current_page + 1})" ${meta.current_page === meta.last_page ? 'disabled' : ''}>
+            Next <i class="bi bi-chevron-right"></i>
+        </button>
+    `;
+    
+    controlsContainer.innerHTML = buttonsHTML;
 }
 
-    /**
-     * Add click listeners to requisition items
-     */
-    function addRequisitionItemClickListeners() {
-        const requisitionItems = document.querySelectorAll('.clickable-requisition-item');
+/**
+ * Change page for a specific tab
+ */
+window.changePage = function(tab, page) {
+    if (page < 1) return;
+    fetchRequisitionsByStatus(page, tab);
+};
 
-        requisitionItems.forEach(item => {
-            item.removeEventListener('click', handleItemClick);
-            item.addEventListener('click', handleItemClick);
-        });
-    }
+/**
+ * Get container element for a tab
+ */
+function getContainerForTab(tab) {
+    const mapping = {
+        'pending': elements.pendingContainer,
+        'awaiting': elements.awaitingContainer,
+        'payment-submitted': elements.paymentSubmittedContainer,
+        'reserved': elements.reservedContainer
+    };
+    return mapping[tab];
+}
 
-    function handleItemClick() {
-        const requestId = this.getAttribute('data-request-id');
-        if (requestId) {
-            window.location.href = `/admin/requisition/${requestId}`;
-        }
+/**
+ * Get pagination container for a tab
+ */
+function getPaginationContainerForTab(tab) {
+    const mapping = {
+        'pending': elements.pendingPagination,
+        'awaiting': elements.awaitingPagination,
+        'payment-submitted': elements.paymentSubmittedPagination,
+        'reserved': elements.reservedPagination
+    };
+    return mapping[tab];
+}
+
+/**
+ * Add click listeners to requisition items
+ */
+function addRequisitionItemClickListeners() {
+    const requisitionItems = document.querySelectorAll('.clickable-requisition-item');
+    
+    requisitionItems.forEach(item => {
+        item.removeEventListener('click', handleItemClick);
+        item.addEventListener('click', handleItemClick);
+    });
+}
+
+function handleItemClick() {
+    const requestId = this.getAttribute('data-request-id');
+    if (requestId) {
+        window.location.href = `/admin/requisition/${requestId}`;
     }
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Make retryLoadTab available globally
+window.retryLoadTab = retryLoadTab;
 </script>
 @endsection

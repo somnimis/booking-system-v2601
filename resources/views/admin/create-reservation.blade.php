@@ -555,13 +555,13 @@
                                             </div>
 
                                             <div class="col-12">
-                                                <label class="form-label fw-medium">Event Title (for calendar)</label>
+                                                <label class="form-label fw-medium">Event Title</label>
                                                 <input type="text" class="form-control" name="event_title" maxlength="50">
                                                 <small class="text-muted" id="calendarTitleCounter"></small>
                                             </div>
 
                                             <div class="col-12">
-                                                <label class="form-label fw-medium">Event Description (for calendar)</label>
+                                                <label class="form-label fw-medium">Event Description</label>
                                                 <textarea class="form-control" name="event_details" rows="2"
                                                     maxlength="100"></textarea>
                                                 <small class="text-muted" id="calendarDescriptionCounter"></small>
@@ -895,1068 +895,1181 @@
 @endsection
 
 @section('scripts')
-    <script>
-        let adminToken = localStorage.getItem('adminToken');
-        let currentStep = 1;
-        const totalSteps = 7;
+<script>
+    let adminToken = localStorage.getItem('adminToken');
+    let currentStep = 1;
+    const totalSteps = 7;
 
-        // Toast notification function
-        window.showToast = function (message, type = 'success', duration = 3000) {
-            const toast = document.createElement('div');
-            toast.className = `toast align-items-center border-0 position-fixed start-0 mb-2`;
-            toast.style.zIndex = '1100';
-            toast.style.bottom = '0';
-            toast.style.left = '0';
-            toast.style.margin = '1rem';
+    // Lazy loading state
+    let facilitiesLoaded = false;
+    let equipmentLoaded = false;
+    let servicesLoaded = false;
+    
+    // Pagination state
+    let facilitiesPage = 1;
+    let equipmentPage = 1;
+    let facilitiesTotalPages = 1;
+    let equipmentTotalPages = 1;
+    let facilitiesFilters = { search: '', rate_type: '', status: '' };
+    let equipmentFilters = { search: '', rate_type: '', status: '' };
+    
+    // Store data
+    let allServices = [];
+    let allPurposes = [];
+    let allStatuses = [];
+
+    // Toast notification function
+    window.showToast = function (message, type = 'success', duration = 3000) {
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center border-0 position-fixed start-0 mb-2`;
+        toast.style.zIndex = '1100';
+        toast.style.bottom = '0';
+        toast.style.left = '0';
+        toast.style.margin = '1rem';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        toast.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+
+        const bgColor = type === 'success' ? '#004183ff' : '#dc3545';
+        toast.style.backgroundColor = bgColor;
+        toast.style.color = '#fff';
+        toast.style.minWidth = '250px';
+        toast.style.borderRadius = '0.3rem';
+
+        toast.innerHTML = `
+            <div class="d-flex align-items-center px-3 py-1"> 
+                <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
+                <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="loading-bar" style="
+                height: 3px;
+                background: rgba(255,255,255,0.7);
+                width: 100%;
+                transition: width ${duration}ms linear;
+            "></div>
+        `;
+
+        document.body.appendChild(toast);
+
+        const bsToast = new bootstrap.Toast(toast, { autohide: false });
+        bsToast.show();
+
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        });
+
+        const loadingBar = toast.querySelector('.loading-bar');
+        requestAnimationFrame(() => {
+            loadingBar.style.width = '0%';
+        });
+
+        setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transform = 'translateY(20px)';
-            toast.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-            toast.setAttribute('role', 'alert');
-            toast.setAttribute('aria-live', 'assertive');
-            toast.setAttribute('aria-atomic', 'true');
-
-            const bgColor = type === 'success' ? '#004183ff' : '#dc3545';
-            toast.style.backgroundColor = bgColor;
-            toast.style.color = '#fff';
-            toast.style.minWidth = '250px';
-            toast.style.borderRadius = '0.3rem';
-
-            toast.innerHTML = `
-                                                                                    <div class="d-flex align-items-center px-3 py-1"> 
-                                                                                        <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                                                                                        <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                                                                                        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                                                                                    </div>
-                                                                                    <div class="loading-bar" style="
-                                                                                        height: 3px;
-                                                                                        background: rgba(255,255,255,0.7);
-                                                                                        width: 100%;
-                                                                                        transition: width ${duration}ms linear;
-                                                                                    "></div>
-                                                                                `;
-
-            document.body.appendChild(toast);
-
-            const bsToast = new bootstrap.Toast(toast, { autohide: false });
-            bsToast.show();
-
-            requestAnimationFrame(() => {
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateY(0)';
-            });
-
-            const loadingBar = toast.querySelector('.loading-bar');
-            requestAnimationFrame(() => {
-                loadingBar.style.width = '0%';
-            });
-
             setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    bsToast.hide();
-                    toast.remove();
-                }, 400);
-            }, duration);
-        };
+                bsToast.hide();
+                toast.remove();
+            }, 400);
+        }, duration);
+    };
 
-        // Populate time dropdowns
-        function populateTimeDropdowns() {
-            const startTimeSelect = document.getElementById('startTime');
-            const endTimeSelect = document.getElementById('endTime');
+    // Populate time dropdowns
+    function populateTimeDropdowns() {
+        const startTimeSelect = document.getElementById('startTime');
+        const endTimeSelect = document.getElementById('endTime');
 
-            if (!startTimeSelect || !endTimeSelect) return;
+        if (!startTimeSelect || !endTimeSelect) return;
 
-            startTimeSelect.innerHTML = '';
-            endTimeSelect.innerHTML = '';
+        startTimeSelect.innerHTML = '';
+        endTimeSelect.innerHTML = '';
 
-            for (let hour = 0; hour < 24; hour++) {
-                for (let minute = 0; minute < 60; minute += 15) {
-                    const hourStr = hour.toString().padStart(2, '0');
-                    const minuteStr = minute.toString().padStart(2, '0');
-                    const timeValue = `${hourStr}:${minuteStr}`;
+        for (let hour = 0; hour < 24; hour++) {
+            for (let minute = 0; minute < 60; minute += 15) {
+                const hourStr = hour.toString().padStart(2, '0');
+                const minuteStr = minute.toString().padStart(2, '0');
+                const timeValue = `${hourStr}:${minuteStr}`;
 
-                    const displayHour = hour % 12 || 12;
-                    const ampm = hour < 12 ? 'AM' : 'PM';
-                    const displayTime = `${displayHour}:${minuteStr} ${ampm}`;
+                const displayHour = hour % 12 || 12;
+                const ampm = hour < 12 ? 'AM' : 'PM';
+                const displayTime = `${displayHour}:${minuteStr} ${ampm}`;
 
-                    const option = new Option(displayTime, timeValue);
-                    startTimeSelect.appendChild(option.cloneNode(true));
-                    endTimeSelect.appendChild(option);
-                }
+                const option = new Option(displayTime, timeValue);
+                startTimeSelect.appendChild(option.cloneNode(true));
+                endTimeSelect.appendChild(option);
             }
-
-            startTimeSelect.value = '09:00';
-            endTimeSelect.value = '17:00';
         }
 
-        // Calculate duration
-        function calculateDuration() {
+        startTimeSelect.value = '09:00';
+        endTimeSelect.value = '17:00';
+    }
+
+    // Calculate duration
+    function calculateDuration() {
+        const startDate = document.getElementById('startDate')?.value;
+        const endDate = document.getElementById('endDate')?.value;
+        let startTime = document.getElementById('startTime')?.value;
+        let endTime = document.getElementById('endTime')?.value;
+
+        if (startDate && endDate && startTime && endTime) {
+            const start = new Date(`${startDate}T${startTime}`);
+            const end = new Date(`${endDate}T${endTime}`);
+
+            if (end > start) {
+                const diffMs = end - start;
+                const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+                let durationText = '';
+                if (hours > 0) durationText += `${hours} hour${hours > 1 ? 's' : ''}`;
+                if (minutes > 0) {
+                    if (hours > 0) durationText += ' ';
+                    durationText += `${minutes} minute${minutes > 1 ? 's' : ''}`;
+                }
+
+                const durationElement = document.getElementById('durationDisplay');
+                if (durationElement) {
+                    durationElement.textContent = durationText || '0 minutes';
+                }
+            } else {
+                const durationElement = document.getElementById('durationDisplay');
+                if (durationElement) {
+                    durationElement.textContent = 'End time must be after start time';
+                }
+            }
+        }
+    }
+
+    // Update character counter
+    function updateCharacterCounter(input, maxLength, counterId) {
+        if (!input) return;
+        let counter = document.getElementById(counterId);
+        if (!counter) {
+            counter = document.createElement('small');
+            counter.id = counterId;
+            counter.className = 'text-muted d-block mt-1';
+            input.parentNode.appendChild(counter);
+        }
+
+        const update = () => {
+            const length = input.value.length;
+            counter.textContent = `${length}/${maxLength} characters`;
+            const percentage = (length / maxLength) * 100;
+            counter.className = 'text-muted d-block mt-1';
+            if (percentage >= 90) {
+                counter.classList.add('text-danger', 'fw-bold');
+            } else if (percentage >= 80) {
+                counter.classList.add('text-warning', 'fw-medium');
+            }
+        };
+        input.addEventListener('input', update);
+        input.addEventListener('change', update);
+        update();
+    }
+
+    // Setup character counters
+    function setupCharacterCounters() {
+        updateCharacterCounter(document.querySelector('input[name="first_name"]'), 50, 'firstNameCounter');
+        updateCharacterCounter(document.querySelector('input[name="last_name"]'), 50, 'lastNameCounter');
+        updateCharacterCounter(document.querySelector('input[name="email"]'), 100, 'emailCounter');
+        updateCharacterCounter(document.querySelector('input[name="contact_number"]'), 15, 'contactCounter');
+        updateCharacterCounter(document.getElementById('organizationInput'), 100, 'organizationCounter');
+        updateCharacterCounter(document.getElementById('schoolIdInput'), 20, 'schoolIdCounter');
+        updateCharacterCounter(document.querySelector('input[name="event_title"]'), 50, 'calendarTitleCounter');
+        updateCharacterCounter(document.querySelector('textarea[name="event_details"]'), 100, 'calendarDescriptionCounter');
+
+        const additionalRequestsTextarea = document.querySelector('textarea[name="additional_requests"]');
+        const additionalRequestsCounter = document.getElementById('additionalRequestsCounter');
+        if (additionalRequestsTextarea && additionalRequestsCounter) {
+            const updateAdditionalRequestsCounter = () => {
+                const length = additionalRequestsTextarea.value.length;
+                const maxLength = 250;
+                additionalRequestsCounter.textContent = `${length}/${maxLength} characters`;
+                const percentage = (length / maxLength) * 100;
+                additionalRequestsCounter.className = '';
+                if (percentage >= 90) {
+                    additionalRequestsCounter.classList.add('text-danger', 'fw-bold');
+                } else if (percentage >= 80) {
+                    additionalRequestsCounter.classList.add('text-warning', 'fw-medium');
+                } else {
+                    additionalRequestsCounter.classList.add('text-muted');
+                }
+            };
+            additionalRequestsTextarea.addEventListener('input', updateAdditionalRequestsCounter);
+            additionalRequestsTextarea.addEventListener('change', updateAdditionalRequestsCounter);
+            updateAdditionalRequestsCounter();
+        }
+    }
+
+    // Load lightweight init data (no facilities/equipment)
+    async function loadFormInitData() {
+        try {
+            const response = await fetch('/api/admin/requisition/form-init-data', {
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error(`API returned ${response.status}`);
+
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message);
+
+            const data = result.data;
+            
+            // Store lightweight data
+            allPurposes = data.purposes;
+            allServices = data.services;
+            allStatuses = data.statuses;
+
+            // Populate purposes
+            populatePurposes(allPurposes);
+            
+            // Render services (services are lightweight, load immediately)
+            renderServicesList();
+            setupServiceFilters();
+            
+            // Populate status options
+            populateStatusOptions(allStatuses);
+
+            console.log('Form init data loaded:', {
+                purposes: allPurposes.length,
+                services: allServices.length,
+                statuses: allStatuses.length
+            });
+
+        } catch (error) {
+            console.error('Error loading form init data:', error);
+            throw error;
+        }
+    }
+
+    // LAZY LOAD: Load facilities when step 3 is first accessed
+    async function loadFacilities(page = 1) {
+        if (facilitiesLoaded && page === 1 && !facilitiesFilters.search && !facilitiesFilters.rate_type && !facilitiesFilters.status) {
+            return; // Already loaded and no filters
+        }
+        
+        const container = document.getElementById('facilitiesList');
+        if (!container) return;
+        
+// Show loading state - centered
+container.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; width: 100%; grid-column: 1 / -1;">
+        <div class="spinner-border spinner-border-sm text-primary" role="status" style="width: 2rem; height: 2rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2 text-muted">Loading facilities...</div>
+    </div>
+`;
+
+        try {
+            const params = new URLSearchParams({
+                page: page,
+                per_page: 20,
+                search: facilitiesFilters.search,
+                rate_type: facilitiesFilters.rate_type,
+                status: facilitiesFilters.status
+            });
+            
+            const response = await fetch(`/api/admin/requisition/facilities?${params}`, {
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) throw new Error(`API returned ${response.status}`);
+            
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message);
+            
+            facilitiesPage = result.pagination.current_page;
+            facilitiesTotalPages = result.pagination.last_page;
+            facilitiesLoaded = true;
+            
+            renderFacilitiesList(result.data, result.pagination);
+            
+        } catch (error) {
+            console.error('Error loading facilities:', error);
+            container.innerHTML = '<div class="text-center text-danger py-3">Failed to load facilities. Please try again.</div>';
+        }
+    }
+    
+    // LAZY LOAD: Load equipment when step 4 is first accessed
+    async function loadEquipment(page = 1) {
+        if (equipmentLoaded && page === 1 && !equipmentFilters.search && !equipmentFilters.rate_type && !equipmentFilters.status) {
+            return; // Already loaded and no filters
+        }
+        
+        const container = document.getElementById('equipmentList');
+        if (!container) return;
+        
+// Show loading state - centered
+container.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; width: 100%; grid-column: 1 / -1;">
+        <div class="spinner-border spinner-border-sm text-primary" role="status" style="width: 2rem; height: 2rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2 text-muted">Loading equipment...</div>
+    </div>
+`;
+        try {
+            const params = new URLSearchParams({
+                page: page,
+                per_page: 20,
+                search: equipmentFilters.search,
+                rate_type: equipmentFilters.rate_type,
+                status: equipmentFilters.status
+            });
+            
+            const response = await fetch(`/api/admin/requisition/equipment?${params}`, {
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) throw new Error(`API returned ${response.status}`);
+            
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message);
+            
+            equipmentPage = result.pagination.current_page;
+            equipmentTotalPages = result.pagination.last_page;
+            equipmentLoaded = true;
+            
+            renderEquipmentList(result.data, result.pagination);
+            
+        } catch (error) {
+            console.error('Error loading equipment:', error);
+            container.innerHTML = '<div class="text-center text-danger py-3">Failed to load equipment. Please try again.</div>';
+        }
+    }
+
+    function populatePurposes(purposes) {
+        const select = document.getElementById('purposeSelect');
+        if (!select) return;
+
+        select.innerHTML = '<option value="" disabled selected>Select purpose of reservation</option>';
+        purposes.forEach(purpose => {
+            const option = document.createElement('option');
+            option.value = purpose.purpose_id.toString();
+            option.textContent = purpose.purpose_name;
+            select.appendChild(option);
+        });
+    }
+
+    function populateStatusOptions(statuses) {
+        const statusSelect = document.getElementById('initialStatusSelect');
+        if (!statusSelect) return;
+
+        statusSelect.innerHTML = '<option value="" disabled selected>Select initial status</option>';
+        statuses.forEach(status => {
+            const option = document.createElement('option');
+            option.value = status.status_id;
+            option.textContent = status.status_name;
+            option.style.color = status.color_code;
+            statusSelect.appendChild(option);
+        });
+
+        // Set default to Scheduled if available
+        const scheduledOption = Array.from(statusSelect.options).find(opt => opt.textContent === 'Scheduled');
+        if (scheduledOption) scheduledOption.selected = true;
+    }
+    
+    function renderFacilitiesList(facilities, pagination) {
+        const facilitiesList = document.getElementById('facilitiesList');
+        if (!facilitiesList) return;
+
+        if (facilities.length === 0) {
+            facilitiesList.innerHTML = '<div class="text-center text-muted py-3">No facilities match your filters</div>';
+            return;
+        }
+
+        facilitiesList.innerHTML = '';
+        facilities.forEach(facility => {
+            let isAvailable = false;
+            let statusName = 'Unknown';
+            let statusColor = '#6c757d';
+
+            if (facility.status_name) {
+                statusName = facility.status_name;
+                isAvailable = facility.status_name === 'Available';
+                statusColor = isAvailable ? '#28a745' :
+                    (facility.status_name === 'Unavailable' ? '#dc3545' :
+                        (facility.status_name === 'Under Maintenance' ? '#ffc107' :
+                            (facility.status_name === 'Reserved' ? '#007bff' : '#6c757d')));
+            } else if (facility.status && facility.status.status_name) {
+                statusName = facility.status.status_name;
+                isAvailable = facility.status.status_name === 'Available';
+                statusColor = facility.status.color_code || '#6c757d';
+            }
+
+            const div = document.createElement('div');
+            div.className = `facility-card ${!isAvailable ? 'disabled' : ''}`;
+            div.innerHTML = `
+                <input type="checkbox" class="facility-checkbox" value="${facility.facility_id}" 
+                       data-name="${facility.facility_name.replace(/'/g, "\\'")}" data-fee="${facility.base_fee}"
+                       data-rate-type="${facility.rate_type}" data-capacity="${facility.capacity}"
+                       ${!isAvailable ? 'disabled' : ''}>
+                <div class="fw-medium">${escapeHtml(facility.facility_name)}</div>
+                <div><small>₱${parseFloat(facility.base_fee).toLocaleString()} ${facility.rate_type === 'Per Hour' ? '/hour' : '/event'}</small></div>
+                <div><small class="text-muted">Capacity: ${facility.capacity} people</small></div>
+                ${facility.location_note && facility.location_note !== 'No location note provided.' ?
+                    `<div><small class="text-muted"><i class="bi bi-geo-alt"></i> ${escapeHtml(facility.location_note)}</small></div>` : ''}
+                <div><span class="badge" style="background-color: ${statusColor}; color: white;">${statusName}</span></div>
+            `;
+
+            if (isAvailable) {
+                div.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const checkbox = div.querySelector('.facility-checkbox');
+                    checkbox.checked = !checkbox.checked;
+                    div.classList.toggle('selected', checkbox.checked);
+                    updateSelectedCounts();
+                });
+            }
+
+            facilitiesList.appendChild(div);
+        });
+        
+        // Add pagination controls if needed
+        if (pagination && pagination.last_page > 1) {
+            addFacilityPagination(pagination);
+        }
+        
+        updateSelectedCounts();
+    }
+    
+    function addFacilityPagination(pagination) {
+        const facilitiesList = document.getElementById('facilitiesList');
+        if (!facilitiesList) return;
+        
+        const paginationDiv = document.createElement('div');
+        paginationDiv.className = 'd-flex justify-content-center align-items-center gap-2 mt-3 pt-2 border-top';
+        paginationDiv.style.gridColumn = '1 / -1';
+        
+        let buttonsHTML = '';
+        
+        // Previous button
+        buttonsHTML += `<button class="btn btn-sm btn-outline-secondary" onclick="changeFacilitiesPage(${pagination.current_page - 1})" ${pagination.current_page === 1 ? 'disabled' : ''}>Previous</button>`;
+        
+        // Page numbers
+        for (let i = 1; i <= pagination.last_page; i++) {
+            if (i === 1 || i === pagination.last_page || (i >= pagination.current_page - 2 && i <= pagination.current_page + 2)) {
+                buttonsHTML += `<button class="btn btn-sm ${i === pagination.current_page ? 'btn-primary' : 'btn-outline-secondary'}" onclick="changeFacilitiesPage(${i})">${i}</button>`;
+            } else if (i === pagination.current_page - 3 || i === pagination.current_page + 3) {
+                buttonsHTML += `<span class="px-1">...</span>`;
+            }
+        }
+        
+        // Next button
+        buttonsHTML += `<button class="btn btn-sm btn-outline-secondary" onclick="changeFacilitiesPage(${pagination.current_page + 1})" ${pagination.current_page === pagination.last_page ? 'disabled' : ''}>Next</button>`;
+        
+        paginationDiv.innerHTML = buttonsHTML;
+        facilitiesList.appendChild(paginationDiv);
+    }
+    
+    function addEquipmentPagination(pagination) {
+        const equipmentList = document.getElementById('equipmentList');
+        if (!equipmentList) return;
+        
+        const paginationDiv = document.createElement('div');
+        paginationDiv.className = 'd-flex justify-content-center align-items-center gap-2 mt-3 pt-2 border-top';
+        paginationDiv.style.gridColumn = '1 / -1';
+        
+        let buttonsHTML = '';
+        
+        buttonsHTML += `<button class="btn btn-sm btn-outline-secondary" onclick="changeEquipmentPage(${pagination.current_page - 1})" ${pagination.current_page === 1 ? 'disabled' : ''}>Previous</button>`;
+        
+        for (let i = 1; i <= pagination.last_page; i++) {
+            if (i === 1 || i === pagination.last_page || (i >= pagination.current_page - 2 && i <= pagination.current_page + 2)) {
+                buttonsHTML += `<button class="btn btn-sm ${i === pagination.current_page ? 'btn-primary' : 'btn-outline-secondary'}" onclick="changeEquipmentPage(${i})">${i}</button>`;
+            } else if (i === pagination.current_page - 3 || i === pagination.current_page + 3) {
+                buttonsHTML += `<span class="px-1">...</span>`;
+            }
+        }
+        
+        buttonsHTML += `<button class="btn btn-sm btn-outline-secondary" onclick="changeEquipmentPage(${pagination.current_page + 1})" ${pagination.current_page === pagination.last_page ? 'disabled' : ''}>Next</button>`;
+        
+        paginationDiv.innerHTML = buttonsHTML;
+        equipmentList.appendChild(paginationDiv);
+    }
+    
+    window.changeFacilitiesPage = function(page) {
+        if (page < 1 || page > facilitiesTotalPages) return;
+        loadFacilities(page);
+    };
+    
+    window.changeEquipmentPage = function(page) {
+        if (page < 1 || page > equipmentTotalPages) return;
+        loadEquipment(page);
+    };
+    
+    function renderEquipmentList(equipment, pagination) {
+        const equipmentList = document.getElementById('equipmentList');
+        if (!equipmentList) return;
+
+        if (equipment.length === 0) {
+            equipmentList.innerHTML = '<div class="text-center text-muted py-3">No equipment match your filters</div>';
+            return;
+        }
+
+        equipmentList.innerHTML = '';
+        equipment.forEach(equip => {
+            let isAvailable = false;
+            let statusName = 'Unknown';
+            let statusColor = '#6c757d';
+
+            if (equip.status_name) {
+                statusName = equip.status_name;
+                isAvailable = equip.status_name === 'Available';
+                statusColor = isAvailable ? '#28a745' :
+                    (equip.status_name === 'Unavailable' ? '#dc3545' :
+                        (equip.status_name === 'Under Maintenance' ? '#ffc107' :
+                            (equip.status_name === 'Reserved' ? '#007bff' : '#6c757d')));
+            } else if (equip.status && equip.status.status_name) {
+                statusName = equip.status.status_name;
+                isAvailable = equip.status.status_name === 'Available';
+                statusColor = equip.status.color_code || '#6c757d';
+            }
+
+            const div = document.createElement('div');
+            div.className = `equipment-card ${!isAvailable ? 'disabled' : ''}`;
+            div.innerHTML = `
+                <input type="checkbox" class="equipment-checkbox" value="${equip.equipment_id}"
+                       data-name="${equip.equipment_name.replace(/'/g, "\\'")}" data-fee="${equip.base_fee}"
+                       data-rate-type="${equip.rate_type}" ${!isAvailable ? 'disabled' : ''}>
+                <strong>${escapeHtml(equip.equipment_name)}</strong>
+                <div><small>₱${parseFloat(equip.base_fee).toLocaleString()} ${equip.rate_type === 'Per Hour' ? '/hour' : '/event'}</small></div>
+                ${equip.description && equip.description !== 'No description provided for this equipment.' ?
+                    `<div><small class="text-muted">${escapeHtml(equip.description.substring(0, 100))}</small></div>` : ''}
+                <div><span class="badge" style="background-color: ${statusColor}; color: white;">${statusName}</span></div>
+            `;
+
+            if (isAvailable) {
+                div.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const checkbox = div.querySelector('.equipment-checkbox');
+                    checkbox.checked = !checkbox.checked;
+                    div.classList.toggle('selected', checkbox.checked);
+                    updateSelectedCounts();
+                });
+            }
+
+            equipmentList.appendChild(div);
+        });
+        
+        if (pagination && pagination.last_page > 1) {
+            addEquipmentPagination(pagination);
+        }
+        
+        updateSelectedCounts();
+    }
+
+    function setupFacilityFilters() {
+        const facilitySearch = document.getElementById('facilitySearch');
+        const facilityRateFilter = document.getElementById('facilityRateFilter');
+        const facilityStatusFilter = document.getElementById('facilityStatusFilter');
+
+        const applyFilters = () => {
+            facilitiesFilters = {
+                search: facilitySearch?.value.toLowerCase() || '',
+                rate_type: facilityRateFilter?.value || '',
+                status: facilityStatusFilter?.value || ''
+            };
+            facilitiesPage = 1;
+            loadFacilities(1);
+        };
+
+        if (facilitySearch) facilitySearch.addEventListener('input', applyFilters);
+        if (facilityRateFilter) facilityRateFilter.addEventListener('change', applyFilters);
+        if (facilityStatusFilter) facilityStatusFilter.addEventListener('change', applyFilters);
+    }
+
+    function setupEquipmentFilters() {
+        const equipmentSearch = document.getElementById('equipmentSearch');
+        const equipmentRateFilter = document.getElementById('equipmentRateFilter');
+        const equipmentStatusFilter = document.getElementById('equipmentStatusFilter');
+
+        const applyFilters = () => {
+            equipmentFilters = {
+                search: equipmentSearch?.value.toLowerCase() || '',
+                rate_type: equipmentRateFilter?.value || '',
+                status: equipmentStatusFilter?.value || ''
+            };
+            equipmentPage = 1;
+            loadEquipment(1);
+        };
+
+        if (equipmentSearch) equipmentSearch.addEventListener('input', applyFilters);
+        if (equipmentRateFilter) equipmentRateFilter.addEventListener('change', applyFilters);
+        if (equipmentStatusFilter) equipmentStatusFilter.addEventListener('change', applyFilters);
+    }
+    
+    function renderServicesList() {
+        const searchTerm = document.getElementById('serviceSearch')?.value.toLowerCase() || '';
+
+        const filteredServices = allServices.filter(service => {
+            return !searchTerm || service.service_name.toLowerCase().includes(searchTerm);
+        });
+
+        const container = document.getElementById('extraServicesContainer');
+        if (!container) return;
+
+        if (filteredServices.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center text-muted py-3">No services match your search</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        filteredServices.forEach(service => {
+            const colDiv = document.createElement('div');
+            colDiv.className = 'col-lg-4 col-md-6 col-12';
+
+            const serviceCard = document.createElement('div');
+            serviceCard.className = 'service-card';
+            serviceCard.innerHTML = `
+                <input type="checkbox" class="service-checkbox" value="${service.service_id}"
+                       data-name="${service.service_name.replace(/'/g, "\\'")}">
+                <div class="fw-medium">${escapeHtml(service.service_name)}</div>
+                ${service.service_fee ? `<div><small class="text-muted">₱${parseFloat(service.service_fee).toLocaleString()}</small></div>` : ''}
+            `;
+
+            serviceCard.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const checkbox = serviceCard.querySelector('.service-checkbox');
+                checkbox.checked = !checkbox.checked;
+                serviceCard.classList.toggle('selected', checkbox.checked);
+            });
+
+            colDiv.appendChild(serviceCard);
+            container.appendChild(colDiv);
+        });
+        
+        // Re-attach select all functionality
+        const selectAllCheckbox = document.getElementById('selectAllServices');
+        if (selectAllCheckbox) {
+            const newSelectAll = selectAllCheckbox.cloneNode(true);
+            selectAllCheckbox.parentNode.replaceChild(newSelectAll, selectAllCheckbox);
+
+            newSelectAll.addEventListener('change', function () {
+                const isChecked = this.checked;
+                const allServiceCards = document.querySelectorAll('.service-card');
+                allServiceCards.forEach(card => {
+                    const checkbox = card.querySelector('.service-checkbox');
+                    if (checkbox && !checkbox.disabled) {
+                        checkbox.checked = isChecked;
+                        card.classList.toggle('selected', isChecked);
+                    }
+                });
+            });
+        }
+    }
+
+    function setupServiceFilters() {
+        const serviceSearch = document.getElementById('serviceSearch');
+        if (serviceSearch) serviceSearch.addEventListener('input', () => renderServicesList());
+    }
+
+    function updateSelectedCounts() {
+        const facilitiesCount = document.querySelectorAll('.facility-checkbox:checked').length;
+        const equipmentCount = document.querySelectorAll('.equipment-checkbox:checked').length;
+
+        const facilitiesCountSpan = document.getElementById('selectedFacilitiesCount');
+        const equipmentCountSpan = document.getElementById('selectedEquipmentCount');
+
+        if (facilitiesCountSpan) facilitiesCountSpan.textContent = facilitiesCount;
+        if (equipmentCountSpan) equipmentCountSpan.textContent = equipmentCount;
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Initialize user type toggle
+    function initializeUserTypeToggle() {
+        const userTypeSelect = document.querySelector('select[name="user_type"]');
+        const schoolIdInput = document.getElementById('schoolIdInput');
+        const organizationInput = document.getElementById('organizationInput');
+        if (!userTypeSelect) return;
+
+        const handleUserTypeChange = function () {
+            if (this.value === 'Internal') {
+                schoolIdInput.disabled = false;
+                schoolIdInput.setAttribute('required', 'required');
+                schoolIdInput.placeholder = "e.g., 2015-12345";
+                schoolIdInput.classList.remove('bg-light');
+                organizationInput.disabled = false;
+                organizationInput.removeAttribute('required');
+            } else if (this.value === 'External') {
+                schoolIdInput.disabled = true;
+                schoolIdInput.removeAttribute('required');
+                schoolIdInput.value = '';
+                schoolIdInput.placeholder = "For internal users only";
+                schoolIdInput.classList.add('bg-light');
+                organizationInput.disabled = false;
+                organizationInput.removeAttribute('required');
+            } else {
+                schoolIdInput.disabled = true;
+                schoolIdInput.removeAttribute('required');
+                organizationInput.disabled = false;
+                organizationInput.removeAttribute('required');
+            }
+            if (typeof validateCurrentStep === 'function') validateCurrentStep();
+        };
+        userTypeSelect.addEventListener('change', handleUserTypeChange);
+        if (!userTypeSelect.value || userTypeSelect.value === '') userTypeSelect.value = 'External';
+        setTimeout(() => userTypeSelect.dispatchEvent(new Event('change')), 100);
+    }
+    
+    // Save reservation
+    async function saveReservation() {
+        const form = document.getElementById('addReservationForm');
+        const confirmBtn = document.getElementById('submitReservationBtn');
+
+        if (confirmBtn.disabled) return;
+
+        const originalText = confirmBtn.innerHTML;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width: 1rem; height: 1rem;"></span> Creating...';
+        confirmBtn.classList.remove('btn-loading');
+
+        const statusSelect = document.getElementById('initialStatusSelect');
+        const statusId = statusSelect ? parseInt(statusSelect.value) : 1;
+        const isAllDay = document.getElementById('allDayCheckbox')?.checked || false;
+
+        const resetButtonState = () => {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalText;
+        };
+
+        try {
+            const firstName = document.querySelector('input[name="first_name"]')?.value.trim() || '';
+            const lastName = document.querySelector('input[name="last_name"]')?.value.trim() || '';
+            const email = document.querySelector('input[name="email"]')?.value.trim() || '';
+            const contactNumber = document.querySelector('input[name="contact_number"]')?.value || '';
+            const organizationName = document.querySelector('input[name="organization_name"]')?.value || '';
+            const schoolId = document.querySelector('input[name="school_id"]')?.value || '';
+            const userType = document.querySelector('select[name="user_type"]')?.value;
+            const additionalRequests = document.querySelector('textarea[name="additional_requests"]')?.value || '';
+            const calendarTitle = document.querySelector('input[name="event_title"]')?.value || '';
+            const calendarDescription = document.querySelector('textarea[name="event_details"]')?.value || '';
+            const purposeSelect = document.getElementById('purposeSelect');
+            const purposeId = purposeSelect?.value ? parseInt(purposeSelect.value) : null;
+            const numParticipants = parseInt(document.querySelector('input[name="num_participants"]')?.value || 1);
+            const numTables = parseInt(document.querySelector('input[name="num_tables"]')?.value || 0);
+            const numChairs = parseInt(document.querySelector('input[name="num_chairs"]')?.value || 0);
             const startDate = document.getElementById('startDate')?.value;
             const endDate = document.getElementById('endDate')?.value;
             let startTime = document.getElementById('startTime')?.value;
             let endTime = document.getElementById('endTime')?.value;
 
-            if (startDate && endDate && startTime && endTime) {
+            const selectedFacilities = Array.from(document.querySelectorAll('.facility-checkbox:checked')).map(cb => ({
+                facility_id: parseInt(cb.value)
+            }));
+
+            const selectedEquipment = Array.from(document.querySelectorAll('.equipment-checkbox:checked')).map(cb => ({
+                equipment_id: parseInt(cb.value),
+                quantity: 1
+            }));
+
+            const selectedServices = Array.from(document.querySelectorAll('.service-checkbox:checked')).map(cb => ({
+                service_id: parseInt(cb.value)
+            }));
+
+            const numMicrophones = parseInt(document.querySelector('input[name="num_microphones"]')?.value || 0);
+
+            const validationErrors = [];
+            if (!firstName) validationErrors.push('First name is required');
+            if (!lastName) validationErrors.push('Last name is required');
+            if (!email) validationErrors.push('Email is required');
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) validationErrors.push('Email format is invalid');
+            if (!purposeId || isNaN(purposeId) || purposeId <= 0) validationErrors.push('Please select a valid purpose');
+            if (!startDate || !endDate) validationErrors.push('Start and end dates are required');
+            if (!userType) validationErrors.push('User type is required');
+            if (userType === 'Internal' && !schoolId) validationErrors.push('School ID is required for internal users');
+            if (selectedFacilities.length === 0 && selectedEquipment.length === 0) {
+                validationErrors.push('Please select at least one facility or equipment item');
+            }
+
+            if (validationErrors.length > 0) {
+                throw new Error(`Validation failed:\n${validationErrors.join('\n• ')}`);
+            }
+
+            if (isAllDay) {
+                startTime = '00:00';
+                endTime = '00:00';
+            }
+
+            const reservationData = {
+                status_id: statusId,
+                start_date: startDate,
+                end_date: endDate,
+                start_time: startTime,
+                end_time: endTime,
+                all_day: isAllDay,
+                purpose_id: purposeId,
+                num_participants: numParticipants,
+                num_tables: numTables,
+                num_chairs: numChairs,
+                num_microphones: numMicrophones,
+                first_name: firstName,
+                last_name: lastName,
+                email: email,
+                contact_number: contactNumber || null,
+                organization_name: organizationName || null,
+                school_id: schoolId || null,
+                user_type: userType,
+                additional_requests: additionalRequests || null,
+                event_title: calendarTitle || null,
+                event_details: calendarDescription || null,
+                facilities: selectedFacilities,
+                equipment: selectedEquipment,
+                services: selectedServices
+            };
+
+            const response = await fetch('/api/admin/requisition/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify(reservationData)
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                if (result.details) {
+                    const apiErrors = Object.values(result.details).flat().join('\n• ');
+                    throw new Error(`Validation failed:\n• ${apiErrors}`);
+                }
+                throw new Error(result.message || result.error || `HTTP Error ${response.status}: Failed to create reservation`);
+            }
+
+            if (result && (result.request_id || result.message)) {
+                showToast('Reservation created successfully!', 'success');
+                resetButtonState();
+                setTimeout(() => { window.location.href = '/admin/pending-requests'; }, 1500);
+            } else {
+                throw new Error(result.message || 'Reservation created but received unexpected response format');
+            }
+        } catch (error) {
+            console.error('Error saving reservation:', error);
+            let errorMessage = error.message;
+            if (errorMessage.includes('Validation failed:')) {
+                errorMessage = errorMessage.replace('Validation failed:\n', 'Please fix the following:\n• ');
+            }
+            showToast(errorMessage || 'Failed to create reservation. Please try again.', 'error');
+            resetButtonState();
+        }
+    }
+
+    // Setup step navigation
+    function setupReservationStepNavigation() {
+        const prevBtn = document.getElementById('prevStepBtn');
+        const nextBtn = document.getElementById('nextStepBtn');
+        const submitBtn = document.getElementById('submitReservationBtn');
+
+        function validateCurrentStep() {
+            let isValid = false;
+            switch (currentStep) {
+                case 1:
+                    const userType = document.querySelector('select[name="user_type"]')?.value;
+                    const firstName = document.querySelector('input[name="first_name"]')?.value.trim();
+                    const lastName = document.querySelector('input[name="last_name"]')?.value.trim();
+                    const email = document.querySelector('input[name="email"]')?.value.trim();
+                    const schoolId = document.querySelector('input[name="school_id"]')?.value.trim();
+                    let schoolIdValid = true;
+                    if (userType === 'Internal') schoolIdValid = schoolId && schoolId.length > 0;
+                    isValid = userType && firstName && lastName && email && schoolIdValid;
+                    break;
+                case 2:
+                    const purposeSelect = document.getElementById('purposeSelect');
+                    const purposeValue = purposeSelect?.value;
+                    const isPlaceholderSelected = purposeSelect?.selectedIndex === 0;
+                    const purposeValid = !isPlaceholderSelected && purposeValue && parseInt(purposeValue) > 0;
+                    const participantsValid = parseInt(document.querySelector('input[name="num_participants"]')?.value || 0) > 0;
+                    isValid = purposeValid && participantsValid;
+                    break;
+                case 3:
+                    isValid = true;
+                    // LAZY LOAD: Load facilities when reaching this step
+                    if (!facilitiesLoaded) {
+                        loadFacilities(1);
+                        setupFacilityFilters();
+                    }
+                    break;
+                case 4:
+                    isValid = true;
+                    // LAZY LOAD: Load equipment when reaching this step
+                    if (!equipmentLoaded) {
+                        loadEquipment(1);
+                        setupEquipmentFilters();
+                    }
+                    break;
+                case 5:
+                    isValid = true;
+                    break;
+                case 6:
+                    const startDate = document.getElementById('startDate')?.value;
+                    const endDate = document.getElementById('endDate')?.value;
+                    const isAllDay = document.getElementById('allDayCheckbox')?.checked || false;
+                    if (isAllDay) {
+                        isValid = startDate && endDate && new Date(endDate) >= new Date(startDate);
+                    } else {
+                        const startTime = document.getElementById('startTime')?.value;
+                        const endTime = document.getElementById('endTime')?.value;
+                        if (!startDate || !startTime || !endDate || !endTime) {
+                            isValid = false;
+                        } else {
+                            const start = new Date(`${startDate}T${startTime}`);
+                            const end = new Date(`${endDate}T${endTime}`);
+                            isValid = end > start;
+                        }
+                    }
+                    break;
+                case 7:
+                    const statusValid = statusSelect && statusSelect.value && statusSelect.value !== '';
+                    isValid = statusValid;
+                    break;
+                default:
+                    isValid = false;
+            }
+
+            if (nextBtn) nextBtn.disabled = !isValid;
+            if (currentStep === totalSteps && submitBtn) submitBtn.disabled = !isValid;
+            return isValid;
+        }
+
+        function updateStepDisplay() {
+            document.querySelectorAll('.step').forEach(step => {
+                const stepNum = parseInt(step.dataset.step);
+                if (stepNum === currentStep) step.classList.add('active');
+                else step.classList.remove('active');
+            });
+            document.querySelectorAll('.step-content').forEach(content => {
+                const stepNum = parseInt(content.dataset.step);
+                if (stepNum === currentStep) content.classList.remove('d-none');
+                else content.classList.add('d-none');
+            });
+            prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-block';
+            if (currentStep === totalSteps) {
+                nextBtn.classList.add('d-none');
+                submitBtn.classList.remove('d-none');
+                updateReviewSummary();
+            } else {
+                nextBtn.classList.remove('d-none');
+                submitBtn.classList.add('d-none');
+            }
+            validateCurrentStep();
+        }
+
+        function updateReviewSummary() {
+            const firstName = document.querySelector('input[name="first_name"]')?.value.trim() || '';
+            const lastName = document.querySelector('input[name="last_name"]')?.value.trim() || '';
+            document.getElementById('reviewUserName').textContent = `${firstName} ${lastName}`;
+            document.getElementById('reviewUserType').textContent = document.querySelector('select[name="user_type"]')?.value || '-';
+            document.getElementById('reviewEmail').textContent = document.querySelector('input[name="email"]')?.value || '-';
+            document.getElementById('reviewContactNumber').textContent = document.querySelector('input[name="contact_number"]')?.value || 'Not provided';
+            document.getElementById('reviewSchoolId').textContent = document.querySelector('input[name="school_id"]')?.value || 'Not provided';
+            document.getElementById('reviewOrganization').textContent = document.querySelector('input[name="organization_name"]')?.value || 'Not provided';
+
+            const purposeSelect = document.getElementById('purposeSelect');
+            document.getElementById('reviewPurpose').textContent = purposeSelect?.options[purposeSelect.selectedIndex]?.text || '-';
+            document.getElementById('reviewParticipants').textContent = document.querySelector('input[name="num_participants"]')?.value || '0';
+            document.getElementById('reviewFurniture').textContent = `${document.querySelector('input[name="num_tables"]')?.value || 0} tables, ${document.querySelector('input[name="num_chairs"]')?.value || 0} chairs`;
+            document.getElementById('reviewMicrophones').textContent = document.querySelector('input[name="num_microphones"]')?.value || '0';
+            document.getElementById('reviewEventTitle').textContent = document.querySelector('input[name="event_title"]')?.value || 'Not provided';
+            document.getElementById('reviewEventDetails').textContent = document.querySelector('textarea[name="event_details"]')?.value || 'Not provided';
+            document.getElementById('reviewAdditionalRequests').textContent = document.querySelector('textarea[name="additional_requests"]')?.value || 'None';
+
+            const statusSelect = document.getElementById('initialStatusSelect');
+            document.getElementById('reviewStatus').textContent = statusSelect?.options[statusSelect.selectedIndex]?.text || 'Scheduled';
+            
+            const startDate = document.getElementById('startDate')?.value;
+            const endDate = document.getElementById('endDate')?.value;
+            let startTime = document.getElementById('startTime')?.value;
+            let endTime = document.getElementById('endTime')?.value;
+            const isAllDay = document.getElementById('allDayCheckbox')?.checked || false;
+
+            if (startTime) startTime = startTime.replace(/^0/, '');
+            if (endTime) endTime = endTime.replace(/^0/, '');
+
+            if (startDate && endDate) {
+                const dateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+                const startDateObj = new Date(startDate + 'T12:00:00');
+                const endDateObj = new Date(endDate + 'T12:00:00');
+
+                if (isAllDay) {
+                    if (startDate === endDate) {
+                        document.getElementById('reviewSchedule').textContent = `${startDateObj.toLocaleDateString('en-US', dateOptions)} (All Day)`;
+                    } else {
+                        document.getElementById('reviewSchedule').textContent = `${startDateObj.toLocaleDateString('en-US', dateOptions)} - ${endDateObj.toLocaleDateString('en-US', dateOptions)} (All Day)`;
+                    }
+                } else if (startTime && endTime) {
+                    const formatTime = (timeStr) => {
+                        const [hour, minute] = timeStr.split(':');
+                        let hourNum = parseInt(hour, 10);
+                        const ampm = hourNum >= 12 ? 'PM' : 'AM';
+                        hourNum = hourNum % 12 || 12;
+                        return `${hourNum}:${minute} ${ampm}`;
+                    };
+                    const startFormatted = formatTime(startTime);
+                    const endFormatted = formatTime(endTime);
+                    document.getElementById('reviewSchedule').textContent = `${startDateObj.toLocaleDateString('en-US', dateOptions)} ${startFormatted} to ${endDateObj.toLocaleDateString('en-US', dateOptions)} ${endFormatted}`;
+                }
+            }
+
+            if (startDate && endDate && startTime && endTime && !isAllDay) {
                 const start = new Date(`${startDate}T${startTime}`);
                 const end = new Date(`${endDate}T${endTime}`);
-
                 if (end > start) {
                     const diffMs = end - start;
                     const hours = Math.floor(diffMs / (1000 * 60 * 60));
                     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
                     let durationText = '';
                     if (hours > 0) durationText += `${hours} hour${hours > 1 ? 's' : ''}`;
                     if (minutes > 0) {
                         if (hours > 0) durationText += ' ';
                         durationText += `${minutes} minute${minutes > 1 ? 's' : ''}`;
                     }
-
-                    const durationElement = document.getElementById('durationDisplay');
-                    if (durationElement) {
-                        durationElement.textContent = durationText || '0 minutes';
-                    }
-                } else {
-                    const durationElement = document.getElementById('durationDisplay');
-                    if (durationElement) {
-                        durationElement.textContent = 'End time must be after start time';
-                    }
-                }
-            }
-        }
-
-        // Update character counter
-        function updateCharacterCounter(input, maxLength, counterId) {
-            if (!input) return;
-            let counter = document.getElementById(counterId);
-            if (!counter) {
-                counter = document.createElement('small');
-                counter.id = counterId;
-                counter.className = 'text-muted d-block mt-1';
-                input.parentNode.appendChild(counter);
-            }
-
-            const update = () => {
-                const length = input.value.length;
-                counter.textContent = `${length}/${maxLength} characters`;
-                const percentage = (length / maxLength) * 100;
-                counter.className = 'text-muted d-block mt-1';
-                if (percentage >= 90) {
-                    counter.classList.add('text-danger', 'fw-bold');
-                } else if (percentage >= 80) {
-                    counter.classList.add('text-warning', 'fw-medium');
-                }
-            };
-            input.addEventListener('input', update);
-            input.addEventListener('change', update);
-            update();
-        }
-
-        // Setup character counters
-        function setupCharacterCounters() {
-            updateCharacterCounter(document.querySelector('input[name="first_name"]'), 50, 'firstNameCounter');
-            updateCharacterCounter(document.querySelector('input[name="last_name"]'), 50, 'lastNameCounter');
-            updateCharacterCounter(document.querySelector('input[name="email"]'), 100, 'emailCounter');
-            updateCharacterCounter(document.querySelector('input[name="contact_number"]'), 15, 'contactCounter');
-            updateCharacterCounter(document.getElementById('organizationInput'), 100, 'organizationCounter');
-            updateCharacterCounter(document.getElementById('schoolIdInput'), 20, 'schoolIdCounter');
-            updateCharacterCounter(document.querySelector('input[name="event_title"]'), 50, 'calendarTitleCounter');
-            updateCharacterCounter(document.querySelector('textarea[name="event_details"]'), 100, 'calendarDescriptionCounter');
-
-            const additionalRequestsTextarea = document.querySelector('textarea[name="additional_requests"]');
-            const additionalRequestsCounter = document.getElementById('additionalRequestsCounter');
-            if (additionalRequestsTextarea && additionalRequestsCounter) {
-                const updateAdditionalRequestsCounter = () => {
-                    const length = additionalRequestsTextarea.value.length;
-                    const maxLength = 250;
-                    additionalRequestsCounter.textContent = `${length}/${maxLength} characters`;
-                    const percentage = (length / maxLength) * 100;
-                    additionalRequestsCounter.className = '';
-                    if (percentage >= 90) {
-                        additionalRequestsCounter.classList.add('text-danger', 'fw-bold');
-                    } else if (percentage >= 80) {
-                        additionalRequestsCounter.classList.add('text-warning', 'fw-medium');
-                    } else {
-                        additionalRequestsCounter.classList.add('text-muted');
-                    }
-                };
-                additionalRequestsTextarea.addEventListener('input', updateAdditionalRequestsCounter);
-                additionalRequestsTextarea.addEventListener('change', updateAdditionalRequestsCounter);
-                updateAdditionalRequestsCounter();
-            }
-        }
-
-
-        // Store original facilities data for filtering
-        let allFacilities = [];
-        let allEquipment = [];
-        let allServices = [];
-        let formInitData = null;
-
-        // Single function to load all initialization data
-        async function loadFormInitData() {
-            try {
-                const response = await fetch('/api/admin/requisition/form-init-data', {
-                    headers: {
-                        'Authorization': `Bearer ${adminToken}`,
-                        'Accept': 'application/json'
-                    }
-                });
-
-                if (!response.ok) throw new Error(`API returned ${response.status}`);
-
-                const result = await response.json();
-                if (!result.success) throw new Error(result.message);
-
-                formInitData = result.data;
-
-                // Populate purposes
-                populatePurposes(formInitData.purposes);
-
-                // Store facilities and equipment
-                allFacilities = formInitData.facilities;
-                allEquipment = formInitData.equipment;
-                allServices = formInitData.services;
-
-                // Render UI components
-                renderFacilitiesList();
-                renderEquipmentList();
-                renderServicesList();
-                populateStatusOptions(formInitData.statuses);
-
-                // Setup filters after data is loaded
-                setupFacilityFilters();
-                setupEquipmentFilters();
-                setupServiceFilters();
-
-                console.log('Form init data loaded:', {
-                    purposes: formInitData.purposes.length,
-                    facilities: allFacilities.length,
-                    equipment: allEquipment.length,
-                    services: allServices.length,
-                    statuses: formInitData.statuses.length
-                });
-
-            } catch (error) {
-                console.error('Error loading form init data:', error);
-                throw error;
-            }
-        }
-
-        function populatePurposes(purposes) {
-            const select = document.getElementById('purposeSelect');
-            if (!select) return;
-
-            select.innerHTML = '<option value="" disabled selected>Select purpose of reservation</option>';
-            purposes.forEach(purpose => {
-                const option = document.createElement('option');
-                option.value = purpose.purpose_id.toString();
-                option.textContent = purpose.purpose_name;
-                select.appendChild(option);
-            });
-        }
-
-        function populateStatusOptions(statuses) {
-            const statusSelect = document.getElementById('initialStatusSelect');
-            if (!statusSelect) return;
-
-            statusSelect.innerHTML = '<option value="" disabled selected>Select initial status</option>';
-            statuses.forEach(status => {
-                const option = document.createElement('option');
-                option.value = status.status_id;
-                option.textContent = status.status_name;
-                option.style.color = status.color_code;
-                statusSelect.appendChild(option);
-            });
-
-            // Set default to Scheduled if available
-            const scheduledOption = Array.from(statusSelect.options).find(opt => opt.textContent === 'Scheduled');
-            if (scheduledOption) scheduledOption.selected = true;
-        }
-        function renderFacilitiesList() {
-            const searchTerm = document.getElementById('facilitySearch')?.value.toLowerCase() || '';
-            const rateFilter = document.getElementById('facilityRateFilter')?.value || '';
-            const statusFilter = document.getElementById('facilityStatusFilter')?.value || '';
-
-            const filteredFacilities = allFacilities.filter(facility => {
-                const matchesSearch = !searchTerm || facility.facility_name.toLowerCase().includes(searchTerm);
-                const matchesRate = !rateFilter || facility.rate_type === rateFilter;
-
-                let isAvailable = false;
-                if (facility.status_name) {
-                    isAvailable = facility.status_name === 'Available';
-                } else if (facility.status && facility.status.status_name) {
-                    isAvailable = facility.status.status_name === 'Available';
-                } else if (facility.status_id) {
-                    isAvailable = facility.status_id === 1;
-                }
-
-                const matchesStatus = !statusFilter ||
-                    (statusFilter === 'available' && isAvailable) ||
-                    (statusFilter === 'unavailable' && !isAvailable);
-
-                return matchesSearch && matchesRate && matchesStatus;
-            });
-
-            const facilitiesList = document.getElementById('facilitiesList');
-            if (!facilitiesList) return;
-
-            if (filteredFacilities.length === 0) {
-                facilitiesList.innerHTML = '<div class="text-center text-muted py-3">No facilities match your filters</div>';
-                return;
-            }
-
-            facilitiesList.innerHTML = '';
-            filteredFacilities.forEach(facility => {
-                let isAvailable = false;
-                let statusName = 'Unknown';
-                let statusColor = '#6c757d';
-
-                if (facility.status_name) {
-                    statusName = facility.status_name;
-                    isAvailable = facility.status_name === 'Available';
-                    statusColor = isAvailable ? '#28a745' :
-                        (facility.status_name === 'Unavailable' ? '#dc3545' :
-                            (facility.status_name === 'Under Maintenance' ? '#ffc107' :
-                                (facility.status_name === 'Reserved' ? '#007bff' : '#6c757d')));
-                } else if (facility.status && facility.status.status_name) {
-                    statusName = facility.status.status_name;
-                    isAvailable = facility.status.status_name === 'Available';
-                    statusColor = facility.status.color_code || '#6c757d';
-                } else if (facility.status_id) {
-                    isAvailable = facility.status_id === 1;
-                    statusName = isAvailable ? 'Available' : 'Unknown';
-                    statusColor = isAvailable ? '#28a745' : '#6c757d';
-                }
-
-                const div = document.createElement('div');
-                div.className = `facility-card ${!isAvailable ? 'disabled' : ''}`;
-                div.innerHTML = `
-                                    <input type="checkbox" class="facility-checkbox" value="${facility.facility_id}" 
-                                           data-name="${facility.facility_name}" data-fee="${facility.base_fee}"
-                                           data-rate-type="${facility.rate_type}" data-capacity="${facility.capacity}"
-                                           ${!isAvailable ? 'disabled' : ''}>
-                                    <div class="fw-medium">${facility.facility_name}</div>
-                                    <div><small>₱${parseFloat(facility.base_fee).toLocaleString()} ${facility.rate_type === 'Per Hour' ? '/hour' : '/event'}</small></div>
-                                    <div><small class="text-muted">Capacity: ${facility.capacity} people</small></div>
-                                    ${facility.location_note && facility.location_note !== 'No location note provided.' ?
-                        `<div><small class="text-muted"><i class="bi bi-geo-alt"></i> ${facility.location_note}</small></div>` : ''}
-                                    <div><span class="badge" style="background-color: ${statusColor}; color: white;">${statusName}</span></div>
-                                `;
-
-                if (isAvailable) {
-                    div.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const checkbox = div.querySelector('.facility-checkbox');
-                        checkbox.checked = !checkbox.checked;
-                        div.classList.toggle('selected', checkbox.checked);
-                        updateSelectedCounts();
-                    });
-                }
-
-                facilitiesList.appendChild(div);
-            });
-
-            updateSelectedCounts();
-        }
-
-        function setupFacilityFilters() {
-            const facilitySearch = document.getElementById('facilitySearch');
-            const facilityRateFilter = document.getElementById('facilityRateFilter');
-            const facilityStatusFilter = document.getElementById('facilityStatusFilter');
-
-            if (facilitySearch) facilitySearch.addEventListener('input', () => renderFacilitiesList());
-            if (facilityRateFilter) facilityRateFilter.addEventListener('change', () => renderFacilitiesList());
-            if (facilityStatusFilter) facilityStatusFilter.addEventListener('change', () => renderFacilitiesList());
-        }
-
-        function renderEquipmentList() {
-            const searchTerm = document.getElementById('equipmentSearch')?.value.toLowerCase() || '';
-            const rateFilter = document.getElementById('equipmentRateFilter')?.value || '';
-            const statusFilter = document.getElementById('equipmentStatusFilter')?.value || '';
-
-            const filteredEquipment = allEquipment.filter(equipment => {
-                const matchesSearch = !searchTerm || equipment.equipment_name.toLowerCase().includes(searchTerm);
-                const matchesRate = !rateFilter || equipment.rate_type === rateFilter;
-
-                let isAvailable = false;
-                if (equipment.status_name) {
-                    isAvailable = equipment.status_name === 'Available';
-                } else if (equipment.status && equipment.status.status_name) {
-                    isAvailable = equipment.status.status_name === 'Available';
-                } else if (equipment.status_id) {
-                    isAvailable = equipment.status_id === 1;
-                }
-
-                const matchesStatus = !statusFilter ||
-                    (statusFilter === 'available' && isAvailable) ||
-                    (statusFilter === 'unavailable' && !isAvailable);
-
-                return matchesSearch && matchesRate && matchesStatus;
-            });
-
-            const equipmentList = document.getElementById('equipmentList');
-            if (!equipmentList) return;
-
-            if (filteredEquipment.length === 0) {
-                equipmentList.innerHTML = '<div class="text-center text-muted py-3">No equipment match your filters</div>';
-                return;
-            }
-
-            equipmentList.innerHTML = '';
-            filteredEquipment.forEach(equipment => {
-                let isAvailable = false;
-                let statusName = 'Unknown';
-                let statusColor = '#6c757d';
-
-                if (equipment.status_name) {
-                    statusName = equipment.status_name;
-                    isAvailable = equipment.status_name === 'Available';
-                    statusColor = isAvailable ? '#28a745' :
-                        (equipment.status_name === 'Unavailable' ? '#dc3545' :
-                            (equipment.status_name === 'Under Maintenance' ? '#ffc107' :
-                                (equipment.status_name === 'Reserved' ? '#007bff' : '#6c757d')));
-                } else if (equipment.status && equipment.status.status_name) {
-                    statusName = equipment.status.status_name;
-                    isAvailable = equipment.status.status_name === 'Available';
-                    statusColor = equipment.status.color_code || '#6c757d';
-                } else if (equipment.status_id) {
-                    isAvailable = equipment.status_id === 1;
-                    statusName = isAvailable ? 'Available' : 'Unknown';
-                    statusColor = isAvailable ? '#28a745' : '#6c757d';
-                }
-
-                const div = document.createElement('div');
-                div.className = `equipment-card ${!isAvailable ? 'disabled' : ''}`;
-                div.innerHTML = `
-                                    <input type="checkbox" class="equipment-checkbox" value="${equipment.equipment_id}"
-                                           data-name="${equipment.equipment_name}" data-fee="${equipment.base_fee}"
-                                           data-rate-type="${equipment.rate_type}" ${!isAvailable ? 'disabled' : ''}>
-                                    <strong>${equipment.equipment_name}</strong>
-                                    <div><small>₱${parseFloat(equipment.base_fee).toLocaleString()} ${equipment.rate_type === 'Per Hour' ? '/hour' : '/event'}</small></div>
-                                    ${equipment.description && equipment.description !== 'No description provided for this equipment.' ?
-                        `<div><small class="text-muted">${equipment.description.substring(0, 100)}</small></div>` : ''}
-                                    <div><span class="badge" style="background-color: ${statusColor}; color: white;">${statusName}</span></div>
-                                `;
-
-                if (isAvailable) {
-                    div.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const checkbox = div.querySelector('.equipment-checkbox');
-                        checkbox.checked = !checkbox.checked;
-                        div.classList.toggle('selected', checkbox.checked);
-                        updateSelectedCounts();
-                    });
-                }
-
-                equipmentList.appendChild(div);
-            });
-
-            updateSelectedCounts();
-        }
-
-        function setupEquipmentFilters() {
-            const equipmentSearch = document.getElementById('equipmentSearch');
-            const equipmentRateFilter = document.getElementById('equipmentRateFilter');
-            const equipmentStatusFilter = document.getElementById('equipmentStatusFilter');
-
-            if (equipmentSearch) equipmentSearch.addEventListener('input', () => renderEquipmentList());
-            if (equipmentRateFilter) equipmentRateFilter.addEventListener('change', () => renderEquipmentList());
-            if (equipmentStatusFilter) equipmentStatusFilter.addEventListener('change', () => renderEquipmentList());
-        }
-        function renderServicesList() {
-            const searchTerm = document.getElementById('serviceSearch')?.value.toLowerCase() || '';
-
-            const filteredServices = allServices.filter(service => {
-                return !searchTerm || service.service_name.toLowerCase().includes(searchTerm);
-            });
-
-            const container = document.getElementById('extraServicesContainer');
-            if (!container) return;
-
-            if (filteredServices.length === 0) {
-                container.innerHTML = '<div class="col-12 text-center text-muted py-3">No services match your search</div>';
-                return;
-            }
-
-            container.innerHTML = '';
-            filteredServices.forEach(service => {
-                const colDiv = document.createElement('div');
-                colDiv.className = 'col-lg-4 col-md-6 col-12';
-
-                const serviceCard = document.createElement('div');
-                serviceCard.className = 'service-card';
-                serviceCard.innerHTML = `
-                                    <input type="checkbox" class="service-checkbox" value="${service.service_id}"
-                                           data-name="${service.service_name}">
-                                    <div class="fw-medium">${service.service_name}</div>
-                                    ${service.service_fee ? `<div><small class="text-muted">₱${parseFloat(service.service_fee).toLocaleString()}</small></div>` : ''}
-                                `;
-
-                serviceCard.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const checkbox = serviceCard.querySelector('.service-checkbox');
-                    checkbox.checked = !checkbox.checked;
-                    serviceCard.classList.toggle('selected', checkbox.checked);
-                });
-
-                colDiv.appendChild(serviceCard);
-                container.appendChild(colDiv);
-            });
-            // Re-attach select all functionality for services
-            const selectAllCheckbox = document.getElementById('selectAllServices');
-            if (selectAllCheckbox) {
-                // Remove old listener by cloning
-                const newSelectAll = selectAllCheckbox.cloneNode(true);
-                selectAllCheckbox.parentNode.replaceChild(newSelectAll, selectAllCheckbox);
-
-                newSelectAll.addEventListener('change', function () {
-                    const isChecked = this.checked;
-                    const allServiceCards = document.querySelectorAll('.service-card');
-
-                    allServiceCards.forEach(card => {
-                        const checkbox = card.querySelector('.service-checkbox');
-                        if (checkbox && !checkbox.disabled) {
-                            checkbox.checked = isChecked;
-                            if (isChecked) {
-                                card.classList.add('selected');
-                            } else {
-                                card.classList.remove('selected');
-                            }
-                        }
-                    });
-                });
-            }
-        }
-
-        function setupServiceFilters() {
-            const serviceSearch = document.getElementById('serviceSearch');
-            if (serviceSearch) serviceSearch.addEventListener('input', () => renderServicesList());
-        }
-
-        function updateSelectedCounts() {
-            const facilitiesCount = document.querySelectorAll('.facility-checkbox:checked').length;
-            const equipmentCount = document.querySelectorAll('.equipment-checkbox:checked').length;
-
-            const facilitiesCountSpan = document.getElementById('selectedFacilitiesCount');
-            const equipmentCountSpan = document.getElementById('selectedEquipmentCount');
-
-            if (facilitiesCountSpan) facilitiesCountSpan.textContent = facilitiesCount;
-            if (equipmentCountSpan) equipmentCountSpan.textContent = equipmentCount;
-        }
-
-
-        // Initialize user type toggle
-        function initializeUserTypeToggle() {
-            const userTypeSelect = document.querySelector('select[name="user_type"]');
-            const schoolIdInput = document.getElementById('schoolIdInput');
-            const organizationInput = document.getElementById('organizationInput');
-            if (!userTypeSelect) return;
-
-            const handleUserTypeChange = function () {
-                if (this.value === 'Internal') {
-                    schoolIdInput.disabled = false;
-                    schoolIdInput.setAttribute('required', 'required');
-                    schoolIdInput.placeholder = "e.g., 2015-12345";
-                    schoolIdInput.classList.remove('bg-light');
-                    organizationInput.disabled = false;
-                    organizationInput.removeAttribute('required');
-                } else if (this.value === 'External') {
-                    schoolIdInput.disabled = true;
-                    schoolIdInput.removeAttribute('required');
-                    schoolIdInput.value = '';
-                    schoolIdInput.placeholder = "For internal users only";
-                    schoolIdInput.classList.add('bg-light');
-                    organizationInput.disabled = false;
-                    organizationInput.removeAttribute('required');
-                } else {
-                    schoolIdInput.disabled = true;
-                    schoolIdInput.removeAttribute('required');
-                    organizationInput.disabled = false;
-                    organizationInput.removeAttribute('required');
-                }
-                if (typeof validateCurrentStep === 'function') validateCurrentStep();
-            };
-            userTypeSelect.addEventListener('change', handleUserTypeChange);
-            if (!userTypeSelect.value || userTypeSelect.value === '') userTypeSelect.value = 'External';
-            setTimeout(() => userTypeSelect.dispatchEvent(new Event('change')), 100);
-        }
-        // Save reservation
-        async function saveReservation() {
-            const form = document.getElementById('addReservationForm');
-            const confirmBtn = document.getElementById('submitReservationBtn');
-
-            // Prevent double submission
-            if (confirmBtn.disabled) return;
-
-            // Store original button content
-            const originalText = confirmBtn.innerHTML;
-
-            // Disable button and show loading state - USE ONLY ONE METHOD
-            confirmBtn.disabled = true;
-            confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width: 1rem; height: 1rem;"></span> Creating...';
-            // REMOVE the btn-loading class to avoid double spinner
-            confirmBtn.classList.remove('btn-loading');
-
-            const statusSelect = document.getElementById('initialStatusSelect');
-            const statusId = statusSelect ? parseInt(statusSelect.value) : 1;
-            const isAllDay = document.getElementById('allDayCheckbox')?.checked || false;
-
-            // Helper function to reset button state
-            const resetButtonState = () => {
-                confirmBtn.disabled = false;
-                confirmBtn.innerHTML = originalText;
-                // Don't re-add btn-loading class unless needed for other states
-            };
-
-            try {
-                // ... rest of your validation and data collection code ...
-                const firstName = document.querySelector('input[name="first_name"]')?.value.trim() || '';
-                const lastName = document.querySelector('input[name="last_name"]')?.value.trim() || '';
-                const email = document.querySelector('input[name="email"]')?.value.trim() || '';
-                const contactNumber = document.querySelector('input[name="contact_number"]')?.value || '';
-                const organizationName = document.querySelector('input[name="organization_name"]')?.value || '';
-                const schoolId = document.querySelector('input[name="school_id"]')?.value || '';
-                const userType = document.querySelector('select[name="user_type"]')?.value;
-                const additionalRequests = document.querySelector('textarea[name="additional_requests"]')?.value || '';
-                const calendarTitle = document.querySelector('input[name="event_title"]')?.value || '';
-                const calendarDescription = document.querySelector('textarea[name="event_details"]')?.value || '';
-                const purposeSelect = document.getElementById('purposeSelect');
-                const purposeId = purposeSelect?.value ? parseInt(purposeSelect.value) : null;
-                const numParticipants = parseInt(document.querySelector('input[name="num_participants"]')?.value || 1);
-                const numTables = parseInt(document.querySelector('input[name="num_tables"]')?.value || 0);
-                const numChairs = parseInt(document.querySelector('input[name="num_chairs"]')?.value || 0);
-                const startDate = document.getElementById('startDate')?.value;
-                const endDate = document.getElementById('endDate')?.value;
-                let startTime = document.getElementById('startTime')?.value;
-                let endTime = document.getElementById('endTime')?.value;
-
-                const selectedFacilities = Array.from(document.querySelectorAll('.facility-checkbox:checked')).map(cb => ({
-                    facility_id: parseInt(cb.value)
-                }));
-
-                const selectedEquipment = Array.from(document.querySelectorAll('.equipment-checkbox:checked')).map(cb => ({
-                    equipment_id: parseInt(cb.value),
-                    quantity: 1
-                }));
-
-                const selectedServices = Array.from(document.querySelectorAll('.service-checkbox:checked')).map(cb => ({
-                    service_id: parseInt(cb.value)
-                }));
-
-                const numMicrophones = parseInt(document.querySelector('input[name="num_microphones"]')?.value || 0);
-
-                // Validation
-                const validationErrors = [];
-                if (firstName.length > 50) validationErrors.push('First name must be 50 characters or less');
-                if (!firstName) validationErrors.push('First name is required');
-                if (lastName.length > 50) validationErrors.push('Last name must be 50 characters or less');
-                if (!lastName) validationErrors.push('Last name is required');
-                if (email.length > 100) validationErrors.push('Email must be 100 characters or less');
-                if (!email) validationErrors.push('Email is required');
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) validationErrors.push('Email format is invalid');
-                if (contactNumber && contactNumber.length > 15) validationErrors.push('Contact number must be 15 characters or less');
-                if (organizationName && organizationName.length > 100) validationErrors.push('Organization name must be 100 characters or less');
-                if (schoolId && schoolId.length > 20) validationErrors.push('School ID must be 20 characters or less');
-                if (additionalRequests && additionalRequests.length > 250) validationErrors.push('Additional requests must be 250 characters or less');
-                if (calendarTitle && calendarTitle.length > 50) validationErrors.push('Calendar title must be 50 characters or less');
-                if (calendarDescription && calendarDescription.length > 100) validationErrors.push('Calendar description must be 100 characters or less');
-                if (numParticipants < 1 || numParticipants > 500) validationErrors.push('Number of participants must be between 1 and 500');
-                if (numTables < 0 || numTables > 100) validationErrors.push('Number of tables must be between 0 and 100');
-                if (numChairs < 0 || numChairs > 500) validationErrors.push('Number of chairs must be between 0 and 500');
-                if (!purposeId || isNaN(purposeId) || purposeId <= 0) validationErrors.push('Please select a valid purpose');
-                if (!startDate || !endDate) validationErrors.push('Start and end dates are required');
-                if (!userType) validationErrors.push('User type is required');
-
-                // School ID validation for internal users
-                if (userType === 'Internal' && !schoolId) {
-                    validationErrors.push('School ID is required for internal users');
-                }
-
-                if (selectedFacilities.length === 0 && selectedEquipment.length === 0) {
-                    validationErrors.push('Please select at least one facility or equipment item');
-                }
-
-                if (validationErrors.length > 0) {
-                    throw new Error(`Validation failed:\n${validationErrors.join('\n• ')}`);
-                }
-
-                if (isAllDay) {
-                    startTime = '00:00';
-                    endTime = '00:00';
-                }
-
-                const reservationData = {
-                    status_id: statusId,
-                    start_date: startDate,
-                    end_date: endDate,
-                    start_time: startTime,
-                    end_time: endTime,
-                    all_day: isAllDay,
-                    purpose_id: purposeId,
-                    num_participants: numParticipants,
-                    num_tables: numTables,
-                    num_chairs: numChairs,
-                    num_microphones: numMicrophones,
-                    first_name: firstName,
-                    last_name: lastName,
-                    email: email,
-                    contact_number: contactNumber || null,
-                    organization_name: organizationName || null,
-                    school_id: schoolId || null,
-                    user_type: userType,
-                    additional_requests: additionalRequests || null,
-                    event_title: calendarTitle || null,
-                    event_details: calendarDescription || null,
-                    facilities: selectedFacilities,
-                    equipment: selectedEquipment,
-                    services: selectedServices
-                };
-
-                const response = await fetch('/api/admin/requisition/create', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${adminToken}`,
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-                    },
-                    body: JSON.stringify(reservationData)
-                });
-
-                const result = await response.json();
-                if (!response.ok) {
-                    // Handle validation errors from API
-                    if (result.details) {
-                        const apiErrors = Object.values(result.details).flat().join('\n• ');
-                        throw new Error(`Validation failed:\n• ${apiErrors}`);
-                    }
-                    throw new Error(result.message || result.error || `HTTP Error ${response.status}: Failed to create reservation`);
-                }
-
-                if (result && (result.request_id || result.message)) {
-                    showToast('Reservation created successfully!', 'success');
-                    // Reset button state before redirect
-                    resetButtonState();
-                    setTimeout(() => { window.location.href = '/admin/pending-requests'; }, 1500);
-                } else {
-                    throw new Error(result.message || 'Reservation created but received unexpected response format');
-                }
-            } catch (error) {
-                console.error('Error saving reservation:', error);
-                let errorMessage = error.message;
-                if (errorMessage.includes('Validation failed:')) {
-                    errorMessage = errorMessage.replace('Validation failed:\n', 'Please fix the following:\n• ');
-                }
-                showToast(errorMessage || 'Failed to create reservation. Please try again.', 'error');
-                // Reset button state on error so user can try again
-                resetButtonState();
-            }
-        }
-
-        // Setup step navigation
-        function setupReservationStepNavigation() {
-            const prevBtn = document.getElementById('prevStepBtn');
-            const nextBtn = document.getElementById('nextStepBtn');
-            const submitBtn = document.getElementById('submitReservationBtn');
-
-            function validateCurrentStep() {
-                let isValid = false;
-                switch (currentStep) {
-                    case 1: // User Details
-                        const userType = document.querySelector('select[name="user_type"]')?.value;
-                        const firstName = document.querySelector('input[name="first_name"]')?.value.trim();
-                        const lastName = document.querySelector('input[name="last_name"]')?.value.trim();
-                        const email = document.querySelector('input[name="email"]')?.value.trim();
-                        const schoolId = document.querySelector('input[name="school_id"]')?.value.trim();
-                        let schoolIdValid = true;
-                        if (userType === 'Internal') schoolIdValid = schoolId && schoolId.length > 0;
-                        isValid = userType && firstName && lastName && email && schoolIdValid;
-                        break;
-                    case 2: // Event Details
-                        const purposeSelect = document.getElementById('purposeSelect');
-                        const purposeValue = purposeSelect?.value;
-                        const isPlaceholderSelected = purposeSelect?.selectedIndex === 0;
-                        const purposeValid = !isPlaceholderSelected && purposeValue && parseInt(purposeValue) > 0;
-                        const participantsValid = parseInt(document.querySelector('input[name="num_participants"]')?.value || 0) > 0;
-                        isValid = purposeValid && participantsValid;
-                        break;
-                    case 3: // Facilities (optional, always valid)
-                        isValid = true;
-                        break;
-                    case 4: // Equipment (optional, always valid)
-                        isValid = true;
-                        break;
-                    case 5: // Services (optional, always valid)
-                        isValid = true;
-                        break;
-                    case 6: // Schedule
-                        const startDate = document.getElementById('startDate')?.value;
-                        const endDate = document.getElementById('endDate')?.value;
-                        const isAllDay = document.getElementById('allDayCheckbox')?.checked || false;
-                        if (isAllDay) {
-                            isValid = startDate && endDate && new Date(endDate) >= new Date(startDate);
-                        } else {
-                            const startTime = document.getElementById('startTime')?.value;
-                            const endTime = document.getElementById('endTime')?.value;
-                            if (!startDate || !startTime || !endDate || !endTime) {
-                                isValid = false;
-                            } else {
-                                const start = new Date(`${startDate}T${startTime}`);
-                                const end = new Date(`${endDate}T${endTime}`);
-                                isValid = end > start;
-                            }
-                        }
-                        break;
-                    case 7: // Review & Submit
-                        const statusSelect = document.getElementById('initialStatusSelect');
-                        const statusValid = statusSelect && statusSelect.value && statusSelect.value !== '';
-                        isValid = statusValid;
-                        break;
-                    default:
-                        isValid = false;
-                }
-
-                const nextBtn = document.getElementById('nextStepBtn');
-                const submitBtn = document.getElementById('submitReservationBtn');
-
-                if (nextBtn) nextBtn.disabled = !isValid;
-                if (currentStep === totalSteps && submitBtn) submitBtn.disabled = !isValid;
-                return isValid;
-            }
-
-            function updateStepDisplay() {
-                document.querySelectorAll('.step').forEach(step => {
-                    const stepNum = parseInt(step.dataset.step);
-                    if (stepNum === currentStep) step.classList.add('active');
-                    else step.classList.remove('active');
-                });
-                document.querySelectorAll('.step-content').forEach(content => {
-                    const stepNum = parseInt(content.dataset.step);
-                    if (stepNum === currentStep) content.classList.remove('d-none');
-                    else content.classList.add('d-none');
-                });
-                prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-block';
-                if (currentStep === totalSteps) {
-                    nextBtn.classList.add('d-none');
-                    submitBtn.classList.remove('d-none');
-                    updateReviewSummary();
-                } else {
-                    nextBtn.classList.remove('d-none');
-                    submitBtn.classList.add('d-none');
-                }
-                validateCurrentStep();
-            }
-
-            function updateReviewSummary() {
-                // User Information
-                const firstName = document.querySelector('input[name="first_name"]')?.value.trim() || '';
-                const lastName = document.querySelector('input[name="last_name"]')?.value.trim() || '';
-                document.getElementById('reviewUserName').textContent = `${firstName} ${lastName}`;
-                document.getElementById('reviewUserType').textContent = document.querySelector('select[name="user_type"]')?.value || '-';
-                document.getElementById('reviewEmail').textContent = document.querySelector('input[name="email"]')?.value || '-';
-                document.getElementById('reviewContactNumber').textContent = document.querySelector('input[name="contact_number"]')?.value || 'Not provided';
-                document.getElementById('reviewSchoolId').textContent = document.querySelector('input[name="school_id"]')?.value || 'Not provided';
-                document.getElementById('reviewOrganization').textContent = document.querySelector('input[name="organization_name"]')?.value || 'Not provided';
-
-                // Event Information
-                const purposeSelect = document.getElementById('purposeSelect');
-                document.getElementById('reviewPurpose').textContent = purposeSelect?.options[purposeSelect.selectedIndex]?.text || '-';
-                document.getElementById('reviewParticipants').textContent = document.querySelector('input[name="num_participants"]')?.value || '0';
-                document.getElementById('reviewFurniture').textContent = `${document.querySelector('input[name="num_tables"]')?.value || 0} tables, ${document.querySelector('input[name="num_chairs"]')?.value || 0} chairs`;
-                document.getElementById('reviewMicrophones').textContent = document.querySelector('input[name="num_microphones"]')?.value || '0';
-                document.getElementById('reviewEventTitle').textContent = document.querySelector('input[name="event_title"]')?.value || 'Not provided';
-                document.getElementById('reviewEventDetails').textContent = document.querySelector('textarea[name="event_details"]')?.value || 'Not provided';
-                document.getElementById('reviewAdditionalRequests').textContent = document.querySelector('textarea[name="additional_requests"]')?.value || 'None';
-
-                const statusSelect = document.getElementById('initialStatusSelect');
-                document.getElementById('reviewStatus').textContent = statusSelect?.options[statusSelect.selectedIndex]?.text || 'Scheduled';
-                const startDate = document.getElementById('startDate')?.value;
-                const endDate = document.getElementById('endDate')?.value;
-                let startTime = document.getElementById('startTime')?.value;
-                let endTime = document.getElementById('endTime')?.value;
-                const isAllDay = document.getElementById('allDayCheckbox')?.checked || false;
-
-                // Remove leading zeros from time
-                if (startTime) startTime = startTime.replace(/^0/, '');
-                if (endTime) endTime = endTime.replace(/^0/, '');
-
-                if (startDate && endDate) {
-                    const dateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-                    const startDateObj = new Date(startDate + 'T12:00:00');
-                    const endDateObj = new Date(endDate + 'T12:00:00');
-
-                    if (isAllDay) {
-                        if (startDate === endDate) {
-                            document.getElementById('reviewSchedule').textContent = `${startDateObj.toLocaleDateString('en-US', dateOptions)} (All Day)`;
-                        } else {
-                            document.getElementById('reviewSchedule').textContent = `${startDateObj.toLocaleDateString('en-US', dateOptions)} - ${endDateObj.toLocaleDateString('en-US', dateOptions)} (All Day)`;
-                        }
-                    } else if (startTime && endTime) {
-                        // Format time without leading zero
-                        const formatTime = (timeStr) => {
-                            const [hour, minute] = timeStr.split(':');
-                            let hourNum = parseInt(hour, 10);
-                            const ampm = hourNum >= 12 ? 'PM' : 'AM';
-                            hourNum = hourNum % 12 || 12;
-                            return `${hourNum}:${minute} ${ampm}`;
-                        };
-
-                        const startFormatted = formatTime(startTime);
-                        const endFormatted = formatTime(endTime);
-
-                        document.getElementById('reviewSchedule').textContent = `${startDateObj.toLocaleDateString('en-US', dateOptions)} ${startFormatted} to ${endDateObj.toLocaleDateString('en-US', dateOptions)} ${endFormatted}`;
-                    }
-                }
-
-                // Calculate and display duration in review
-                if (startDate && endDate && startTime && endTime && !isAllDay) {
-                    const start = new Date(`${startDate}T${startTime}`);
-                    const end = new Date(`${endDate}T${endTime}`);
-                    if (end > start) {
-                        const diffMs = end - start;
-                        const hours = Math.floor(diffMs / (1000 * 60 * 60));
-                        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                        let durationText = '';
-                        if (hours > 0) durationText += `${hours} hour${hours > 1 ? 's' : ''}`;
-                        if (minutes > 0) {
-                            if (hours > 0) durationText += ' ';
-                            durationText += `${minutes} minute${minutes > 1 ? 's' : ''}`;
-                        }
-                        document.getElementById('reviewDuration').textContent = durationText || '0 minutes';
-                    } else {
-                        document.getElementById('reviewDuration').textContent = '-';
-                    }
-                } else if (isAllDay && startDate && endDate) {
-                    const start = new Date(startDate);
-                    const end = new Date(endDate);
-                    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                    document.getElementById('reviewDuration').textContent = `${days} day${days > 1 ? 's' : ''}`;
+                    document.getElementById('reviewDuration').textContent = durationText || '0 minutes';
                 } else {
                     document.getElementById('reviewDuration').textContent = '-';
                 }
-                const selectedFacilities = Array.from(document.querySelectorAll('.facility-checkbox:checked')).map(cb => cb.dataset.name || cb.value);
-                document.getElementById('reviewFacilities').textContent = selectedFacilities.length > 0 ? selectedFacilities.join(', ') : 'None selected';
-                const selectedEquipment = Array.from(document.querySelectorAll('.equipment-checkbox:checked')).map(cb => cb.dataset.name || cb.value);
-                document.getElementById('reviewEquipment').textContent = selectedEquipment.length > 0 ? selectedEquipment.join(', ') : 'None selected';
-                const selectedServices = Array.from(document.querySelectorAll('.service-checkbox:checked')).map(cb => cb.dataset.name || cb.value);
-                const reviewServices = document.getElementById('reviewServices');
-                if (reviewServices) reviewServices.textContent = selectedServices.length > 0 ? selectedServices.join(', ') : 'None selected';
+            } else if (isAllDay && startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                document.getElementById('reviewDuration').textContent = `${days} day${days > 1 ? 's' : ''}`;
+            } else {
+                document.getElementById('reviewDuration').textContent = '-';
             }
-
-            prevBtn.addEventListener('click', () => { if (currentStep > 1) { currentStep--; updateStepDisplay(); } });
-            nextBtn.addEventListener('click', () => { if (validateCurrentStep() && currentStep < totalSteps) { currentStep++; updateStepDisplay(); } });
-            document.querySelectorAll('#addReservationForm input, #addReservationForm select, #addReservationForm textarea').forEach(element => {
-                element.addEventListener('change', () => { validateCurrentStep(); if (currentStep === totalSteps) updateReviewSummary(); });
-                if (element.type === 'number' || element.tagName === 'SELECT') {
-                    element.addEventListener('input', () => { validateCurrentStep(); if (currentStep === totalSteps) updateReviewSummary(); });
-                }
-            });
-            updateStepDisplay();
-            return { resetSteps: () => { currentStep = 1; updateStepDisplay(); }, validateCurrentStep };
+            
+            const selectedFacilities = Array.from(document.querySelectorAll('.facility-checkbox:checked')).map(cb => cb.dataset.name || cb.value);
+            document.getElementById('reviewFacilities').textContent = selectedFacilities.length > 0 ? selectedFacilities.join(', ') : 'None selected';
+            const selectedEquipment = Array.from(document.querySelectorAll('.equipment-checkbox:checked')).map(cb => cb.dataset.name || cb.value);
+            document.getElementById('reviewEquipment').textContent = selectedEquipment.length > 0 ? selectedEquipment.join(', ') : 'None selected';
+            const selectedServices = Array.from(document.querySelectorAll('.service-checkbox:checked')).map(cb => cb.dataset.name || cb.value);
+            const reviewServices = document.getElementById('reviewServices');
+            if (reviewServices) reviewServices.textContent = selectedServices.length > 0 ? selectedServices.join(', ') : 'None selected';
         }
 
-        // DOM Content Loaded
-        document.addEventListener('DOMContentLoaded', async function () {
-            const token = localStorage.getItem('adminToken');
-            if (!token) {
-                window.location.href = "/admin/login";
-                return;
+        prevBtn.addEventListener('click', () => { if (currentStep > 1) { currentStep--; updateStepDisplay(); } });
+        nextBtn.addEventListener('click', () => { if (validateCurrentStep() && currentStep < totalSteps) { currentStep++; updateStepDisplay(); } });
+        document.querySelectorAll('#addReservationForm input, #addReservationForm select, #addReservationForm textarea').forEach(element => {
+            element.addEventListener('change', () => { validateCurrentStep(); if (currentStep === totalSteps) updateReviewSummary(); });
+            if (element.type === 'number' || element.tagName === 'SELECT') {
+                element.addEventListener('input', () => { validateCurrentStep(); if (currentStep === totalSteps) updateReviewSummary(); });
             }
-            adminToken = token;
-
-            const loadingContainer = document.getElementById('loadingContainer');
-            const formContent = document.getElementById('formContent');
-
-            // Show loading spinner overlay, keep form visible but faded
-            if (loadingContainer) loadingContainer.style.display = 'flex';
-            if (formContent) formContent.style.opacity = '0.3';
-            if (formContent) formContent.style.pointerEvents = 'none';
-
-            // Disable navigation buttons initially
-            const nextBtn = document.getElementById('nextStepBtn');
-            const prevBtn = document.getElementById('prevStepBtn');
-            const submitBtn = document.getElementById('submitReservationBtn');
-
-            if (nextBtn) nextBtn.disabled = true;
-            if (prevBtn) prevBtn.disabled = true;
-            if (submitBtn) submitBtn.disabled = true;
-
-            // Add disabled class to steps
-            document.querySelector('.steps')?.classList.add('step-nav-disabled');
-
-            try {
-                await loadFormInitData();
-
-                // Hide loading spinner, restore form
-                if (loadingContainer) loadingContainer.style.display = 'none';
-                if (formContent) {
-                    formContent.style.opacity = '1';
-                    formContent.style.pointerEvents = 'auto';
-                }
-
-                // Enable navigation buttons
-                if (nextBtn) nextBtn.disabled = false;
-                if (prevBtn) prevBtn.disabled = false;
-                if (submitBtn) submitBtn.disabled = false;
-
-                // Remove disabled class from step navigation
-                document.querySelector('.steps')?.classList.remove('step-nav-disabled');
-
-                // Validate current step
-                if (window.stepManager && window.stepManager.validateCurrentStep) {
-                    window.stepManager.validateCurrentStep();
-                }
-
-            } catch (error) {
-                console.error('Failed to load form data:', error);
-                if (loadingContainer) loadingContainer.style.display = 'none';
-                if (formContent) {
-                    formContent.style.opacity = '1';
-                    formContent.style.pointerEvents = 'auto';
-                }
-                showToast('Failed to load form data. Please refresh the page.', 'error', 5000);
-            }
-
-            // Initialize other components
-            populateTimeDropdowns();
-            setupCharacterCounters();
-            initializeUserTypeToggle();
-
-            // Setup event listeners
-            document.getElementById('allDayCheckbox')?.addEventListener('change', function () {
-                const startTimeSelect = document.getElementById('startTime');
-                const endTimeSelect = document.getElementById('endTime');
-                const allDayIndicator = document.getElementById('allDayScheduleIndicator');
-                if (this.checked) {
-                    startTimeSelect.disabled = true;
-                    endTimeSelect.disabled = true;
-                    startTimeSelect.value = '00:00';
-                    endTimeSelect.value = '00:00';
-                    if (allDayIndicator) allDayIndicator.classList.remove('d-none');
-                    startTimeSelect.classList.add('bg-light');
-                    endTimeSelect.classList.add('bg-light');
-                } else {
-                    startTimeSelect.disabled = false;
-                    endTimeSelect.disabled = false;
-                    startTimeSelect.value = '09:00';
-                    endTimeSelect.value = '17:00';
-                    if (allDayIndicator) allDayIndicator.classList.add('d-none');
-                    startTimeSelect.classList.remove('bg-light');
-                    endTimeSelect.classList.remove('bg-light');
-                }
-                calculateDuration();
-                if (typeof validateCurrentStep === 'function') validateCurrentStep();
-            });
-
-            document.getElementById('startDate')?.addEventListener('change', calculateDuration);
-            document.getElementById('startTime')?.addEventListener('change', calculateDuration);
-            document.getElementById('endDate')?.addEventListener('change', calculateDuration);
-            document.getElementById('endTime')?.addEventListener('change', calculateDuration);
-            document.getElementById('submitReservationBtn')?.addEventListener('click', saveReservation);
-
-            window.stepManager = setupReservationStepNavigation();
         });
-    </script>
+        updateStepDisplay();
+        return { resetSteps: () => { currentStep = 1; updateStepDisplay(); }, validateCurrentStep };
+    }
+
+    // DOM Content Loaded
+    document.addEventListener('DOMContentLoaded', async function () {
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+            window.location.href = "/admin/login";
+            return;
+        }
+        adminToken = token;
+
+        const loadingContainer = document.getElementById('loadingContainer');
+        const formContent = document.getElementById('formContent');
+
+        if (loadingContainer) loadingContainer.style.display = 'flex';
+        if (formContent) formContent.style.opacity = '0.3';
+        if (formContent) formContent.style.pointerEvents = 'none';
+
+        const nextBtn = document.getElementById('nextStepBtn');
+        const prevBtn = document.getElementById('prevStepBtn');
+        const submitBtn = document.getElementById('submitReservationBtn');
+
+        if (nextBtn) nextBtn.disabled = true;
+        if (prevBtn) prevBtn.disabled = true;
+        if (submitBtn) submitBtn.disabled = true;
+
+        document.querySelector('.steps')?.classList.add('step-nav-disabled');
+
+        try {
+            await loadFormInitData();
+
+            if (loadingContainer) loadingContainer.style.display = 'none';
+            if (formContent) {
+                formContent.style.opacity = '1';
+                formContent.style.pointerEvents = 'auto';
+            }
+
+            if (nextBtn) nextBtn.disabled = false;
+            if (prevBtn) prevBtn.disabled = false;
+            if (submitBtn) submitBtn.disabled = false;
+
+            document.querySelector('.steps')?.classList.remove('step-nav-disabled');
+
+            if (window.stepManager && window.stepManager.validateCurrentStep) {
+                window.stepManager.validateCurrentStep();
+            }
+
+        } catch (error) {
+            console.error('Failed to load form data:', error);
+            if (loadingContainer) loadingContainer.style.display = 'none';
+            if (formContent) {
+                formContent.style.opacity = '1';
+                formContent.style.pointerEvents = 'auto';
+            }
+            showToast('Failed to load form data. Please refresh the page.', 'error', 5000);
+        }
+
+        populateTimeDropdowns();
+        setupCharacterCounters();
+        initializeUserTypeToggle();
+
+        document.getElementById('allDayCheckbox')?.addEventListener('change', function () {
+            const startTimeSelect = document.getElementById('startTime');
+            const endTimeSelect = document.getElementById('endTime');
+            const allDayIndicator = document.getElementById('allDayScheduleIndicator');
+            if (this.checked) {
+                startTimeSelect.disabled = true;
+                endTimeSelect.disabled = true;
+                startTimeSelect.value = '00:00';
+                endTimeSelect.value = '00:00';
+                if (allDayIndicator) allDayIndicator.classList.remove('d-none');
+                startTimeSelect.classList.add('bg-light');
+                endTimeSelect.classList.add('bg-light');
+            } else {
+                startTimeSelect.disabled = false;
+                endTimeSelect.disabled = false;
+                startTimeSelect.value = '09:00';
+                endTimeSelect.value = '17:00';
+                if (allDayIndicator) allDayIndicator.classList.add('d-none');
+                startTimeSelect.classList.remove('bg-light');
+                endTimeSelect.classList.remove('bg-light');
+            }
+            calculateDuration();
+            if (typeof validateCurrentStep === 'function') validateCurrentStep();
+        });
+
+        document.getElementById('startDate')?.addEventListener('change', calculateDuration);
+        document.getElementById('startTime')?.addEventListener('change', calculateDuration);
+        document.getElementById('endDate')?.addEventListener('change', calculateDuration);
+        document.getElementById('endTime')?.addEventListener('change', calculateDuration);
+        document.getElementById('submitReservationBtn')?.addEventListener('click', saveReservation);
+
+        window.stepManager = setupReservationStepNavigation();
+    });
+</script>
 @endsection
