@@ -148,7 +148,8 @@ Route::middleware('web')->group(function () {
     }
 
     // Create a middleware-like function for admin routes
-    function requireAdminAuth($request, $callback) {
+    function requireAdminAuth($request, $callback)
+    {
         if (!authenticateFromRequest($request)) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['message' => 'Unauthorized'], 401);
@@ -160,49 +161,56 @@ Route::middleware('web')->group(function () {
 
     // Dashboard
     Route::get('/admin/dashboard', function (Request $request) {
-        return requireAdminAuth($request, function() use ($request) {
+        return requireAdminAuth($request, function () use ($request) {
             return view('admin.dashboard');
         });
     });
 
     // Admin Roles
     Route::get('/admin/admin-roles', function (Request $request) {
-        return requireAdminAuth($request, function() use ($request) {
+        return requireAdminAuth($request, function () use ($request) {
             return view('admin.admin-roles');
         });
     });
 
     // Create Reservation - FIXED
     Route::get('/admin/reservations/create', function (Request $request) {
-        return requireAdminAuth($request, function() use ($request) {
+        return requireAdminAuth($request, function () use ($request) {
             return view('admin.create-reservation');
         });
     });
 
     // Signatory Dashboard
     Route::get('/admin/signatory/dashboard', function (Request $request) {
-        return requireAdminAuth($request, function() use ($request) {
+        return requireAdminAuth($request, function () use ($request) {
             return view('admin.signatory-dashboard');
         });
     });
 
     // Profile
     Route::get('/admin/profile/{adminId}', function (Request $request, $adminId) {
-        return requireAdminAuth($request, function() use ($request, $adminId) {
+        return requireAdminAuth($request, function () use ($request, $adminId) {
             return view('admin.admin-profile', ['adminId' => $adminId]);
         });
     });
 
     // Requisition View - FIXED
     Route::get('/admin/requisition/{requestId}', function (Request $request, $requestId) {
-        return requireAdminAuth($request, function() use ($request, $requestId) {
+        return requireAdminAuth($request, function () use ($request, $requestId) {
             return view('admin.request-view', ['requestId' => $requestId]);
+        });
+    });
+
+    // These routes need authentication too - FIXED
+    Route::get('/admin/requisition/{requestId}/financials', function (Request $request, $requestId) {
+        return requireAdminAuth($request, function () use ($request, $requestId) {
+            return view('admin.financials-edit', ['requestId' => $requestId]);
         });
     });
 
     // Catch-all for other admin routes
     Route::get('/admin/{any}', function (Request $request, $any) {
-        return requireAdminAuth($request, function() use ($request, $any) {
+        return requireAdminAuth($request, function () use ($request, $any) {
             // Check if view exists
             if (view()->exists("admin.{$any}")) {
                 return view("admin.{$any}");
@@ -227,20 +235,14 @@ Route::middleware('web')->group(function () {
     Route::view('/admin/manage-facilities', 'admin.manage-facilities');
     Route::get('/admin/edit-facility', [FacilityController::class, 'edit'])->name('admin.edit-facility');
     Route::view('/admin/manage-requests', 'admin.manage-requests');
-    
-    // These routes need authentication too - FIXED
-    Route::get('/admin/requisition/{requestId}/financials', function (Request $request, $requestId) {
-        return requireAdminAuth($request, function() use ($request, $requestId) {
-            return view('admin.financials-edit', ['requestId' => $requestId]);
-        });
-    });
-    
+
+
     Route::get('/admin/form-review/{requestId}', function (Request $request, $requestId) {
-        return requireAdminAuth($request, function() use ($request, $requestId) {
+        return requireAdminAuth($request, function () use ($request, $requestId) {
             return view('admin.form-review', ['requestId' => $requestId]);
         });
     });
-    
+
     Route::get('/admin/feedback-data', [FeedbackController::class, 'getFeedbackData'])->name('admin.feedback.data');
     Route::get('/admin/feedback-stats', [FeedbackController::class, 'getFeedbackStats'])->name('admin.feedback.stats');
     Route::view('/admin/archives', 'admin.archives')->name('admin.archives');

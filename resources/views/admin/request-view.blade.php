@@ -4,52 +4,60 @@
 
     <style>
         /* Approval Stages Styling */
-.approval-stages-container {
-    padding: 0.5rem;
-}
+        .approval-stages-container {
+            padding: 0.5rem;
+        }
 
-.stage-section {
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-}
+        .stage-section {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
 
-.stage-header {
-    padding: 1rem;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 8px;
-}
+        .stage-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+        }
 
-.approval-card {
-    transition: all 0.2s ease;
-    background: white;
-}
+        .approval-card {
+            transition: all 0.2s ease;
+            background: white;
+        }
 
-.approval-card:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
-}
+        .approval-card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
 
-.approval-progress {
-    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
-    border-radius: 12px;
-}
+        .approval-progress {
+            background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+            border-radius: 12px;
+        }
 
-.badge {
-    padding: 0.35rem 0.75rem;
-    font-weight: 500;
-}
+        .badge {
+            padding: 0.35rem 0.75rem;
+            font-weight: 500;
+        }
 
-/* Timeline animation for pending items */
-@keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-}
+        /* Timeline animation for pending items */
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
 
-.approval-card .fa-clock {
-    animation: pulse 1.5s ease-in-out infinite;
-}
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
+        }
+
+        .approval-card .fa-clock {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
 
         .tracking-wider {
             letter-spacing: 0.05em;
@@ -66,8 +74,8 @@
         }
 
         /* ============================================================
-                                                                                                                       TAB STYLES
-                                                                                                                    ============================================================ */
+                                                                                                                           TAB STYLES
+                                                                                                                        ============================================================ */
         .request-tabs {
             border-bottom: 1px solid #dee2e6;
             margin-bottom: 1.5rem;
@@ -115,8 +123,8 @@
         }
 
         /* ============================================================
-                                                                                                                       ORIGINAL STYLES (Preserved)
-                                                                                                                    ============================================================ */
+                                                                                                                           ORIGINAL STYLES (Preserved)
+                                                                                                                        ============================================================ */
         /* Footer card responsive styles */
         @media (max-width: 768px) {
             #footerTotalFee {
@@ -266,11 +274,20 @@
             line-height: 1.2;
         }
 
-        /* Timeline tab styles */
-        .timeline-tab-container {
-            max-height: 600px;
-            overflow-y: auto;
-        }
+/* Timeline container and empty state vertical centering */
+.timeline-tab-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.timeline-empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+}
 
         .timeline-filter-bar {
             display: flex;
@@ -339,11 +356,6 @@
                             <i class="bi bi-clock-history"></i> Timeline
                         </button>
                     </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="approvals-tab" data-tab="approvals" type="button" role="tab">
-                            <i class="bi bi-check2-circle"></i> Approvals
-                        </button>
-                    </li>
                 </ul>
             </div>
 
@@ -390,45 +402,6 @@
                                     <div class="row g-3" id="detailsContainer"></div>
                                 </div>
                             </div>
-
-                            <div class="card custom-card border-top-accent m-1">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="mb-0">Requested Items</h5>
-                                    <button class="btn btn-sm btn-outline-secondary px-3 rounded-pill" id="editFeesBtn">
-                                        <i class="bi bi-currency-dollar me-1"></i> Edit Fees
-                                    </button>
-                                </div>
-
-                                <div class="card-body pt-0">
-                                    <div class="table-responsive">
-                                        <table class="table align-middle custom-table-modern mt-0 mb-0"
-                                            style="font-size: 0.9rem;">
-                                            <thead>
-                                                <tr class="text-uppercase text-muted fw-bold align-middle"
-                                                    style="font-size: 0.75rem; letter-spacing: 0.5px; height: 50px;">
-                                                    <th scope="col" class="border-0 text-start" style="width: 40%;">Item
-                                                        Name</th>
-                                                    <th scope="col" class="border-0 text-end" style="width: 15%;">Unit Rate
-                                                    </th>
-                                                    <th scope="col" class="border-0 text-center" style="width: 15%;">
-                                                        Quantity</th>
-                                                    <th scope="col" class="border-0 text-center" style="width: 15%;">
-                                                        Duration</th>
-                                                    <th scope="col" class="border-0 text-end" style="width: 15%;">Subtotal
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="requestedItemsTableBody"></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div
-                                    class="card-footer bg-transparent border-top-0 pt-0 mx-4 px-0 pb-4 d-flex justify-content-between align-items-center">
-                                    <span class="text-uppercase fw-bold text-secondary tracking-wider"
-                                        style="font-size: 0.8rem;">Total Base Fee</span>
-                                    <span class="fw-bold fs-4 text-dark" id="detailsHourlyTotal">--</span>
-                                </div>
-                            </div>
                         </div>
 
                         <div class="col-lg-4 d-flex flex-column gap-3">
@@ -451,14 +424,6 @@
                                     <div class="documents-vertical" id="attachmentsStatusCard"></div>
                                 </div>
                             </div>
-
-                            <div class="card custom-card border-top-accent m-1">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="mb-0">Actions</h5>
-                                    <i class="bi bi-lightning-charge text-muted"></i>
-                                </div>
-                                <div class="card-body d-flex flex-column gap-2" id="actionButtonsSidebar"></div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -475,70 +440,60 @@
                     </div>
                 </div>
 
-                <!-- ==================== TAB: TIMELINE ==================== -->
-                <div id="timelinePane" class="tab-pane">
-                    <div class="card custom-card border-top-accent m-1">
-                        <div class="card-header d-flex align-items-center justify-content-between">
-                            <h5 class="mb-0">Activity Timeline</h5>
-                            <div class="d-flex gap-2">
-                                <select id="timelineFilterTab" class="form-select form-select-sm" style="width: auto;">
-                                    <option value="all">All</option>
-                                    <option value="comment">Comments only</option>
-                                    <option value="fee">Fee changes only</option>
-                                </select>
-                                <button class="btn btn-sm btn-outline-secondary" id="refreshTimelineBtnTab">
-                                    <i class="fas fa-sync-alt"></i> Refresh
-                                </button>
-                            </div>
+<!-- ==================== TAB: TIMELINE ==================== -->
+<div id="timelinePane" class="tab-pane">
+    <div class="row g-3">
+        <!-- Left Column: Activity Timeline -->
+        <div class="col-lg-7">
+            <div class="card custom-card border-top-accent h-100 d-flex flex-column">
+                <div class="card-header d-flex align-items-center justify-content-between flex-shrink-0">
+                    <h5 class="mb-0">Activity Timeline</h5>
+                    <div class="d-flex gap-2">
+                        <select id="timelineFilterTab" class="form-select form-select-sm" style="width: auto;">
+                            <option value="all">All</option>
+                            <option value="comment">Comments only</option>
+                            <option value="fee">Fee changes only</option>
+                        </select>
+                        <button class="btn btn-sm btn-outline-secondary" id="refreshTimelineBtnTab">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body d-flex flex-column" style="flex: 1; overflow: hidden;">
+                    <div id="timelineContentTab" class="timeline-tab-container" 
+                        style="flex: 1; overflow-y: auto; min-height: 300px;">
+                        <div class="text-center text-muted py-4">
+                            <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                            <p class="small mb-0">Loading activity...</p>
                         </div>
-                        <div class="card-body">
-                            <div id="timelineContentTab" class="timeline-tab-container"
-                                style="max-height: 500px; overflow-y: auto;">
-                                <div class="text-center text-muted py-4">
-                                    <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
-                                    <p class="small mb-0">Loading activity...</p>
-                                </div>
-                            </div>
-                            <div class="comment-input-area mt-3">
-                                <div class="d-flex gap-2">
-                                    <input type="text" class="form-control" placeholder="Press Enter to send..."
-                                        id="timelineCommentTab" style="flex: 1;">
-                                    <button class="btn btn-primary" id="timelineSendBtnTab" style="white-space: nowrap;">
-                                        <i class="fas fa-paper-plane"></i> Send
-                                    </button>
-                                </div>
-                            </div>
+                    </div>
+                    <div class="comment-input-area mt-3 flex-shrink-0">
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" placeholder="Press Enter to send..."
+                                id="timelineCommentTab" style="flex: 1;">
+                            <button class="btn btn-primary" id="timelineSendBtnTab" style="white-space: nowrap;">
+                                <i class="fas fa-paper-plane"></i> Send
+                            </button>
                         </div>
                     </div>
                 </div>
-
-                <!-- ==================== TAB: APPROVALS ==================== -->
-                <div id="approvalsPane" class="tab-pane">
-                    <div class="row">
-                        <div class="col-lg-6">
-                            <div class="card custom-card border-top-accent m-1">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="mb-0">Approvals</h5>
-                                    <i class="bi bi-check-circle text-muted"></i>
-                                </div>
-                                <div class="card-body" id="approvalsListContainer">
-                                    <div class="text-center text-muted py-4">Loading approvals...</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="card custom-card border-top-accent m-1">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="mb-0">Rejections</h5>
-                                    <i class="bi bi-x-circle text-muted"></i>
-                                </div>
-                                <div class="card-body" id="rejectionsListContainer">
-                                    <div class="text-center text-muted py-4">Loading rejections...</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+        </div>
+        
+        <!-- Right Column: Approvals Card -->
+        <div class="col-lg-5">
+            <div class="card custom-card border-top-accent h-100">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="mb-0">Approval Status</h5>
+                    <i class="bi bi-check2-circle text-muted"></i>
                 </div>
+                <div class="card-body" id="approvalsListContainer" style="max-height: 500px; overflow-y: auto;">
+                    <div class="text-center text-muted py-4">Loading approvals...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             </div>
 
             <!-- All Modals -->
@@ -942,12 +897,8 @@
                 case 'timeline':
                     await renderTimelineTab();
                     break;
-                case 'approvals':
-                    await renderApprovalsTab();
-                    break;
             }
         }
-
         // ============================================================================
         // ======================== TAB RENDER FUNCTIONS ==============================
         // ============================================================================
@@ -962,48 +913,48 @@
             const detailsContainer = document.getElementById('detailsContainer');
             if (detailsContainer) {
                 detailsContainer.innerHTML = `
-                                                                                                        <div class="col-md-6">
-                                                                                                            <div class="mb-3"><label class="text-muted small">Requester</label><div class="fw-medium">${escapeHtml(data.user_details.first_name)} ${escapeHtml(data.user_details.last_name)}</div></div>
-                                                                                                            <div class="mb-3"><label class="text-muted small">Organization</label><div class="fw-medium">${escapeHtml(data.user_details.organization_name || 'N/A')}</div></div>
-                                                                                                            <div class="mb-3"><label class="text-muted small">Email</label><div class="fw-medium">${escapeHtml(data.user_details.email)}</div></div>
-                                                                                                            <div class="mb-3"><label class="text-muted small">Contact No.</label><div class="fw-medium">${escapeHtml(data.user_details.contact_number || 'N/A')}</div></div>
-                                                                                                        </div>
-                                                                                                        <div class="col-md-6">
-                                                                                                            <div class="mb-3"><label class="text-muted small">User Type</label><div class="fw-medium">${escapeHtml(data.user_details.user_type)}</div></div>
-                                                                                                            <div class="mb-3"><label class="text-muted small">School ID</label><div class="fw-medium">${escapeHtml(data.user_details.school_id || 'N/A')}</div></div>
-                                                                                                            <div class="mb-3"><label class="text-muted small">Purpose</label><div class="fw-medium">${escapeHtml(data.form_details.purpose || 'N/A')}</div></div>
-                                                                                                            <div class="mb-3"><label class="text-muted small">Participants</label><div class="fw-medium">${data.form_details.num_participants || 0}</div></div>
-                                                                                                        </div>
-                                                                                                    `;
+                                                                                                            <div class="col-md-6">
+                                                                                                                <div class="mb-3"><label class="text-muted small">Requester</label><div class="fw-medium">${escapeHtml(data.user_details.first_name)} ${escapeHtml(data.user_details.last_name)}</div></div>
+                                                                                                                <div class="mb-3"><label class="text-muted small">Organization</label><div class="fw-medium">${escapeHtml(data.user_details.organization_name || 'N/A')}</div></div>
+                                                                                                                <div class="mb-3"><label class="text-muted small">Email</label><div class="fw-medium">${escapeHtml(data.user_details.email)}</div></div>
+                                                                                                                <div class="mb-3"><label class="text-muted small">Contact No.</label><div class="fw-medium">${escapeHtml(data.user_details.contact_number || 'N/A')}</div></div>
+                                                                                                            </div>
+                                                                                                            <div class="col-md-6">
+                                                                                                                <div class="mb-3"><label class="text-muted small">User Type</label><div class="fw-medium">${escapeHtml(data.user_details.user_type)}</div></div>
+                                                                                                                <div class="mb-3"><label class="text-muted small">School ID</label><div class="fw-medium">${escapeHtml(data.user_details.school_id || 'N/A')}</div></div>
+                                                                                                                <div class="mb-3"><label class="text-muted small">Purpose</label><div class="fw-medium">${escapeHtml(data.form_details.purpose || 'N/A')}</div></div>
+                                                                                                                <div class="mb-3"><label class="text-muted small">Participants</label><div class="fw-medium">${data.form_details.num_participants || 0}</div></div>
+                                                                                                            </div>
+                                                                                                        `;
             }
 
             // Render Attachments
             const attachmentsContainer = document.getElementById('attachmentsStatusCard');
             if (attachmentsContainer) {
                 attachmentsContainer.innerHTML = `
-                                                                                                        <div class="documents-vertical">
-                                                                                                            <div class="document-mini-item d-flex align-items-center p-2 border rounded-3 mb-2">
-                                                                                                                <i id="formalLetterIcon" class="fas fa-file-alt fa-lg text-muted me-3"></i>
-                                                                                                                <div class="flex-grow-1"><div class="small fw-bold">Event Documents</div></div>
-                                                                                                                <button type="button" id="formalLetterBtn" class="btn btn-sm btn-document-null ms-2">View</button>
+                                                                                                            <div class="documents-vertical">
+                                                                                                                <div class="document-mini-item d-flex align-items-center p-2 border rounded-3 mb-2">
+                                                                                                                    <i id="formalLetterIcon" class="fas fa-file-alt fa-lg text-muted me-3"></i>
+                                                                                                                    <div class="flex-grow-1"><div class="small fw-bold">Event Documents</div></div>
+                                                                                                                    <button type="button" id="formalLetterBtn" class="btn btn-sm btn-document-null ms-2">View</button>
+                                                                                                                </div>
+                                                                                                                <div class="document-mini-item d-flex align-items-center p-2 border rounded-3 mb-2">
+                                                                                                                    <i id="facilityLayoutIcon" class="fas fa-map-marked-alt fa-lg text-muted me-3"></i>
+                                                                                                                    <div class="flex-grow-1"><div class="small fw-bold">Venue Layout</div></div>
+                                                                                                                    <button type="button" id="facilityLayoutBtn" class="btn btn-sm btn-document-null ms-2">View</button>
+                                                                                                                </div>
+                                                                                                                <div class="document-mini-item d-flex align-items-center p-2 border rounded-3 mb-2">
+                                                                                                                    <i id="proofOfPaymentIcon" class="fas fa-receipt fa-lg text-muted me-3"></i>
+                                                                                                                    <div class="flex-grow-1"><div class="small fw-bold">Official Receipt</div></div>
+                                                                                                                    <button type="button" id="proofOfPaymentBtn" class="btn btn-sm btn-document-null ms-2">View</button>
+                                                                                                                </div>
+                                                                                                                <div class="document-mini-item d-flex align-items-center p-2 border rounded-3 mb-2">
+                                                                                                                    <i id="officialReceiptIcon" class="fas fa-file-invoice-dollar fa-lg text-muted me-3"></i>
+                                                                                                                    <div class="flex-grow-1"><div class="small fw-bold">Use of Hall Permit</div></div>
+                                                                                                                    <button type="button" id="officialReceiptBtn" class="btn btn-sm btn-document-null ms-2">View</button>
+                                                                                                                </div>
                                                                                                             </div>
-                                                                                                            <div class="document-mini-item d-flex align-items-center p-2 border rounded-3 mb-2">
-                                                                                                                <i id="facilityLayoutIcon" class="fas fa-map-marked-alt fa-lg text-muted me-3"></i>
-                                                                                                                <div class="flex-grow-1"><div class="small fw-bold">Venue Layout</div></div>
-                                                                                                                <button type="button" id="facilityLayoutBtn" class="btn btn-sm btn-document-null ms-2">View</button>
-                                                                                                            </div>
-                                                                                                            <div class="document-mini-item d-flex align-items-center p-2 border rounded-3 mb-2">
-                                                                                                                <i id="proofOfPaymentIcon" class="fas fa-receipt fa-lg text-muted me-3"></i>
-                                                                                                                <div class="flex-grow-1"><div class="small fw-bold">Official Receipt</div></div>
-                                                                                                                <button type="button" id="proofOfPaymentBtn" class="btn btn-sm btn-document-null ms-2">View</button>
-                                                                                                            </div>
-                                                                                                            <div class="document-mini-item d-flex align-items-center p-2 border rounded-3 mb-2">
-                                                                                                                <i id="officialReceiptIcon" class="fas fa-file-invoice-dollar fa-lg text-muted me-3"></i>
-                                                                                                                <div class="flex-grow-1"><div class="small fw-bold">Use of Hall Permit</div></div>
-                                                                                                                <button type="button" id="officialReceiptBtn" class="btn btn-sm btn-document-null ms-2">View</button>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                    `;
+                                                                                                        `;
             }
 
             // Render Status Badge
@@ -1035,21 +986,18 @@
                     : '--';
 
                 eventDetails.innerHTML = `
-                                    <div class="row g-2 mb-2">
-                                        <div class="col-6"><label class="text-muted small">Start</label><div class="fw-medium">${startDate}<br>${startTime}</div></div>
-                                        <div class="col-6"><label class="text-muted small">End</label><div class="fw-medium">${endDate}<br>${endTime}</div></div>
-                                        <div class="col-6"><label class="text-muted small">Duration</label><div class="fw-medium">${data.duration_hours} hours</div></div>
-                                        <div class="col-6"><label class="text-muted small">Date Submitted</label><div class="fw-medium">${submittedDate}</div></div>
-                                    </div>
-                                    <div class="border-top pt-2 mt-1">
-                                        <label class="text-muted small">Additional Requests</label>
-                                        <div class="fw-medium">${escapeHtml(data.form_details.additional_requests || 'None')}</div>
-                                    </div>
-                                `;
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-6"><label class="text-muted small">Start</label><div class="fw-medium">${startDate}<br>${startTime}</div></div>
+                                            <div class="col-6"><label class="text-muted small">End</label><div class="fw-medium">${endDate}<br>${endTime}</div></div>
+                                            <div class="col-6"><label class="text-muted small">Duration</label><div class="fw-medium">${data.duration_hours} hours</div></div>
+                                            <div class="col-6"><label class="text-muted small">Date Submitted</label><div class="fw-medium">${submittedDate}</div></div>
+                                        </div>
+                                        <div class="border-top pt-2 mt-1">
+                                            <label class="text-muted small">Additional Requests</label>
+                                            <div class="fw-medium">${escapeHtml(data.form_details.additional_requests || 'None')}</div>
+                                        </div>
+                                    `;
             }
-
-            // Render Requested Items
-            renderRequestedItems(data.requested_items);
 
 
             // Populate hourly total in details tab footer
@@ -1064,127 +1012,129 @@
             renderedTabs.details = true;
         }
 
-        async function renderTimelineTab() {
-            if (renderedTabs.timeline) {
-                await loadTimelineContentTab();
-                return;
-            }
+async function renderTimelineTab() {
+    if (renderedTabs.timeline) {
+        await loadTimelineContentTab();
+        await renderApprovalsTab(); // Also refresh approvals when tab is already rendered
+        return;
+    }
 
-            await loadTimelineContentTab();
-            renderedTabs.timeline = true;
-        }
-
-        function generateApprovalCard(approval) {
-    const isApproved = approval.status === 'Approved';
-    const isRejected = approval.status === 'Rejected';
-    const isPending = approval.status === 'Pending';
-    
-    const statusIcon = isApproved ? 'fa-check-circle' : (isRejected ? 'fa-times-circle' : 'fa-clock');
-    const statusClass = isApproved ? 'success' : (isRejected ? 'danger' : 'warning');
-    const statusText = approval.status;
-    
-    const requiredAdmin = approval.required_admin || {};
-    const actedBy = approval.acted_by || {};
-    
-    return `
-        <div class="approval-card border rounded-3 mb-3 p-3 ${isRejected ? 'bg-light' : ''}">
-            <div class="d-flex align-items-start">
-                <!-- Admin Avatar -->
-                <div class="me-3 flex-shrink-0">
-                    ${requiredAdmin.photo ? 
-                        `<img src="${requiredAdmin.photo}" class="rounded-circle" width="48" height="48" style="object-fit: cover;">` : 
-                        `<div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white" style="width: 48px; height: 48px;">
-                            <span class="fw-bold fs-5">${(requiredAdmin.first_name?.charAt(0) || '')}${(requiredAdmin.last_name?.charAt(0) || '')}</span>
-                         </div>`
-                    }
-                </div>
-                
-                <!-- Admin Info and Action -->
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap">
-                        <div>
-                            <h6 class="mb-1">${escapeHtml(requiredAdmin.name || 'Unknown Signatory')}</h6>
-                            <small class="text-muted d-block">${escapeHtml(requiredAdmin.role || 'Signatory')}</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge bg-${statusClass} mb-1">
-                                <i class="fas ${statusIcon} me-1"></i>${statusText}
-                            </span>
-                            ${approval.formatted_date !== 'Pending' ? 
-                                `<div><small class="text-muted">${approval.formatted_date}</small></div>` : ''
-                            }
-                        </div>
-                    </div>
-                    
-                    <!-- Action details if acted upon -->
-                    ${!isPending ? `
-                        <div class="mt-2 pt-2 border-top">
-                            <div class="d-flex align-items-center">
-                                <div class="me-2">
-                                    ${actedBy.photo ? 
-                                        `<img src="${actedBy.photo}" class="rounded-circle" width="24" height="24" style="object-fit: cover;">` : 
-                                        `<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 10px;">
-                                            ${(actedBy.first_name?.charAt(0) || '')}${(actedBy.last_name?.charAt(0) || '')}
-                                         </div>`
-                                    }
-                                </div>
-                                <div>
-                                    <small>Acted by: <strong>${escapeHtml(actedBy.name || 'System')}</strong></small>
-                                </div>
-                            </div>
-                            ${approval.remarks ? `
-                                <div class="mt-2">
-                                    <small class="text-muted">Remarks:</small>
-                                    <div class="small bg-light p-2 rounded mt-1">${escapeHtml(approval.remarks)}</div>
-                                </div>
-                            ` : ''}
-                        </div>
-                    ` : `
-                        <div class="mt-2 pt-2 border-top">
-                            <small class="text-muted"><i class="fas fa-hourglass-half me-1"></i>Awaiting action from this signatory</small>
-                        </div>
-                    `}
-                </div>
-            </div>
-        </div>
-    `;
+    await loadTimelineContentTab();
+    await renderApprovalsTab(); // Load approvals when first rendering timeline tab
+    renderedTabs.timeline = true;
 }
 
-function generateRejectionsList(rejections) {
-    if (!rejections || rejections.length === 0) {
-        return '<div class="text-center text-muted py-4">No rejections recorded</div>';
-    }
-    
-    return rejections.map(rejection => {
-        const requiredAdmin = rejection.required_admin || {};
-        const actedBy = rejection.acted_by || {};
-        
-        return `
-            <div class="rejection-item border rounded-3 mb-3 p-3 bg-light">
+        function generateApprovalCard(approval) {
+            const isApproved = approval.status === 'Approved';
+            const isRejected = approval.status === 'Rejected';
+            const isPending = approval.status === 'Pending';
+
+            const statusIcon = isApproved ? 'fa-check-circle' : (isRejected ? 'fa-times-circle' : 'fa-clock');
+            const statusClass = isApproved ? 'success' : (isRejected ? 'danger' : 'warning');
+            const statusText = approval.status;
+
+            const requiredAdmin = approval.required_admin || {};
+            const actedBy = approval.acted_by || {};
+
+            return `
+            <div class="approval-card border rounded-3 mb-3 p-3 ${isRejected ? 'bg-light' : ''}">
                 <div class="d-flex align-items-start">
-                    <div class="me-3">
-                        <i class="fas fa-times-circle text-danger fs-4"></i>
+                    <!-- Admin Avatar -->
+                    <div class="me-3 flex-shrink-0">
+                        ${requiredAdmin.photo ?
+                    `<img src="${requiredAdmin.photo}" class="rounded-circle" width="48" height="48" style="object-fit: cover;">` :
+                    `<div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white" style="width: 48px; height: 48px;">
+                                <span class="fw-bold fs-5">${(requiredAdmin.first_name?.charAt(0) || '')}${(requiredAdmin.last_name?.charAt(0) || '')}</span>
+                             </div>`
+                }
                     </div>
+
+                    <!-- Admin Info and Action -->
                     <div class="flex-grow-1">
                         <div class="d-flex justify-content-between align-items-start flex-wrap">
                             <div>
-                                <h6 class="mb-1">Stage ${rejection.stage} - ${escapeHtml(requiredAdmin.name || 'Signatory')}</h6>
-                                <small class="text-muted">Rejected by: ${escapeHtml(actedBy.name || 'Unknown')}</small>
+                                <h6 class="mb-1">${escapeHtml(requiredAdmin.name || 'Unknown Signatory')}</h6>
+                                <small class="text-muted d-block">${escapeHtml(requiredAdmin.role || 'Signatory')}</small>
                             </div>
-                            <small class="text-muted">${rejection.formatted_date}</small>
+                            <div class="text-end">
+                                <span class="badge bg-${statusClass} mb-1">
+                                    <i class="fas ${statusIcon} me-1"></i>${statusText}
+                                </span>
+                                ${approval.formatted_date !== 'Pending' ?
+                    `<div><small class="text-muted">${approval.formatted_date}</small></div>` : ''
+                }
+                            </div>
                         </div>
-                        ${rejection.remarks ? `
-                            <div class="mt-2">
-                                <small class="text-muted">Reason:</small>
-                                <div class="small bg-white p-2 rounded mt-1 border">${escapeHtml(rejection.remarks)}</div>
+
+                        <!-- Action details if acted upon -->
+                        ${!isPending ? `
+                            <div class="mt-2 pt-2 border-top">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2">
+                                        ${actedBy.photo ?
+                        `<img src="${actedBy.photo}" class="rounded-circle" width="24" height="24" style="object-fit: cover;">` :
+                        `<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 10px;">
+                                                ${(actedBy.first_name?.charAt(0) || '')}${(actedBy.last_name?.charAt(0) || '')}
+                                             </div>`
+                    }
+                                    </div>
+                                    <div>
+                                        <small>Acted by: <strong>${escapeHtml(actedBy.name || 'System')}</strong></small>
+                                    </div>
+                                </div>
+                                ${approval.remarks ? `
+                                    <div class="mt-2">
+                                        <small class="text-muted">Remarks:</small>
+                                        <div class="small bg-light p-2 rounded mt-1">${escapeHtml(approval.remarks)}</div>
+                                    </div>
+                                ` : ''}
                             </div>
-                        ` : ''}
+                        ` : `
+                            <div class="mt-2 pt-2 border-top">
+                                <small class="text-muted"><i class="fas fa-hourglass-half me-1"></i>Awaiting action from this signatory</small>
+                            </div>
+                        `}
                     </div>
                 </div>
             </div>
         `;
-    }).join('');
-}
+        }
+
+        function generateRejectionsList(rejections) {
+            if (!rejections || rejections.length === 0) {
+                return '<div class="text-center text-muted py-4">No rejections recorded</div>';
+            }
+
+            return rejections.map(rejection => {
+                const requiredAdmin = rejection.required_admin || {};
+                const actedBy = rejection.acted_by || {};
+
+                return `
+                <div class="rejection-item border rounded-3 mb-3 p-3 bg-light">
+                    <div class="d-flex align-items-start">
+                        <div class="me-3">
+                            <i class="fas fa-times-circle text-danger fs-4"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                                <div>
+                                    <h6 class="mb-1">Stage ${rejection.stage} - ${escapeHtml(requiredAdmin.name || 'Signatory')}</h6>
+                                    <small class="text-muted">Rejected by: ${escapeHtml(actedBy.name || 'Unknown')}</small>
+                                </div>
+                                <small class="text-muted">${rejection.formatted_date}</small>
+                            </div>
+                            ${rejection.remarks ? `
+                                <div class="mt-2">
+                                    <small class="text-muted">Reason:</small>
+                                    <div class="small bg-white p-2 rounded mt-1 border">${escapeHtml(rejection.remarks)}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
 
         async function renderApprovalsTab() {
             if (renderedTabs.approvals) return;
@@ -1225,118 +1175,113 @@ function generateRejectionsList(rejections) {
 
             // Generate HTML for approvals
             let html = `
-            <div class="approval-stages-container">
-                <!-- Approval Progress Summary -->
-                <div class="approval-progress mb-4 p-3 bg-light rounded">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0">Approval Progress</h6>
-                        ${allApproved ? '<span class="badge bg-success">Fully Approved ✓</span>' :
+        <div class="approval-stages-container">
+            <!-- Approval Progress Summary -->
+            <div class="approval-progress mb-4 p-3 bg-light rounded">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Approval Progress</h6>
+                    ${allApproved ? '<span class="badge bg-success">Fully Approved ✓</span>' :
                     hasRejection ? '<span class="badge bg-danger">Rejected ✗</span>' :
                         '<span class="badge bg-warning">In Progress</span>'}
-                    </div>
-                    <div class="progress mb-2" style="height: 8px;">
-                        <div class="progress-bar bg-success" style="width: ${(stage1Approved + stage2Approved + stage3Approved) / (stage1Approvals.length + stage2Approvals.length + stage3Approvals.length) * 100}%"></div>
-                    </div>
-                    <div class="row text-center small">
-                        <div class="col">
-                            <span class="text-muted">Stage 1:</span>
-                            <span class="fw-bold ${stage1Complete ? 'text-success' : 'text-warning'}">${stage1Approved}/${stage1Approvals.length}</span>
-                        </div>
-                        <div class="col">
-                            <span class="text-muted">Stage 2:</span>
-                            <span class="fw-bold ${stage2Complete ? 'text-success' : 'text-warning'}">${stage2Approved}/${stage2Approvals.length}</span>
-                        </div>
-                        <div class="col">
-                            <span class="text-muted">Stage 3:</span>
-                            <span class="fw-bold ${stage3Complete ? 'text-success' : 'text-warning'}">${stage3Approved}/${stage3Approvals.length}</span>
-                        </div>
-                    </div>
                 </div>
-        `;
-
-            // Stage 1 Section
-            html += `
-            <div class="stage-section mb-4">
-                <div class="stage-header d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h5 class="mb-0">Stage 1 Approval</h5>
-                        <small class="text-muted">Initial Review and Endorsement</small>
-                    </div>
-                    <div class="stage-status">
-                        ${stage1Rejected > 0 ?
-                    '<span class="badge bg-danger">Rejected</span>' :
-                    (stage1Complete ?
-                        '<span class="badge bg-success">Completed</span>' :
-                        '<span class="badge bg-warning">Pending (' + stage1Pending + ')</span>')}
-                    </div>
+                <div class="progress mb-2" style="height: 8px;">
+                    <div class="progress-bar bg-success" style="width: ${(stage1Approved + stage2Approved + stage3Approved) / (stage1Approvals.length + stage2Approvals.length + stage3Approvals.length) * 100}%"></div>
                 </div>
-                <div class="stage-content">
-                    ${stage1Approvals.length === 0 ?
-                    '<div class="text-center text-muted py-3">No signatories assigned for Stage 1</div>' :
-                    stage1Approvals.map(approval => generateApprovalCard(approval)).join('')}
+                <div class="row text-center small">
+                    <div class="col">
+                        <span class="text-muted">Stage 1:</span>
+                        <span class="fw-bold ${stage1Complete ? 'text-success' : 'text-warning'}">${stage1Approved}/${stage1Approvals.length}</span>
+                    </div>
+                    <div class="col">
+                        <span class="text-muted">Stage 2:</span>
+                        <span class="fw-bold ${stage2Complete ? 'text-success' : 'text-warning'}">${stage2Approved}/${stage2Approvals.length}</span>
+                    </div>
+                    <div class="col">
+                        <span class="text-muted">Stage 3:</span>
+                        <span class="fw-bold ${stage3Complete ? 'text-success' : 'text-warning'}">${stage3Approved}/${stage3Approvals.length}</span>
+                    </div>
                 </div>
             </div>
         `;
 
+            // Stage 1 Section
+            html += `
+        <div class="stage-section mb-4">
+            <div class="stage-header d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="mb-0">Stage 1 Approval</h5>
+                    <small class="text-muted">Initial Review and Endorsement</small>
+                </div>
+                <div class="stage-status">
+                    ${stage1Rejected > 0 ?
+                    '<span class="badge bg-danger">Rejected</span>' :
+                    (stage1Complete ?
+                        '<span class="badge bg-success">Completed</span>' :
+                        '<span class="badge bg-warning">Pending (' + stage1Pending + ')</span>')}
+                </div>
+            </div>
+            <div class="stage-content">
+                ${stage1Approvals.length === 0 ?
+                    '<div class="text-center text-muted py-3">No signatories assigned for Stage 1</div>' :
+                    stage1Approvals.map(approval => generateApprovalCard(approval)).join('')}
+            </div>
+        </div>
+    `;
+
             // Stage 2 Section
             if (stage2Approvals.length > 0) {
                 html += `
-                <div class="stage-section mb-4">
-                    <div class="stage-header d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h5 class="mb-0">Stage 2 Approval</h5>
-                            <small class="text-muted">Department Head Review</small>
-                        </div>
-                        <div class="stage-status">
-                            ${stage2Rejected > 0 ?
+            <div class="stage-section mb-4">
+                <div class="stage-header d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-0">Stage 2 Approval</h5>
+                        <small class="text-muted">Department Head Review</small>
+                    </div>
+                    <div class="stage-status">
+                        ${stage2Rejected > 0 ?
                         '<span class="badge bg-danger">Rejected</span>' :
                         (stage2Complete ?
                             '<span class="badge bg-success">Completed</span>' :
                             '<span class="badge bg-warning">Pending (' + stage2Pending + ')</span>')}
-                        </div>
-                    </div>
-                    <div class="stage-content">
-                        ${stage2Approvals.map(approval => generateApprovalCard(approval)).join('')}
                     </div>
                 </div>
-            `;
+                <div class="stage-content">
+                    ${stage2Approvals.map(approval => generateApprovalCard(approval)).join('')}
+                </div>
+            </div>
+        `;
             }
 
             // Stage 3 Section
             if (stage3Approvals.length > 0) {
                 html += `
-                <div class="stage-section mb-4">
-                    <div class="stage-header d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h5 class="mb-0">Stage 3 Approval</h5>
-                            <small class="text-muted">Final Review and Authorization</small>
-                        </div>
-                        <div class="stage-status">
-                            ${stage3Rejected > 0 ?
+            <div class="stage-section mb-4">
+                <div class="stage-header d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-0">Stage 3 Approval</h5>
+                        <small class="text-muted">Final Review and Authorization</small>
+                    </div>
+                    <div class="stage-status">
+                        ${stage3Rejected > 0 ?
                         '<span class="badge bg-danger">Rejected</span>' :
                         (stage3Complete ?
                             '<span class="badge bg-success">Completed</span>' :
                             '<span class="badge bg-warning">Pending (' + stage3Pending + ')</span>')}
-                        </div>
-                    </div>
-                    <div class="stage-content">
-                        ${stage3Approvals.map(approval => generateApprovalCard(approval)).join('')}
                     </div>
                 </div>
-            `;
+                <div class="stage-content">
+                    ${stage3Approvals.map(approval => generateApprovalCard(approval)).join('')}
+                </div>
+            </div>
+        `;
             }
 
             html += `</div>`;
 
             // Update the approvals container
-            document.getElementById('approvalsListContainer').innerHTML = html;
-
-            // Also update rejections container if needed
-            const rejections = approvalsHistory.filter(item => item.status === 'Rejected');
-            if (rejections.length > 0) {
-                document.getElementById('rejectionsListContainer').innerHTML = generateRejectionsList(rejections);
-            } else {
-                document.getElementById('rejectionsListContainer').innerHTML = '<div class="text-center text-muted py-4">No rejections recorded</div>';
+            const approvalsContainer = document.getElementById('approvalsListContainer');
+            if (approvalsContainer) {
+                approvalsContainer.innerHTML = html;
             }
 
             renderedTabs.approvals = true;
@@ -1346,80 +1291,12 @@ function generateRejectionsList(rejections) {
         // ======================== EXISTING RENDER FUNCTIONS =========================
         // ============================================================================
 
-        function renderRequestedItems(requestedItems, durationHours = 1) {
-            const tbody = document.getElementById('requestedItemsTableBody');
-            if (!tbody) return;
-
-            let html = '';
-            const hasFacilities = requestedItems.facilities && requestedItems.facilities.length > 0;
-            const hasEquipment = requestedItems.equipment && requestedItems.equipment.length > 0;
-
-            if (!hasFacilities && !hasEquipment) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No items requested</td></tr>`;
-                return;
-            }
-
-            // --- 1. RENDER FACILITIES ---
-            if (hasFacilities) {
-                requestedItems.facilities.forEach(f => {
-                    const qty = 1; // Facilities default to 1 unit
-                    const isPerHour = f.rate_type === 'Per Hour';
-
-                    // Calculation logic
-                    const subtotal = isPerHour ? f.fee * durationHours : f.fee;
-                    const rateLabel = isPerHour ? '/hr' : '/event';
-                    const durationText = isPerHour ? `${durationHours.toFixed(1)} hrs` : '—';
-
-                    html += `
-                                                                                    <tr class="border-bottom border-light-subtle">
-                                                                                        <td class="py-3">
-                                                                                            <div class="fw-semibold text-dark">${escapeHtml(f.name)}</div>
-                                                                                            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.3px;">Facility</small>
-                                                                                        </td>
-                                                                                        <td class="py-3 text-end fw-medium text-secondary">${formatMoney(f.fee)}${rateLabel}</td>
-                                                                                        <td class="py-3 text-center text-secondary">${qty}</td>
-                                                                                        <td class="py-3 text-center text-secondary">${durationText}</td>
-                                                                                        <td class="py-3 text-end fw-bold text-dark">${formatMoney(subtotal)}</td>
-                                                                                    </tr>
-                                                                                `;
-                });
-            }
-
-            // --- 2. RENDER EQUIPMENT ---
-            if (hasEquipment) {
-                requestedItems.equipment.forEach(e => {
-                    const qty = e.quantity || 1;
-                    const isPerHour = e.rate_type === 'Per Hour';
-
-                    // Calculation logic
-                    const subtotal = isPerHour ? (e.fee * durationHours) * qty : e.fee * qty;
-                    const rateLabel = isPerHour ? '/hr' : '/event';
-                    const durationText = isPerHour ? `${durationHours.toFixed(1)} hrs` : '—';
-
-                    html += `
-                                                                                    <tr class="border-bottom">
-                                                                                        <td class="py-3">
-                                                                                            <div class="fw-semibold text-dark">${escapeHtml(e.name)}</div>
-                                                                                            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.3px;">Equipment</small>
-                                                                                        </td>
-                                                                                        <td class="py-3 text-end fw-medium text-secondary">${formatMoney(e.fee)}${rateLabel}</td>
-                                                                                        <td class="py-3 text-center text-secondary">${qty}</td>
-                                                                                        <td class="py-3 text-center text-secondary">${durationText}</td>
-                                                                                        <td class="py-3 text-end fw-bold text-dark">${formatMoney(subtotal)}</td>
-                                                                                    </tr>
-                                                                                `;
-                });
-            }
-
-            tbody.innerHTML = html;
-        }
-
         async function loadTimelineContentTab() {
             const container = document.getElementById('timelineContentTab');
             const filter = document.getElementById('timelineFilterTab')?.value || 'all';
             if (!container) return;
 
-            container.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary mb-2"></div><p class="small mb-0">Loading activity...</p></div>';
+            container.innerHTML = '<div class="timeline-empty-state text-center text-muted"><div class="spinner-border spinner-border-sm text-primary mb-2"></div><p class="small mb-0">Loading activity...</p></div>';
 
             try {
                 let activities = [];
@@ -1432,8 +1309,8 @@ function generateRejectionsList(rejections) {
                 activities.sort((a, b) => b.timestamp - a.timestamp);
 
                 if (activities.length === 0) {
-                    container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-comment-slash fa-2x mb-2"></i><p class="small mb-0">No activity yet</p></div>';
-                } else {
+    container.innerHTML = '<div class="timeline-empty-state text-center text-muted"><i class="fas fa-comment-slash fa-2x mb-2"></i><p class="small mb-0">No activity yet</p></div>';
+} else {
                     container.innerHTML = activities.map(activity => {
                         if (activity.type === 'comment') {
                             const c = activity.data;
@@ -1448,7 +1325,7 @@ function generateRejectionsList(rejections) {
                 }
             } catch (error) {
                 console.error('Error loading timeline:', error);
-                container.innerHTML = '<div class="text-center text-danger py-4">Failed to load activity</div>';
+                container.innerHTML = '<div class="timeline-empty-state text-center text-danger"><i class="fas fa-exclamation-circle fa-2x mb-2"></i><p class="small mb-0">Failed to load activity</p></div>';
             }
         }
 
@@ -1571,7 +1448,7 @@ function generateRejectionsList(rejections) {
                         if (document.getElementById('timelinePane').classList.contains('active')) {
                             await loadTimelineContentTab();
                         }
-                        if (document.getElementById('approvalsPane').classList.contains('active')) {
+                        if (document.getElementById('timelinePane').classList.contains('active')) {
                             await renderApprovalsTab();
                         }
                         return result.data;
@@ -1833,8 +1710,7 @@ function generateRejectionsList(rejections) {
             const panes = {
                 details: document.getElementById('detailsPane'),
                 financials: document.getElementById('financialsPane'),
-                timeline: document.getElementById('timelinePane'),
-                approvals: document.getElementById('approvalsPane')
+                timeline: document.getElementById('timelinePane')
             };
 
             tabs.forEach(tab => {
@@ -1864,28 +1740,12 @@ function generateRejectionsList(rejections) {
                             case 'timeline':
                                 await renderTimelineTab();
                                 break;
-                            case 'approvals':
-                                await renderApprovalsTab();
-                                break;
                         }
                     }
                 });
             });
         }
-
-        // ============================================================================
-        // ======================== REDIRECT TO FINANCIALS TAB ==================================
-        // ============================================================================
-
-        // Redirect to Financials tab when Edit Fees button is clicked
-        document.getElementById('editFeesBtn')?.addEventListener('click', function () {
-            // Find and click the Financials tab
-            const financialsTab = document.querySelector('.nav-link[data-tab="financials"]');
-            if (financialsTab) {
-                financialsTab.click();
-            }
-        });
-
+        
         // ============================================================================
         // ======================== DOCUMENT PREVIEW ==================================
         // ============================================================================
