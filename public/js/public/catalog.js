@@ -72,6 +72,21 @@ class BookingCatalog {
         this.cacheDomElements();
         this.setupEventListeners();
         this.setInitialUI();
+
+        // Check URL parameter for tab
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get("tab");
+        if (tabParam && ["venues", "rooms", "equipment"].includes(tabParam)) {
+            this.catalogType = tabParam;
+            document
+                .querySelectorAll(".catalog-type-tab")
+                .forEach((t) => t.classList.remove("active"));
+            const tabBtn = document.querySelector(
+                `.catalog-type-tab[data-type="${tabParam}"]`,
+            );
+            if (tabBtn) tabBtn.classList.add("active");
+        }
+
         await this.loadCategories();
         await this.loadCatalogData();
         await this.loadFormStatuses();
@@ -223,6 +238,10 @@ class BookingCatalog {
     }
 
     async switchCatalogType(type) {
+        // Update URL
+        const url = new URL(window.location);
+        url.searchParams.set("tab", type);
+        window.history.pushState({}, "", url);
         this.catalogType = type;
         this.currentPage = 1;
         this.searchQuery = "";
