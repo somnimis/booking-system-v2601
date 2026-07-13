@@ -442,7 +442,6 @@
                 }
             });
 
-            // No need to pass CalendarModule anymore since it's global
             await bookingCatalog.init();
             console.log('BookingCatalog initialized successfully');
 

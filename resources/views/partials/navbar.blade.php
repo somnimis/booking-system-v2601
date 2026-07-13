@@ -162,60 +162,6 @@
         border-radius: 2px;
     }
 
-    /* Dropdown */
-    .main-navbar .dropdown-toggle {
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-
-    .main-navbar .dropdown-toggle::after {
-        margin-top: 2px;
-    }
-
-    .main-navbar .dropdown-menu {
-        background: var(--white);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-        margin-top: 0.5rem;
-        padding: 0.5rem;
-        box-shadow: var(--shadow-md);
-        min-width: 200px;
-        animation: dropdownFadeIn 0.2s ease-out;
-    }
-
-    @keyframes dropdownFadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-8px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .main-navbar .dropdown-item {
-        font-family: 'DM Sans', sans-serif;
-        color: var(--text-base);
-        font-size: 0.85rem;
-        padding: 0.6rem 1rem;
-        border-radius: var(--radius-sm);
-        transition: var(--transition);
-    }
-
-    .main-navbar .dropdown-item:hover,
-    .main-navbar .dropdown-item:focus {
-        background-color: var(--navy-light);
-        color: var(--navy);
-    }
-
-    .main-navbar .dropdown-item.active {
-        background-color: var(--navy);
-        color: var(--white);
-    }
-
     /* How to Book */
     .navbar .how-to-book {
         font-family: 'DM Sans', sans-serif;
@@ -273,32 +219,41 @@
     }
 
     .tooltip-inner {
-        background-color: var(--navy);
-        color: var(--white);
+        background: rgba(20, 20, 20, 0.75);
+        color: #fff;
+
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 1rem;
+
         font-family: 'DM Sans', sans-serif;
         font-size: 0.8rem;
         padding: 0.75rem 1rem;
         line-height: 1.4;
         max-width: 320px;
         text-align: left;
-        border-radius: var(--radius-md);
-        box-shadow: var(--shadow-md);
-    }
 
-    .tooltip-arrow::before {
-        border-bottom-color: var(--navy);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.35),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
 
     .bs-tooltip-top .tooltip-arrow::before {
-        border-top-color: var(--navy);
+        border-top-color: rgba(20, 20, 20, 0.75);
     }
 
-    .bs-tooltip-end .tooltip-arrow::before {
-        border-right-color: var(--navy);
+    .bs-tooltip-bottom .tooltip-arrow::before {
+        border-bottom-color: rgba(20, 20, 20, 0.75);
     }
 
     .bs-tooltip-start .tooltip-arrow::before {
-        border-left-color: var(--navy);
+        border-left-color: rgba(20, 20, 20, 0.75);
+    }
+
+    .bs-tooltip-end .tooltip-arrow::before {
+        border-right-color: rgba(20, 20, 20, 0.75);
     }
 
     /* Mobile Responsive Styles */
@@ -373,18 +328,6 @@
             display: none;
         }
 
-        .main-navbar .dropdown-menu {
-            background: var(--surface);
-            border: none;
-            padding: 0;
-            margin: 0;
-            box-shadow: none;
-            animation: none;
-        }
-
-        .main-navbar .dropdown-item {
-            padding: 0.6rem 0 0.6rem 1rem;
-        }
 
         /* Right side actions */
         .d-flex.align-items-center.ms-lg-3 {
@@ -429,6 +372,20 @@
             padding: 0.5rem 0.75rem;
         }
     }
+
+    .custom-tooltip .tooltip-inner ol {
+        margin: 0;
+        padding-left: 1.25rem;
+    }
+
+    .custom-tooltip .tooltip-inner li {
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+    }
+
+    .custom-tooltip .tooltip-inner li:last-child {
+        margin-bottom: 0;
+    }
 </style>
 
 <header class="top-header-bar">
@@ -469,20 +426,6 @@
                     <a class="nav-link {{ Request::is('your-bookings') ? 'active' : '' }}"
                         href="{{ url('your-bookings') }}">Your Bookings</a>
                 </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle {{ Request::is('about-facilities', 'about-equipment', 'about-services') ? 'active' : '' }}"
-                        href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        About Services
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item {{ Request::is('about-facilities') ? 'active' : '' }}"
-                                href="{{ url('about-facilities') }}">About Facilities</a></li>
-                        <li><a class="dropdown-item {{ Request::is('about-equipment') ? 'active' : '' }}"
-                                href="{{ url('about-equipment') }}">About Equipment</a></li>
-                        <li><a class="dropdown-item {{ Request::is('about-services') ? 'active' : '' }}"
-                                href="{{ url('about-services') }}">Extra Services</a></li>
-                    </ul>
-                </li>
                 <li class="nav-item">
                     <a class="nav-link {{ Request::is('policies') ? 'active' : '' }}" href="{{ url('policies') }}">Our
                         Policies</a>
@@ -495,21 +438,26 @@
 
             <div class="d-flex align-items-center ms-lg-3">
                 <span class="me-2 how-to-book d-flex align-items-center" data-bs-toggle="tooltip"
-                    data-bs-placement="bottom" data-bs-custom-class="custom-tooltip" title="1. Browse the catalog and add venues or equipment to your booking cart.
-2. Go to the reservation form via 'Book Now' or your cart.
-3. Fill in required booking data and check item availability for your timeslot.
-4. Read reservation policies before submitting.">
+                    data-bs-placement="bottom" data-bs-html="true" data-bs-custom-class="custom-tooltip" title="
+            <ol class='mb-0 ps-3'>
+                <li class='mb-2'>Browse the catalog and add venues or equipment to your booking cart.</li>
+                <li class='mb-2'>Go to the reservation form via <strong>Book Now</strong> or your cart.</li>
+                <li class='mb-2'>Fill in the required booking details and check item availability for your selected timeslot.</li>
+                <li class='mb-0'>Read the reservation policies before submitting your request.</li>
+            </ol>
+        ">
                     How to book?
                     <i class="bi bi-question-circle ms-1" style="font-size: 0.85rem;"></i>
                 </span>
-
-                @if(Route::currentRouteName() === 'reservation.form' || Request::is('reservation-form'))
-                    <a href="{{ url('booking-catalog') }}" class="btn btn-book-now">Back to Catalog</a>
-                @else
-                    <a href="{{ url('reservation-form') }}" class="btn btn-book-now">Book Now</a>
-                @endif
             </div>
+
+            @if(Route::currentRouteName() === 'reservation.form' || Request::is('reservation-form'))
+                <a href="{{ url('booking-catalog') }}" class="btn btn-book-now">Back to Catalog</a>
+            @else
+                <a href="{{ url('reservation-form') }}" class="btn btn-book-now">Book Now</a>
+            @endif
         </div>
+    </div>
     </div>
 </nav>
 
@@ -518,13 +466,5 @@
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (el) {
         return new bootstrap.Tooltip(el, { container: 'body' });
-    });
-
-    // Initialize Bootstrap dropdowns
-    document.addEventListener('DOMContentLoaded', function () {
-        const dropdownElements = document.querySelectorAll('.dropdown-toggle');
-        dropdownElements.forEach(dropdown => {
-            new bootstrap.Dropdown(dropdown);
-        });
     });
 </script>
