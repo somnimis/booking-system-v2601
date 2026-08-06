@@ -9,21 +9,112 @@ use App\Models\LookupTables\AvailabilityStatus;
 use Illuminate\Http\Request;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class FacilityController extends Controller
 {
     // ----- Index - Show all facilities ----- //
 
-    public function getFacilitiesForDropdown()
+    public function getFacilitiesWithSelected(Request $request)
     {
-        $facilities = Facility::select('facility_id', 'facility_name')
-            ->orderBy('facility_name')
-            ->get();
+        $search = $request->input('search');
+        $filter = $request->input('filter');
+        $page = $request->input('page', 1);
+        $perPage = 10;
+
+        // Get facilities with pagination
+        $query = Facility::select(
+            'facility_id',
+            'parent_facility_id',
+            'facility_code',
+            'facility_name'
+        );
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('facility_name', 'like', "%{$search}%")
+                    ->orWhere('facility_code', 'like', "%{$search}%");
+            });
+        }
+
+        if ($filter) {
+            [$type, $id] = explode(':', $filter);
+            if ($type === 'category') {
+                $query->where('category_id', $id);
+            }
+            if ($type === 'subcategory') {
+                $query->where('subcategory_id', $id);
+            }
+        }
+
+        $facilities = $query->orderBy('facility_name')->paginate($perPage, ['*'], 'page', $page);
+
+        // Get selected item IDs from session
+        $selectedItems = session('selected_items', []);
+        $selectedFacilityIds = collect($selectedItems)
+            ->filter(fn($item) => $item['type'] === 'facility')
+            ->pluck('facility_id')
+            ->toArray();
+
+        // Get parent names for buildings
+        $parentIds = $facilities->pluck('parent_facility_id')->filter()->unique()->toArray();
+        $parentNames = [];
+        if (!empty($parentIds)) {
+            $parentNames = Facility::whereIn('facility_id', $parentIds)
+                ->pluck('facility_name', 'facility_id')
+                ->toArray();
+        }
 
         return response()->json([
-            'success' => true,
-            'data' => $facilities
+            'data' => $facilities->items(),
+            'current_page' => $facilities->currentPage(),
+            'last_page' => $facilities->lastPage(),
+            'total' => $facilities->total(),
+            'per_page' => $facilities->perPage(),
+            'selected_ids' => $selectedFacilityIds,
+            'parent_names' => $parentNames,
         ]);
+    }
+
+    public function getFacilitiesForDropdown(Request $request)
+    {
+        $search = $request->input('search');
+        $parentFacilityId = $request->input('parent_facility_id');
+        $filter = $request->input('filter');
+
+        $query = Facility::select(
+            'facility_id',
+            'parent_facility_id',
+            'facility_code',
+            'facility_name'
+        );
+
+        $query->when($search, function ($query) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('facility_name', 'like', "%{$search}%")
+                    ->orWhere('facility_code', 'like', "%{$search}%");
+            });
+        });
+
+        $query->when($parentFacilityId, function ($query) use ($parentFacilityId) {
+            $query->where('parent_facility_id', $parentFacilityId);
+        });
+
+        if ($filter) {
+            [$type, $id] = explode(':', $filter);
+
+            if ($type === 'category') {
+                $query->where('category_id', $id);
+            }
+
+            if ($type === 'subcategory') {
+                $query->where('subcategory_id', $id);
+            }
+        }
+
+        return $query
+            ->orderBy('facility_name')
+            ->paginate(10);
     }
 
     public function publicIndex(): JsonResponse
@@ -386,7 +477,7 @@ class FacilityController extends Controller
             foreach ($facilityIds as $facilityId) {
                 try {
                     $facility = Facility::findOrFail($facilityId);
-                    
+
                     // Update the managed_by field
                     $facility->managed_by = $departmentId;
                     $facility->save();

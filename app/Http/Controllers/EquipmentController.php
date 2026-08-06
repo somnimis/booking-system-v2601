@@ -285,33 +285,99 @@ class EquipmentController extends Controller
         }
     }
 
-    public function getAllEquipmentForDropdown(Request $request): JsonResponse
+    public function getEquipmentWithSelected(Request $request)
 {
-    try {
-        $query = Equipment::with(['category', 'status'])
-            ->orderBy('equipment_name', 'asc');
-        
-        // Apply filters if needed
-        if ($request->has('status_id') && $request->status_id !== 'all') {
-            $query->where('status_id', $request->status_id);
-        }
-        
-        if ($request->has('category_id') && $request->category_id !== 'all') {
-            $query->where('category_id', $request->category_id);
-        }
-        
-        $equipment = $query->get(['equipment_id', 'equipment_name']); // Only fetch what you need
-        
-        return response()->json([
-            'success' => true,
-            'data' => $equipment
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to fetch equipment: ' . $e->getMessage()
-        ], 500);
+    $search = $request->input('search');
+    $filter = $request->input('filter');
+    $page = $request->input('page', 1);
+    $perPage = 10;
+
+    $query = Equipment::join(
+        'availability_statuses',
+        'equipment.status_id',
+        '=',
+        'availability_statuses.status_id'
+    )
+    ->select(
+        'equipment.equipment_id',
+        'equipment.equipment_name',
+        'availability_statuses.status_name'
+    );
+
+    if ($search) {
+        $query->where('equipment.equipment_name', 'like', "%{$search}%");
     }
+
+    if ($filter) {
+        [$type, $id] = explode(':', $filter);
+        if ($type === 'category') {
+            $query->where('equipment.category_id', $id);
+        }
+    }
+
+    $equipment = $query->orderBy('equipment.equipment_name')->paginate($perPage, ['*'], 'page', $page);
+
+    // Filter out "Hidden" status
+    $filteredItems = $equipment->items();
+    $filteredItems = array_filter($filteredItems, fn($e) => $e->status_name !== 'Hidden');
+
+    // Get selected item IDs from session
+    $selectedItems = session('selected_items', []);
+    $selectedEquipmentIds = collect($selectedItems)
+        ->filter(fn($item) => $item['type'] === 'equipment')
+        ->pluck('equipment_id')
+        ->toArray();
+
+    return response()->json([
+        'data' => array_values($filteredItems),
+        'current_page' => $equipment->currentPage(),
+        'last_page' => $equipment->lastPage(),
+        'total' => count($filteredItems),
+        'per_page' => $perPage,
+        'selected_ids' => $selectedEquipmentIds,
+    ]);
+}
+
+public function getEquipmentForDropdown(Request $request): JsonResponse
+{
+    $search = $request->input('search');
+    $filter = $request->input('filter');
+
+    $query = Equipment::join(
+        'availability_statuses',
+        'equipment.status_id',
+        '=',
+        'availability_statuses.status_id'
+    )
+    ->select(
+        'equipment.equipment_id',
+        'equipment.equipment_name',
+        'availability_statuses.status_name'
+    )
+    ->when($search, function ($query) use ($search) {
+        $query->where(
+            'equipment.equipment_name',
+            'like',
+            "%{$search}%"
+        );
+    });
+
+    if ($filter) {
+        [$type, $id] = explode(':', $filter);
+
+        if ($type === 'category') {
+            $query->where('equipment.category_id', $id);
+        }
+    }
+
+    return response()->json(
+        $query
+            ->orderBy('equipment.equipment_name')
+            ->paginate(
+                perPage: 10,
+                page: $request->input('page', 1)
+            )
+    );
 }
 
     /**
@@ -854,10 +920,6 @@ class EquipmentController extends Controller
                 'status_id' => $equipment->status_id,
                 'status_name' => $equipment->status->status_name,
                 'color_code' => $equipment->status->color_code,
-            ],
-            'department' => [
-                'department_id' => $equipment->department_id,
-                'department_name' => $equipment->department->department_name,
             ],
             'items' => $equipment->items,
             'images' => $equipment->images,
