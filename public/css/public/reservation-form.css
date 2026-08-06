@@ -1,0 +1,1009 @@
+/* Pagination color */
+.page-item.active .page-link {
+    background-color: #0b2d72;
+    border-color: #0b2d72;
+}
+
+.page-link {
+    color: #0b2d72;
+}
+
+.page-link:hover {
+    color: #0b2d72;
+}
+
+/* Fix previous/next buttons */
+.page-item:not(.active) .page-link {
+    color: #0b2d72;
+}
+
+.page-item:not(.active) .page-link:hover {
+    color: #0b2d72;
+    background-color: #f8f9fa;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+}
+
+/* Tab styling */
+.nav-tabs .nav-link {
+    color: #0b2d72;
+    cursor: pointer;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #0b2d72;
+    cursor: pointer;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0b2d72;
+    border-color: #0b2d72 #0b2d72 #fff;
+}
+
+.nav-tabs .nav-link.active:hover {
+    cursor: pointer;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    /* Stack columns vertically */
+    .row {
+        flex-direction: column;
+    }
+
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    /* Adjust form-section-card heights for mobile */
+    .form-section-card {
+        height: auto !important;
+        min-height: 300px;
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+
+    /* Make the requested items container stack properly */
+    #step1 .col-md-6 {
+        margin-bottom: 15px;
+    }
+
+    /* Ensure the booking schedule section doesn't have fixed height */
+    #step1 .col-md-6 .form-section-card {
+        height: auto !important;
+        min-height: auto;
+    }
+
+    /* Adjust form inputs for better mobile experience */
+    .form-control,
+    .form-select {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+        padding: 10px;
+    }
+
+    /* Stack form elements vertically */
+    .row .col-md-3,
+    .row .col-md-4,
+    .row .col-md-6,
+    .row .col-md-12 {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    /* Adjust the checkboxes container */
+    .border.rounded.p-3 .row {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .border.rounded.p-3 .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    /* Navigation buttons */
+    .navigation-buttons {
+        padding: 10px;
+        margin-top: 10px;
+    }
+
+    .navigation-buttons .btn {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    /* Conflict modal adjustments */
+    #conflictModal .modal-dialog {
+        margin: 10px;
+    }
+
+    /* Terms modal adjustments */
+    #termsModal .modal-dialog {
+        margin: 10px;
+    }
+
+    .terms-content {
+        max-height: 60vh !important;
+        padding: 0 10px;
+    }
+
+    /* Success modal */
+    #successModal .modal-dialog {
+        margin: 10px;
+    }
+
+    /* Header adjustments */
+    .top-header-bar .container {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .cpu-brand {
+        margin-bottom: 10px;
+        justify-content: center;
+    }
+
+    .admin-login {
+        margin-bottom: 10px;
+    }
+
+    /* Navbar adjustments */
+    .navbar-nav {
+        margin-top: 10px;
+    }
+
+    .navbar .d-flex {
+        margin-top: 10px;
+        justify-content: center;
+    }
+
+    /* File upload button */
+    .position-relative {
+        margin-bottom: 15px;
+    }
+
+    /* Summary section adjustments */
+    #step3 .col-md-6 {
+        margin-bottom: 20px;
+    }
+
+    /* Footer adjustments */
+    .footer-container {
+        padding: 15px 0;
+    }
+
+    /* Tooltip adjustments */
+    .custom-tooltip .tooltip-inner {
+        max-width: 250px;
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    /* Calendar and availability section */
+    .d-flex.justify-content-start.gap-2 {
+        flex-wrap: wrap;
+    }
+
+    .d-flex.justify-content-start.gap-2 .btn {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    /* Selected items container */
+    .selected-item-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .selected-item-image {
+        width: 100%;
+        height: auto;
+        max-height: 150px;
+        margin-bottom: 10px;
+    }
+
+    .selected-item-image img {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+    }
+
+    .delete-item-btn {
+        align-self: flex-end;
+        margin-top: 10px;
+    }
+
+    /* Extra services checkboxes */
+    .form-check {
+        padding-left: 1.8rem;
+    }
+
+    .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        margin-top: 0.2em;
+    }
+
+    /* Adjust text sizes for mobile */
+    h5 {
+        font-size: 1.1rem;
+    }
+
+    .text-muted {
+        font-size: 0.85rem;
+    }
+
+    /* Make buttons more tappable */
+    .btn {
+        padding: 10px 16px;
+        min-height: 44px;
+        /* Apple's recommended minimum touch target size */
+    }
+
+    .btn-sm {
+        min-height: 38px;
+    }
+
+    /* Improve spacing */
+    .main-content {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .mb-2,
+    .my-2 {
+        margin-bottom: 12px !important;
+    }
+
+    .gap-2 {
+        gap: 10px !important;
+    }
+
+    /* Make sure the How to book? section doesn't overflow */
+    .how-to-book {
+        white-space: normal;
+        text-align: center;
+        margin-right: 0 !important;
+        margin-bottom: 5px;
+    }
+
+    /* Adjust the navbar toggler position */
+    .navbar-toggler {
+        margin: 0 auto;
+    }
+}
+
+/* Extra small devices (phones, 480px and down) */
+@media (max-width: 480px) {
+    /* Further adjustments for very small screens */
+    .form-section-card {
+        padding: 12px;
+    }
+
+    .border.rounded.p-3 .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .summary-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .summary-item strong {
+        margin-bottom: 3px;
+    }
+
+    .modal-header {
+        padding: 10px;
+    }
+
+    .modal-title {
+        font-size: 1rem;
+    }
+
+    .modal-body {
+        padding: 15px;
+    }
+
+    /* Adjust font sizes */
+    body {
+        font-size: 14px;
+    }
+
+    h5 {
+        font-size: 1rem;
+    }
+
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+    }
+
+    /* Stack date and time inputs */
+    .row .col-md-6 {
+        width: 100%;
+    }
+
+    /* Improve touch targets */
+    .form-check-label {
+        padding-left: 5px;
+    }
+
+    /* Make the toggle button more accessible */
+    #toggleReservationBtn {
+        padding: 8px 12px;
+    }
+
+    /* Adjust the navigation buttons */
+    .navigation-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .navigation-buttons .btn {
+        width: 100%;
+    }
+}
+
+/* Ensure proper stacking for all cards */
+@media (max-width: 992px) {
+    .form-section-card {
+        margin-bottom: 20px;
+    }
+
+    #step2 .col-md-6 {
+        margin-bottom: 20px;
+    }
+}
+
+/* Extra Services Checkboxes */
+.form-check {
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+}
+
+.form-check-input {
+    margin-top: 0.25rem;
+    margin-left: -1.5rem;
+}
+
+.form-check-label {
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.form-check-input:checked {
+    background-color: var(--cpu-primary);
+    border-color: var(--cpu-primary);
+}
+
+/* Style the 'How to book?' trigger text */
+.navbar .how-to-book {
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: underline;
+    color: #4d4d4dff;
+}
+
+.custom-tooltip .tooltip-inner {
+    background-color: #000000;
+    /* black background */
+    color: #ffffff;
+    /* white text */
+    font-size: 0.85rem;
+    padding: 0.75rem 0.75rem;
+    /* reduce top/bottom padding */
+    line-height: 1.2;
+    /* tighten spacing */
+    max-width: 300px;
+    text-align: left;
+    white-space: pre-line;
+    /* preserves line breaks */
+}
+
+.custom-tooltip .tooltip-arrow::before {
+    border-bottom-color: #000000;
+    /* match arrow to bg */
+}
+
+.endorser-tooltip {
+    font-size: 0.9rem;
+    opacity: 0.75;
+    cursor: pointer;
+}
+
+.endorser-tooltip:hover {
+    opacity: 1;
+}
+
+.btn-outline-primary {
+    border: none !important;
+    background: transparent !important;
+    color: #003366 !important;
+}
+
+.btn-outline-primary:hover {
+    background: #e6e6e6 !important;
+    color: #003366 !important;
+}
+
+/* Loading Spinner Styles */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #0d4581ff;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+.loading-overlay .loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    margin-bottom: 1rem;
+}
+
+.fee-loading {
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.selected-items-loading {
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Conflict Modal Styles */
+#conflictModal .modal-header {
+    background-color: var(--cpu-primary) !important;
+}
+
+#conflictModal .modal-title {
+    color: white !important;
+    font-weight: 600;
+}
+
+#conflictModal .modal-body {
+    max-height: 60vh;
+    /* controls modal size */
+    overflow-y: auto;
+    /* scroll inside */
+    overflow-x: hidden;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 5px;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.fee-breakdown-section {
+    display: none;
+}
+
+label.required::after {
+    content: " *";
+    color: red;
+    margin-left: 2px;
+    font-weight: bold;
+}
+
+.selected-items-container .empty-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 200px;
+    margin: 0;
+    flex-grow: 1;
+}
+
+body {
+    font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+#termsModal .modal-header {
+    padding-top: 0.5rem;
+    padding-bottom: 0.25rem;
+}
+
+#termsModal .modal-title {
+    margin-top: 0.55rem;
+    justify-content: center;
+    position: relative;
+}
+
+.modal-header .btn-close {
+    position: absolute;
+    right: 1rem;
+    top: 0.75rem;
+}
+
+/* Add this to your existing CSS */
+#school_id:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+#confirmSubmitBtn .btn-text {
+    display: inline-block;
+}
+
+#confirmSubmitBtn .btn-loading {
+    display: none;
+}
+
+#confirmSubmitBtn.loading .btn-text {
+    display: none;
+}
+
+#confirmSubmitBtn.loading .btn-loading {
+    display: inline-block;
+}
+
+.modal-header {
+    border-bottom: none !important;
+}
+
+/* Center header visually with modal body */
+.modal-title {
+    margin: 0 auto;
+    font-weight: 600;
+}
+
+/* Add spacing and highlight for each term number */
+.terms-content ol li {
+    margin-bottom: 1rem;
+}
+
+.terms-content ol li strong {
+    color: var(--bs-primary);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+/* Make all scrollbars thin and subtle across browsers */
+* {
+    scrollbar-width: thin;
+    /* Firefox */
+    scrollbar-color: #adb5bd transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: #adb5bd;
+    border-radius: 10px;
+}
+
+.card-title {
+    color: #003366;
+    font-weight: 600;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 5px 8px;
+}
+
+.btn-outline-danger {
+    border: none;
+    padding: 0.25rem 0.5rem;
+}
+
+.btn-outline-danger:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+body {
+    background-color: #f8f9fa;
+}
+
+.main-content {
+    padding-top: 20px;
+}
+
+.form-section-card {
+    background: white;
+    padding: 20px;
+    border: 1px solid #ddd;
+    /* Replace shadow with solid stroke */
+    border-radius: 0;
+    /* Remove rounded corners */
+    margin-bottom: 20px;
+}
+
+.form-section-card h5,
+.form-section-card h6 {
+    color: #003366;
+    margin-bottom: 15px;
+}
+
+.form-section-card .form-control,
+.form-section-card .form-select {
+    margin-bottom: 10px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-item .item-details {
+    flex-grow: 1;
+}
+
+.summary-item .item-price {
+    font-weight: bold;
+}
+
+.calendar-header {
+    background-color: #e9ecef;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    text-align: center;
+}
+
+.calendar-day-name {
+    font-weight: bold;
+    padding: 5px;
+    background-color: #f0f0f0;
+}
+
+.calendar-day {
+    padding: 10px 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #fff;
+}
+
+.calendar-day.selected {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.calendar-day.disabled {
+    background-color: #f8f9fa;
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.selected-schedule {
+    background-color: #e9f5ff;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.availability-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.availability-row .form-control {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.availability-status {
+    color: green;
+    font-weight: bold;
+}
+
+.slideshow-placeholder {
+    background-color: #e9ecef;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #6c757d;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.included-equipment-list {
+    list-style: none;
+    padding: 0;
+}
+
+.included-equipment-list li {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+}
+
+.quantity-control .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.quantity-control input {
+    width: 50px;
+    text-align: center;
+    margin: 0 5px;
+}
+
+.total-price {
+    font-size: 1.25em;
+    font-weight: bold;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    z-index: 1050;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 700px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.popup.show {
+    display: block;
+}
+
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+}
+
+.overlay.show {
+    display: block;
+}
+
+.col-md-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.facility-card,
+.equipment-card {
+    position: relative;
+    /* Enable positioning for the trash bin */
+    border: none;
+    /* Remove grey border */
+    border-radius: 0;
+    /* Remove rounded corners */
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.facility-card .btn-outline-danger,
+.equipment-card .btn-outline-danger {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    /* Move trash bin to top-right */
+    z-index: 1;
+    /* Ensure it stays above other elements */
+    border: none;
+    /* Remove red border */
+}
+
+.facility-card img,
+.equipment-card img {
+    width: 120px;
+    /* Ensure consistent image size */
+    height: 120px;
+    object-fit: cover;
+    border-radius: 0;
+    /* Remove rounded corners from images */
+    margin-right: 15px;
+}
+
+.facility-card .facility-details,
+.equipment-card .equipment-details {
+    flex-grow: 1;
+    margin-right: 30px;
+    /* Further reduce right margin */
+}
+
+.selected-item-card {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.selected-item-image {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+}
+
+.selected-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.selected-item-details {
+    flex-grow: 1;
+}
+
+.selected-item-details h6 {
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.quantity-control input {
+    width: 60px;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.quantity-control button {
+    padding: 0 8px;
+    font-size: 14px;
+}
+
+.delete-item-btn {
+    align-self: flex-start;
+}
+
+.selected-items-container .selected-item-card {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.selected-item-details {
+    flex-grow: 1;
+}
+
+.selected-item-details h6 {
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.selected-item-details .fee {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.selected-item-details .quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.delete-item-btn {
+    color: #dc3545;
+    background: none;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.delete-item-btn:hover {
+    color: #bd2130;
+}
+
+.btn-outline-secondary {
+    background-color: #ffdc95;
+    color: #aa7400;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+    background-color: #f5c26a;
+    color: #7a5500;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.btn-outline-secondary:active,
+.btn-outline-secondary.active,
+.btn-outline-secondary:focus:not(:hover) {
+    background-color: #e0aa3d !important;
+    /* deeper gold/orange */
+    color: #5a3900 !important;
+    /* even darker text for contrast */
+    border-color: transparent !important;
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    /* subtle pressed effect */
+}

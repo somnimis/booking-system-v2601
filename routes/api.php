@@ -35,6 +35,7 @@ use App\Http\Controllers\ReservationListingsController;
 use App\Http\Controllers\EquipmentTransactionController;
 use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\CreateReservationController;
+use App\Http\Controllers\CheckAvailabilityController;
 use App\Http\Controllers\ManageAdminsController;
 use Illuminate\Support\Facades\Log;
 
@@ -68,7 +69,10 @@ Route::post('/login', function (Request $request) {
 });
 
 Route::get('/admins/departments', [AdminController::class, 'getAdminDepartments']);
+
+// ---------------- Dropdown Selections ---------------- //    
 Route::get('/facilities/dropdown', [FacilityController::class, 'getFacilitiesForDropdown']);
+Route::get('/equipment/dropdown', [EquipmentController::class, 'getEquipmentForDropdown']);
 
 
 // ---------------- Booking Listings ---------------- //    
@@ -134,9 +138,14 @@ Route::post('/extra-services/assign', [ExtraServicesController::class, 'assignSe
     ->middleware('auth:sanctum');
 Route::get('/admin-services/{adminId?}', [ExtraServicesController::class, 'getAdminServices']);
 Route::delete('/admin-services/{adminServiceId}', [ExtraServicesController::class, 'unassignService']);
+
 // ---------------- Requisition Forms (public) ---------------- //
 Route::prefix('requisition')->middleware(['web'])->group(function () {
     Route::post('/save-request-info', [RequisitionFormController::class, 'saveRequestInfo']);
+    Route::get('/facilities/with-selected', [FacilityController::class, 'getFacilitiesWithSelected']);
+    Route::get('/equipment/with-selected', [EquipmentController::class, 'getEquipmentWithSelected']);
+    Route::post('/batch-add-items', [RequisitionFormController::class, 'batchAddToForm']);
+    Route::post('/batch-remove-items', [RequisitionFormController::class, 'batchRemoveFromForm']);
     Route::post('/add-item', [RequisitionFormController::class, 'addToForm']);
     Route::post('/remove-item', [RequisitionFormController::class, 'removeFromForm']);
     Route::get('/get-items', [RequisitionFormController::class, 'getItems']);
@@ -175,9 +184,6 @@ Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
 // Mass Assignment Routes //
 // Equipment mass department assignment
 Route::post('/admin/equipment/mass-assign-departments', [EquipmentController::class, 'massAssignDepartments']);
-
-// Get all equipment for dropdown (used in mass assign modal)
-Route::get('/admin/equipment/all', [EquipmentController::class, 'getAllEquipmentForDropdown']);
 
 // Facility mass department assignment
 Route::post('/admin/facilities/mass-assign-department', [FacilityController::class, 'massAssignDepartment']);
@@ -345,6 +351,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Make manual reservation
         Route::post('create', [AdminActionsController::class, 'createReservation']);
+        Route::post('/check-availability', [CheckAvailabilityController::class, 'checkAvailability']);
         Route::get('/form-init-data', [CreateReservationController::class, 'getFormInitData']);
         // Lazy loading endpoints for create reservation
         Route::get('/facilities', [CreateReservationController::class, 'getFacilities']);
