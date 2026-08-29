@@ -133,6 +133,7 @@ Route::get('/requisition-purposes', [RequisitionPurposeController::class, 'index
 Route::get('/extra-services', [ExtraServicesController::class, 'index']);
 Route::post('/extra-services', [ExtraServicesController::class, 'store']);
 Route::put('/extra-services/{service_id}', [ExtraServicesController::class, 'update']);
+Route::delete('/extra-services/{service_id}', [ExtraServicesController::class, 'destroy']);
 Route::post('/extra-services/assign', [ExtraServicesController::class, 'assignService'])
     ->middleware('auth:sanctum');
 Route::get('/admin-services/{adminId?}', [ExtraServicesController::class, 'getAdminServices']);

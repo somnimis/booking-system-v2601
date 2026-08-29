@@ -87,8 +87,10 @@
                             <input type="text" class="form-control" name="service_name" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Managed By (Department ID)</label>
-                            <input type="number" class="form-control" name="managed_by" placeholder="Enter department ID">
+                            <label class="form-label">Department Ownership</label>
+                            <select class="form-select" name="managed_by">
+                                <option value="">Select department</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Account Number</label>
@@ -97,8 +99,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Service Fee</label>
-                            <input type="number" class="form-control" name="service_fee" step="0.01" min="0"
-                                placeholder="0.00">
+                            <input type="number" class="form-control" name="service_fee" step="0.01" placeholder="0.00">
                         </div>
                     </form>
                 </div>
@@ -132,9 +133,10 @@
                                 <input type="text" class="form-control" id="edit_service_name" name="service_name" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Managed By (Department ID)</label>
-                                <input type="number" class="form-control" id="edit_managed_by" name="managed_by"
-                                    placeholder="Enter department ID">
+                                <label class="form-label">Department Ownership</label>
+                                <select class="form-select" id="edit_managed_by" name="managed_by">
+                                    <option value="">Select department</option>
+                                </select>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Account Number</label>
@@ -233,6 +235,39 @@
             loadServices();
         });
 
+        let departmentsData = [];
+
+        async function loadDepartments() {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+            try {
+                const response = await fetch('/api/departments', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                departmentsData = Array.isArray(result) ? result : (result.data || []);
+                populateDepartmentDropdowns();
+            } catch (error) {
+                console.error('Error loading departments:', error);
+            }
+        }
+
+        function populateDepartmentDropdowns() {
+            const addSelect = document.querySelector('#addServiceForm select[name="managed_by"]');
+            const editSelect = document.getElementById('edit_managed_by');
+
+            const options = departmentsData.map(dept =>
+                `<option value="${dept.department_id}">${dept.department_name} (${dept.department_code || ''})</option>`
+            ).join('');
+
+            if (addSelect) {
+                addSelect.innerHTML = '<option value="">Select department</option>' + options;
+            }
+
+            if (editSelect) {
+                editSelect.innerHTML = '<option value="">Select department</option>' + options;
+            }
+        }
+
         async function loadServices() {
             const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
             const loadingEl = document.getElementById('servicesLoading');
@@ -242,13 +277,15 @@
             if (contentEl) contentEl.style.display = 'none';
 
             try {
-                const [servicesRes, adminsRes] = await Promise.all([
+                const [servicesRes, adminsRes, deptsRes] = await Promise.all([
                     fetch('/api/extra-services', { headers: { 'Authorization': `Bearer ${token}` } }),
-                    fetch('/api/admins', { headers: { 'Authorization': `Bearer ${token}` } })
+                    fetch('/api/admins', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('/api/departments', { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
 
                 const servicesResult = await servicesRes.json();
                 const adminsResult = await adminsRes.json();
+                const deptsResult = await deptsRes.json();
 
                 servicesData = Array.isArray(servicesResult) ? servicesResult : (servicesResult.data || []);
 
@@ -256,8 +293,11 @@
                     adminsList = adminsResult.data || [];
                 }
 
+                departmentsData = Array.isArray(deptsResult) ? deptsResult : (deptsResult.data || []);
+
                 renderServices();
                 populateAdminDropdowns();
+                populateDepartmentDropdowns();
                 populateAssignChecklist();
 
                 if (loadingEl) loadingEl.style.display = 'none';
@@ -293,11 +333,11 @@
             container.innerHTML = '';
             servicesData.forEach(service => {
                 container.innerHTML += `
-                        <div class="form-check">
-                            <input class="form-check-input assign-service-cb" type="checkbox" value="${service.service_id}" id="assign_service_${service.service_id}">
-                            <label class="form-check-label" for="assign_service_${service.service_id}">${service.service_name}</label>
-                        </div>
-                    `;
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input assign-service-cb" type="checkbox" value="${service.service_id}" id="assign_service_${service.service_id}">
+                                                                    <label class="form-check-label" for="assign_service_${service.service_id}">${service.service_name}</label>
+                                                                </div>
+                                                            `;
             });
         }
 
@@ -313,50 +353,50 @@
             }
 
             servicesData.forEach(service => {
+                // Find department name from departmentsData
+                const department = departmentsData.find(d => d.department_id === service.managed_by);
+                const managedByName = department ? department.department_code : '--';
+
                 const card = `
-                    <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="card service-card h-100 border shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-title mb-2 fw-semibold" style="font-family: 'Fraunces', Georgia, serif;">
-                                    <i class="bi bi-grid me-2" style="color: var(--navy);"></i>
-                                    ${service.service_name || 'N/A'}
-                                </h6>
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="card service-card h-100 border shadow-sm">
+                                            <div class="card-body">
+                                                <h6 class="card-title mb-2 fw-semibold" style="font-family: 'Fraunces', Georgia, serif;">
+                                                    <i class="bi bi-grid me-2" style="color: var(--navy);"></i>
+                                                    ${service.service_name || '--'}
+                                                </h6>
 
-                                <div class="mb-1">
-                                    <small class="text-muted">Managed By:</small>
-                                    <span class="ms-1">
-                                        ${service.managed_by || 'N/A'}
-                                    </span>
-                                </div>
+                                                <div class="mb-1">
+                                                    <small class="text-muted">Managed By:</small>
+                                                    <span class="ms-1">${managedByName}</span>
+                                                </div>
 
-                                <div>
-                                    <small class="text-muted">Account Number:</small>
-                                    <span class="ms-1">
-                                        ${service.account_number || 'N/A'}
-                                    </span>
-                                </div>
+                                                <div class="mb-1">
+                                                    <small class="text-muted">Account Number:</small>
+                                                    <span class="ms-1">${service.account_number !== null && service.account_number !== undefined ? service.account_number : '--'}</span>
+                                                </div>
 
-                                <div>
-                                    <small class="text-muted">Fee:</small>
-                                    <span class="ms-1">
-                                        ${service.service_fee
+                                                <div>
+                                                    <small class="text-muted">Fee:</small>
+                                                    <span class="ms-1">
+                                                        ${service.service_fee !== null && service.service_fee !== undefined
                         ? `₱${parseFloat(service.service_fee).toLocaleString()}`
-                        : 'N/A'}
-                                    </span>
-                                </div>
-                            </div>
+                        : '--'}
+                                                    </span>
+                                                </div>
+                                            </div>
 
-                            <div class="card-footer bg-white border-top d-flex justify-content-end gap-2">
-                                <button class="btn btn-sm btn-primary" onclick="editService(${service.service_id})">
-                                    <i class="bi bi-pencil"></i> Edit
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteService(${service.service_id})">
-                                    <i class="bi bi-trash"></i> Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                                            <div class="card-footer bg-white border-top d-flex justify-content-end gap-2">
+                                                <button class="btn btn-sm btn-primary" onclick="editService(${service.service_id})">
+                                                    <i class="bi bi-pencil"></i> Edit
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="deleteService(${service.service_id})">
+                                                    <i class="bi bi-trash"></i> Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
 
                 grid.insertAdjacentHTML('beforeend', card);
             });
@@ -370,12 +410,26 @@
                 e.preventDefault();
                 const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
                 const formData = new FormData(this);
+
+                // Get values from number inputs
+                const accountNumberInput = this.querySelector('input[name="account_number"]');
+                const serviceFeeInput = this.querySelector('input[name="service_fee"]');
+
+                let accountNumber = accountNumberInput ? parseFloat(accountNumberInput.value) : null;
+                let serviceFee = serviceFeeInput ? parseFloat(serviceFeeInput.value) : null;
+
+                // Check if values are valid numbers
+                if (isNaN(accountNumber) || accountNumberInput?.value === '') accountNumber = null;
+                if (isNaN(serviceFee) || serviceFeeInput?.value === '') serviceFee = null;
+
                 const data = {
                     service_name: formData.get('service_name'),
-                    managed_by: formData.get('managed_by') ? parseInt(formData.get('managed_by')) : null,
-                    account_number: formData.get('account_number') ? parseInt(formData.get('account_number')) : null,
-                    service_fee: formData.get('service_fee') ? parseFloat(formData.get('service_fee')) : null
+                    managed_by: formData.get('managed_by') || null,
+                    account_number: accountNumber,
+                    service_fee: serviceFee
                 };
+
+                console.log('Sending data:', data);
 
                 const submitBtn = this.querySelector('button[type="submit"]');
                 const originalText = submitBtn ? submitBtn.innerHTML : 'Add Service';
@@ -396,6 +450,7 @@
                     });
 
                     const result = await response.json();
+                    console.log('Response:', result);
 
                     if (response.ok) {
                         if (typeof showToast === 'function') {
@@ -423,6 +478,7 @@
             });
         }
 
+
         // Edit service
         window.editService = async function (serviceId) {
             const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
@@ -440,8 +496,9 @@
                     document.getElementById('edit_service_id').value = service.service_id;
                     document.getElementById('edit_service_name').value = service.service_name || '';
                     document.getElementById('edit_managed_by').value = service.managed_by || '';
-                    document.getElementById('edit_account_number').value = service.account_number || '';
-                    document.getElementById('edit_service_fee').value = service.service_fee || '';
+                    // Set empty string for null/undefined values so the input shows blank
+                    document.getElementById('edit_account_number').value = service.account_number !== null && service.account_number !== undefined ? service.account_number : '';
+                    document.getElementById('edit_service_fee').value = service.service_fee !== null && service.service_fee !== undefined ? service.service_fee : '';
                 }
 
                 if (loadingDiv) loadingDiv.style.display = 'none';
@@ -459,12 +516,27 @@
             saveServiceBtn.addEventListener('click', async function () {
                 const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
                 const serviceId = document.getElementById('edit_service_id')?.value;
+
+                // Get values - for number inputs, use .valueAsNumber or parse the value
+                const accountNumberEl = document.getElementById('edit_account_number');
+                const serviceFeeEl = document.getElementById('edit_service_fee');
+
+                // Use valueAsNumber for number inputs, which returns NaN for empty fields
+                let accountNumber = accountNumberEl?.valueAsNumber;
+                let serviceFee = serviceFeeEl?.valueAsNumber;
+
+                // Convert NaN to null
+                if (isNaN(accountNumber)) accountNumber = null;
+                if (isNaN(serviceFee)) serviceFee = null;
+
                 const formData = {
                     service_name: document.getElementById('edit_service_name')?.value,
-                    managed_by: document.getElementById('edit_managed_by')?.value ? parseInt(document.getElementById('edit_managed_by')?.value) : null,
-                    account_number: document.getElementById('edit_account_number')?.value ? parseInt(document.getElementById('edit_account_number')?.value) : null,
-                    service_fee: document.getElementById('edit_service_fee')?.value ? parseFloat(document.getElementById('edit_service_fee')?.value) : null
+                    managed_by: document.getElementById('edit_managed_by')?.value || null,
+                    account_number: accountNumber,
+                    service_fee: serviceFee
                 };
+
+                console.log('Updating with data:', formData);
 
                 const btn = this;
                 const originalText = btn.innerHTML;
@@ -483,6 +555,7 @@
                     });
 
                     const result = await response.json();
+                    console.log('Update response:', result);
 
                     if (response.ok) {
                         if (typeof showToast === 'function') {
@@ -513,11 +586,11 @@
             const detailsEl = document.getElementById('deleteServiceDetails');
             if (detailsEl) {
                 detailsEl.innerHTML = `
-                        <div class="row">
-                            <div class="col-4 fw-bold">Service:</div>
-                            <div class="col-8">${service ? service.service_name : 'Service ID: ' + serviceId}</div>
-                        </div>
-                    `;
+                                                                <div class="row">
+                                                                    <div class="col-4 fw-bold">Service:</div>
+                                                                    <div class="col-8">${service ? service.service_name : 'Service ID: ' + serviceId}</div>
+                                                                </div>
+                                                            `;
             }
 
             window.serviceToDelete = serviceId;
@@ -537,7 +610,7 @@
                 btn.disabled = true;
 
                 try {
-                    const response = await fetch(`api/extra-services/${serviceId}`, {
+                    const response = await fetch(`/api/extra-services/${serviceId}`, {
                         method: 'DELETE',
                         headers: {
                             'Authorization': `Bearer ${token}`,
