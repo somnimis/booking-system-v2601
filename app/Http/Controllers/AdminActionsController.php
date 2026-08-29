@@ -42,123 +42,138 @@ class AdminActionsController extends Controller
 
 
     /**
- * Create a new admin reservation
- */
-public function createReservation(Request $request)
-{
-    try {
-        Log::debug('Creating admin reservation', $request->all());
+     * Create a new admin reservation
+     */
+    public function createReservation(Request $request)
+    {
+        try {
+            Log::debug('Creating admin reservation', $request->all());
 
-        DB::beginTransaction();
+            DB::beginTransaction();
 
-        // Validate request
-        $validatedData = $this->validateReservationRequest($request);
+            // Validate request
+            $validatedData = $this->validateReservationRequest($request);
 
-        // Generate unique access code
-        $accessCodeService = app(AccessCodeService::class);
-        $validatedData['access_code'] = $accessCodeService->generateUniqueAccessCode();
+            // Generate unique access code
+            $accessCodeService = app(AccessCodeService::class);
+            $validatedData['access_code'] = $accessCodeService->generateUniqueAccessCode();
 
-        // Check for facility conflicts
-        $conflictItems = [];
-        
-        foreach ($validatedData['facilities'] as $facility) {
-            $facilityConflicts = $this->availabilityChecker->checkFacilityAvailability(
-                $facility['facility_id'],
-                $validatedData['start_date'],
-                $validatedData['end_date'],
-                $validatedData['start_time'] ?? '00:00:00',
-                $validatedData['end_time'] ?? '23:59:59',
-                $validatedData['all_day']
-            );
-            
-            if (!empty($facilityConflicts)) {
-                $conflictItems = array_merge($conflictItems, $facilityConflicts);
-            }
-        }
+            // Check for facility conflicts
+            $conflictItems = [];
 
-        // Check for equipment conflicts
-        if (!empty($validatedData['equipment'])) {
-            foreach ($validatedData['equipment'] as $equipment) {
-                $availableCount = $this->availabilityChecker->checkEquipmentAvailability(
-                    $equipment['equipment_id'],
+            foreach ($validatedData['facilities'] as $facility) {
+                $facilityConflicts = $this->availabilityChecker->checkFacilityAvailability(
+                    $facility['facility_id'],
                     $validatedData['start_date'],
                     $validatedData['end_date'],
+                    $validatedData['start_time'] ?? '00:00:00',
+                    $validatedData['end_time'] ?? '23:59:59',
                     $validatedData['all_day']
                 );
 
-                if ($availableCount < $equipment['quantity']) {
-                    $equipmentName = EquipmentItem::find($equipment['equipment_id'])->equipment_name ?? 'Unknown';
-                    $conflictItems[] = [
-                        'type' => 'equipment',
-                        'id' => $equipment['equipment_id'],
-                        'name' => $equipmentName,
-                        'source' => 'requisition',
-                        'status' => null,
-                        'message' => "Only {$availableCount} available, requested {$equipment['quantity']}"
-                    ];
+                if (!empty($facilityConflicts)) {
+                    $conflictItems = array_merge($conflictItems, $facilityConflicts);
                 }
             }
-        }
 
-        // If conflicts exist, return them
-        if (!empty($conflictItems)) {
+            // Check for equipment conflicts
+            if (!empty($validatedData['equipment'])) {
+                foreach ($validatedData['equipment'] as $equipment) {
+                    $availableCount = $this->availabilityChecker->checkEquipmentAvailability(
+                        $equipment['equipment_id'],
+                        $validatedData['start_date'],
+                        $validatedData['end_date'],
+                        $validatedData['all_day']
+                    );
+
+                    if ($availableCount < $equipment['quantity']) {
+                        $equipmentName = EquipmentItem::find($equipment['equipment_id'])->equipment_name ?? 'Unknown';
+                        $conflictItems[] = [
+                            'type' => 'equipment',
+                            'id' => $equipment['equipment_id'],
+                            'name' => $equipmentName,
+                            'source' => 'requisition',
+                            'status' => null,
+                            'message' => "Only {$availableCount} available, requested {$equipment['quantity']}"
+                        ];
+                    }
+                }
+            }
+
+            // If conflicts exist, return them
+            if (!empty($conflictItems)) {
+                DB::rollBack();
+                return response()->json([
+                    'error' => 'Scheduling conflicts detected',
+                    'conflict_items' => $conflictItems
+                ], 409);
+            }
+
+            // Create the reservation
+            $requisitionForm = $this->createRequisitionForm($validatedData);
+
+            // Add related items
+            $this->addFacilities($requisitionForm->request_id, $validatedData['facilities']);
+            $this->addEquipment($requisitionForm->request_id, $validatedData['equipment'] ?? []);
+            $this->addServices($requisitionForm->request_id, $validatedData['services'] ?? []);
+
+            // Add comment record
+            $this->addCommentRecord($requisitionForm->request_id);
+
+            // Create approval chain records
+            try {
+                $approvalChainService = app(\App\Services\ApprovalChainService::class);
+                $approvalChainService->createApprovalChain($requisitionForm);
+                Log::info('Approval chain created for requisition', [
+                    'request_id' => $requisitionForm->request_id
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to create approval chain', [
+                    'request_id' => $requisitionForm->request_id,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't rollback - approval chain failure shouldn't prevent reservation creation
+            }
+
+            DB::commit();
+
+            // Send confirmation email
+            try {
+                $notificationService = app(NotificationService::class);
+                $notificationService->sendConfirmationEmail($requisitionForm);
+            } catch (\Exception $e) {
+                Log::error('Failed to send confirmation email: ' . $e->getMessage());
+            }
+
+            // Send approval request emails
+            try {
+                $this->notificationService->sendAdminApprovalEmails($requisitionForm);
+            } catch (\Exception $e) {
+                Log::error('Failed to send admin approval emails: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'message' => 'Reservation created successfully',
+                'request_id' => $requisitionForm->request_id,
+                'access_code' => $requisitionForm->access_code,
+                'all_day' => $requisitionForm->all_day,
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             return response()->json([
-                'error' => 'Scheduling conflicts detected',
-                'conflict_items' => $conflictItems
-            ], 409);
-        }
-
-        // Create the reservation
-        $requisitionForm = $this->createRequisitionForm($validatedData);
-
-        // Add related items
-        $this->addFacilities($requisitionForm->request_id, $validatedData['facilities']);
-        $this->addEquipment($requisitionForm->request_id, $validatedData['equipment'] ?? []);
-        $this->addServices($requisitionForm->request_id, $validatedData['services'] ?? []);
-
-        // Add comment record
-        $this->addCommentRecord($requisitionForm->request_id);
-
-        DB::commit();
-
-        // Send confirmation email
-        try {
-            $notificationService = app(NotificationService::class);
-            $notificationService->sendConfirmationEmail($requisitionForm);
+                'error' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
-            Log::error('Failed to send confirmation email: ' . $e->getMessage());
+            DB::rollBack();
+            Log::error('Failed to create reservation: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Failed to create reservation',
+                'details' => $e->getMessage(),
+            ], 500);
         }
-
-        // Send approval request emails
-        try {
-            $this->notificationService->sendAdminApprovalEmails($requisitionForm);
-        } catch (\Exception $e) {
-            Log::error('Failed to send admin approval emails: ' . $e->getMessage());
-        }
-
-        return response()->json([
-            'message' => 'Reservation created successfully',
-            'request_id' => $requisitionForm->request_id,
-            'access_code' => $requisitionForm->access_code,
-            'all_day' => $requisitionForm->all_day,
-        ], 201);
-
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        DB::rollBack();
-        return response()->json([
-            'error' => 'Validation failed',
-            'details' => $e->errors(),
-        ], 422);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Failed to create reservation: ' . $e->getMessage());
-        return response()->json([
-            'error' => 'Failed to create reservation',
-            'details' => $e->getMessage(),
-        ], 500);
     }
-}
 
     /**
      * Validate the reservation request
@@ -170,119 +185,119 @@ public function createReservation(Request $request)
         return $request->validate($rules);
     }
 
-/**
- * Build validation rules dynamically based on all_day flag
- */
-private function buildValidationRules(Request $request): array
-{
-    $rules = [
-        // User details
-        'user_type' => 'required|in:Internal,External',
-        'first_name' => 'required|string|max:50',
-        'last_name' => 'required|string|max:50',
-        'email' => 'required|email|max:100',
-        'school_id' => 'nullable|string|max:20',
-        'organization_name' => 'nullable|string|max:100',
-        'contact_number' => ['nullable', 'regex:/^\d{1,15}$/', 'max:15'],
+    /**
+     * Build validation rules dynamically based on all_day flag
+     */
+    private function buildValidationRules(Request $request): array
+    {
+        $rules = [
+            // User details
+            'user_type' => 'required|in:Internal,External',
+            'first_name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'email' => 'required|email|max:100',
+            'school_id' => 'nullable|string|max:20',
+            'organization_name' => 'nullable|string|max:100',
+            'contact_number' => ['nullable', 'regex:/^\d{1,15}$/', 'max:15'],
 
-        // Form details
-        'purpose_id' => 'required|exists:requisition_purposes,purpose_id',
-        'num_participants' => 'required|integer|min:1',
-        'num_tables' => 'required|integer|min:0',
-        'num_chairs' => 'required|integer|min:0',
-        'num_microphones' => 'required|integer|min:0',
-        'additional_requests' => 'nullable|string|max:250',
+            // Form details
+            'purpose_id' => 'required|exists:requisition_purposes,purpose_id',
+            'num_participants' => 'required|integer|min:1',
+            'num_tables' => 'required|integer|min:0',
+            'num_chairs' => 'required|integer|min:0',
+            'num_microphones' => 'required|integer|min:0',
+            'additional_requests' => 'nullable|string|max:250',
 
-        // Event details
-        'event_title' => 'nullable|string|max:100',
-        'event_details' => 'nullable|string|max:100',
+            // Event details
+            'event_title' => 'nullable|string|max:100',
+            'event_details' => 'nullable|string|max:100',
 
-        // Schedule
-        'start_date' => 'required|date',
-        'end_date' => 'required|date|after_or_equal:start_date',
-        'all_day' => 'required|boolean',
+            // Schedule
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'all_day' => 'required|boolean',
 
-        // Requested items
-        'facilities' => 'required|array|min:1',
-        'facilities.*.facility_id' => 'required|exists:facilities,facility_id',
-        'equipment' => 'array',
-        'equipment.*.equipment_id' => 'required|exists:equipment,equipment_id',
-        'equipment.*.quantity' => 'required|integer|min:1',
-        'services' => 'array', // ADDED
-        'services.*.service_id' => 'required|exists:extra_services,service_id', // ADDED
+            // Requested items
+            'facilities' => 'required|array|min:1',
+            'facilities.*.facility_id' => 'required|exists:facilities,facility_id',
+            'equipment' => 'array',
+            'equipment.*.equipment_id' => 'required|exists:equipment,equipment_id',
+            'equipment.*.quantity' => 'required|integer|min:1',
+            'services' => 'array', // ADDED
+            'services.*.service_id' => 'required|exists:extra_services,service_id', // ADDED
 
-        // Status
-        'status_id' => 'required|exists:form_statuses,status_id',
-    ];
+            // Status
+            'status_id' => 'required|exists:form_statuses,status_id',
+        ];
 
-    // Add time rules conditionally
-    if (!$request->all_day) {
-        $rules['start_time'] = 'required|date_format:H:i';
-        $rules['end_time'] = 'required|date_format:H:i|after:start_time';
-    } else {
-        $rules['start_time'] = 'nullable';
-        $rules['end_time'] = 'nullable';
+        // Add time rules conditionally
+        if (!$request->all_day) {
+            $rules['start_time'] = 'required|date_format:H:i';
+            $rules['end_time'] = 'required|date_format:H:i|after:start_time';
+        } else {
+            $rules['start_time'] = 'nullable';
+            $rules['end_time'] = 'nullable';
+        }
+
+        return $rules;
     }
 
-    return $rules;
-}
+    /**
+     * Add service records
+     */
+    private function addServices(int $requestId, array $services): void
+    {
+        foreach ($services as $service) {
+            RequestedService::create([
+                'request_id' => $requestId,
+                'service_id' => $service['service_id'],
+                'is_waived' => false,
+            ]);
+        }
+    }
 
-/**
- * Add service records
- */
-private function addServices(int $requestId, array $services): void
-{
-    foreach ($services as $service) {
-        RequestedService::create([
-            'request_id' => $requestId,
-            'service_id' => $service['service_id'],
-            'is_waived' => false,
+    /**
+     * Create the main requisition form record
+     */
+    private function createRequisitionForm(array $data): RequisitionForm
+    {
+        return RequisitionForm::create([
+            // User details
+            'user_type' => $data['user_type'],
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'email' => $data['email'],
+            'school_id' => $data['school_id'] ?? null,
+            'organization_name' => $data['organization_name'] ?? null,
+            'contact_number' => $data['contact_number'] ?? null,
+
+            // Form details
+            'purpose_id' => $data['purpose_id'],
+            'num_participants' => $data['num_participants'],
+            'num_tables' => $data['num_tables'] ?? 0,
+            'num_chairs' => $data['num_chairs'] ?? 0,
+            'num_microphones' => $data['num_microphones'] ?? 0,
+            'access_code' => $data['access_code'],
+            'additional_requests' => $data['additional_requests'] ?? null,
+
+            // Event details
+            'event_title' => $data['event_title'] ?? 'Admin Reservation',
+            'event_details' => $data['event_details'] ?? null,
+
+            // Schedule
+            'start_date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'start_time' => $this->formatStartTime($data),
+            'end_time' => $this->formatEndTime($data),
+            'all_day' => $data['all_day'],
+
+            // Status
+            'status_id' => $data['status_id'],
+            'is_finalized' => true,
+            'finalized_at' => now(),
+            'finalized_by' => auth()->id(),
         ]);
     }
-}
-
-/**
- * Create the main requisition form record
- */
-private function createRequisitionForm(array $data): RequisitionForm
-{
-    return RequisitionForm::create([
-        // User details
-        'user_type' => $data['user_type'],
-        'first_name' => $data['first_name'],
-        'last_name' => $data['last_name'],
-        'email' => $data['email'],
-        'school_id' => $data['school_id'] ?? null,
-        'organization_name' => $data['organization_name'] ?? null,
-        'contact_number' => $data['contact_number'] ?? null,
-
-        // Form details
-        'purpose_id' => $data['purpose_id'],
-        'num_participants' => $data['num_participants'],
-        'num_tables' => $data['num_tables'] ?? 0,
-        'num_chairs' => $data['num_chairs'] ?? 0,
-        'num_microphones' => $data['num_microphones'] ?? 0,
-        'access_code' => $data['access_code'],
-        'additional_requests' => $data['additional_requests'] ?? null,
-
-        // Event details
-        'event_title' => $data['event_title'] ?? 'Admin Reservation',
-        'event_details' => $data['event_details'] ?? null,
-
-        // Schedule
-        'start_date' => $data['start_date'],
-        'end_date' => $data['end_date'],
-        'start_time' => $this->formatStartTime($data),
-        'end_time' => $this->formatEndTime($data),
-        'all_day' => $data['all_day'],
-
-        // Status
-        'status_id' => $data['status_id'],
-        'is_finalized' => true,
-        'finalized_at' => now(),
-        'finalized_by' => auth()->id(),
-    ]);
-}
 
     /**
      * Format start time based on all_day flag

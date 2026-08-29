@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 
 class RequisitionForm extends Model
 {
@@ -66,6 +67,50 @@ class RequisitionForm extends Model
         'tentative_fee' => 'decimal:2',
         'approved_fee' => 'decimal:2',
     ];
+
+      /**
+     * Scope to filter requisitions visible to an admin based on managed departments
+     */
+    public function scopeVisibleToAdmin(Builder $query, array $departmentIds): Builder
+    {
+        if (empty($departmentIds)) {
+            return $query->whereRaw('1 = 0'); // No results if no departments
+        }
+
+        return $query->where(function ($subQuery) use ($departmentIds) {
+            $subQuery->whereHas('requestedFacilities.facility', function ($q) use ($departmentIds) {
+                $q->whereIn('managed_by', $departmentIds);
+            })->orWhereHas('requestedEquipment.equipment', function ($q) use ($departmentIds) {
+                $q->whereIn('managed_by', $departmentIds);
+            });
+        });
+    }
+
+    /**
+     * Scope to filter by status
+     */
+    public function scopeWithStatus(Builder $query, int|array $statusIds): Builder
+    {
+        return $query->whereIn('status_id', (array) $statusIds);
+    }
+
+    /**
+     * Scope to get active reservations for today
+     */
+    public function scopeActiveToday(Builder $query): Builder
+    {
+        $today = now()->format('Y-m-d');
+        return $query->whereDate('start_date', '<=', $today)
+                     ->whereDate('end_date', '>=', $today);
+    }
+
+    /**
+     * Scope to order by urgency
+     */
+    public function scopeOrderByUrgency(Builder $query, string $direction = 'asc'): Builder
+    {
+        return $query->orderBy('created_at', $direction);
+    }
 
     protected static function booted()
 {

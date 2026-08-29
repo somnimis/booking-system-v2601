@@ -15,10 +15,10 @@ class EquipmentSeeder extends Seeder
                 'equipment_name' => 'Sound System (Small)',
                 'base_fee' => 5000.00,
                 'rate_type' => 'Per Hour',
-                'category_id' => 1, // Please change to your actual category ID
-                'status_id' => 1,   // Please change to your actual status ID
-                'managed_by' => 4, // Please change to your actual department ID
-                'created_by' => 1, // Please change to an existing admin_id
+                'category_id' => 1, 
+                'status_id' => 1,  
+                'managed_by' => 4, 
+                'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -46,7 +46,7 @@ class EquipmentSeeder extends Seeder
             ],
             [ // 4
                 'equipment_name' => 'Wireless Microphone',
-                'base_fee' => 700.00, // Was null in image
+                'base_fee' => 700.00, 
                 'rate_type' => 'Per Hour',
                 'category_id' => 1,
                 'status_id' => 1,

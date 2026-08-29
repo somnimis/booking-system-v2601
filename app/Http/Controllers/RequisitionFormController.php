@@ -853,6 +853,10 @@ class RequisitionFormController extends Controller
         DB::beginTransaction();
 
         try {
+
+            $this->saveRequestInfoToSession($request);
+
+
             $selectedItems = $this->getValidatedSelectedItems();
             $this->validateSubmissionPrerequisites($selectedItems);
             $this->validateAvailability($selectedItems, $request);
@@ -881,6 +885,29 @@ class RequisitionFormController extends Controller
             return $this->jsonResponse(false, 'Submission failed: ' . $e->getMessage(), [], 500);
         }
     }
+
+    private function saveRequestInfoToSession(RequisitionSubmitRequest $request): void
+{
+    $requestInfo = [
+        'user_type' => $request->user_type,
+        'first_name' => $request->first_name,
+        'last_name' => $request->last_name,
+        'email' => $request->email,
+        'school_id' => $request->school_id,
+        'organization_name' => $request->organization_name,
+        'contact_number' => $request->contact_number,
+        'num_participants' => $request->num_participants,
+        'purpose_id' => $request->purpose_id,
+        'additional_requests' => $request->additional_requests,
+        'start_date' => $request->start_date,
+        'end_date' => $request->end_date,
+        'start_time' => $request->all_day ? '00:00:00' : $request->start_time,
+        'end_time' => $request->all_day ? '23:59:59' : $request->end_time,
+        'all_day' => $request->all_day,
+    ];
+
+    session(['request_info' => $requestInfo]);
+}
 
     // ------------------------------------------------------------------------
     // Private helper methods for form submission
