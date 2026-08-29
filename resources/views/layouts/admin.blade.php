@@ -112,66 +112,115 @@
             <p class="admin-role" id="admin-role" style="display: none">Loading...</p>
         </div>
 
-        <div class="sidebar-nav flex-grow-1">
-            <!-- Dashboard -->
-            <div id="dashboard-nav-skeleton" class="mb-2">
-                <div class="d-flex align-items-center gap-2 px-3 py-2">
-                    <div class="skeleton skeleton-circle" style="width: 20px; height: 20px;"></div>
-                    <div class="skeleton skeleton-text" style="width: 80px; height: 16px;"></div>
-                </div>
-            </div>
-            <div id="dashboard-nav-item" style="display: none;">
-                <a class="nav-link {{ Request::is('admin/dashboard') || Request::is('admin/signatory/dashboard') ? 'active' : '' }}"
-                    id="dashboard-nav-link" href="#">
-                    <i class="fa-solid fa-house" id="dashboard-nav-icon"></i>
-                    <span id="dashboard-nav-text">Dashboard</span>
-                </a>
-            </div>
+<div class="sidebar-nav flex-grow-1">
+    <!-- Dashboard -->
+    <div id="dashboard-nav-skeleton" class="mb-2">
+        <div class="d-flex align-items-center gap-2 px-3 py-2">
+            <div class="skeleton skeleton-circle" style="width: 20px; height: 20px;"></div>
+            <div class="skeleton skeleton-text" style="width: 80px; height: 16px;"></div>
+        </div>
+    </div>
 
-            <!-- Management Section -->
-            <div id="management-section-skeleton">
-                <div class="px-3 py-2 mt-2">
-                    <div class="skeleton skeleton-text" style="width: 100px; height: 12px;"></div>
-                </div>
-                <div class="d-flex align-items-center gap-2 px-3 py-2">
-                    <div class="skeleton skeleton-circle" style="width: 20px; height: 20px;"></div>
-                    <div class="skeleton skeleton-text" style="width: 110px; height: 16px;"></div>
-                </div>
-                <div class="d-flex align-items-center gap-2 px-3 py-2">
-                    <div class="skeleton skeleton-circle" style="width: 20px; height: 20px;"></div>
-                    <div class="skeleton skeleton-text" style="width: 100px; height: 16px;"></div>
-                </div>
-                <div class="d-flex align-items-center gap-2 px-3 py-2">
-                    <div class="skeleton skeleton-circle" style="width: 20px; height: 20px;"></div>
-                    <div class="skeleton skeleton-text" style="width: 115px; height: 16px;"></div>
-                </div>
-            </div>
+    <div id="dashboard-nav-item" style="display: none;">
+        <a class="nav-link {{ Request::is('admin/dashboard') || Request::is('admin/signatory/dashboard') ? 'active' : '' }}"
+            id="dashboard-nav-link" href="#">
+            <i class="fa-solid fa-house" id="dashboard-nav-icon"></i>
+            <span id="dashboard-nav-text">Dashboard</span>
+        </a>
+    </div>
 
-            <div id="management-section" style="display: none;">
-                <div class="nav-section-title">Management</div>
-            </div>
+    <!-- Administration Section -->
+    <div id="administration-section-skeleton">
+        <div class="px-3 py-2 mt-2">
+            <div class="skeleton skeleton-text" style="width: 115px; height: 12px;"></div>
+        </div>
 
-            <div id="pending-nav-item" style="display: none;">
-                <a class="nav-link {{ Request::is('admin/pending-requests') ? 'active' : '' }}"
-                    href="{{ url('/admin/pending-requests') }}">
-                    <i class="fa-solid fa-clipboard-list"></i>
-                    <span>Request Forms</span>
-                </a>
-            </div>
+        <div class="d-flex align-items-center gap-2 px-3 py-2">
+            <div class="skeleton skeleton-circle" style="width: 20px; height: 20px;"></div>
+            <div class="skeleton skeleton-text" style="width: 110px; height: 16px;"></div>
+        </div>
 
-            <div id="equipment-tracker-nav-item" style="display: none;">
-                <a class="nav-link {{ Request::is('admin/scan-equipment') ? 'active' : '' }}"
-                    href="{{ url('/admin/scan-equipment') }}">
-                    <i class="fa-solid fa-camera"></i>
-                    <span>Equipment Tracker</span>
-                </a>
-            </div>
+        <div class="d-flex align-items-center gap-2 px-3 py-2">
+            <div class="skeleton skeleton-circle" style="width: 20px; height: 20px;"></div>
+            <div class="skeleton skeleton-text" style="width: 125px; height: 16px;"></div>
+        </div>
+    </div>
+
+    <div id="administration-section" style="display: none;">
+        <div class="nav-section-title">Administration</div>
+    </div>
+
+    <div id="pending-nav-item" style="display: none;">
+        <a class="nav-link {{ Request::is('admin/pending-requests') ? 'active' : '' }}"
+            href="{{ url('/admin/pending-requests') }}">
+            <i class="fa-solid fa-clipboard-list"></i>
+            <span>Request Forms</span>
+        </a>
+    </div>
+
+    <div id="equipment-tracker-nav-item" style="display: none;">
+        <a class="nav-link {{ Request::is('admin/scan-equipment') ? 'active' : '' }}"
+            href="{{ url('/admin/scan-equipment') }}">
+            <i class="fa-solid fa-camera"></i>
+            <span>Equipment Tracker</span>
+        </a>
+    </div>
+
+    <!-- Management Section -->
+    <div id="management-section-skeleton">
+        <div class="px-3 py-2 mt-2">
+            <div class="skeleton skeleton-text" style="width: 100px; height: 12px;"></div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 px-3 py-2">
+            <div class="skeleton skeleton-circle" style="width: 20px; height: 20px;"></div>
+            <div class="skeleton skeleton-text" style="width: 110px; height: 16px;"></div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 px-3 py-2">
+            <div class="skeleton skeleton-circle" style="width: 20px; height: 20px;"></div>
+            <div class="skeleton skeleton-text" style="width: 100px; height: 16px;"></div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 px-3 py-2">
+            <div class="skeleton skeleton-circle" style="width: 20px; height: 20px;"></div>
+            <div class="skeleton skeleton-text" style="width: 115px; height: 16px;"></div>
+        </div>
+    </div>
+
+    <div id="management-section" style="display: none;">
+        <div class="nav-section-title">System Management</div>
+    </div>
 
             <div id="administrators-nav-item" style="display: none;">
                 <a class="nav-link {{ Request::is('admin/admin-roles') ? 'active' : '' }}"
                     href="{{ url('/admin/admin-roles') }}">
                     <i class="fa-solid fa-user-gear"></i>
                     <span>Administrators</span>
+                </a>
+            </div>
+
+                        <div id="departments-nav-item" style="display: none;">
+                <a class="nav-link {{ Request::is('admin/departments') ? 'active' : '' }}"
+                    href="{{ url('/admin/departments') }}">
+                    <i class="fa-solid fa-building"></i>
+                    <span>Departments</span>
+                </a>
+            </div>
+
+            <div id="services-nav-item" style="display: none;">
+                <a class="nav-link {{ Request::is('admin/services') ? 'active' : '' }}"
+                    href="{{ url('/admin/services') }}">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <span>Extra Services</span>
+                </a>
+            </div>
+
+            <div id="purposes-nav-item" style="display: none;">
+                <a class="nav-link {{ Request::is('admin/purposes') ? 'active' : '' }}"
+                    href="{{ url('/admin/purposes') }}">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <span>Form Purposes</span>
                 </a>
             </div>
 
@@ -257,263 +306,347 @@
     @yield('scripts')
 
     <script>
-        // Notification Manager - only for notifications (separate from profile)
-        class NotificationManager {
-            constructor() {
-                this.pollingInterval = null;
-                this.isInitialized = false;
-            }
+// Notification Manager - only for notifications (separate from profile)
+class NotificationManager {
+    constructor() {
+        this.pollingInterval = null;
+        this.isInitialized = false;
+    }
 
-            init() {
-                if (this.isInitialized) return;
-                this.loadNotifications();
-                this.setupEventListeners();
-                this.startPolling();
-                this.isInitialized = true;
-            }
+    init() {
+        if (this.isInitialized) return;
+        this.loadNotifications();
+        this.setupEventListeners();
+        this.startPolling();
+        this.isInitialized = true;
+    }
 
-            setupEventListeners() {
-                document.getElementById('markAllAsRead')?.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.markAllAsRead();
-                });
-                document.getElementById('notificationDropdownButton')?.addEventListener('click', () => {
-                    this.loadNotifications();
-                });
-            }
+    setupEventListeners() {
+        document.getElementById('markAllAsRead')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.markAllAsRead();
+        });
+        document.getElementById('notificationDropdownButton')?.addEventListener('click', () => {
+            this.loadNotifications();
+        });
+    }
 
-            async loadNotifications() {
-                try {
-                    const token = localStorage.getItem('adminToken');
-                    if (!token) return;
-                    const response = await fetch('/api/admin/notifications', {
-                        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
-                    });
-                    if (!response.ok) throw new Error('Failed to fetch notifications');
-                    const data = await response.json();
-                    this.updateNotificationUI(data);
-                } catch (error) {
-                    console.error('Error loading notifications:', error);
-                }
-            }
-
-            updateNotificationUI(data) {
-                const { notifications, unread_count } = data;
-                this.updateBadge('notificationBadge', unread_count);
-                this.renderNotificationList(notifications);
-            }
-
-            updateBadge(elementId, count) {
-                const badge = document.getElementById(elementId);
-                if (!badge) return;
-                if (count > 0) {
-                    badge.textContent = count > 99 ? '99+' : count;
-                    badge.style.display = 'flex';
-                } else {
-                    badge.style.display = 'none';
-                }
-            }
-
-            renderNotificationList(notifications) {
-                const container = document.getElementById('notificationList');
-                if (!container) return;
-                if (notifications.length === 0) {
-                    container.innerHTML = '<div class="text-center py-3 text-muted">No notifications</div>';
-                    return;
-                }
-                container.innerHTML = notifications.map(notification => `
-                    <div class="notification-item ${notification.is_read ? '' : 'unread'}" 
-                         onclick="window.notificationManager?.handleNotificationClick(${notification.notification_id}, ${notification.request_id || 'null'})">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="small text-muted">${this.formatTime(notification.created_at)}</div>
-                                <div class="fw-medium">${notification.message}</div>
-                                ${notification.request_id ? `<small class="text-primary">Request #${notification.request_id}</small>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            handleNotificationClick(notificationId, requestId) {
-                this.markAsRead(notificationId);
-                if (requestId) window.location.href = `/admin/requisition/${requestId}`;
-            }
-
-            async markAsRead(notificationId = null) {
-                try {
-                    const token = localStorage.getItem('adminToken');
-                    if (!token) return;
-                    const url = notificationId ? `/api/admin/notifications/mark-read/${notificationId}` : '/api/admin/notifications/mark-all-read';
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json', 'Content-Type': 'application/json' }
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        this.updateBadge('notificationBadge', data.unread_count);
-                        if (document.getElementById('notificationDropdown')?.classList.contains('show')) this.loadNotifications();
-                    }
-                } catch (error) {
-                    console.error('Error marking notification as read:', error);
-                }
-            }
-
-            async markAllAsRead() { await this.markAsRead(); }
-
-            formatTime(dateString) {
-                const date = new Date(dateString);
-                const now = new Date();
-                const diffMins = Math.floor((now - date) / 60000);
-                if (diffMins < 1) return 'Just now';
-                if (diffMins < 60) return `${diffMins}m ago`;
-                if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-                return `${Math.floor(diffMins / 1440)}d ago`;
-            }
-
-            startPolling() { this.pollingInterval = setInterval(() => this.loadNotifications(), 30000); }
-            stopPolling() { if (this.pollingInterval) clearInterval(this.pollingInterval); }
-        }
-
-        // Initialize sidebar and profile rendering using injected data
-        document.addEventListener('DOMContentLoaded', function () {
-            // Check if admin data is injected
-            if (!window.Admin) {
-                console.error('No admin data found');
-                window.location.href = '/admin/login';
-                return;
-            }
-
-            // Store token and admin info
+    async loadNotifications() {
+        try {
             const token = localStorage.getItem('adminToken');
-            if (token) {
-                localStorage.setItem('adminId', window.Admin.admin_id);
-                localStorage.setItem('adminRoleTitle', window.Admin.role_title);
-                localStorage.setItem('adminRoleId', window.Admin.role_id);
+            if (!token) return;
+            const response = await fetch('/api/admin/notifications', {
+                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+            });
+            if (!response.ok) throw new Error('Failed to fetch notifications');
+            const data = await response.json();
+            this.updateNotificationUI(data);
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+        }
+    }
+
+    updateNotificationUI(data) {
+        const { notifications, unread_count } = data;
+        this.updateBadge('notificationBadge', unread_count);
+        this.renderNotificationList(notifications);
+    }
+
+    updateBadge(elementId, count) {
+        const badge = document.getElementById(elementId);
+        if (!badge) return;
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    renderNotificationList(notifications) {
+        const container = document.getElementById('notificationList');
+        if (!container) return;
+        if (notifications.length === 0) {
+            container.innerHTML = '<div class="text-center py-3 text-muted">No notifications</div>';
+            return;
+        }
+        container.innerHTML = notifications.map(notification => `
+            <div class="notification-item ${notification.is_read ? '' : 'unread'}" 
+                 onclick="window.notificationManager?.handleNotificationClick(${notification.notification_id}, ${notification.request_id || 'null'})">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="small text-muted">${this.formatTime(notification.created_at)}</div>
+                        <div class="fw-medium">${notification.message}</div>
+                        ${notification.request_id ? `<small class="text-primary">Request #${notification.request_id}</small>` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    handleNotificationClick(notificationId, requestId) {
+        this.markAsRead(notificationId);
+        if (requestId) window.location.href = `/admin/requisition/${requestId}`;
+    }
+
+    async markAsRead(notificationId = null) {
+        try {
+            const token = localStorage.getItem('adminToken');
+            if (!token) return;
+            const url = notificationId ? `/api/admin/notifications/mark-read/${notificationId}` : '/api/admin/notifications/mark-all-read';
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json', 'Content-Type': 'application/json' }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                this.updateBadge('notificationBadge', data.unread_count);
+                if (document.getElementById('notificationDropdown')?.classList.contains('show')) this.loadNotifications();
             }
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    }
 
-            // Render profile from injected data
-            renderProfileFromData(window.Admin);
+    async markAllAsRead() { await this.markAsRead(); }
 
-            // Initialize notifications
-            window.notificationManager = new NotificationManager();
-            const isAdminRolesPage = window.location.pathname.includes('/admin/admin-roles');
-            if (!isAdminRolesPage) {
-                window.notificationManager.init();
-            }
+    formatTime(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMins = Math.floor((now - date) / 60000);
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+        return `${Math.floor(diffMins / 1440)}d ago`;
+    }
 
-            // Setup sidebar toggle
-            const sidebar = document.getElementById('sidebar');
-            const toggleBtn = document.getElementById('sidebarToggle');
-            if (sidebar && toggleBtn) {
-                toggleBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    sidebar.classList.toggle('active');
-                });
-                document.addEventListener('click', (e) => {
-                    if (window.innerWidth <= 991.98 && sidebar.classList.contains('active') &&
-                        !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
-                        sidebar.classList.remove('active');
-                    }
-                });
+    startPolling() { this.pollingInterval = setInterval(() => this.loadNotifications(), 30000); }
+    stopPolling() { if (this.pollingInterval) clearInterval(this.pollingInterval); }
+}
+
+// Initialize sidebar and profile rendering using injected data
+document.addEventListener('DOMContentLoaded', function () {
+    // Check if admin data is injected
+    if (!window.Admin) {
+        console.error('No admin data found');
+        window.location.href = '/admin/login';
+        return;
+    }
+
+    // Store token and admin info
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+        localStorage.setItem('adminId', window.Admin.admin_id);
+        localStorage.setItem('adminRoleTitle', window.Admin.role_title);
+        localStorage.setItem('adminRoleId', window.Admin.role_id);
+    }
+
+    // Render profile from injected data
+    renderProfileFromData(window.Admin);
+
+    // Initialize notifications
+    window.notificationManager = new NotificationManager();
+    const isAdminRolesPage = window.location.pathname.includes('/admin/admin-roles');
+    if (!isAdminRolesPage) {
+        window.notificationManager.init();
+    }
+
+    // Setup sidebar toggle
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    if (sidebar && toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('active');
+        });
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 991.98 && sidebar.classList.contains('active') &&
+                !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+                sidebar.classList.remove('active');
             }
         });
+    }
+});
 
-        function renderProfileFromData(data) {
-            const profileImg = document.getElementById('admin-profile-img');
-            const profileSkeleton = document.getElementById('profile-skeleton');
-            const nameSkeleton = document.getElementById('name-skeleton');
-            const adminName = document.getElementById('admin-name');
-            const roleSkeleton = document.getElementById('role-skeleton');
-            const adminRole = document.getElementById('admin-role');
+function renderProfileFromData(data) {
+    const profileImg = document.getElementById('admin-profile-img');
+    const profileSkeleton = document.getElementById('profile-skeleton');
+    const nameSkeleton = document.getElementById('name-skeleton');
+    const adminName = document.getElementById('admin-name');
+    const roleSkeleton = document.getElementById('role-skeleton');
+    const adminRole = document.getElementById('admin-role');
 
-            if (profileImg && data.photo_url) {
-                if (profileSkeleton) profileSkeleton.style.display = 'none';
-                profileImg.src = data.photo_url;
-                profileImg.style.display = 'block';
-            } else if (profileImg) {
-                if (profileSkeleton) profileSkeleton.style.display = 'none';
-                profileImg.style.display = 'block';
-            }
+    if (profileImg && data.photo_url) {
+        if (profileSkeleton) profileSkeleton.style.display = 'none';
+        profileImg.src = data.photo_url;
+        profileImg.style.display = 'block';
+    } else if (profileImg) {
+        if (profileSkeleton) profileSkeleton.style.display = 'none';
+        profileImg.style.display = 'block';
+    }
 
-            if (nameSkeleton) nameSkeleton.style.display = 'none';
-            const nameLink = document.querySelector('#admin-name a');
-            if (nameLink) {
-                const fullName = `${data.first_name} ${data.middle_name ? data.middle_name + ' ' : ''}${data.last_name}`;
-                nameLink.textContent = fullName;
-                nameLink.href = `/admin/profile/${data.admin_id}`;
-            }
-            if (adminName) adminName.style.display = 'block';
+    if (nameSkeleton) nameSkeleton.style.display = 'none';
+    const nameLink = document.querySelector('#admin-name a');
+    if (nameLink) {
+        const fullName = `${data.first_name} ${data.middle_name ? data.middle_name + ' ' : ''}${data.last_name}`;
+        nameLink.textContent = fullName;
+        nameLink.href = `/admin/profile/${data.admin_id}`;
+    }
+    if (adminName) adminName.style.display = 'block';
 
-            const accountSettingsBtn = document.getElementById('accountSettingsBtn');
-            if (accountSettingsBtn && nameLink) {
-                accountSettingsBtn.href = nameLink.href;
-            }
+    const accountSettingsBtn = document.getElementById('accountSettingsBtn');
+    if (accountSettingsBtn && nameLink) {
+        accountSettingsBtn.href = nameLink.href;
+    }
 
-            if (roleSkeleton) roleSkeleton.style.display = 'none';
-            if (adminRole) {
-                adminRole.textContent = data.role_title || 'Admin';
-                adminRole.style.display = 'block';
-            }
+    if (roleSkeleton) roleSkeleton.style.display = 'none';
+    if (adminRole) {
+        adminRole.textContent = data.role_title || 'Admin';
+        adminRole.style.display = 'block';
+    }
 
-            // Hide sidebar items based on role
-            hideSidebarItemsBasedOnRole(data.role_id);
-            updateDashboardNavLink();
-        }
+    // Hide sidebar items based on role
+    hideSidebarItemsBasedOnRole(data.role_id);
+    updateDashboardNavLink();
+}
 
-        function updateDashboardNavLink() {
-            const dashboardLink = document.getElementById('dashboard-nav-link');
-            if (dashboardLink) dashboardLink.href = '/admin/dashboard';
-        }
+function updateDashboardNavLink() {
+    const dashboardLink = document.getElementById('dashboard-nav-link');
+    if (dashboardLink) dashboardLink.href = '/admin/dashboard';
+}
 
-        function hideSidebarItemsBasedOnRole(roleId) {
-            const skeletons = ['dashboard-nav-skeleton', 'management-section-skeleton', 'inventories-section-skeleton', 'transactions-section-skeleton'];
-            skeletons.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+function hideSidebarItemsBasedOnRole(roleId) {
+    // Hide all skeleton loaders
+    const skeletonIds = [
+        'dashboard-nav-skeleton',
+        'administration-section-skeleton',
+        'management-section-skeleton',
+        'inventories-section-skeleton',
+        'transactions-section-skeleton'
+    ];
+    skeletonIds.forEach(id => { 
+        const el = document.getElementById(id); 
+        if (el) el.style.display = 'none'; 
+    });
 
-            const sections = ['management-section', 'inventories-section', 'transactions-section'];
-            sections.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'block'; });
+    // Show all sections
+    const sectionIds = [
+        'administration-section',
+        'management-section',
+        'inventories-section',
+        'transactions-section'
+    ];
+    sectionIds.forEach(id => { 
+        const el = document.getElementById(id); 
+        if (el) el.style.display = 'block'; 
+    });
 
-            const navItems = ['dashboard-nav-item', 'pending-nav-item', 'administrators-nav-item', 'facilities-nav-item', 'equipment-nav-item', 'archive-nav-item', 'feedback-nav-item', 'equipment-tracker-nav-item'];
-            navItems.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'block'; });
+    // Show all nav items by default
+    const navItemIds = [
+        'dashboard-nav-item',
+        'pending-nav-item',
+        'equipment-tracker-nav-item',
+        'administrators-nav-item',
+        'departments-nav-item',
+        'services-nav-item',
+        'purposes-nav-item',
+        'facilities-nav-item',
+        'equipment-nav-item',
+        'archive-nav-item',
+        'feedback-nav-item'
+    ];
+    navItemIds.forEach(id => { 
+        const el = document.getElementById(id); 
+        if (el) el.style.display = 'block'; 
+    });
 
-            if (roleId === 4) {
-                const managementSection = document.getElementById('management-section');
-                if (managementSection) managementSection.style.display = 'none';
-                const adminItem = document.getElementById('administrators-nav-item');
-                const pendingItem = document.getElementById('pending-nav-item');
-                if (adminItem) adminItem.style.display = 'none';
-                if (pendingItem) pendingItem.style.display = 'none';
-            } else if (roleId === 2 || roleId === 3) {
-                const adminItem = document.getElementById('administrators-nav-item');
-                if (adminItem) adminItem.style.display = 'none';
-            }
-        }
+    // Role-specific hiding
+    if (roleId === 4) {
+        // Signatory role - hide Administration section and its items
+        const adminSection = document.getElementById('administration-section');
+        if (adminSection) adminSection.style.display = 'none';
+        
+        const pendingItem = document.getElementById('pending-nav-item');
+        if (pendingItem) pendingItem.style.display = 'none';
+        
+        const adminItem = document.getElementById('administrators-nav-item');
+        if (adminItem) adminItem.style.display = 'none';
+        
+        // Also hide Equipment Tracker for signatory
+        const equipmentTrackerItem = document.getElementById('equipment-tracker-nav-item');
+        if (equipmentTrackerItem) equipmentTrackerItem.style.display = 'none';
+        
+    } else if (roleId === 2 || roleId === 3) {
+        // Request Assessor (2) and Super Admin (3) - hide Administrators
+        const adminItem = document.getElementById('administrators-nav-item');
+        if (adminItem) adminItem.style.display = 'none';
+    }
+    
+    // If role is Super Admin (3), show everything (already shown by default)
+}
 
-        function showAllNavItems() {
-            const skeletons = ['dashboard-nav-skeleton', 'management-section-skeleton', 'inventories-section-skeleton', 'transactions-section-skeleton'];
-            skeletons.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-            const sections = ['management-section', 'inventories-section', 'transactions-section'];
-            sections.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'block'; });
-            const navItems = ['dashboard-nav-item', 'pending-nav-item', 'administrators-nav-item', 'facilities-nav-item', 'equipment-nav-item', 'archive-nav-item', 'feedback-nav-item'];
-            navItems.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'block'; });
-        }
+function showAllNavItems() {
+    // Hide all skeleton loaders
+    const skeletonIds = [
+        'dashboard-nav-skeleton',
+        'administration-section-skeleton',
+        'management-section-skeleton',
+        'inventories-section-skeleton',
+        'transactions-section-skeleton'
+    ];
+    skeletonIds.forEach(id => { 
+        const el = document.getElementById(id); 
+        if (el) el.style.display = 'none'; 
+    });
 
-        // Scroll behavior for topbar
-        const topbar = document.getElementById('topbar');
-        let lastScroll = 0;
-        window.addEventListener('scroll', () => {
-            const currentScroll = window.scrollY;
-            if (currentScroll > 100 && currentScroll > lastScroll) topbar?.classList.add('topbar-hidden');
-            else if (currentScroll < lastScroll) topbar?.classList.remove('topbar-hidden');
-            lastScroll = currentScroll;
-        });
-        topbar?.addEventListener('mouseenter', () => topbar.classList.remove('topbar-hidden'));
+    // Show all sections
+    const sectionIds = [
+        'administration-section',
+        'management-section',
+        'inventories-section',
+        'transactions-section'
+    ];
+    sectionIds.forEach(id => { 
+        const el = document.getElementById(id); 
+        if (el) el.style.display = 'block'; 
+    });
 
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 991.98) {
-                document.getElementById('sidebar')?.classList.remove('active');
-            }
-        });
+    // Show all nav items
+    const navItemIds = [
+        'dashboard-nav-item',
+        'pending-nav-item',
+        'equipment-tracker-nav-item',
+        'administrators-nav-item',
+        'departments-nav-item',
+        'services-nav-item',
+        'purposes-nav-item',
+        'facilities-nav-item',
+        'equipment-nav-item',
+        'archive-nav-item',
+        'feedback-nav-item'
+];
+    navItemIds.forEach(id => { 
+        const el = document.getElementById(id); 
+        if (el) el.style.display = 'block'; 
+    });
+}
+
+// Scroll behavior for topbar
+const topbar = document.getElementById('topbar');
+let lastScroll = 0;
+window.addEventListener('scroll', () => {
+    const currentScroll = window.scrollY;
+    if (currentScroll > 100 && currentScroll > lastScroll) topbar?.classList.add('topbar-hidden');
+    else if (currentScroll < lastScroll) topbar?.classList.remove('topbar-hidden');
+    lastScroll = currentScroll;
+});
+topbar?.addEventListener('mouseenter', () => topbar.classList.remove('topbar-hidden'));
+
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 991.98) {
+        document.getElementById('sidebar')?.classList.remove('active');
+    }
+});
     </script>
 </body>
 

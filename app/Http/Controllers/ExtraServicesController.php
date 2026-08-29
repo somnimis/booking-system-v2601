@@ -22,13 +22,15 @@ class ExtraServicesController extends Controller
     {
         $validated = $request->validate([
             'service_name' => 'required|string|max:80',
+            'managed_by' => 'nullable|exists:departments,department_id',
+            'account_number' => 'nullable|integer',
+            'service_fee' => 'nullable|numeric|min:0',
         ]);
 
         $extraService = ExtraService::create($validated);
-        $serviceName = $extraService->service_name;
 
         return response()->json([
-            'message' => "Extra service '{$serviceName}' was created successfully.",
+            'message' => "Extra service '{$extraService->service_name}' was created successfully.",
             'data' => $extraService
         ], 201);
     }
@@ -37,14 +39,16 @@ class ExtraServicesController extends Controller
     {
         $validated = $request->validate([
             'service_name' => 'required|string|max:80',
+            'managed_by' => 'nullable|exists:departments,department_id',
+            'account_number' => 'nullable|integer',
+            'service_fee' => 'nullable|numeric|min:0',
         ]);
 
         $extraService = ExtraService::findOrFail($service_id);
         $extraService->update($validated);
-        $serviceName = $extraService->service_name;
 
         return response()->json([
-            'message' => "Extra service '{$serviceName}' was updated successfully.",
+            'message' => "Extra service '{$extraService->service_name}' was updated successfully.",
             'data' => $extraService
         ], 200);
     }
@@ -63,68 +67,65 @@ class ExtraServicesController extends Controller
 
     /* ----- Assigning admins to extra services ----- */
 
-public function assignService(Request $request)
-{
-    $admin = $request->user(); // Logged-in admin
+    public function assignService(Request $request)
+    {
+        $admin = $request->user();
 
-    $validated = $request->validate([
-        'service_ids' => 'required|array',
-        'service_ids.*' => 'exists:extra_services,service_id',
-    ]);
-
-    $assignedServices = [];
-    $skippedServices = [];
-
-    foreach ($validated['service_ids'] as $serviceId) {
-        $exists = AdminService::where('admin_id', $admin->admin_id)
-            ->where('service_id', $serviceId)
-            ->exists();
-
-        if ($exists) {
-            $skippedServices[] = $serviceId;
-            continue;
-        }
-
-        $adminService = AdminService::create([
-            'admin_id' => $admin->admin_id,
-            'service_id' => $serviceId
+        $validated = $request->validate([
+            'service_ids' => 'required|array',
+            'service_ids.*' => 'exists:extra_services,service_id',
         ]);
 
-        $assignedServices[] = [
-            'service_id' => $serviceId,
-            'service_name' => ExtraService::find($serviceId)->service_name
-        ];
+        $assignedServices = [];
+        $skippedServices = [];
+
+        foreach ($validated['service_ids'] as $serviceId) {
+            $exists = AdminService::where('admin_id', $admin->admin_id)
+                ->where('service_id', $serviceId)
+                ->exists();
+
+            if ($exists) {
+                $skippedServices[] = $serviceId;
+                continue;
+            }
+
+            $adminService = AdminService::create([
+                'admin_id' => $admin->admin_id,
+                'service_id' => $serviceId
+            ]);
+
+            $assignedServices[] = [
+                'service_id' => $serviceId,
+                'service_name' => ExtraService::find($serviceId)->service_name
+            ];
+        }
+
+        $messageParts = [];
+        if (!empty($assignedServices)) {
+            $assignedNames = implode(', ', array_column($assignedServices, 'service_name'));
+            $messageParts[] = "Assigned: {$assignedNames}";
+        }
+        if (!empty($skippedServices)) {
+            $skippedNames = implode(', ', ExtraService::whereIn('service_id', $skippedServices)->pluck('service_name')->toArray());
+            $messageParts[] = "Skipped (already assigned): {$skippedNames}";
+        }
+
+        return response()->json([
+            'message' => implode(' | ', $messageParts),
+            'data' => $assignedServices
+        ], 201);
     }
 
-    $messageParts = [];
-    if (!empty($assignedServices)) {
-        $assignedNames = implode(', ', array_column($assignedServices, 'service_name'));
-        $messageParts[] = "Assigned: {$assignedNames}";
+    public function getAdminServices($adminId = null)
+    {
+        if ($adminId) {
+            $services = AdminService::where('admin_id', $adminId)->get();
+        } else {
+            $services = AdminService::all();
+        }
+        
+        return response()->json($services, 200);
     }
-    if (!empty($skippedServices)) {
-        $skippedNames = implode(', ', ExtraService::whereIn('service_id', $skippedServices)->pluck('service_name')->toArray());
-        $messageParts[] = "Skipped (already assigned): {$skippedNames}";
-    }
-
-    return response()->json([
-        'message' => implode(' | ', $messageParts),
-        'data' => $assignedServices
-    ], 201);
-}
-
-
-public function getAdminServices($adminId = null)
-{
-    if ($adminId) {
-        // Return services for specific admin
-        $services = AdminService::where('admin_id', $adminId)->get();
-    } else {
-        // Return all admin-service relationships (for filtering client-side)
-        $services = AdminService::all();
-    }
-    
-    return response()->json($services, 200);
-}
 
     public function unassignService($adminServiceId)
     {
@@ -137,5 +138,4 @@ public function getAdminServices($adminId = null)
             'message' => "Service '{$serviceName}' unassigned successfully"
         ], 200);
     }
-
 }

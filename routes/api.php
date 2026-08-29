@@ -84,7 +84,6 @@ Route::get('/equipment-details/{id}', [EquipmentController::class, 'getEquipment
 
 // Public catalog endpoints
 Route::prefix('facilities')->group(function () {
-    // === PUT SPECIFIC ROUTES BEFORE PARAMETERIZED ROUTES ===
     Route::get('/parent-buildings-for-rooms', [FacilityCategoryController::class, 'getParentBuildingsForRooms']);
     Route::get('/buildings', [FacilityCategoryController::class, 'getBuildings']);
     Route::get('/venue-count', [FacilityCategoryController::class, 'getVenuesCount']);
@@ -108,7 +107,7 @@ Route::post('/calendar-events', [CalendarEventsController::class, 'store']);
 Route::delete('/calendar-events/{id}', [CalendarEventsController::class, 'destroy']);
 Route::get('/calendar-events/types', [CalendarEventsController::class, 'getEventTypes']);
 
-// ==================== OPTIMIZED AVAILABILITY ENDPOINTS ==================== //
+// ==================== AVAILABILITY ENDPOINTS ==================== //
 Route::get('/availability/facilities', [AvailabilityController::class, 'getFacilitiesList']);
 Route::get('/availability/events', [AvailabilityController::class, 'getEventsForDate']);
 Route::get('/availability/facility/{facilityId}/schedule', [AvailabilityController::class, 'getFacilitySchedule']);

@@ -149,7 +149,25 @@ class CheckAvailabilityService
             $q->where('event_venues.facility_id', $facilityId);
         });
 
-        $this->addDateOverlapCondition($query, $startDate, $endDate, $startTime, $endTime, $allDay, false);
+        // Date range must overlap
+        $query->where(function ($dateQuery) use ($startDate, $endDate, $startTime, $endTime, $allDay) {
+            // Date overlap first
+            $dateQuery->whereDate('start_date', '<=', $endDate)
+                ->whereDate('end_date', '>=', $startDate);
+
+            // Then check time overlap for non-all-day events
+            $dateQuery->where(function ($timeQuery) use ($startTime, $endTime, $allDay) {
+                // If the calendar event is all-day, it ALWAYS conflicts with any time on that date
+                $timeQuery->where('all_day', true);
+
+                // If the calendar event has specific times, check overlap
+                $timeQuery->orWhere(function ($specificTime) use ($startTime, $endTime) {
+                    $specificTime->where('all_day', false)
+                        ->whereRaw('TIME(start_time) < ?', [$endTime])
+                        ->whereRaw('TIME(end_time) > ?', [$startTime]);
+                });
+            });
+        });
 
         return $query->get()->map(function ($event) {
             return [
@@ -162,7 +180,66 @@ class CheckAvailabilityService
                 'event_id' => $event->event_id,
                 'has_facilities' => true,
                 'needs_grace_period' => true,
-                'conflict_reason' => 'This facility is booked for a school event',
+                'conflict_reason' => $event->all_day
+                    ? 'This facility is booked for an all-day school event'
+                    : 'This facility is booked for a school event during this time',
+                'schedule' => [
+                    'start_date' => $event->start_date,
+                    'end_date' => $event->end_date,
+                    'start_time' => $event->start_time,
+                    'end_time' => $event->end_time,
+                    'all_day' => $event->all_day,
+                ]
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Check equipment conflicts in calendar events
+     */
+    private function checkCalendarEquipmentConflicts($equipmentId, $startDate, $endDate, $startTime, $endTime, $allDay)
+    {
+        $query = CalendarEvent::whereHas('equipment', function ($q) use ($equipmentId) {
+            $q->where('event_equipment.equipment_id', $equipmentId);
+        });
+
+        // Date range must overlap
+        $query->where(function ($dateQuery) use ($startDate, $endDate, $startTime, $endTime, $allDay) {
+            // Date overlap first
+            $dateQuery->whereDate('start_date', '<=', $endDate)
+                ->whereDate('end_date', '>=', $startDate);
+
+            // Then check time overlap for non-all-day events
+            $dateQuery->where(function ($timeQuery) use ($startTime, $endTime, $allDay) {
+                // If the calendar event is all-day, it ALWAYS conflicts with any time on that date
+                $timeQuery->where('all_day', true);
+
+                // If the calendar event has specific times, check overlap
+                $timeQuery->orWhere(function ($specificTime) use ($startTime, $endTime) {
+                    $specificTime->where('all_day', false)
+                        ->whereRaw('TIME(start_time) < ?', [$endTime])
+                        ->whereRaw('TIME(end_time) > ?', [$startTime]);
+                });
+            });
+        });
+
+        return $query->get()->map(function ($event) use ($equipmentId) {
+            // Get the quantity from the pivot table
+            $pivot = $event->equipment->firstWhere('equipment_id', $equipmentId);
+            $quantity = $pivot ? $pivot->pivot->quantity : 1;
+
+            return [
+                'type' => 'equipment',
+                'id' => $equipmentId,
+                'name' => $pivot ? $pivot->equipment_name : 'Unknown Equipment',
+                'source' => 'calendar_event',
+                'status' => null,
+                'request_id' => null,
+                'event_id' => $event->event_id,
+                'quantity' => $quantity,
+                'conflict_reason' => $event->all_day
+                    ? 'This equipment is booked for an all-day school event'
+                    : 'This equipment is booked for a school event during this time',
                 'schedule' => [
                     'start_date' => $event->start_date,
                     'end_date' => $event->end_date,
@@ -325,9 +402,9 @@ class CheckAvailabilityService
             $overlaps[] = $this->formatOverlappingForm($form, $currentForm, 'requisition', $hasFacilities);
         }
 
-        // Calendar events
+        // Calendar events - NEW
         $calendarOverlaps = CalendarEvent::whereHas('equipment', function ($q) use ($equipmentIds) {
-            $q->whereIn('equipment_id', $equipmentIds);
+            $q->whereIn('event_equipment.equipment_id', $equipmentIds);
         })
             ->where(function ($dateQ) use ($currentForm) {
                 $this->addScheduleOverlapCondition($dateQ, $currentForm);
@@ -416,56 +493,62 @@ class CheckAvailabilityService
                 : date('M j, Y', strtotime($item->end_date)) . ' ' . date('g:i A', strtotime($item->end_time)),
         ];
     }
-/**
- * Add date overlap condition to query - Rewritten to avoid SQL syntax issues
- */
-private function addDateOverlapCondition($query, $startDate, $endDate, $startTime, $endTime, $allDay, $applyGracePeriod = false)
-{
-    if ($allDay) {
-        $query->whereDate('start_date', '<=', $endDate)
-            ->whereDate('end_date', '>=', $startDate);
-        return;
-    }
-
-    // For equipment checks, startTime and endTime might be null
-    if (is_null($startTime) || is_null($endTime)) {
-        $query->whereDate('start_date', '<=', $endDate)
-            ->whereDate('end_date', '>=', $startDate);
-        return;
-    }
-
-    $query->where(function ($q) use ($startDate, $endDate, $startTime, $endTime, $applyGracePeriod) {
-        // Date range must overlap
-        $q->whereDate('start_date', '<=', $endDate)
-            ->whereDate('end_date', '>=', $startDate);
-        
-        if ($applyGracePeriod) {
-            // For grace period, check if the request is within 4 hours after existing booking
-            $q->where(function ($graceQ) use ($startDate, $startTime) {
-                // Same day grace period check
-                $graceQ->whereDate('end_date', '=', $startDate)
-                    ->whereRaw("HOUR(TIMEDIFF(?, TIME(end_time))) < 4", [$startTime])
-                    ->whereRaw("TIME(?) > TIME(end_time)", [$startTime]);
-            })->orWhere(function ($laterQ) use ($startDate) {
-                // Existing booking ends after our start date
-                $laterQ->whereDate('end_date', '>', $startDate);
-            });
-        } else {
-            // Direct time overlap
-            $q->where(function ($timeQ) use ($startTime, $endTime) {
-                $timeQ->whereRaw("TIME(start_time) < ?", [$endTime])
-                    ->whereRaw("TIME(end_time) > ?", [$startTime]);
-            });
-        }
-        
-        // Also include all-day events as conflicts
-        $q->orWhere(function ($allDayQ) use ($startDate, $endDate) {
-            $allDayQ->where('all_day', true)
-                ->whereDate('start_date', '<=', $endDate)
+    /**
+     * Add date overlap condition to query - Rewritten to avoid SQL syntax issues
+     */
+    private function addDateOverlapCondition($query, $startDate, $endDate, $startTime, $endTime, $allDay, $applyGracePeriod = false)
+    {
+        if ($allDay) {
+            $query->whereDate('start_date', '<=', $endDate)
                 ->whereDate('end_date', '>=', $startDate);
+            return;
+        }
+
+        // For equipment checks, startTime and endTime might be null
+        if (is_null($startTime) || is_null($endTime)) {
+            $query->whereDate('start_date', '<=', $endDate)
+                ->whereDate('end_date', '>=', $startDate);
+            return;
+        }
+
+        $query->where(function ($q) use ($query, $startDate, $endDate, $startTime, $endTime, $applyGracePeriod) {
+            // FIRST: Date range must overlap
+            $q->whereDate('start_date', '<=', $endDate)
+                ->whereDate('end_date', '>=', $startDate);
+
+            if ($applyGracePeriod) {
+                // SECOND: Time overlap condition with proper parameter binding
+                $q->where(function ($timeQ) use ($startTime, $endTime, $startDate) {
+                    // Direct time overlap
+                    $timeQ->where(function ($direct) use ($startTime, $endTime) {
+                        $direct->whereRaw('TIME(start_time) < ?', [$endTime])
+                            ->whereRaw('TIME(end_time) > ?', [$startTime]);
+                    });
+
+                    // Grace period overlap (existing booking ends on same day, within 4 hours)
+                    $timeQ->orWhere(function ($grace) use ($startTime, $startDate) {
+                        $grace->whereDate('end_date', '=', $startDate)
+                            ->whereRaw('TIME(?) < TIME(end_time)', [$startTime])
+                            ->whereRaw('TIME(?) >= TIME(end_time)', [$startTime])
+                            ->whereRaw('HOUR(TIMEDIFF(?, TIME(end_time))) < 4', [$startTime]);
+                    });
+                });
+            } else {
+                // Direct time overlap only
+                $q->where(function ($timeQ) use ($startTime, $endTime) {
+                    $timeQ->whereRaw('TIME(start_time) < ?', [$endTime])
+                        ->whereRaw('TIME(end_time) > ?', [$startTime]);
+                });
+            }
+
+            // Also include all-day events as conflicts
+            $q->orWhere(function ($allDayQ) use ($startDate, $endDate) {
+                $allDayQ->where('all_day', true)
+                    ->whereDate('start_date', '<=', $endDate)
+                    ->whereDate('end_date', '>=', $startDate);
+            });
         });
-    });
-}
+    }
 
     /**
      * Add schedule overlap condition to query (existing method)
