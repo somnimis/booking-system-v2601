@@ -330,6 +330,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ---------------- Requisition Management ---------------- //
 
+    // Search requisitions 
+    Route::get('/admin/search-requisitions', function (Request $request) {
+        $query = $request->get('q');
+
+        if (empty($query)) {
+            return response()->json(['results' => []]);
+        }
+
+        $results = DB::table('requisition_forms')
+            ->where('event_title', 'LIKE', "%{$query}%")
+            ->select('request_id', 'event_title', 'first_name', 'last_name')
+            ->limit(10)
+            ->get();
+
+        return response()->json(['results' => $results]);
+    })->middleware('auth:sanctum');
+
     Route::get('/admin/requisition/{requestId}/view-data', [ReservationListingsController::class, 'getRequestViewData']);
     Route::get('/admin/requisition-forms', [ReservationListingsController::class, 'pendingRequests']); // not used
     Route::get('/admin/active-requests', [ReservationListingsController::class, 'getAvailableForTransaction']);
