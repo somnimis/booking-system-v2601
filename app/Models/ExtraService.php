@@ -13,6 +13,8 @@ class ExtraService extends Model
     protected $fillable = [
         'service_name',
         'managed_by',
+        'account_number',
+        'service_fee'
     ];
 
     // Relationships
