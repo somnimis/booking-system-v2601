@@ -115,14 +115,6 @@ Route::get('/availability/facilities/hierarchy', [AvailabilityController::class,
 
 // ---------------- Lookup Tables ---------------- //
 Route::get('/admin-role', [AdminController::class, 'adminRoles']);
-
-// ---------------- Departments ---------------- //
-Route::get('/departments', [DepartmentController::class, 'index']);
-Route::get('/departments/{id}', [DepartmentController::class, 'show']);
-Route::post('/departments', [DepartmentController::class, 'store']);
-Route::put('/departments/{id}', [DepartmentController::class, 'update']);
-Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
-
 Route::get('/availability-statuses', [AvailabilityStatusController::class, 'index']);
 Route::get('/form-statuses', [FormStatusController::class, 'index']);
 Route::get('/conditions', [ConditionController::class, 'index']);
@@ -133,10 +125,23 @@ Route::get('/equipment-items', [EquipmentItemController::class, 'index']);
 Route::get('/facility-categories', [FacilityCategoryController::class, 'index']);
 Route::get('/facility-categories/index', [FacilityCategoryController::class, 'indexWithSubcategories']);
 Route::get('/facility-subcategories/{category}', [FacilitySubcategoryController::class, 'index']);
-Route::get('/requisition-purposes', [RequisitionPurposeController::class, 'index']);
 
+// ---------------- Departments  - CRUD ---------------- //
+Route::get('/departments/dropdown', [DepartmentController::class, 'getDropdown']);
+Route::get('/departments', [DepartmentController::class, 'index']);
+Route::get('/departments/{id}', [DepartmentController::class, 'show']);
+Route::post('/departments', [DepartmentController::class, 'store']);
+Route::put('/departments/{id}', [DepartmentController::class, 'update']);
+Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
 
-// ---------------- Extra Services ---------------- //
+// ---------------- Requisition Purposes - CRUD ---------------- //
+Route::get('/purposes', [RequisitionPurposeController::class, 'index']);
+Route::get('/purposes/{id}', [RequisitionPurposeController::class, 'show']);
+Route::post('/purposes', [RequisitionPurposeController::class, 'store']);
+Route::put('/purposes/{id}', [RequisitionPurposeController::class, 'update']);
+Route::delete('/purposes/{id}', [RequisitionPurposeController::class, 'destroy']);
+
+// ---------------- Extra Services - CRUD ---------------- //
 Route::get('/extra-services', [ExtraServicesController::class, 'index']);
 Route::post('/extra-services', [ExtraServicesController::class, 'store']);
 Route::put('/extra-services/{service_id}', [ExtraServicesController::class, 'update']);

@@ -24,8 +24,8 @@ class RequisitionPurpose extends Model
         return $this->hasMany(RequisitionForm::class, 'purpose_id', 'purpose_id');
     }
 
-    public function routedAdmin()
+    public function routedDepartment()
     {
-        return $this->belongsTo(Admin::class, 'routes_to', 'admin_id');
+        return $this->belongsTo(Department::class, 'routes_to', 'department_id');
     }
 }

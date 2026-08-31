@@ -228,8 +228,8 @@
             <div id="purposes-nav-item" style="display: none;">
                 <a class="nav-link {{ Request::is('admin/purposes') ? 'active' : '' }}"
                     href="{{ url('/admin/purposes') }}">
-                    <i class="fa-solid fa-bullseye"></i>
-                    <span>Form Purposes</span>
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Event Purposes</span>
                 </a>
             </div>
 
