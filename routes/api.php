@@ -115,7 +115,14 @@ Route::get('/availability/facilities/hierarchy', [AvailabilityController::class,
 
 // ---------------- Lookup Tables ---------------- //
 Route::get('/admin-role', [AdminController::class, 'adminRoles']);
+
+// ---------------- Departments ---------------- //
 Route::get('/departments', [DepartmentController::class, 'index']);
+Route::get('/departments/{id}', [DepartmentController::class, 'show']);
+Route::post('/departments', [DepartmentController::class, 'store']);
+Route::put('/departments/{id}', [DepartmentController::class, 'update']);
+Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
+
 Route::get('/availability-statuses', [AvailabilityStatusController::class, 'index']);
 Route::get('/form-statuses', [FormStatusController::class, 'index']);
 Route::get('/conditions', [ConditionController::class, 'index']);

@@ -56,7 +56,7 @@ class Admin extends Authenticatable
         return $this->belongsTo(LookupTables\AdminRole::class, 'role_id', 'role_id');
     }
 
-        // Accessors for local file paths
+    // Accessors for local file paths
     public function getPhotoUrlAttribute($value)
     {
         if ($value && !filter_var($value, FILTER_VALIDATE_URL)) {
@@ -64,7 +64,7 @@ class Admin extends Authenticatable
         }
         return $value ?: asset('storage/defaults/admin-photo.png');
     }
-    
+
     public function getWallpaperUrlAttribute($value)
     {
         if ($value && !filter_var($value, FILTER_VALIDATE_URL)) {
@@ -180,10 +180,28 @@ class Admin extends Authenticatable
     public function departments(): BelongsToMany
     {
         return $this->belongsToMany(Department::class, 'admin_departments', 'admin_id', 'department_id')
-            ->withPivot('is_primary')  // Only include is_primary, not timestamps
+            ->withPivot('is_primary', 'role_id')
             ->withTimestamps();
     }
 
+    public function getDepartmentRole($departmentId)
+    {
+        $dept = $this->departments()->where('department_id', $departmentId)->first();
+        if ($dept && $dept->pivot->role_id) {
+            return DepartmentRole::find($dept->pivot->role_id)->role_name ?? null;
+        }
+        return null;
+    }
+
+    public function isDepartmentHead($departmentId)
+    {
+        $headRole = DepartmentRole::where('role_name', 'Department Head')->first();
+        if (!$headRole)
+            return false;
+
+        $dept = $this->departments()->where('department_id', $departmentId)->first();
+        return $dept && $dept->pivot->role_id === $headRole->role_id;
+    }
 
     /**
      * The services that belong to the admin.
