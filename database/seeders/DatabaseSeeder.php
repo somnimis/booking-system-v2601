@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             AdminRoleSeeder::class,
             AvailabilityStatusSeeder::class,
             ConditionSeeder::class,
+            DepartmentRoleSeeder::class,
             DepartmentSeeder::class,
             EquipmentCategorySeeder::class,
             AdminSeeder::class,
@@ -37,6 +38,7 @@ class DatabaseSeeder extends Seeder
             CalendarEventSeeder::class,
             RequisitionCommentSeeder::class,
             UserFeedbackSeeder::class,
+
         ]);
     }
 }

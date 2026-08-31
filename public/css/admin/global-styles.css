@@ -343,6 +343,9 @@ main {
 /* ============================================
    BUTTONS (merged: base from main-layout, variants from global-styles)
    ============================================ */
+
+/* Allow small buttons to have less padding */
+
 .btn {
     border-radius: 8px !important;
     padding: 0.5rem 1.25rem !important;
@@ -353,7 +356,6 @@ main {
 }
 
 .btn i {
-    margin-right: 6px !important;
     font-size: 0.9rem !important;
 }
 

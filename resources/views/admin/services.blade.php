@@ -44,18 +44,26 @@
 
     <main id="main">
         <div class="container-fluid px-4">
+            <!-- Page Header with Add Button -->
+            <div class="page-header d-flex align-items-center justify-content-between flex-wrap"
+                style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
+                <div style="flex: 1; min-width: 0; padding-right: 1rem;">
+                    <h5 class="mb-1" style="font-family: 'Fraunces', Georgia, serif; color: var(--navy);"><i
+                            class="bi bi-grid me-2"></i>Extra Services</h5>
+                    <p class="text-muted small mb-0">
+                        Manage the services available for users to select when submitting event reservations, including
+                        service ownership, account numbers, and applicable fees.
+                    </p>
+                </div>
+                <div style="flex-shrink: 0;">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+                        <i class="bi bi-plus-circle me-2"></i>Add Service
+                    </button>
+                </div>
+            </div>
+
             <div class="section-card">
                 <div class="section-body">
-                    <div class="page-header">
-                        <div>
-                            <h5 class="mb-1"><i class="bi bi-grid me-2"></i>Extra Services</h5>
-                            <p class="text-muted small mb-0">Manage additional services offered, including department
-                                ownership, account numbers, and service fees.</p>
-                        </div>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceModal">
-                            <i class="bi bi-plus-circle me-2"></i>Add Service
-                        </button>
-                    </div>
                     <div id="servicesLoading" class="loading-container">
                         <div class="text-center">
                             <div class="spinner-border text-primary mb-3" role="status"></div>
@@ -328,11 +336,11 @@
             container.innerHTML = '';
             servicesData.forEach(service => {
                 container.innerHTML += `
-                                                                                                        <div class="form-check">
-                                                                                                            <input class="form-check-input assign-service-cb" type="checkbox" value="${service.service_id}" id="assign_service_${service.service_id}">
-                                                                                                            <label class="form-check-label" for="assign_service_${service.service_id}">${service.service_name}</label>
-                                                                                                        </div>
-                                                                                                    `;
+                                                                                                                <div class="form-check">
+                                                                                                                    <input class="form-check-input assign-service-cb" type="checkbox" value="${service.service_id}" id="assign_service_${service.service_id}">
+                                                                                                                    <label class="form-check-label" for="assign_service_${service.service_id}">${service.service_name}</label>
+                                                                                                                </div>
+                                                                                                            `;
             });
         }
 
@@ -353,45 +361,45 @@
                 const managedByName = department ? department.department_code : '--';
 
                 const card = `
-                                                                            <div class="col-md-6 col-lg-4 mb-3">
-                                                                                <div class="card service-card h-100 border shadow-sm">
-                                                                                    <div class="card-body">
-                                                                                        <h6 class="card-title mb-2 fw-semibold" style="font-family: 'Fraunces', Georgia, serif;">
-                                                                                            <i class="bi bi-grid me-2" style="color: var(--navy);"></i>
-                                                                                            ${service.service_name || '--'}
-                                                                                        </h6>
+                                                                                    <div class="col-md-6 col-lg-4 mb-3">
+                                                                                        <div class="card service-card h-100 border shadow-sm">
+                                                                                            <div class="card-body">
+                                                                                                <h6 class="card-title mb-2 fw-semibold" style="font-family: 'Fraunces', Georgia, serif;">
+                                                                                                    <i class="bi bi-grid me-2" style="color: var(--navy);"></i>
+                                                                                                    ${service.service_name || '--'}
+                                                                                                </h6>
 
-                                                                                        <div class="mb-1">
-                                                                                            <small class="text-muted">Managed By:</small>
-                                                                                            <span class="ms-1">${managedByName}</span>
-                                                                                        </div>
+                                                                                                <div class="mb-1">
+                                                                                                    <small class="text-muted">Managed By:</small>
+                                                                                                    <span class="ms-1">${managedByName}</span>
+                                                                                                </div>
 
-                                                                                        <div class="mb-1">
-                                                                                            <small class="text-muted">Account Number:</small>
-                                                                                            <span class="ms-1">${service.account_number !== null && service.account_number !== undefined ? service.account_number : '--'}</span>
-                                                                                        </div>
+                                                                                                <div class="mb-1">
+                                                                                                    <small class="text-muted">Account Number:</small>
+                                                                                                    <span class="ms-1">${service.account_number !== null && service.account_number !== undefined ? service.account_number : '--'}</span>
+                                                                                                </div>
 
-                                                                                        <div>
-                                                                                            <small class="text-muted">Fee:</small>
-                                                                                            <span class="ms-1">
-                                                                                                ${service.service_fee !== null && service.service_fee !== undefined
+                                                                                                <div>
+                                                                                                    <small class="text-muted">Fee:</small>
+                                                                                                    <span class="ms-1">
+                                                                                                        ${service.service_fee !== null && service.service_fee !== undefined
                         ? `₱${parseFloat(service.service_fee).toLocaleString()}`
                         : '--'}
-                                                                                            </span>
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div class="card-footer bg-white border-top d-flex justify-content-end gap-2">
+                                                                                                <button class="btn btn-sm btn-primary" onclick="editService(${service.service_id})">
+                                                                                                    <i class="bi bi-pencil"></i> Edit
+                                                                                                </button>
+                                                                                                <button class="btn btn-sm btn-danger" onclick="deleteService(${service.service_id})">
+                                                                                                    <i class="bi bi-trash"></i> Delete
+                                                                                                </button>
+                                                                                            </div>
                                                                                         </div>
                                                                                     </div>
-
-                                                                                    <div class="card-footer bg-white border-top d-flex justify-content-end gap-2">
-                                                                                        <button class="btn btn-sm btn-primary" onclick="editService(${service.service_id})">
-                                                                                            <i class="bi bi-pencil"></i> Edit
-                                                                                        </button>
-                                                                                        <button class="btn btn-sm btn-danger" onclick="deleteService(${service.service_id})">
-                                                                                            <i class="bi bi-trash"></i> Delete
-                                                                                        </button>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        `;
+                                                                                `;
 
                 grid.insertAdjacentHTML('beforeend', card);
             });
@@ -585,11 +593,11 @@
             const detailsEl = document.getElementById('deleteServiceDetails');
             if (detailsEl) {
                 detailsEl.innerHTML = `
-                                                                                                        <div class="row">
-                                                                                                            <div class="col-4 fw-bold">Service:</div>
-                                                                                                            <div class="col-8">${service ? service.service_name : 'Service ID: ' + serviceId}</div>
-                                                                                                        </div>
-                                                                                                    `;
+                                                                                                                <div class="row">
+                                                                                                                    <div class="col-4 fw-bold">Service:</div>
+                                                                                                                    <div class="col-8">${service ? service.service_name : 'Service ID: ' + serviceId}</div>
+                                                                                                                </div>
+                                                                                                            `;
             }
 
             window.serviceToDelete = serviceId;

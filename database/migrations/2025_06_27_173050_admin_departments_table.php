@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('admin_departments', function (Blueprint $table) {
             $table->unsignedBigInteger('admin_id');
             $table->unsignedTinyInteger('department_id');
+            $table->unsignedTinyInteger('role_id');
             $table->boolean('is_primary')->default(false);
             $table->timestamps();
 
@@ -23,6 +24,7 @@ return new class extends Migration
             // Foreign Keys
             $table->foreign('admin_id')->references('admin_id')->on('admins')->onDelete('cascade');
             $table->foreign('department_id')->references('department_id')->on('departments')->onDelete('cascade');
+            $table->foreign('role_id')->references('role_id')->on('department_roles')->onDelete('cascade');
         });
     }
 

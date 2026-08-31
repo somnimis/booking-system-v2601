@@ -18,6 +18,7 @@ class AdminDepartmentSeeder extends Seeder
             [
                 'admin_id' => 1,
                 'department_id' => 1,
+                'role_id' => 1, // Department Head
                 'is_primary' => 1,
                 'created_at' => '2026-03-07 08:18:43',
                 'updated_at' => '2026-03-07 08:18:43'
@@ -25,6 +26,7 @@ class AdminDepartmentSeeder extends Seeder
             [
                 'admin_id' => 2,
                 'department_id' => 1,
+                'role_id' => 2, // Staff
                 'is_primary' => 1,
                 'created_at' => '2026-03-07 08:18:43',
                 'updated_at' => '2026-03-07 08:18:43'
@@ -32,6 +34,7 @@ class AdminDepartmentSeeder extends Seeder
             [
                 'admin_id' => 3,
                 'department_id' => 2,
+                'role_id' => 1, // Department Head
                 'is_primary' => 1,
                 'created_at' => '2026-03-07 08:18:43',
                 'updated_at' => '2026-03-07 08:18:43'
@@ -39,6 +42,7 @@ class AdminDepartmentSeeder extends Seeder
             [
                 'admin_id' => 4,
                 'department_id' => 3,
+                'role_id' => 2, // Staff
                 'is_primary' => 0,
                 'created_at' => '2026-03-07 12:12:28',
                 'updated_at' => '2026-03-07 12:12:28'
@@ -46,6 +50,7 @@ class AdminDepartmentSeeder extends Seeder
             [
                 'admin_id' => 5,
                 'department_id' => 5,
+                'role_id' => 1, // Department Head
                 'is_primary' => 1,
                 'created_at' => '2026-03-07 08:18:43',
                 'updated_at' => '2026-03-07 08:18:43'
@@ -53,6 +58,7 @@ class AdminDepartmentSeeder extends Seeder
             [
                 'admin_id' => 6,
                 'department_id' => 7,
+                'role_id' => 1, // Department Head
                 'is_primary' => 1,
                 'created_at' => '2026-03-07 08:18:43',
                 'updated_at' => '2026-03-07 08:18:43'
@@ -60,6 +66,7 @@ class AdminDepartmentSeeder extends Seeder
             [
                 'admin_id' => 7,
                 'department_id' => 4,
+                'role_id' => 1, // Department Head
                 'is_primary' => 1,
                 'created_at' => '2026-03-07 08:18:43',
                 'updated_at' => '2026-03-07 08:18:43'
@@ -67,6 +74,7 @@ class AdminDepartmentSeeder extends Seeder
             [
                 'admin_id' => 8,
                 'department_id' => 8,
+                'role_id' => 1, // Department Head
                 'is_primary' => 1,
                 'created_at' => '2026-03-07 08:18:43',
                 'updated_at' => '2026-03-07 08:18:43'
@@ -74,6 +82,7 @@ class AdminDepartmentSeeder extends Seeder
             [
                 'admin_id' => 9,
                 'department_id' => 6,
+                'role_id' => 1, // Department Head
                 'is_primary' => 1,
                 'created_at' => '2026-03-07 08:18:43',
                 'updated_at' => '2026-03-07 08:18:43'
@@ -81,6 +90,7 @@ class AdminDepartmentSeeder extends Seeder
             [
                 'admin_id' => 10,
                 'department_id' => 9,
+                'role_id' => 1, // Department Head
                 'is_primary' => 1,
                 'created_at' => '2026-03-07 08:18:43',
                 'updated_at' => '2026-03-07 08:18:43'
@@ -88,6 +98,7 @@ class AdminDepartmentSeeder extends Seeder
             [
                 'admin_id' => 11,
                 'department_id' => 4,
+                'role_id' => 2, // Staff
                 'is_primary' => 0,
                 'created_at' => '2026-03-07 12:31:44',
                 'updated_at' => '2026-03-07 12:31:44'
@@ -96,7 +107,7 @@ class AdminDepartmentSeeder extends Seeder
 
         // Insert the records
         DB::table('admin_departments')->insert($adminDepartments);
-        
+
         $this->command->info('Admin departments seeded successfully with ' . count($adminDepartments) . ' records.');
     }
 }
