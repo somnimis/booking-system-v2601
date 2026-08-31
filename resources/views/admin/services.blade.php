@@ -44,16 +44,18 @@
 
     <main id="main">
         <div class="container-fluid px-4">
-
-            <div class="page-header">
-                <h5><i class="bi bi-grid me-2"></i>Extra Services</h5>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceModal">
-                    <i class="bi bi-plus-circle me-2"></i>Add Service
-                </button>
-            </div>
-
             <div class="section-card">
                 <div class="section-body">
+                    <div class="page-header">
+                        <div>
+                            <h5 class="mb-1"><i class="bi bi-grid me-2"></i>Extra Services</h5>
+                            <p class="text-muted small mb-0">Manage additional services offered, including department
+                                ownership, account numbers, and service fees.</p>
+                        </div>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+                            <i class="bi bi-plus-circle me-2"></i>Add Service
+                        </button>
+                    </div>
                     <div id="servicesLoading" class="loading-container">
                         <div class="text-center">
                             <div class="spinner-border text-primary mb-3" role="status"></div>
@@ -105,7 +107,8 @@
                 </div>
                 <div class="modal-footer border-top">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" form="addServiceForm" class="btn btn-primary">Add Service</button>
+                    <button type="submit" form="addServiceForm" class="btn btn-primary" id="addServiceSubmitBtn">Add
+                        Service</button>
                 </div>
             </div>
         </div>
@@ -270,11 +273,6 @@
 
         async function loadServices() {
             const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-            const loadingEl = document.getElementById('servicesLoading');
-            const contentEl = document.getElementById('servicesContent');
-
-            if (loadingEl) loadingEl.style.display = 'flex';
-            if (contentEl) contentEl.style.display = 'none';
 
             try {
                 const [servicesRes, adminsRes, deptsRes] = await Promise.all([
@@ -288,11 +286,7 @@
                 const deptsResult = await deptsRes.json();
 
                 servicesData = Array.isArray(servicesResult) ? servicesResult : (servicesResult.data || []);
-
-                if (adminsResult.success) {
-                    adminsList = adminsResult.data || [];
-                }
-
+                adminsList = adminsResult.success ? (adminsResult.data || []) : [];
                 departmentsData = Array.isArray(deptsResult) ? deptsResult : (deptsResult.data || []);
 
                 renderServices();
@@ -300,12 +294,13 @@
                 populateDepartmentDropdowns();
                 populateAssignChecklist();
 
-                if (loadingEl) loadingEl.style.display = 'none';
-                if (contentEl) contentEl.style.display = 'block';
+                // Remove loading overlay entirely
+                document.getElementById('servicesLoading').style.display = 'none';
+                document.getElementById('servicesContent').style.display = 'block';
 
             } catch (error) {
                 console.error('Error loading services:', error);
-                if (loadingEl) loadingEl.innerHTML = '<div class="alert alert-danger">Failed to load services</div>';
+                document.getElementById('servicesLoading').innerHTML = '<div class="alert alert-danger">Failed to load services</div>';
             }
         }
 
@@ -333,11 +328,11 @@
             container.innerHTML = '';
             servicesData.forEach(service => {
                 container.innerHTML += `
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input assign-service-cb" type="checkbox" value="${service.service_id}" id="assign_service_${service.service_id}">
-                                                                    <label class="form-check-label" for="assign_service_${service.service_id}">${service.service_name}</label>
-                                                                </div>
-                                                            `;
+                                                                                                        <div class="form-check">
+                                                                                                            <input class="form-check-input assign-service-cb" type="checkbox" value="${service.service_id}" id="assign_service_${service.service_id}">
+                                                                                                            <label class="form-check-label" for="assign_service_${service.service_id}">${service.service_name}</label>
+                                                                                                        </div>
+                                                                                                    `;
             });
         }
 
@@ -358,45 +353,45 @@
                 const managedByName = department ? department.department_code : '--';
 
                 const card = `
-                                    <div class="col-md-6 col-lg-4 mb-3">
-                                        <div class="card service-card h-100 border shadow-sm">
-                                            <div class="card-body">
-                                                <h6 class="card-title mb-2 fw-semibold" style="font-family: 'Fraunces', Georgia, serif;">
-                                                    <i class="bi bi-grid me-2" style="color: var(--navy);"></i>
-                                                    ${service.service_name || '--'}
-                                                </h6>
+                                                                            <div class="col-md-6 col-lg-4 mb-3">
+                                                                                <div class="card service-card h-100 border shadow-sm">
+                                                                                    <div class="card-body">
+                                                                                        <h6 class="card-title mb-2 fw-semibold" style="font-family: 'Fraunces', Georgia, serif;">
+                                                                                            <i class="bi bi-grid me-2" style="color: var(--navy);"></i>
+                                                                                            ${service.service_name || '--'}
+                                                                                        </h6>
 
-                                                <div class="mb-1">
-                                                    <small class="text-muted">Managed By:</small>
-                                                    <span class="ms-1">${managedByName}</span>
-                                                </div>
+                                                                                        <div class="mb-1">
+                                                                                            <small class="text-muted">Managed By:</small>
+                                                                                            <span class="ms-1">${managedByName}</span>
+                                                                                        </div>
 
-                                                <div class="mb-1">
-                                                    <small class="text-muted">Account Number:</small>
-                                                    <span class="ms-1">${service.account_number !== null && service.account_number !== undefined ? service.account_number : '--'}</span>
-                                                </div>
+                                                                                        <div class="mb-1">
+                                                                                            <small class="text-muted">Account Number:</small>
+                                                                                            <span class="ms-1">${service.account_number !== null && service.account_number !== undefined ? service.account_number : '--'}</span>
+                                                                                        </div>
 
-                                                <div>
-                                                    <small class="text-muted">Fee:</small>
-                                                    <span class="ms-1">
-                                                        ${service.service_fee !== null && service.service_fee !== undefined
+                                                                                        <div>
+                                                                                            <small class="text-muted">Fee:</small>
+                                                                                            <span class="ms-1">
+                                                                                                ${service.service_fee !== null && service.service_fee !== undefined
                         ? `₱${parseFloat(service.service_fee).toLocaleString()}`
                         : '--'}
-                                                    </span>
-                                                </div>
-                                            </div>
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    </div>
 
-                                            <div class="card-footer bg-white border-top d-flex justify-content-end gap-2">
-                                                <button class="btn btn-sm btn-primary" onclick="editService(${service.service_id})">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                                <button class="btn btn-sm btn-danger" onclick="deleteService(${service.service_id})">
-                                                    <i class="bi bi-trash"></i> Delete
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
+                                                                                    <div class="card-footer bg-white border-top d-flex justify-content-end gap-2">
+                                                                                        <button class="btn btn-sm btn-primary" onclick="editService(${service.service_id})">
+                                                                                            <i class="bi bi-pencil"></i> Edit
+                                                                                        </button>
+                                                                                        <button class="btn btn-sm btn-danger" onclick="deleteService(${service.service_id})">
+                                                                                            <i class="bi bi-trash"></i> Delete
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        `;
 
                 grid.insertAdjacentHTML('beforeend', card);
             });
@@ -431,7 +426,7 @@
 
                 console.log('Sending data:', data);
 
-                const submitBtn = this.querySelector('button[type="submit"]');
+                const submitBtn = document.getElementById('addServiceSubmitBtn');
                 const originalText = submitBtn ? submitBtn.innerHTML : 'Add Service';
                 if (submitBtn) {
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
@@ -456,6 +451,8 @@
                         if (typeof showToast === 'function') {
                             showToast('Service added successfully', 'success');
                         }
+                        // Add delay before closing
+                        await new Promise(resolve => setTimeout(resolve, 500));
                         bootstrap.Modal.getInstance(document.getElementById('addServiceModal')).hide();
                         this.reset();
                         await loadServices();
@@ -561,6 +558,8 @@
                         if (typeof showToast === 'function') {
                             showToast('Service updated successfully', 'success');
                         }
+                        // Add delay before closing
+                        await new Promise(resolve => setTimeout(resolve, 500));
                         bootstrap.Modal.getInstance(document.getElementById('editServiceModal')).hide();
                         await loadServices();
                     } else {
@@ -586,11 +585,11 @@
             const detailsEl = document.getElementById('deleteServiceDetails');
             if (detailsEl) {
                 detailsEl.innerHTML = `
-                                                                <div class="row">
-                                                                    <div class="col-4 fw-bold">Service:</div>
-                                                                    <div class="col-8">${service ? service.service_name : 'Service ID: ' + serviceId}</div>
-                                                                </div>
-                                                            `;
+                                                                                                        <div class="row">
+                                                                                                            <div class="col-4 fw-bold">Service:</div>
+                                                                                                            <div class="col-8">${service ? service.service_name : 'Service ID: ' + serviceId}</div>
+                                                                                                        </div>
+                                                                                                    `;
             }
 
             window.serviceToDelete = serviceId;
@@ -624,6 +623,8 @@
                         if (typeof showToast === 'function') {
                             showToast('Service deleted successfully', 'success');
                         }
+                        // Add delay before closing
+                        await new Promise(resolve => setTimeout(resolve, 500));
                         bootstrap.Modal.getInstance(document.getElementById('deleteServiceModal')).hide();
                         await loadServices();
                     } else {

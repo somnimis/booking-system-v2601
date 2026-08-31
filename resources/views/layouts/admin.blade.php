@@ -48,7 +48,7 @@
                     style="left: 12px; top: 50%; transform: translateY(-50%); color: #e6e6e689;"></i>
 
                 <input type="text" id="searchRequisition" class="form-control form-control-sm"
-                    placeholder="Search request forms by event name..."
+                    placeholder="Search reservations by event name..."
                     style="padding-left: 35px; border-radius: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #e6e6e6;">
 
                 <div id="searchResults" class="dropdown-menu w-100"
