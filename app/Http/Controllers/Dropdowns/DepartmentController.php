@@ -11,7 +11,26 @@ use Illuminate\Support\Facades\Validator;
 
 class DepartmentController extends Controller
 {
-
+public function getDropdown(): JsonResponse
+{
+    try {
+        $departments = Department::select('department_id', 'department_name', 'department_code')
+            ->orderBy('department_name')
+            ->get();
+        return response()->json($departments);
+    } catch (\Exception $e) {
+        \Log::error('Error fetching departments for dropdown', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch departments'
+        ], 500);
+    }
+}
     public function index(): JsonResponse
     {
         try {
