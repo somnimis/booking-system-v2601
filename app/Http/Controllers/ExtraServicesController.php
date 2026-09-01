@@ -17,6 +17,19 @@ class ExtraServicesController extends Controller
             200
         );
     }
+    
+    public function getDropdown()
+    {
+        try {
+            $services = ExtraService::select('service_id', 'service_name')
+                ->orderBy('service_name')
+                ->get();
+            return response()->json(['success' => true, 'data' => $services]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching services dropdown: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to fetch services'], 500);
+        }
+    }
 
     public function store(Request $request)
     {
@@ -123,7 +136,7 @@ class ExtraServicesController extends Controller
         } else {
             $services = AdminService::all();
         }
-        
+
         return response()->json($services, 200);
     }
 

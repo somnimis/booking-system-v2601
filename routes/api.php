@@ -25,6 +25,7 @@ use App\Http\Controllers\Dropdowns\FacilityCategoryController;
 use App\Http\Controllers\Dropdowns\FacilitySubcategoryController;
 use App\Http\Controllers\Dropdowns\EquipmentCategoryController;
 use App\Http\Controllers\Dropdowns\DepartmentController;
+use App\Http\Controllers\DepartmentRoleController;
 use App\Http\Controllers\Dropdowns\AvailabilityStatusController;
 use App\Http\Controllers\FormStatusController;
 use App\Http\Controllers\Dropdowns\ConditionController;
@@ -133,6 +134,7 @@ Route::get('/departments/{id}', [DepartmentController::class, 'show']);
 Route::post('/departments', [DepartmentController::class, 'store']);
 Route::put('/departments/{id}', [DepartmentController::class, 'update']);
 Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
+Route::get('/department-roles', [DepartmentRoleController::class, 'index']);
 
 // ---------------- Requisition Purposes - CRUD ---------------- //
 Route::get('/purposes', [RequisitionPurposeController::class, 'index']);
@@ -143,6 +145,7 @@ Route::delete('/purposes/{id}', [RequisitionPurposeController::class, 'destroy']
 
 // ---------------- Extra Services - CRUD ---------------- //
 Route::get('/extra-services', [ExtraServicesController::class, 'index']);
+Route::get('/services/dropdown', [ExtraServicesController::class, 'getDropdown']);
 Route::post('/extra-services', [ExtraServicesController::class, 'store']);
 Route::put('/extra-services/{service_id}', [ExtraServicesController::class, 'update']);
 Route::delete('/extra-services/{service_id}', [ExtraServicesController::class, 'destroy']);
