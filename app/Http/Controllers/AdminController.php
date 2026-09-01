@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
-    // Add this new method
     public function adminRoles(Request $request)
     {
         try {
@@ -189,80 +188,82 @@ class AdminController extends Controller
     }
 
     // Add a new method to create admin records
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:50',
-            'last_name' => 'required|string|max:50',
-            'middle_name' => 'nullable|string|max:50',
-            'title' => 'nullable|string|max:100',
-            'email' => 'required|email|unique:admins,email|max:150',
-            'contact_number' => 'nullable|string|max:20',
-            'role_id' => 'required|exists:admin_roles,role_id',
-            'school_id' => 'nullable|string|max:20',
-            'password' => 'required|string|min:8|max:50',
-            'department_ids' => 'nullable|array',
-            'department_ids.*' => 'exists:departments,department_id',
-            'service_ids' => 'nullable|array',
-            'service_ids.*' => 'exists:extra_services,service_id',
-            'photo_url' => 'nullable|string',
-            'photo_public_id' => 'nullable|string',
-            'wallpaper_url' => 'nullable|string',
-            'wallpaper_public_id' => 'nullable|string',
-            'signature_url' => 'nullable|string',
-            'signature_public_id' => 'nullable|string',
-        ]);
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'first_name' => 'required|string|max:50',
+        'last_name' => 'required|string|max:50',
+        'middle_name' => 'nullable|string|max:50',
+        'title' => 'nullable|string|max:100',
+        'email' => 'required|email|unique:admins,email|max:150',
+        'contact_number' => 'nullable|string|max:20',
+        'role_id' => 'required|exists:admin_roles,role_id',
+        'school_id' => 'nullable|string|max:20',
+        'password' => 'required|string|min:8|max:50',
+        'department_ids' => 'nullable|array',
+        'department_ids.*' => 'exists:departments,department_id',
+        'department_roles' => 'nullable|array',
+        'department_roles.*' => 'exists:department_roles,role_id',
+        'service_ids' => 'nullable|array',
+        'service_ids.*' => 'exists:extra_services,service_id',
+        'photo_url' => 'nullable|string',
+        'photo_public_id' => 'nullable|string',
+        'wallpaper_url' => 'nullable|string',
+        'wallpaper_public_id' => 'nullable|string',
+        'signature_url' => 'nullable|string',
+        'signature_public_id' => 'nullable|string',
+    ]);
 
-        // Set default photo if not provided
-        $validated['photo_url'] = $validated['photo_url'] ?? 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png';
-        $validated['photo_public_id'] = $validated['photo_public_id'] ?? 'ksdmh4mmpxdtjogdgjmm';
+    $validated['photo_url'] = $validated['photo_url'] ?? 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png';
+    $validated['photo_public_id'] = $validated['photo_public_id'] ?? 'ksdmh4mmpxdtjogdgjmm';
+    $validated['hashed_password'] = bcrypt($validated['password']);
+    unset($validated['password']);
 
-        // Hash the password
-        $validated['hashed_password'] = bcrypt($validated['password']);
-        unset($validated['password']);
+    $departmentIds = $validated['department_ids'] ?? [];
+    $departmentRoles = $validated['department_roles'] ?? [];
+    $serviceIds = $validated['service_ids'] ?? [];
+    unset($validated['department_ids'], $validated['department_roles'], $validated['service_ids']);
 
-        // Extract relationship arrays before creating admin
-        $departmentIds = $validated['department_ids'] ?? [];
-        $serviceIds = $validated['service_ids'] ?? [];
-        unset($validated['department_ids'], $validated['service_ids']);
+    \DB::beginTransaction();
+    try {
+        $admin = Admin::create($validated);
 
-        \DB::beginTransaction();
-        try {
-            // Create new admin
-            $admin = Admin::create($validated);
-
-            // Handle department assignments - NO AUTO-ASSIGNMENT FOR ROLE 1
-            if (!empty($departmentIds)) {
-                $admin->departments()->sync($departmentIds);
-                \Log::info("Assigned departments to new admin: {$admin->admin_id}", ['depts' => $departmentIds]);
+        // Handle department assignments with roles
+        if (!empty($departmentIds)) {
+            $syncData = [];
+            foreach ($departmentIds as $index => $deptId) {
+                $syncData[$deptId] = [
+                    'role_id' => $departmentRoles[$index] ?? 2, // Default to Staff (role_id = 2)
+                    'is_primary' => $index === 0 // First department is primary
+                ];
             }
-
-            // Handle service assignments
-            if (!empty($serviceIds)) {
-                $admin->services()->sync($serviceIds);
-                \Log::info("Assigned services to new admin: {$admin->admin_id}", ['services' => $serviceIds]);
-            }
-
-            \DB::commit();
-
-            // CLEAR ALL RELATED CACHES
-            $this->clearAdminCaches($admin->admin_id);
-
-            return response()->json([
-                'message' => 'Admin created successfully',
-                'admin' => $admin->load(['departments', 'services'])
-            ], 201);
-
-        } catch (\Exception $e) {
-            \DB::rollBack();
-            \Log::error('Error creating admin: ' . $e->getMessage());
-
-            return response()->json([
-                'message' => 'Failed to create admin',
-                'error' => $e->getMessage()
-            ], 500);
+            $admin->departments()->sync($syncData);
+            \Log::info("Assigned departments to new admin: {$admin->admin_id}", ['depts' => $departmentIds]);
         }
+
+        if (!empty($serviceIds)) {
+            $admin->services()->sync($serviceIds);
+            \Log::info("Assigned services to new admin: {$admin->admin_id}", ['services' => $serviceIds]);
+        }
+
+        \DB::commit();
+        $this->clearAdminCaches($admin->admin_id);
+
+        return response()->json([
+            'message' => 'Admin created successfully',
+            'admin' => $admin->load(['departments', 'services'])
+        ], 201);
+
+    } catch (\Exception $e) {
+        \DB::rollBack();
+        \Log::error('Error creating admin: ' . $e->getMessage());
+        return response()->json([
+            'message' => 'Failed to create admin',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
+
     // Delete an admin
     public function deleteAdmin(Admin $admin)
     {
@@ -291,89 +292,88 @@ class AdminController extends Controller
             ], 500);
         }
     }
-    public function update(Request $request, Admin $admin)
-    {
-        // TEMPORARY DEBUG - REMOVE AFTER TESTING
-        \Log::info('Update request data:', $request->all());
+public function update(Request $request, Admin $admin)
+{
+    \Log::info('Update request data:', $request->all());
 
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:50',
-            'last_name' => 'required|string|max:50',
-            'middle_name' => 'nullable|string|max:50',
-            'title' => 'nullable|string|max:100',
-            'email' => 'required|email|max:150|unique:admins,email,' . $admin->admin_id . ',admin_id',
-            'contact_number' => 'nullable|string|max:20',
-            'role_id' => 'required|exists:admin_roles,role_id',
-            'school_id' => 'nullable|string|max:20',
-            'password' => 'nullable|string|min:8|max:50',
-            'department_ids' => 'nullable|array',
-            'department_ids.*' => 'exists:departments,department_id',
-            'service_ids' => 'nullable|array',
-            'service_ids.*' => 'exists:extra_services,service_id',
-            'signature_url' => 'nullable|string',
-            'signature_public_id' => 'nullable|string',
+    $validated = $request->validate([
+        'first_name' => 'required|string|max:50',
+        'last_name' => 'required|string|max:50',
+        'middle_name' => 'nullable|string|max:50',
+        'title' => 'nullable|string|max:100',
+        'email' => 'required|email|max:150|unique:admins,email,' . $admin->admin_id . ',admin_id',
+        'contact_number' => 'nullable|string|max:20',
+        'role_id' => 'required|exists:admin_roles,role_id',
+        'school_id' => 'nullable|string|max:20',
+        'password' => 'nullable|string|min:8|max:50',
+        'department_ids' => 'nullable|array',
+        'department_ids.*' => 'exists:departments,department_id',
+        'department_roles' => 'nullable|array',
+        'department_roles.*' => 'exists:department_roles,role_id',
+        'service_ids' => 'nullable|array',
+        'service_ids.*' => 'exists:extra_services,service_id',
+        'signature_url' => 'nullable|string',
+        'signature_public_id' => 'nullable|string',
+    ]);
+
+    if (!empty($validated['password'])) {
+        $validated['hashed_password'] = bcrypt($validated['password']);
+    }
+    unset($validated['password']);
+
+    $departmentIds = $validated['department_ids'] ?? [];
+    $departmentRoles = $validated['department_roles'] ?? [];
+    $serviceIds = $validated['service_ids'] ?? [];
+    unset($validated['department_ids'], $validated['department_roles'], $validated['service_ids']);
+
+    \DB::beginTransaction();
+    try {
+        $admin->update($validated);
+
+        // Handle department assignments with roles
+        if (!empty($departmentIds)) {
+            $syncData = [];
+            foreach ($departmentIds as $index => $deptId) {
+                $syncData[$deptId] = [
+                    'role_id' => $departmentRoles[$index] ?? 2, // Default to Staff
+                    'is_primary' => $index === 0
+                ];
+            }
+            $admin->departments()->sync($syncData);
+            \Log::info('Synced departments for admin', ['depts' => $departmentIds]);
+        } else {
+            $admin->departments()->detach();
+            \Log::info('Detached all departments for admin');
+        }
+
+        if (empty($serviceIds)) {
+            $admin->services()->detach();
+        } else {
+            $admin->services()->sync($serviceIds);
+        }
+
+        \DB::commit();
+        $this->clearAdminCaches($admin->admin_id);
+        $admin->load(['departments', 'services']);
+
+        return response()->json([
+            'message' => 'Admin updated successfully',
+            'admin' => $admin
         ]);
 
-        // TEMPORARY DEBUG - REMOVE AFTER TESTING
-        \Log::info('Validated data:', $validated);
-        \Log::info('Service IDs from validated:', ['service_ids' => $validated['service_ids'] ?? 'not set']);
+    } catch (\Exception $e) {
+        \DB::rollBack();
+        \Log::error('Error updating admin: ' . $e->getMessage(), [
+            'admin_id' => $admin->admin_id,
+            'trace' => $e->getTraceAsString()
+        ]);
 
-        // Update password only if provided
-        if (!empty($validated['password'])) {
-            $validated['hashed_password'] = bcrypt($validated['password']);
-        }
-        unset($validated['password']);
-
-        // Extract relationship arrays
-        $departmentIds = $validated['department_ids'] ?? [];
-        $serviceIds = $validated['service_ids'] ?? [];
-        unset($validated['department_ids'], $validated['service_ids']);
-
-        \DB::beginTransaction();
-        try {
-            // Update admin basic info
-            $admin->update($validated);
-
-            // Handle department assignments - NO AUTO-ASSIGNMENT FOR ROLE 1
-            // Just sync whatever was sent from the frontend
-            $admin->departments()->sync($departmentIds);
-            \Log::info('Synced departments for admin', ['depts' => $departmentIds]);
-
-            // Handle service assignments
-            if (empty($serviceIds)) {
-                $admin->services()->detach();
-                \Log::info('Detached all services for admin');
-            } else {
-                $admin->services()->sync($serviceIds);
-                \Log::info('Synced services for admin', ['services' => $serviceIds]);
-            }
-
-            \DB::commit();
-
-            // CLEAR ALL RELATED CACHES
-            $this->clearAdminCaches($admin->admin_id);
-
-            // Load relationships and return
-            $admin->load(['departments', 'services']);
-
-            return response()->json([
-                'message' => 'Admin updated successfully',
-                'admin' => $admin
-            ]);
-
-        } catch (\Exception $e) {
-            \DB::rollBack();
-            \Log::error('Error updating admin: ' . $e->getMessage(), [
-                'admin_id' => $admin->admin_id,
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to update admin',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'Failed to update admin',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Clear all admin-related caches

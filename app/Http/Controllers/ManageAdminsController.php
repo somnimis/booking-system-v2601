@@ -58,60 +58,62 @@ class ManageAdminsController extends Controller
         ]);
     }
 
-    /**
-     * Get single admin with all relationships
-     * GET /api/manage/admins/{id}
-     */
-    public function show($id)
-    {
-        $admin = Admin::with([
-            'role',
-            'departments' => function($query) {
-                $query->select('departments.department_id', 'departments.department_name', 'departments.department_code');
-            },
-            'services' => function($query) {
-                $query->select('extra_services.service_id', 'extra_services.service_name');
-            }
-        ])->find($id);
-
-        if (!$admin) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Admin not found'
-            ], 404);
+/**
+ * Get single admin with all relationships
+ * GET /api/manage/admins/{id}
+ */
+public function show($id)
+{
+    $admin = Admin::with([
+        'role',
+        'departments' => function($query) {
+            $query->select('departments.department_id', 'departments.department_name', 'departments.department_code')
+                  ->withPivot('role_id', 'is_primary');
+        },
+        'services' => function($query) {
+            $query->select('extra_services.service_id', 'extra_services.service_name');
         }
+    ])->find($id);
 
+    if (!$admin) {
         return response()->json([
-            'success' => true,
-            'data' => [
-                'admin_id' => $admin->admin_id,
-                'full_name' => $this->getFullName($admin),
-                'first_name' => $admin->first_name,
-                'last_name' => $admin->last_name,
-                'middle_name' => $admin->middle_name,
-                'title' => $admin->title,
-                'email' => $admin->email,
-                'contact_number' => $admin->contact_number,
-                'school_id' => $admin->school_id,
-                'role_id' => $admin->role_id,
-                'role_title' => $admin->role ? $admin->role->role_title : null,
-                'departments' => $admin->departments->map(function($dept) {
-                    return [
-                        'department_id' => $dept->department_id,
-                        'department_name' => $dept->department_name,
-                        'department_code' => $dept->department_code,
-                        'is_primary' => $dept->pivot->is_primary ?? false
-                    ];
-                }),
-                'services' => $admin->services->map(function($service) {
-                    return [
-                        'service_id' => $service->service_id,
-                        'service_name' => $service->service_name
-                    ];
-                })
-            ]
-        ]);
+            'success' => false,
+            'message' => 'Admin not found'
+        ], 404);
     }
+
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'admin_id' => $admin->admin_id,
+            'full_name' => $this->getFullName($admin),
+            'first_name' => $admin->first_name,
+            'last_name' => $admin->last_name,
+            'middle_name' => $admin->middle_name,
+            'title' => $admin->title,
+            'email' => $admin->email,
+            'contact_number' => $admin->contact_number,
+            'school_id' => $admin->school_id,
+            'role_id' => $admin->role_id,
+            'role_title' => $admin->role ? $admin->role->role_title : null,
+            'departments' => $admin->departments->map(function($dept) {
+                return [
+                    'department_id' => $dept->department_id,
+                    'department_name' => $dept->department_name,
+                    'department_code' => $dept->department_code,
+                    'is_primary' => $dept->pivot->is_primary ?? false,
+                    'role_id' => $dept->pivot->role_id ?? null  // Add this line
+                ];
+            }),
+            'services' => $admin->services->map(function($service) {
+                return [
+                    'service_id' => $service->service_id,
+                    'service_name' => $service->service_name
+                ];
+            })
+        ]
+    ]);
+}
 
     /**
      * Get admins grouped by department
