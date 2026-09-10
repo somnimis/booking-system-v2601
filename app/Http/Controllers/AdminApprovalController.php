@@ -3,10 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\RequisitionApproval;
-use App\Models\RequestedFacility;
-use App\Models\RequestedEquipment;
-use App\Models\RequisitionFee;
 use App\Models\FormStatus;
 use App\Models\CompletedTransaction;
 use App\Models\RequisitionForm;
@@ -14,7 +10,6 @@ use App\Models\RequisitionComment;
 use App\Services\ApprovalChainService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
