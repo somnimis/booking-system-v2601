@@ -55,7 +55,7 @@ class DashboardService
             // Single aggregated query for all status counts
             $statusCounts = $baseQuery
                 ->select('status_id', DB::raw('count(*) as total'))
-                ->whereIn('status_id', [1, 2, 3, 7])
+                ->whereIn('status_id', [1, 2, 3, 4])
                 ->groupBy('status_id')
                 ->pluck('total', 'status_id')
                 ->toArray();
@@ -64,10 +64,10 @@ class DashboardService
             $feedbackCount = Feedback::count();
 
             return [
-                'pending_count' => $statusCounts[1] ?? 0,
-                'awaiting_payment_count' => $statusCounts[2] ?? 0,
-                'reserved_count' => $statusCounts[3] ?? 0,
-                'payment_submitted_count' => $statusCounts[7] ?? 0,
+                'pending_count' => $statusCounts[1] ?? 0,           // Pending Approval
+                'awaiting_payment_count' => $statusCounts[2] ?? 0,  // Awaiting Payment
+                'verifying_count' => $statusCounts[3] ?? 0,         // Verifying Payment
+                'reserved_count' => $statusCounts[4] ?? 0,          // Reserved
                 'feedback_count' => $feedbackCount,
             ];
         });
@@ -85,9 +85,9 @@ class DashboardService
                 'formStatus',
                 'purpose'
             ])
-            ->where('status_id', 1)
-            ->orderBy('created_at', 'asc')
-            ->limit(3);
+                ->where('status_id', 1)
+                ->orderBy('created_at', 'asc')
+                ->limit(3);
 
             if (!$isHeadAdmin) {
                 if (empty($departmentIds)) {
@@ -97,8 +97,15 @@ class DashboardService
             }
 
             $forms = $query->get([
-                'request_id', 'first_name', 'last_name', 'organization_name',
-                'event_title', 'start_date', 'end_date', 'created_at', 'status_id'
+                'request_id',
+                'first_name',
+                'last_name',
+                'organization_name',
+                'event_title',
+                'start_date',
+                'end_date',
+                'created_at',
+                'status_id'
             ]);
 
             return $forms->map(function ($form) {
@@ -125,10 +132,10 @@ class DashboardService
 
         $today = Carbon::today()->format('Y-m-d');
 
-        $query = RequisitionForm::where('status_id', 3)
+        $query = RequisitionForm::where('status_id', 4)
             ->where(function ($q) use ($today) {
                 $q->whereDate('start_date', '<=', $today)
-                  ->whereDate('end_date', '>=', $today);
+                    ->whereDate('end_date', '>=', $today);
             })
             ->with([
                 'requestedFacilities.facility' => function ($q) {
@@ -139,8 +146,15 @@ class DashboardService
                 }
             ])
             ->select([
-                'request_id', 'first_name', 'last_name', 'organization_name',
-                'event_title', 'start_date', 'end_date', 'start_time', 'end_time'
+                'request_id',
+                'first_name',
+                'last_name',
+                'organization_name',
+                'event_title',
+                'start_date',
+                'end_date',
+                'start_time',
+                'end_time'
             ])
             ->orderBy('start_time', 'asc');
 
@@ -202,7 +216,7 @@ class DashboardService
                 $q->select('request_id', 'event_title', 'first_name', 'last_name');
             }
         ])
-        ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'desc');
 
         $comments = $query->paginate($perPage, ['*'], 'page', $page);
 
@@ -257,16 +271,19 @@ class DashboardService
                     $q->select('request_id', 'first_name', 'last_name', 'organization_name');
                 }
             ])
-            ->orderBy('created_at', 'desc')
-            ->limit(4)
-            ->get();
+                ->orderBy('created_at', 'desc')
+                ->limit(4)
+                ->get();
 
             return $feedback->map(function ($item) {
                 $ratings = [];
 
-                if ($item->system_performance) $ratings[] = 'System: ' . ucfirst($item->system_performance);
-                if ($item->booking_experience) $ratings[] = 'Booking: ' . ucfirst($item->booking_experience);
-                if ($item->ease_of_use) $ratings[] = 'Ease: ' . ucfirst($item->ease_of_use);
+                if ($item->system_performance)
+                    $ratings[] = 'System: ' . ucfirst($item->system_performance);
+                if ($item->booking_experience)
+                    $ratings[] = 'Booking: ' . ucfirst($item->booking_experience);
+                if ($item->ease_of_use)
+                    $ratings[] = 'Ease: ' . ucfirst($item->ease_of_use);
 
                 return [
                     'feedback_id' => $item->feedback_id,
@@ -321,9 +338,12 @@ class DashboardService
     {
         $days = $createdAt->diffInDays(now());
 
-        if ($days >= 7) return 'urgent';
-        if ($days >= 5) return 'high';
-        if ($days >= 3) return 'medium';
+        if ($days >= 7)
+            return 'urgent';
+        if ($days >= 5)
+            return 'high';
+        if ($days >= 3)
+            return 'medium';
         return 'normal';
     }
 
@@ -336,7 +356,7 @@ class DashboardService
             'pending_count' => 0,
             'reserved_count' => 0,
             'awaiting_payment_count' => 0,
-            'payment_submitted_count' => 0,
+            'verifying_count' => 0,  
             'feedback_count' => 0
         ];
     }

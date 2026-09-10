@@ -194,333 +194,314 @@
           </div>
         </div>
 
-        <!-- Step 2: Contact Information & Reservation Details -->
-        <div class="step-section" id="step2">
-          <!-- Contact Information Card -->
-          <div class="row mb-2">
-            <div class="col-12">
-              <div class="form-section-card">
-                <h5>Step 2: Your Contact Information</h5>
-                <div class="row">
-                  <div class="col-md-4">
-                    <label class="form-label">Applicant Type <span style="color: red;">*</span></label>
-                    <select id="applicantType" name="user_type" class="form-select mb-2" aria-label="Type of Applicant"
-                      required>
-                      <option value="" selected disabled>Type of Applicant</option>
-                      <option value="Internal">Internal</option>
-                      <option value="External">External</option>
-                    </select>
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">First Name <span style="color: red;">*</span></label>
-                    <input name="first_name" type="text" class="form-control" placeholder="First Name" required
-                      maxlength="50" />
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Last Name <span style="color: red;">*</span></label>
-                    <input name="last_name" type="text" class="form-control" placeholder="Last Name" required
-                      maxlength="50" />
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">CPU School ID <span id="schoolIdRequired"
-                        style="color:red;display:none">*</span></label>
-                    <input name="school_id" id="school_id" type="text" class="form-control" placeholder="School ID"
-                      maxlength="20" />
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Contact Number</label>
-                    <input name="contact_number" type="text" class="form-control" placeholder="Contact Number"
-                      maxlength="15" pattern="\d{1,15}" inputmode="numeric" id="contactNumberField"
-                      autocomplete="off" />
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Email Address <span style="color: red;">*</span></label>
-                    <input name="email" type="email" class="form-control mb-2" placeholder="Email Address" required
-                      maxlength="100" />
-                  </div>
-                  <div class="col-md-12">
-                    <label class="form-label">Department/Organization Name</label>
-                    <input name="organization_name" type="text" class="form-control mb-2"
-                      placeholder="Organization Name" maxlength="100" />
-                  </div>
-                </div>
-              </div>
-            </div>
+<!-- Step 2: Complete Reservation Details -->
+<div class="step-section" id="step2">
+  
+  <!-- Card 1: Contact Information -->
+  <div class="row mb-2">
+    <div class="col-12">
+      <div class="form-section-card">
+        <h5>Contact Information</h5>
+        <div class="row">
+          <div class="col-md-4">
+            <label class="form-label">Applicant Type <span style="color: red;">*</span></label>
+            <select id="applicantType" name="user_type" class="form-select mb-2" aria-label="Type of Applicant" required>
+              <option value="" selected disabled>Type of Applicant</option>
+              <option value="Internal">Internal</option>
+              <option value="External">External</option>
+            </select>
           </div>
-
-          <!-- Reservation Details Card -->
-          <div class="row">
-            <div class="col-12">
-              <div class="form-section-card">
-                <h5>Step 3: Reservation Details</h5>
-                <div class="row g-3">
-                  <!-- Event Title -->
-                  <div class="col-md-6">
-                    <label class="form-label required">Event Title</label>
-                    <input name="event_title" type="text" class="form-control"
-                      placeholder="e.g., University Day Celebration" required maxlength="100" />
-                  </div>
-
-                  <!-- Activity/Purpose -->
-                  <div class="col-md-6">
-                    <label class="form-label required">Activity/Purpose</label>
-                    <select id="activityPurposeField" name="purpose_id" class="form-select"
-                      aria-label="Activity/Purpose" required>
-                      <option value="" selected disabled>Select Activity/Purpose</option>
-                      <option value="8">Alumni - Class Reunion</option>
-                      <option value="9">Alumni - Personal Events</option>
-                      <option value="7">Alumni-Organized Events</option>
-                      <option value="5">CPU Organization Led Activity</option>
-                      <option value="2">Equipment Rental</option>
-                      <option value="10">External Event</option>
-                      <option value="1">Facility Rental</option>
-                      <option value="6">Student-Organized Activity</option>
-                      <option value="3">Subject Requirement - Class, Seminar, Conference</option>
-                      <option value="4">University Program/Activity</option>
-                    </select>
-                  </div>
-
-                  <!-- Event Details -->
-                  <div class="col-md-12">
-                    <label class="form-label">Event Details</label>
-                    <textarea name="event_details" class="form-control" rows="3" maxlength="500"
-                      placeholder="Provide more details about your event (optional)"></textarea>
-                  </div>
-
-                  <!-- Attach Event Documents -->
-                  <div class="col-md-12">
-                    <label class="form-label">Attach Event Documents</label>
-                    <div class="position-relative">
-                      <input type="file" class="form-control" id="eventDocuments" onchange="uploadToCloudinary(this)" />
-                      <input type="hidden" name="event_documents_url" id="event_documents_url">
-                      <input type="hidden" name="event_documents_public_id" id="event_documents_public_id">
-                      <button type="button" id="removeEventDocumentsBtn"
-                        class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 d-none"
-                        style="color: black; background: none; border: none"
-                        onclick="removeFile('eventDocuments', 'removeEventDocumentsBtn')">
-                        x
-                      </button>
-                    </div>
-                    <div id="uploadProgress" class="progress mt-2 d-none">
-                      <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
-                    </div>
-                    <small class="text-muted">Upload supporting documents (PDF, DOC, or image files)</small>
-                  </div>
-
-                  <!-- Number of Participants, Chairs, Tables, and Microphones -->
-                  <div class="col-md-3">
-                    <label class="form-label required">Participants</label>
-                    <input name="num_participants" type="number" class="form-control" value="1" min="1" required />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label required">Chairs</label>
-                    <input name="num_chairs" type="number" class="form-control" value="0" min="0" required />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label required">Tables</label>
-                    <input name="num_tables" type="number" class="form-control" value="0" min="0" required />
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label required">Microphones</label>
-                    <input name="num_microphones" type="number" class="form-control" value="0" min="0" required />
-                  </div>
-
-                  <!-- Additional Requests -->
-                  <div class="col-12">
-                    <label class="form-label">Additional Requests</label>
-                    <textarea name="additional_requests" class="form-control" rows="3" maxlength="250"
-                      placeholder="Write a brief description of any additional requests you may have (e.g., WiFi, special seating arrangement, security personnel, technical support, logistics, etc.)."></textarea>
-                  </div>
-
-                  <!-- Extra Services Needed -->
-                  <div class="col-12">
-                    <label class="form-label mb-2">Extra Resources or Services Needed</label>
-                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                      <div class="row">
-                        <div class="col-md-6">
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="1"
-                              id="service_projector">
-                            <label class="form-check-label" for="service_projector">Projector</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="2"
-                              id="service_screen">
-                            <label class="form-check-label" for="service_screen">Projection Screen</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="3"
-                              id="service_sound">
-                            <label class="form-check-label" for="service_sound">Sound Reinforcement System</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="4"
-                              id="service_led">
-                            <label class="form-check-label" for="service_led">LED Wall</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="5"
-                              id="service_electrical">
-                            <label class="form-check-label" for="service_electrical">Electrical</label>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="6"
-                              id="service_internet">
-                            <label class="form-check-label" for="service_internet">Internet Connection</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="7"
-                              id="service_plants">
-                            <label class="form-check-label" for="service_plants">Plants for Decoration</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="8"
-                              id="service_platform">
-                            <label class="form-check-label" for="service_platform">Platform</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="9"
-                              id="service_security">
-                            <label class="form-check-label" for="service_security">Security Guard</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="10"
-                              id="service_emergency">
-                            <label class="form-check-label" for="service_emergency">Emergency Response Team</label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <small class="text-muted mt-2 d-block">Select any additional resource/services you need for your
-                      event.</small>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div class="col-md-4">
+            <label class="form-label">First Name <span style="color: red;">*</span></label>
+            <input name="first_name" type="text" class="form-control" placeholder="First Name" required maxlength="50" />
           </div>
-
-          <!-- Navigation Buttons for Step 2 -->
-          <div class="navigation-buttons">
-            <button type="button" class="btn btn-secondary" onclick="previousStep(1)">Previous</button>
-            <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next</button>
+          <div class="col-md-4">
+            <label class="form-label">Last Name <span style="color: red;">*</span></label>
+            <input name="last_name" type="text" class="form-control" placeholder="Last Name" required maxlength="50" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">CPU School ID <span id="schoolIdRequired" style="color:red;display:none">*</span></label>
+            <input name="school_id" id="school_id" type="text" class="form-control" placeholder="School ID" maxlength="20" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Contact Number</label>
+            <input name="contact_number" type="text" class="form-control" placeholder="Contact Number" maxlength="15" pattern="\d{1,15}" inputmode="numeric" id="contactNumberField" autocomplete="off" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Email Address <span style="color: red;">*</span></label>
+            <input name="email" type="email" class="form-control mb-2" placeholder="Email Address" required maxlength="100" />
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Department/Organization Name</label>
+            <input name="organization_name" type="text" class="form-control mb-2" placeholder="Organization Name" maxlength="100" />
           </div>
         </div>
+      </div>
+    </div>
+  </div>
 
-        <!-- Step 3: Form Summary -->
-        <div class="step-section" id="step3">
-          <!-- Requisition Summary Card with two-column layout -->
-          <div class="row mb-4">
-            <div class="col-12">
-              <div class="form-section-card">
-                <!-- Centered Title -->
-                <h5 class="fw-bold text-center mb-2">Requisition Summary</h5>
+  <!-- Card 2: Event Details -->
+  <div class="row mb-2">
+    <div class="col-12">
+      <div class="form-section-card">
+        <h5>Event Details</h5>
+        <div class="row">
+          <div class="col-md-12">
+            <label class="form-label required">Event Title</label>
+            <input name="event_title" type="text" class="form-control" placeholder="e.g., University Day Celebration" required maxlength="100" />
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Event Details</label>
+            <textarea name="event_details" class="form-control" rows="3" maxlength="500" placeholder="Provide more details about your event (optional)"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                <!-- Warning/Info message below title -->
-                <small class="d-block text-center text-muted mb-4">
-                  Please review all information carefully. Submitted requests cannot be edited.
-                </small>
+  <!-- Card 3: Reservation Details -->
+  <div class="row">
+    <div class="col-12">
+      <div class="form-section-card">
+        <h5>Reservation Details</h5>
+        <div class="row g-3">
+          <!-- Activity/Purpose -->
+          <div class="col-md-6">
+            <label class="form-label required">Activity/Purpose</label>
+            <select id="activityPurposeField" name="purpose_id" class="form-select" aria-label="Activity/Purpose" required>
+              <option value="" selected disabled>Select Activity/Purpose</option>
+              <option value="8">Alumni - Class Reunion</option>
+              <option value="9">Alumni - Personal Events</option>
+              <option value="7">Alumni-Organized Events</option>
+              <option value="5">CPU Organization Led Activity</option>
+              <option value="2">Equipment Rental</option>
+              <option value="10">External Event</option>
+              <option value="1">Facility Rental</option>
+              <option value="6">Student-Organized Activity</option>
+              <option value="3">Subject Requirement - Class, Seminar, Conference</option>
+              <option value="4">University Program/Activity</option>
+            </select>
+          </div>
 
-                <!-- Two column layout: Left side for Contact Info & Reservation Details, Right side for Fee Breakdown -->
-                <div class="row">
-                  <!-- LEFT COLUMN - Contact Information and Reservation Details -->
-                  <div class="col-md-7">
-                    <!-- Contact Information Row -->
-                    <div class="row mb-4">
-                      <div class="col-12">
-                        <h6 class="border-bottom pb-2">Contact Information</h6>
-                        <div class="summary-item">
-                          <strong>Applicant Type:</strong>
-                          <span id="summary-applicant-type"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Name:</strong>
-                          <span id="summary-name"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Email:</strong>
-                          <span id="summary-email"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Contact Number:</strong>
-                          <span id="summary-contact"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Organization:</strong>
-                          <span id="summary-organization"></span>
-                        </div>
-                        <div class="summary-item" id="summary-school-id-container">
-                          <strong>School ID:</strong>
-                          <span id="summary-school-id"></span>
-                        </div>
-                      </div>
-                    </div>
+          <!-- Attach Event Documents -->
+          <div class="col-md-6">
+            <label class="form-label">Attach Event Documents</label>
+            <div class="position-relative">
+              <input type="file" class="form-control" id="eventDocuments" onchange="uploadToCloudinary(this)" />
+              <input type="hidden" name="event_documents_url" id="event_documents_url">
+              <input type="hidden" name="event_documents_public_id" id="event_documents_public_id">
+              <button type="button" id="removeEventDocumentsBtn" class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 d-none" style="color: black; background: none; border: none" onclick="removeFile('eventDocuments', 'removeEventDocumentsBtn')">
+                x
+              </button>
+            </div>
+            <div id="uploadProgress" class="progress mt-2 d-none">
+              <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+            <small class="text-muted">Upload supporting documents (PDF, DOC, or image files)</small>
+          </div>
 
-                    <!-- Reservation Details Row -->
-                    <div class="row">
-                      <div class="col-12">
-                        <h6 class="border-bottom pb-2">Reservation Details</h6>
-                        <div class="summary-item">
-                          <strong>Event Title:</strong>
-                          <span id="summary-event-title"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Activity/Purpose:</strong>
-                          <span id="summary-purpose"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Event Details:</strong>
-                          <span id="summary-event-details"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Start Date & Time:</strong>
-                          <span id="summary-start"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>End Date & Time:</strong>
-                          <span id="summary-end"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Participants:</strong>
-                          <span id="summary-participants"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Furniture & Equipment:</strong>
-                          <span id="summary-furniture"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Additional Requests:</strong>
-                          <span id="summary-requests"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Extra Services:</strong>
-                          <span id="summary-services"></span>
-                        </div>
-                      </div>
-                    </div>
+          <!-- Number of Participants, Chairs, Tables, and Microphones -->
+          <div class="col-md-3">
+            <label class="form-label required">Participants</label>
+            <input name="num_participants" type="number" class="form-control" value="1" min="1" required />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label required">Chairs</label>
+            <input name="num_chairs" type="number" class="form-control" value="0" min="0" required />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label required">Tables</label>
+            <input name="num_tables" type="number" class="form-control" value="0" min="0" required />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label required">Microphones</label>
+            <input name="num_microphones" type="number" class="form-control" value="0" min="0" required />
+          </div>
+
+          <!-- Additional Requests -->
+          <div class="col-12">
+            <label class="form-label">Additional Requests</label>
+            <textarea name="additional_requests" class="form-control" rows="3" maxlength="250" placeholder="Write a brief description of any additional requests you may have (e.g., WiFi, special seating arrangement, security personnel, technical support, logistics, etc.)."></textarea>
+          </div>
+
+          <!-- Extra Services Needed -->
+          <div class="col-12">
+            <label class="form-label mb-2">Extra Resources or Services Needed</label>
+            <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="extra_services[]" value="1" id="service_projector">
+                    <label class="form-check-label" for="service_projector">Projector</label>
                   </div>
-
-                  <!-- RIGHT COLUMN - Fee Breakdown (No scroll, expands naturally) -->
-                  <div class="col-md-5">
-                    <div class="border rounded p-3 bg-light" style="height: 100%;">
-                      <h6 class="border-bottom pb-2 mb-3">Fee Breakdown</h6>
-                      <div id="summary-fees" style="min-height: 200px;">
-                        <!-- Fees will be dynamically populated -->
-                      </div>
-                    </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="extra_services[]" value="2" id="service_screen">
+                    <label class="form-check-label" for="service_screen">Projection Screen</label>
                   </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="extra_services[]" value="3" id="service_sound">
+                    <label class="form-check-label" for="service_sound">Sound Reinforcement System</label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="extra_services[]" value="4" id="service_led">
+                    <label class="form-check-label" for="service_led">LED Wall</label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="extra_services[]" value="5" id="service_electrical">
+                    <label class="form-check-label" for="service_electrical">Electrical</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="extra_services[]" value="6" id="service_internet">
+                    <label class="form-check-label" for="service_internet">Internet Connection</label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="extra_services[]" value="7" id="service_plants">
+                    <label class="form-check-label" for="service_plants">Plants for Decoration</label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="extra_services[]" value="8" id="service_platform">
+                    <label class="form-check-label" for="service_platform">Platform</label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="extra_services[]" value="9" id="service_security">
+                    <label class="form-check-label" for="service_security">Security Guard</label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="extra_services[]" value="10" id="service_emergency">
+                    <label class="form-check-label" for="service_emergency">Emergency Response Team</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <small class="text-muted mt-2 d-block">Select any additional resource/services you need for your event.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Buttons for Step 2 -->
+  <div class="navigation-buttons">
+    <button type="button" class="btn btn-secondary" onclick="previousStep(1)">Previous</button>
+    <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next</button>
+  </div>
+</div>
+
+<!-- Step 3: Form Summary -->
+<div class="step-section" id="step3">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="form-section-card">
+        <h5 class="fw-bold text-center mb-2">Requisition Summary</h5>
+        <small class="d-block text-center text-muted mb-4">
+          Please review all information carefully. Submitted requests cannot be edited.
+        </small>
+
+        <div class="row">
+          <!-- LEFT COLUMN -->
+          <div class="col-md-7">
+            <!-- Contact Information -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2">Contact Information</h6>
+                <div class="summary-item">
+                  <strong>Applicant Type:</strong>
+                  <span id="summary-applicant-type"></span>
+                </div>
+                <div class="summary-item">
+                  <strong>Name:</strong>
+                  <span id="summary-name"></span>
+                </div>
+                <div class="summary-item">
+                  <strong>Email:</strong>
+                  <span id="summary-email"></span>
+                </div>
+                <div class="summary-item">
+                  <strong>Contact Number:</strong>
+                  <span id="summary-contact"></span>
+                </div>
+                <div class="summary-item">
+                  <strong>Organization:</strong>
+                  <span id="summary-organization"></span>
+                </div>
+                <div class="summary-item" id="summary-school-id-container">
+                  <strong>School ID:</strong>
+                  <span id="summary-school-id"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Event Details -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2">Event Details</h6>
+                <div class="summary-item">
+                  <strong>Event Title:</strong>
+                  <span id="summary-event-title"></span>
+                </div>
+                <div class="summary-item">
+                  <strong>Event Details:</strong>
+                  <span id="summary-event-details"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reservation Details -->
+            <div class="row">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2">Reservation Details</h6>
+                <div class="summary-item">
+                  <strong>Activity/Purpose:</strong>
+                  <span id="summary-purpose"></span>
+                </div>
+                <div class="summary-item">
+                  <strong>Start Date & Time:</strong>
+                  <span id="summary-start"></span>
+                </div>
+                <div class="summary-item">
+                  <strong>End Date & Time:</strong>
+                  <span id="summary-end"></span>
+                </div>
+                <div class="summary-item">
+                  <strong>Participants:</strong>
+                  <span id="summary-participants"></span>
+                </div>
+                <div class="summary-item">
+                  <strong>Furniture & Equipment:</strong>
+                  <span id="summary-furniture"></span>
+                </div>
+                <div class="summary-item">
+                  <strong>Additional Requests:</strong>
+                  <span id="summary-requests"></span>
+                </div>
+                <div class="summary-item">
+                  <strong>Extra Services:</strong>
+                  <span id="summary-services"></span>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Navigation Buttons for Step 3 -->
-          <div class="navigation-buttons">
-            <button type="button" class="btn btn-secondary" onclick="previousStep(2)">Previous</button>
-            <button type="button" class="btn btn-primary" onclick="openTermsModal(event)">Submit Form</button>
+          <!-- RIGHT COLUMN - Fee Breakdown -->
+          <div class="col-md-5">
+            <div class="border rounded p-3 bg-light" style="height: 100%;">
+              <h6 class="border-bottom pb-2 mb-3">Fee Breakdown</h6>
+              <div id="summary-fees" style="min-height: 200px;"></div>
+            </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Buttons for Step 3 -->
+  <div class="navigation-buttons">
+    <button type="button" class="btn btn-secondary" onclick="previousStep(2)">Previous</button>
+    <button type="button" class="btn btn-primary" onclick="openTermsModal(event)">Submit Form</button>
+  </div>
+</div>
 
         <!-- Success Modal -->
         <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">

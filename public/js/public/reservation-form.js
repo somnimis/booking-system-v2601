@@ -363,13 +363,8 @@ function showStep(stepNumber) {
 }
 
 function nextStep(nextStepNumber) {
-    if (nextStepNumber === 2 && !validateStep1()) {
-        return;
-    }
-
-    if (nextStepNumber === 3 && !validateStep2()) {
-        return;
-    }
+    if (currentStep === 1 && !validateStep1()) return;
+    if (currentStep === 2 && !validateStep2()) return;
 
     if (nextStepNumber === 3) {
         populateFormSummary();
@@ -378,10 +373,7 @@ function nextStep(nextStepNumber) {
 }
 
 function previousStep(prevStepNumber) {
-    const reservationForm = document.getElementById("reservationForm");
-    reservationForm
-        .querySelectorAll(".is-invalid")
-        .forEach((input) => clearFieldError(input));
+    document.querySelectorAll(".is-invalid").forEach((input) => clearFieldError(input));
     showStep(prevStepNumber);
 }
 
@@ -437,53 +429,25 @@ function validateStep2() {
     let valid = true;
     let firstInvalid = null;
 
-    // Add num_microphones to required fields
     const requiredFields = [
         "user_type",
         "first_name",
         "last_name",
         "email",
-        "num_participants",
+        "event_title",
         "purpose_id",
+        "num_participants",
         "num_chairs",
         "num_tables",
-        "num_microphones",
-        "event_title",
+        "num_microphones"
     ];
 
-    // Clear existing errors
-    reservationForm
-        .querySelectorAll(".is-invalid")
-        .forEach((input) => clearFieldError(input));
+    reservationForm.querySelectorAll(".is-invalid").forEach((input) => clearFieldError(input));
 
-    // Validate required fields
     requiredFields.forEach((name) => {
         const input = reservationForm.querySelector(`[name="${name}"]`);
         if (input) {
-            // Special handling for numeric fields that should be >= 0
-            if (
-                name === "num_chairs" ||
-                name === "num_tables" ||
-                name === "num_microphones"
-            ) {
-                if (
-                    input.value === "" ||
-                    input.value === null ||
-                    parseInt(input.value) < 0
-                ) {
-                    showFieldError(
-                        input,
-                        "Please enter a valid number (0 or greater).",
-                    );
-                    valid = false;
-                    if (!firstInvalid) firstInvalid = input;
-                }
-            } else if (
-                !input.value ||
-                (name === "user_type" && input.value === "") ||
-                (name === "purpose_id" &&
-                    (input.value === "" || input.value === null))
-            ) {
+            if (!input.value || (name === "user_type" && input.value === "") || (name === "purpose_id" && input.value === "")) {
                 showFieldError(input, "Please fill in this field.");
                 valid = false;
                 if (!firstInvalid) firstInvalid = input;
@@ -522,10 +486,7 @@ function validateStep2() {
     if (contactNumberField && contactNumberField.value) {
         clearFieldError(contactNumberField);
         if (!/^\d{1,15}$/.test(contactNumberField.value)) {
-            showFieldError(
-                contactNumberField,
-                "Contact number must be numbers only (max 15 digits).",
-            );
+            showFieldError(contactNumberField, "Contact number must be numbers only (max 15 digits).");
             valid = false;
             if (!firstInvalid) firstInvalid = contactNumberField;
         }
@@ -533,47 +494,29 @@ function validateStep2() {
         clearFieldError(contactNumberField);
     }
 
-    // Additional validation for numeric fields to ensure they're not negative
+    // Validate numeric fields are not negative
     const numChairsInput = document.querySelector('input[name="num_chairs"]');
     const numTablesInput = document.querySelector('input[name="num_tables"]');
-    const numMicrophonesInput = document.querySelector(
-        'input[name="num_microphones"]',
-    );
+    const numMicrophonesInput = document.querySelector('input[name="num_microphones"]');
 
-    if (
-        numChairsInput &&
-        numChairsInput.value !== "" &&
-        parseInt(numChairsInput.value) < 0
-    ) {
+    if (numChairsInput && numChairsInput.value !== "" && parseInt(numChairsInput.value) < 0) {
         showFieldError(numChairsInput, "Number of chairs cannot be negative.");
         valid = false;
         if (!firstInvalid) firstInvalid = numChairsInput;
     }
 
-    if (
-        numTablesInput &&
-        numTablesInput.value !== "" &&
-        parseInt(numTablesInput.value) < 0
-    ) {
+    if (numTablesInput && numTablesInput.value !== "" && parseInt(numTablesInput.value) < 0) {
         showFieldError(numTablesInput, "Number of tables cannot be negative.");
         valid = false;
         if (!firstInvalid) firstInvalid = numTablesInput;
     }
 
-    if (
-        numMicrophonesInput &&
-        numMicrophonesInput.value !== "" &&
-        parseInt(numMicrophonesInput.value) < 0
-    ) {
-        showFieldError(
-            numMicrophonesInput,
-            "Number of microphones cannot be negative.",
-        );
+    if (numMicrophonesInput && numMicrophonesInput.value !== "" && parseInt(numMicrophonesInput.value) < 0) {
+        showFieldError(numMicrophonesInput, "Number of microphones cannot be negative.");
         valid = false;
         if (!firstInvalid) firstInvalid = numMicrophonesInput;
     }
 
-    // Scroll to first invalid field
     if (firstInvalid) {
         firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
         firstInvalid.focus();

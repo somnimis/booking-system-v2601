@@ -3,12 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Facility;
 use App\Models\RequestedFacility;
 use App\Models\RequestedEquipment;
-use App\Models\EquipmentItem;
 use App\Models\RequisitionFee;
-use App\Models\RequestedService;
 use App\Models\FormStatus;
 use App\Models\CompletedTransaction;
 use App\Models\RequisitionForm;
@@ -16,12 +13,38 @@ use App\Models\RequisitionComment;
 use App\Services\FeeCalculatorService;
 use App\Services\CheckAvailabilityService;
 use App\Services\NotificationService;
-use App\Services\AccessCodeService;
 use App\Services\ReceiptService;
+use App\Services\ApprovalChainService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+
+/* AdminActionsController — Summary Documentation
+
+This controller manages the entire admin-side approval and fee handling process
+for requisition forms within the booking system. It provides endpoints for viewing,
+approving, rejecting, and modifying requests, as well as managing related financial actions.
+
+The controller includes methods to fetch pending and completed requests, allowing
+admins to review requisition forms that are awaiting approval or have been finalized.
+Only authorized roles such as Head Admin, Vice President of Administration, and
+Approving Officer can perform approval or rejection actions. When a request is approved
+or rejected, a corresponding record is created in the requisition_approvals table,
+capturing details such as the admin who performed the action, remarks, and the timestamp.
+
+It also handles the financial side of the approval process. Through dedicated methods,
+admins can add fees or discounts to a requisition form, each stored in the
+requisition_fees table with details like label, amount, and references to any
+waived facilities or equipment. Additional methods allow specific items or entire
+forms to be marked as waived, updating related database records to reflect that
+charges have been removed or discounted.
+
+Overall, the AdminApprovalController serves as the core module for managing
+the administrative workflow of requisition approval, ensuring that all actions,
+statuses, and fee-related transactions are properly validated, recorded, and
+restricted to the appropriate user roles.
+*/
 
 
 class AdminActionsController extends Controller
@@ -31,348 +54,79 @@ class AdminActionsController extends Controller
     protected $availabilityChecker;
     protected $notificationService;
     protected $receiptService;
+    protected $approvalChainService;
 
-    public function __construct(FeeCalculatorService $feeCalculator, CheckAvailabilityService $availabilityChecker, NotificationService $notificationService, ReceiptService $receiptService)
+    public function __construct(FeeCalculatorService $feeCalculator, CheckAvailabilityService $availabilityChecker, NotificationService $notificationService, ReceiptService $receiptService, ApprovalChainService $approvalChainService)
     {
         $this->feeCalculator = $feeCalculator;
         $this->availabilityChecker = $availabilityChecker;
         $this->notificationService = $notificationService;
         $this->receiptService = $receiptService;
+        $this->approvalChainService = $approvalChainService;
     }
 
-
-    /**
-     * Create a new admin reservation
-     */
-    public function createReservation(Request $request)
+        public function actionRequest(Request $request, $requestId, $action)
     {
         try {
-            Log::debug('Creating admin reservation', $request->all());
+            Log::debug('=== PROCESS APPROVAL ACTION CALLED ===', [
+                'request_id' => $requestId,
+                'admin_id' => auth()->id(),
+                'action' => $action
+            ]);
 
-            DB::beginTransaction();
-
-            // Validate request
-            $validatedData = $this->validateReservationRequest($request);
-
-            // Generate unique access code
-            $accessCodeService = app(AccessCodeService::class);
-            $validatedData['access_code'] = $accessCodeService->generateUniqueAccessCode();
-
-            // Check for facility conflicts
-            $conflictItems = [];
-
-            foreach ($validatedData['facilities'] as $facility) {
-                $facilityConflicts = $this->availabilityChecker->checkFacilityAvailability(
-                    $facility['facility_id'],
-                    $validatedData['start_date'],
-                    $validatedData['end_date'],
-                    $validatedData['start_time'] ?? '00:00:00',
-                    $validatedData['end_time'] ?? '23:59:59',
-                    $validatedData['all_day']
-                );
-
-                if (!empty($facilityConflicts)) {
-                    $conflictItems = array_merge($conflictItems, $facilityConflicts);
-                }
+            if (!in_array($action, ['approve', 'reject'])) {
+                return response()->json(['error' => 'Invalid action'], 400);
             }
 
-            // Check for equipment conflicts
-            if (!empty($validatedData['equipment'])) {
-                foreach ($validatedData['equipment'] as $equipment) {
-                    $availableCount = $this->availabilityChecker->checkEquipmentAvailability(
-                        $equipment['equipment_id'],
-                        $validatedData['start_date'],
-                        $validatedData['end_date'],
-                        $validatedData['all_day']
-                    );
+            $adminId = auth()->id();
 
-                    if ($availableCount < $equipment['quantity']) {
-                        $equipmentName = EquipmentItem::find($equipment['equipment_id'])->equipment_name ?? 'Unknown';
-                        $conflictItems[] = [
-                            'type' => 'equipment',
-                            'id' => $equipment['equipment_id'],
-                            'name' => $equipmentName,
-                            'source' => 'requisition',
-                            'status' => null,
-                            'message' => "Only {$availableCount} available, requested {$equipment['quantity']}"
-                        ];
-                    }
-                }
+            if (!$adminId) {
+                return response()->json(['error' => 'Admin not authenticated'], 401);
             }
 
-            // If conflicts exist, return them
-            if (!empty($conflictItems)) {
-                DB::rollBack();
-                return response()->json([
-                    'error' => 'Scheduling conflicts detected',
-                    'conflict_items' => $conflictItems
-                ], 409);
+            $result = $this->approvalChainService->processAction(
+                $requestId,
+                $adminId,
+                $action,
+                $request->input('remarks', null)
+            );
+
+            if (!$result['success']) {
+                return response()->json(['error' => $result['message']], 404);
             }
 
-            // Create the reservation
-            $requisitionForm = $this->createRequisitionForm($validatedData);
+            // Create comment record for activity timeline
+            $commentText = ucfirst($action) . " this request" . ($request->input('remarks') ? ": " . $request->input('remarks') : "");
+            RequisitionComment::create([
+                'request_id' => $requestId,
+                'admin_id' => $adminId,
+                'comment' => $commentText
+            ]);
 
-            // Add related items
-            $this->addFacilities($requisitionForm->request_id, $validatedData['facilities']);
-            $this->addEquipment($requisitionForm->request_id, $validatedData['equipment'] ?? []);
-            $this->addServices($requisitionForm->request_id, $validatedData['services'] ?? []);
-
-            // Add comment record
-            $this->addCommentRecord($requisitionForm->request_id);
-
-            // Create approval chain records
-            try {
-                $approvalChainService = app(\App\Services\ApprovalChainService::class);
-                $approvalChainService->createApprovalChain($requisitionForm);
-                Log::info('Approval chain created for requisition', [
-                    'request_id' => $requisitionForm->request_id
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Failed to create approval chain', [
-                    'request_id' => $requisitionForm->request_id,
-                    'error' => $e->getMessage()
-                ]);
-                // Don't rollback - approval chain failure shouldn't prevent reservation creation
-            }
-
-            DB::commit();
-
-            // Send confirmation email
-            try {
-                $notificationService = app(NotificationService::class);
-                $notificationService->sendConfirmationEmail($requisitionForm);
-            } catch (\Exception $e) {
-                Log::error('Failed to send confirmation email: ' . $e->getMessage());
-            }
-
-            // Send approval request emails
-            try {
-                $this->notificationService->sendAdminApprovalEmails($requisitionForm);
-            } catch (\Exception $e) {
-                Log::error('Failed to send admin approval emails: ' . $e->getMessage());
-            }
+            Log::debug('Approval action processed successfully', [
+                'approval_id' => $result['approval_id'],
+                'action' => $action
+            ]);
 
             return response()->json([
-                'message' => 'Reservation created successfully',
-                'request_id' => $requisitionForm->request_id,
-                'access_code' => $requisitionForm->access_code,
-                'all_day' => $requisitionForm->all_day,
-            ], 201);
+                'message' => $result['message'],
+                'approval_id' => $result['approval_id']
+            ]);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            DB::rollBack();
-            return response()->json([
-                'error' => 'Validation failed',
-                'details' => $e->errors(),
-            ], 422);
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to create reservation: ' . $e->getMessage());
+            Log::error("Failed to {$action} request", [
+                'request_id' => $requestId,
+                'admin_id' => auth()->id(),
+                'action' => $action,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
-                'error' => 'Failed to create reservation',
-                'details' => $e->getMessage(),
+                'error' => "Failed to {$action} request",
+                'details' => $e->getMessage()
             ], 500);
         }
-    }
-
-    /**
-     * Validate the reservation request
-     */
-    private function validateReservationRequest(Request $request): array
-    {
-        $rules = $this->buildValidationRules($request);
-
-        return $request->validate($rules);
-    }
-
-    /**
-     * Build validation rules dynamically based on all_day flag
-     */
-    private function buildValidationRules(Request $request): array
-    {
-        $rules = [
-            // User details
-            'user_type' => 'required|in:Internal,External',
-            'first_name' => 'required|string|max:50',
-            'last_name' => 'required|string|max:50',
-            'email' => 'required|email|max:100',
-            'school_id' => 'nullable|string|max:20',
-            'organization_name' => 'nullable|string|max:100',
-            'contact_number' => ['nullable', 'regex:/^\d{1,15}$/', 'max:15'],
-
-            // Form details
-            'purpose_id' => 'required|exists:requisition_purposes,purpose_id',
-            'num_participants' => 'required|integer|min:1',
-            'num_tables' => 'required|integer|min:0',
-            'num_chairs' => 'required|integer|min:0',
-            'num_microphones' => 'required|integer|min:0',
-            'additional_requests' => 'nullable|string|max:250',
-
-            // Event details
-            'event_title' => 'nullable|string|max:100',
-            'event_details' => 'nullable|string|max:100',
-
-            // Schedule
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'all_day' => 'required|boolean',
-
-            // Requested items
-            'facilities' => 'required|array|min:1',
-            'facilities.*.facility_id' => 'required|exists:facilities,facility_id',
-            'equipment' => 'array',
-            'equipment.*.equipment_id' => 'required|exists:equipment,equipment_id',
-            'equipment.*.quantity' => 'required|integer|min:1',
-            'services' => 'array', // ADDED
-            'services.*.service_id' => 'required|exists:extra_services,service_id', // ADDED
-
-            // Status
-            'status_id' => 'required|exists:form_statuses,status_id',
-        ];
-
-        // Add time rules conditionally
-        if (!$request->all_day) {
-            $rules['start_time'] = 'required|date_format:H:i';
-            $rules['end_time'] = 'required|date_format:H:i|after:start_time';
-        } else {
-            $rules['start_time'] = 'nullable';
-            $rules['end_time'] = 'nullable';
-        }
-
-        return $rules;
-    }
-
-    /**
-     * Add service records
-     */
-    private function addServices(int $requestId, array $services): void
-    {
-        foreach ($services as $service) {
-            RequestedService::create([
-                'request_id' => $requestId,
-                'service_id' => $service['service_id'],
-                'is_waived' => false,
-            ]);
-        }
-    }
-
-    /**
-     * Create the main requisition form record
-     */
-    private function createRequisitionForm(array $data): RequisitionForm
-    {
-        return RequisitionForm::create([
-            // User details
-            'user_type' => $data['user_type'],
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-            'email' => $data['email'],
-            'school_id' => $data['school_id'] ?? null,
-            'organization_name' => $data['organization_name'] ?? null,
-            'contact_number' => $data['contact_number'] ?? null,
-
-            // Form details
-            'purpose_id' => $data['purpose_id'],
-            'num_participants' => $data['num_participants'],
-            'num_tables' => $data['num_tables'] ?? 0,
-            'num_chairs' => $data['num_chairs'] ?? 0,
-            'num_microphones' => $data['num_microphones'] ?? 0,
-            'access_code' => $data['access_code'],
-            'additional_requests' => $data['additional_requests'] ?? null,
-
-            // Event details
-            'event_title' => $data['event_title'] ?? 'Admin Reservation',
-            'event_details' => $data['event_details'] ?? null,
-
-            // Schedule
-            'start_date' => $data['start_date'],
-            'end_date' => $data['end_date'],
-            'start_time' => $this->formatStartTime($data),
-            'end_time' => $this->formatEndTime($data),
-            'all_day' => $data['all_day'],
-
-            // Status
-            'status_id' => $data['status_id'],
-            'is_finalized' => true,
-            'finalized_at' => now(),
-            'finalized_by' => auth()->id(),
-        ]);
-    }
-
-    /**
-     * Format start time based on all_day flag
-     */
-    private function formatStartTime(array $data): string
-    {
-        if ($data['all_day']) {
-            return '00:00:00';
-        }
-        return $data['start_time'] ?? '00:00:00';
-    }
-
-    /**
-     * Format end time based on all_day flag
-     */
-    private function formatEndTime(array $data): string
-    {
-        if ($data['all_day']) {
-            return '23:59:59';
-        }
-        return $data['end_time'] ?? '23:59:59';
-    }
-
-    /**
-     * Add facility records
-     */
-    private function addFacilities(int $requestId, array $facilities): void
-    {
-        foreach ($facilities as $facility) {
-            RequestedFacility::create([
-                'request_id' => $requestId,
-                'facility_id' => $facility['facility_id'],
-                'is_waived' => false,
-            ]);
-        }
-    }
-
-    /**
-     * Add equipment records
-     */
-    private function addEquipment(int $requestId, array $equipment): void
-    {
-        foreach ($equipment as $item) {
-            RequestedEquipment::create([
-                'request_id' => $requestId,
-                'equipment_id' => $item['equipment_id'],
-                'quantity' => $item['quantity'],
-                'is_waived' => false,
-            ]);
-        }
-    }
-
-
-    /**
-     * Add comment record
-     */
-    private function addCommentRecord(int $requestId): void
-    {
-        // Get the authenticated admin's ID
-        $adminId = auth()->id();
-
-        if (!$adminId) {
-            Log::error('Cannot add comment: admin_id is null', [
-                'request_id' => $requestId,
-                'auth_check' => auth()->check(),
-                'user' => auth()->user()
-            ]);
-            throw new \Exception('Admin not authenticated');
-        }
-
-        RequisitionComment::create([
-            'request_id' => $requestId,
-            'admin_id' => $adminId, // Use the variable, not calling auth() again
-            'comment' => 'Admin created this reservation manually',
-        ]);
     }
 
     public function addFee(Request $request, $requestId)
@@ -816,7 +570,6 @@ class AdminActionsController extends Controller
         }
     }
 
-
     public function finalizeForm(Request $request, $requestId)
     {
         try {
@@ -970,50 +723,6 @@ class AdminActionsController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to close form',
-                'details' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function markReturned(Request $request, $requestId)
-    {
-        try {
-            $validatedData = $request->validate([
-                'is_late' => 'required|boolean',
-                'late_penalty_fee' => 'required_if:is_late,true|numeric|min:0'
-            ]);
-
-            $form = RequisitionForm::findOrFail($requestId);
-
-            $form->returned_at = now();
-            $form->is_late = $validatedData['is_late'];
-
-            if ($validatedData['is_late']) {
-                $form->late_penalty_fee = $validatedData['late_penalty_fee'];
-            }
-
-            // Update status based on return time
-            if ($validatedData['is_late']) {
-                $form->status_id = FormStatus::where('status_name', 'Late Return')->first()->status_id;
-            } else {
-                $form->status_id = FormStatus::where('status_name', 'Returned')->first()->status_id;
-            }
-
-            // Recalculate approved fee
-            $form->load(['requestedFacilities', 'requestedEquipment', 'requisitionFees']);
-            $approvedFee = $this->feeCalculator->calculateApprovedFee($form);
-            $form->approved_fee = $approvedFee;
-            $form->save();
-
-            return response()->json([
-                'message' => 'Equipment marked as returned',
-                'is_late' => $form->is_late,
-                'late_penalty_fee' => $form->late_penalty_fee,
-                'updated_approved_fee' => $approvedFee
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to mark equipment as returned',
                 'details' => $e->getMessage()
             ], 500);
         }

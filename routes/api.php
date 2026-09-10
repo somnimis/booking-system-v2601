@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\EquipmentItemController;
-use App\Http\Controllers\RequiredApprovalsController;
-use App\Http\Controllers\UserRequisitionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-
+use App\Http\Controllers\EquipmentItemController;
+use App\Http\Controllers\RequestViewController;
+use App\Http\Controllers\RequiredApprovalsController;
+use App\Http\Controllers\UserRequisitionController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminApprovalController;
@@ -114,7 +114,7 @@ Route::get('/availability/events', [AvailabilityController::class, 'getEventsFor
 Route::get('/availability/facility/{facilityId}/schedule', [AvailabilityController::class, 'getFacilitySchedule']);
 Route::get('/availability/facilities/hierarchy', [AvailabilityController::class, 'getFacilitiesHierarchy']);
 
-// ---------------- Lookup Tables ---------------- //
+// ---------------- Lookup Tables (for testing) ---------------- //
 Route::get('/admin-role', [AdminController::class, 'adminRoles']);
 Route::get('/availability-statuses', [AvailabilityStatusController::class, 'index']);
 Route::get('/form-statuses', [FormStatusController::class, 'index']);
@@ -248,23 +248,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin listing endpoints
     Route::get('/manage/admins', [ManageAdminsController::class, 'index']);
     Route::get('/manage/admins/{id}', [ManageAdminsController::class, 'show']);
-
     // Department relationships
     Route::get('/manage/departments/admins', [ManageAdminsController::class, 'getAdminsByDepartment']);
     Route::get('/manage/departments', [ManageAdminsController::class, 'getDepartmentsWithAdmins']);
-
     // Service relationships
     Route::get('/manage/services', [ManageAdminsController::class, 'getServicesWithManager']);
-
     // Purpose relationships
     Route::get('/manage/purposes', [ManageAdminsController::class, 'getPurposesWithRoutes']);
-
     // Complete dashboard data (all in one)
     Route::get('/manage/dashboard', [ManageAdminsController::class, 'getDashboardData']);
-
     // Combined static data endpoint
     Route::get('/manage/static-data', [ManageAdminsController::class, 'getStaticData']);
-
     // Admin CRUD endpoints
     Route::get('/admins', [AdminController::class, 'getAllAdmins']);
     Route::get('/admins/{admin}/edit', [AdminController::class, 'getAdminForEdit']);
@@ -311,11 +305,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('admin/equipment/{equipmentId}/items/{itemId}', [EquipmentController::class, 'deleteItem']);
 
     // ---------------- Facility Management ---------------- //
-    // Merged endpoint for manage-facilities.blade.php
-    // Returns paginated facilities + filter metadata (statuses, categories, parent buildings)
-    // in a single request. Replaces the previous 3 separate bootstrap calls.
     Route::get('admin/manage-facilities', [ManageFacilitiesController::class, 'index']);
-
     Route::post('admin/add-facility', [FacilityController::class, 'store']);
     Route::put('admin/facilities/{facilityId}', [FacilityController::class, 'update']);
     Route::delete('/admin/facilities/{facilityId}', [FacilityController::class, 'destroy']);
@@ -337,89 +327,96 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [AdminFacilityController::class, 'destroy']);
     });
 
-    Route::middleware(['auth:sanctum'])->group(function () {
-        Route::get('/requisitions/{requestId}/approval-status', [RequiredApprovalsController::class, 'getApprovalStatus']);
-        Route::get('/requisitions/{requestId}/approval-progress', [RequiredApprovalsController::class, 'getApprovalProgress']);
-        Route::get('/requisitions/{requestId}/can-approve', [RequiredApprovalsController::class, 'canAdminApprove']);
+    // ====================================================================
+    // 1. REQUISITION LISTS & SEARCH
+    // ====================================================================
+    Route::prefix('admin/requisitions')->group(function () {
+        Route::get('/search', function (Request $request) {
+            $query = $request->get('q');
+            if (empty($query))
+                return response()->json(['results' => []]);
+
+            $results = DB::table('requisition_forms')
+                ->where('event_title', 'LIKE', "%{$query}%")
+                ->select('request_id', 'event_title', 'first_name', 'last_name')
+                ->limit(10)
+                ->get();
+
+            return response()->json(['results' => $results]);
+        });
+
+        Route::get('/active', [ReservationListingsController::class, 'getAvailableForTransaction']);
+        Route::get('/pending', [ReservationListingsController::class, 'paginatedPendingRequests']);
+        Route::get('/ongoing', [ReservationListingsController::class, 'paginatedOngoingRequests']);
+        Route::get('/completed', [ReservationListingsController::class, 'completedRequests']);
+        Route::get('/archives', [ReservationListingsController::class, 'getArchivedRequisitions']);
+        Route::get('/pending-count', [ReservationListingsController::class, 'getPendingCount']);
     });
 
-    // ---------------- Requisition Management ---------------- //
-
-    // Search requisitions 
-    Route::get('/admin/search-requisitions', function (Request $request) {
-        $query = $request->get('q');
-
-        if (empty($query)) {
-            return response()->json(['results' => []]);
-        }
-
-        $results = DB::table('requisition_forms')
-            ->where('event_title', 'LIKE', "%{$query}%")
-            ->select('request_id', 'event_title', 'first_name', 'last_name')
-            ->limit(10)
-            ->get();
-
-        return response()->json(['results' => $results]);
-    })->middleware('auth:sanctum');
-
-    Route::get('/admin/requisition/{requestId}/view-data', [ReservationListingsController::class, 'getRequestViewData']);
-    Route::get('/admin/requisition-forms', [ReservationListingsController::class, 'pendingRequests']); // not used
-    Route::get('/admin/active-requests', [ReservationListingsController::class, 'getAvailableForTransaction']);
-    Route::get('/admin/pending-requests', [ReservationListingsController::class, 'paginatedPendingRequests']);
-    Route::get('/admin/ongoing-requests', [ReservationListingsController::class, 'paginatedOngoingRequests']);
-    Route::get('/admin/pending-requests-count', [ReservationListingsController::class, 'getPendingCount']);
-    Route::get('/admin/requisition-forms/{requestId}', [ReservationListingsController::class, 'getRequisitionFormById']); // single form
-    Route::put('admin/requisition-forms/{requestId}/calendar-info', [CalendarEventsController::class, 'updateCalendarInfo']);
-    Route::get('/admin/completed-requests', [ReservationListingsController::class, 'completedRequests']);
-    Route::get('/admin/archives', [ReservationListingsController::class, 'getArchivedRequisitions']);
-    Route::post('/admin/requisition/{requestId}/mark-scheduled', [AdminActionsController::class, 'markAsScheduled']); // UPDATED
-    Route::get('/admin/requisition/{requestId}/approval-history', [ReservationListingsController::class, 'getApprovalHistory']);
-    Route::get('/admin/requisition/{requestId}/equipment-status', [AdminApprovalController::class, 'getEquipmentStatus']);
-
-
-
-    // Form Management
+    // ====================================================================
+    // 2. SINGLE REQUISITION (VIEW, DATA, STATUS)
+    // ====================================================================
     Route::prefix('admin/requisition')->group(function () {
 
-        // Make manual reservation
-        Route::post('create', [AdminActionsController::class, 'createReservation']);
-        Route::post('/check-availability', [CheckAvailabilityController::class, 'checkAvailability']);
-        Route::get('/form-init-data', [CreateReservationController::class, 'getFormInitData']);
-        // Lazy loading endpoints for create reservation
-        Route::get('/facilities', [CreateReservationController::class, 'getFacilities']);
-        Route::get('/equipment', [CreateReservationController::class, 'getEquipment']);
-        // Fees & Payments
-        Route::post('/{requestId}/fee', [AdminActionsController::class, 'addFee']);
-        Route::post('/{requestId}/discount', [AdminActionsController::class, 'addDiscount']);
-        Route::post('/{requestId}/late-penalty', [AdminActionsController::class, 'addLatePenalty']);
-        Route::post('/{requestId}/remove-late-penalty', [AdminActionsController::class, 'removeLatePenalty']);
-        Route::delete('/{requestId}/fee/{feeId}', [AdminActionsController::class, 'removeFee']);
-        Route::get('/{requestId}/fees', [ReservationListingsController::class, 'getRequisitionFees']); // UPDATED
-        Route::post('/{requestId}/waive', [AdminActionsController::class, 'waiveItems']);
+        // ---- 2.1 View & Data ----
+        Route::get('/{requestId}/view-data', [RequestViewController::class, 'getRequestViewData']);
+        Route::get('/{requestId}/form', [ReservationListingsController::class, 'getRequisitionFormById']);
+        Route::get('/{requestId}/equipment-status', [AdminApprovalController::class, 'getEquipmentStatus']);
+        Route::get('/{requestId}/approval-history', [ReservationListingsController::class, 'getApprovalHistory']);
 
-        // Status Management
-        Route::post('/{requestId}/update-status', [AdminActionsController::class, 'updateStatus']); // for manual overrides
-        Route::post('/{requestId}/{action}', [AdminApprovalController::class, 'actionRequest'])->where('action', 'approve|reject');
-        Route::post('{requestId}/cancel', [AdminActionsController::class, 'cancelForm']);
+        // ---- 2.2 Approval Status & History ----
+        Route::get('/{requestId}/approval-status', [RequiredApprovalsController::class, 'getApprovalStatus']);
+        Route::get('/{requestId}/approval-progress', [RequiredApprovalsController::class, 'getApprovalProgress']);
+        Route::get('/{requestId}/can-approve', [RequiredApprovalsController::class, 'canAdminApprove']);
+
+        // ---- 2.3 Actions (Approve/Reject) - SIGNATORIES ----
+        Route::post('/{requestId}/{action}', [AdminActionsController::class, 'actionRequest'])
+            ->where('action', 'approve|reject');
+
+        // ---- 2.4 Status Management - HEAD ADMINISTRATOR ----
+        Route::post('/{requestId}/update-status', [AdminActionsController::class, 'updateStatus']); // manual overrides 
+        Route::post('/{requestId}/mark-scheduled', [AdminActionsController::class, 'markAsScheduled']);
         Route::post('/{requestId}/finalize', [AdminActionsController::class, 'finalizeForm']);
         Route::post('/{requestId}/close', [AdminActionsController::class, 'closeForm']);
-        Route::post('/{requestId}/mark-returned', [AdminActionsController::class, 'markReturned']);
+        Route::post('/{requestId}/cancel', [AdminActionsController::class, 'cancelForm']);
 
-        // Automatic status update routes
-        Route::post('/admin/auto-mark-ongoing', [AdminApprovalController::class, 'autoMarkOngoingForms']);
-        Route::post('/admin/auto-mark-late', [AdminApprovalController::class, 'autoMarkLateForms']);
-        Route::post('/admin/auto-update-all', [AdminApprovalController::class, 'autoUpdateAllStatuses']);
+        // ---- 2.5 Fees & Payments ----
+        Route::post('/{requestId}/fee', [AdminActionsController::class, 'addFee']);
+        Route::delete('/{requestId}/fee/{feeId}', [AdminActionsController::class, 'removeFee']);
+        Route::post('/{requestId}/discount', [AdminActionsController::class, 'addDiscount']);
+        Route::post('/{requestId}/waive', [AdminActionsController::class, 'waiveItems']);
+        Route::post('/{requestId}/late-penalty', [AdminActionsController::class, 'addLatePenalty']);
+        Route::post('/{requestId}/remove-late-penalty', [AdminActionsController::class, 'removeLatePenalty']);
 
-        // Comments
+        // ---- 2.6 Comments & Activity ----
         Route::post('/{requestId}/comment', [AdminActionsController::class, 'addComment']);
         Route::get('/{requestId}/comments', [AdminActionsController::class, 'getComments']);
+
+        // ---- 2.7 Calendar ----
+        Route::put('/{requestId}/calendar-info', [CalendarEventsController::class, 'updateCalendarInfo']);
     });
 
-    // ---------------- Cloudinary Management ---------------- //
-    Route::post('/admin/cloudinary/delete', function (Request $request) {
-        // ... (unchanged)
+    // ====================================================================
+    // 3. FORM CREATION (Create Reservation)
+    // ====================================================================
+    Route::prefix('admin/requisition')->group(function () {
+        Route::post('/create', [CreateReservationController::class, 'createReservation']);
+        Route::post('/check-availability', [CheckAvailabilityController::class, 'checkAvailability']);
+        Route::get('/form-init-data', [CreateReservationController::class, 'getFormInitData']);
+        Route::get('/facilities', [CreateReservationController::class, 'getFacilities']);
+        Route::get('/equipment', [CreateReservationController::class, 'getEquipment']);
+    });
+
+    // ====================================================================
+    // 4. AUTOMATED STATUS UPDATES (Cron/Scheduled Jobs) ----- STILL NOT IMPLEMENTED
+    // ====================================================================
+    Route::prefix('admin/requisition/auto')->group(function () {
+        Route::post('/mark-ongoing', [AdminApprovalController::class, 'autoMarkOngoingForms']);
+        Route::post('/mark-late', [AdminApprovalController::class, 'autoMarkLateForms']);
+        Route::post('/update-all', [AdminApprovalController::class, 'autoUpdateAllStatuses']);
     });
 
     // ---------------- Logout ---------------- //
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
+
 });
