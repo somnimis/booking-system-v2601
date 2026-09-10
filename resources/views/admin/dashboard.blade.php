@@ -3,7 +3,7 @@
 @section('title', 'Booking Dashboard')
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/public/dashboard.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/public/dashboard.css') }}">
   <main id="main">
     <div class="dashboard-wrap">
 
@@ -91,7 +91,7 @@
             <div class="stat-card" onclick="redirectToTab('payment-submitted')">
               <i class="bi bi-chevron-right stat-arrow"></i>
               <div class="stat-value" id="paymentSubmittedCount">0</div>
-              <div class="stat-label">Payment Submitted</div>
+              <div class="stat-label">Verifying Payment</div>
             </div>
           </div>
           <div class="col-md-3 col-6">
@@ -272,10 +272,10 @@
       // Show loading state only on first load or when manually refreshing
       if (!todayEventsData || page !== currentTodayEventsPage) {
         container.innerHTML = `
-                            <div class="empty-state">
-                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                                <p class="mt-2">Loading events...</p>
-                            </div>`;
+                              <div class="empty-state">
+                                  <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                  <p class="mt-2">Loading events...</p>
+                              </div>`;
       }
 
       fetch(`/api/admin/today-events?page=${page}`, {
@@ -296,21 +296,21 @@
           } else {
             console.error('Failed to load today\'s events:', response.message);
             container.innerHTML = `
-                                    <div class="empty-state">
-                                        <i class="bi bi-exclamation-triangle"></i>
-                                        <p>Failed to load events</p>
-                                        <button class="btn btn-sm btn-primary mt-2" onclick="loadTodayEventsPage(1)">Retry</button>
-                                    </div>`;
+                                      <div class="empty-state">
+                                          <i class="bi bi-exclamation-triangle"></i>
+                                          <p>Failed to load events</p>
+                                          <button class="btn btn-sm btn-primary mt-2" onclick="loadTodayEventsPage(1)">Retry</button>
+                                      </div>`;
           }
         })
         .catch(error => {
           console.error('Error loading today\'s events:', error);
           container.innerHTML = `
-                                <div class="empty-state">
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                    <p>Network error loading events</p>
-                                    <button class="btn btn-sm btn-primary mt-2" onclick="loadTodayEventsPage(1)">Retry</button>
-                                </div>`;
+                                  <div class="empty-state">
+                                      <i class="bi bi-exclamation-triangle"></i>
+                                      <p>Network error loading events</p>
+                                      <button class="btn btn-sm btn-primary mt-2" onclick="loadTodayEventsPage(1)">Retry</button>
+                                  </div>`;
         });
     }
 
@@ -417,22 +417,22 @@
 
       // Render events
       container.innerHTML = displayEvents.map(r => `
-      <div class="reservation-item" onclick="handleEventClick(${r.request_id}, ${r.is_sample || false})">
-        <div class="d-flex justify-content-between align-items-start gap-2">
-          <div class="flex-grow-1">
-            <div class="item-name">${escapeHtml(r.requester_name)}</div>
-            <div class="item-sub">${escapeHtml(r.event_title)}</div>
-            <div class="item-meta">
-              <i class="bi bi-clock"></i>${r.time}
-              <span class="text-light">·</span>
-              <i class="bi bi-geo-alt"></i>
-              ${r.locations.map(loc => `<span class="location-chip">${escapeHtml(loc)}</span>`).join(' ')}
+        <div class="reservation-item" onclick="handleEventClick(${r.request_id}, ${r.is_sample || false})">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div class="flex-grow-1">
+              <div class="item-name">${escapeHtml(r.requester_name)}</div>
+              <div class="item-sub">${escapeHtml(r.event_title)}</div>
+              <div class="item-meta">
+                <i class="bi bi-clock"></i>${r.time}
+                <span class="text-light">·</span>
+                <i class="bi bi-geo-alt"></i>
+                ${r.locations.map(loc => `<span class="location-chip">${escapeHtml(loc)}</span>`).join(' ')}
+              </div>
             </div>
+            <i class="bi bi-chevron-right text-primary align-self-center" style="font-size:0.8rem; opacity:0.5;"></i>
           </div>
-          <i class="bi bi-chevron-right text-primary align-self-center" style="font-size:0.8rem; opacity:0.5;"></i>
         </div>
-      </div>
-    `).join('');
+      `).join('');
     }
 
     // Handle click on events (with sample detection)
@@ -467,10 +467,10 @@
       // Show loading state only on first load or when manually refreshing
       if (!activityTimelineData || page !== currentActivityPage) {
         container.innerHTML = `
-                            <div class="empty-state">
-                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                                <p class="mt-2">Loading activities...</p>
-                            </div>`;
+                              <div class="empty-state">
+                                  <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                  <p class="mt-2">Loading activities...</p>
+                              </div>`;
       }
 
       fetch(`/api/admin/activity-timeline?page=${page}`, {
@@ -491,21 +491,21 @@
           } else {
             console.error('Failed to load activity timeline:', response.message);
             container.innerHTML = `
-                                    <div class="empty-state">
-                                        <i class="bi bi-exclamation-triangle"></i>
-                                        <p>Failed to load activities</p>
-                                        <button class="btn btn-sm btn-primary mt-2" onclick="loadActivityTimelinePage(1)">Retry</button>
-                                    </div>`;
+                                      <div class="empty-state">
+                                          <i class="bi bi-exclamation-triangle"></i>
+                                          <p>Failed to load activities</p>
+                                          <button class="btn btn-sm btn-primary mt-2" onclick="loadActivityTimelinePage(1)">Retry</button>
+                                      </div>`;
           }
         })
         .catch(error => {
           console.error('Error loading activity timeline:', error);
           container.innerHTML = `
-                                <div class="empty-state">
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                    <p>Network error loading activities</p>
-                                    <button class="btn btn-sm btn-primary mt-2" onclick="loadActivityTimelinePage(1)">Retry</button>
-                                </div>`;
+                                  <div class="empty-state">
+                                      <i class="bi bi-exclamation-triangle"></i>
+                                      <p>Network error loading activities</p>
+                                      <button class="btn btn-sm btn-primary mt-2" onclick="loadActivityTimelinePage(1)">Retry</button>
+                                  </div>`;
         });
     }
 
@@ -514,11 +514,11 @@
 
       if (!activityTimelineData || activityTimelineData.data.length === 0) {
         container.innerHTML = `
-                            <div class="empty-state">
-                                <i class="bi bi-activity"></i>
-                                <p>No recent activity</p>
-                                <small>Comments will appear here</small>
-                            </div>`;
+                              <div class="empty-state">
+                                  <i class="bi bi-activity"></i>
+                                  <p>No recent activity</p>
+                                  <small>Comments will appear here</small>
+                              </div>`;
         document.getElementById('activityPagination').style.display = 'none';
         return;
       }
@@ -531,24 +531,24 @@
       document.getElementById('activityPagination').style.display = totalActivityPages > 1 ? 'flex' : 'none';
 
       container.innerHTML = activityTimelineData.data.map(activity => `
-                        <div class="activity-item" onclick="goToRequest(${activity.request_id})">
-                            <div class="d-flex gap-2">
-                                <div class="activity-icon"><i class="bi bi-chat-dots"></i></div>
-                                <div class="flex-grow-1">
-                                    <div class="activity-text">
-                                        <strong>${escapeHtml(activity.admin_name)}</strong>
-                                        ${activity.action_type} in
-                                        <strong class="request-link">Request #${activity.request_number}</strong>
-                                        <div class="item-sub mt-1">${escapeHtml(activity.event_title)}</div>
-                                    </div>
-                                    <div class="activity-comment">
-                                        <i class="bi bi-quote me-1"></i>${escapeHtml(activity.comment)}
-                                    </div>
-                                    <div class="activity-time"><i class="bi bi-clock me-1"></i>${activity.time_ago}</div>
-                                </div>
-                                <i class="bi bi-chevron-right align-self-center" style="color:var(--text-light); font-size:0.78rem;"></i>
-                            </div>
-                        </div>`).join('');
+                          <div class="activity-item" onclick="goToRequest(${activity.request_id})">
+                              <div class="d-flex gap-2">
+                                  <div class="activity-icon"><i class="bi bi-chat-dots"></i></div>
+                                  <div class="flex-grow-1">
+                                      <div class="activity-text">
+                                          <strong>${escapeHtml(activity.admin_name)}</strong>
+                                          ${activity.action_type} in
+                                          <strong class="request-link">Request #${activity.request_number}</strong>
+                                          <div class="item-sub mt-1">${escapeHtml(activity.event_title)}</div>
+                                      </div>
+                                      <div class="activity-comment">
+                                          <i class="bi bi-quote me-1"></i>${escapeHtml(activity.comment)}
+                                      </div>
+                                      <div class="activity-time"><i class="bi bi-clock me-1"></i>${activity.time_ago}</div>
+                                  </div>
+                                  <i class="bi bi-chevron-right align-self-center" style="color:var(--text-light); font-size:0.78rem;"></i>
+                              </div>
+                          </div>`).join('');
     }
 
     function loadActivityNextPage() {
@@ -567,7 +567,7 @@
     function renderInitialDashboard() {
       document.getElementById('pendingCount').textContent = dashboardData.stats.pending_count || 0;
       document.getElementById('awaitingPaymentCount').textContent = dashboardData.stats.awaiting_payment_count || 0;
-      document.getElementById('paymentSubmittedCount').textContent = dashboardData.stats.payment_submitted_count || 0;
+      document.getElementById('paymentSubmittedCount').textContent = dashboardData.stats.verifying_count || 0;
       document.getElementById('reservedCount').textContent = dashboardData.stats.reserved_count || 0;
 
       const today = new Date();
@@ -585,28 +585,28 @@
 
       if (approvals.length === 0) {
         container.innerHTML = `
-                            <div class="empty-state">
-                                <i class="bi bi-check-circle"></i>
-                                <p>No pending approvals</p>
-                                <small>All caught up!</small>
-                            </div>`;
+                              <div class="empty-state">
+                                  <i class="bi bi-check-circle"></i>
+                                  <p>No pending approvals</p>
+                                  <small>All caught up!</small>
+                              </div>`;
         return;
       }
 
       container.innerHTML = approvals.map(a => `
-                        <div class="pending-item" onclick="goToRequest(${a.request_id})">
-                            <div class="d-flex justify-content-between align-items-start gap-2">
-                                <div class="flex-grow-1">
-                                    <div class="item-name">${escapeHtml(a.requester_name)}</div>
-                                    <div class="item-sub">${escapeHtml(a.event_title)}</div>
-                                    <div class="item-meta">
-                                        <i class="bi bi-building"></i>${escapeHtml(a.organization)}
-                                        <span class="text-light">·</span>
-                                        <i class="bi bi-calendar3"></i>${a.start_date}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`).join('');
+                          <div class="pending-item" onclick="goToRequest(${a.request_id})">
+                              <div class="d-flex justify-content-between align-items-start gap-2">
+                                  <div class="flex-grow-1">
+                                      <div class="item-name">${escapeHtml(a.requester_name)}</div>
+                                      <div class="item-sub">${escapeHtml(a.event_title)}</div>
+                                      <div class="item-meta">
+                                          <i class="bi bi-building"></i>${escapeHtml(a.organization)}
+                                          <span class="text-light">·</span>
+                                          <i class="bi bi-calendar3"></i>${a.start_date}
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>`).join('');
     }
 
     function renderFeedback() {
@@ -615,26 +615,26 @@
 
       if (feedbacks.length === 0) {
         container.innerHTML = `
-                            <div class="empty-state">
-                                <i class="bi bi-chat-square-text"></i>
-                                <p>No feedback yet</p>
-                                <small>Responses will appear here</small>
-                            </div>`;
+                              <div class="empty-state">
+                                  <i class="bi bi-chat-square-text"></i>
+                                  <p>No feedback yet</p>
+                                  <small>Responses will appear here</small>
+                              </div>`;
         return;
       }
 
       container.innerHTML = feedbacks.map(f => `
-                        <div class="feedback-item" onclick="goToRequest(${f.request_id})">
-                            <div class="d-flex justify-content-between align-items-start gap-2">
-                                <div class="flex-grow-1">
-                                    <div class="item-name">${escapeHtml(f.requester_name)}</div>
-                                    <div class="item-sub">${escapeHtml(f.ratings_summary)}</div>
-                                    ${f.additional_feedback ? `<div class="item-meta fst-italic">"${escapeHtml(f.additional_feedback.substring(0, 80))}${f.additional_feedback.length > 80 ? '…' : ''}"</div>` : ''}
-                                    <div class="item-meta"><i class="bi bi-clock"></i>${f.created_at}</div>
-                                </div>
-                                <i class="bi bi-chat-dots align-self-start" style="color:var(--navy); font-size:0.85rem; opacity:0.6;"></i>
-                            </div>
-                        </div>`).join('');
+                          <div class="feedback-item" onclick="goToRequest(${f.request_id})">
+                              <div class="d-flex justify-content-between align-items-start gap-2">
+                                  <div class="flex-grow-1">
+                                      <div class="item-name">${escapeHtml(f.requester_name)}</div>
+                                      <div class="item-sub">${escapeHtml(f.ratings_summary)}</div>
+                                      ${f.additional_feedback ? `<div class="item-meta fst-italic">"${escapeHtml(f.additional_feedback.substring(0, 80))}${f.additional_feedback.length > 80 ? '…' : ''}"</div>` : ''}
+                                      <div class="item-meta"><i class="bi bi-clock"></i>${f.created_at}</div>
+                                  </div>
+                                  <i class="bi bi-chat-dots align-self-start" style="color:var(--navy); font-size:0.85rem; opacity:0.6;"></i>
+                              </div>
+                          </div>`).join('');
     }
 
     // ========== UTILITY FUNCTIONS ==========
@@ -653,13 +653,13 @@
       const skeletonState = document.getElementById('skeletonState');
       if (skeletonState) {
         skeletonState.innerHTML = `
-                            <div class="empty-state py-5">
-                                <i class="bi bi-exclamation-triangle" style="color:var(--danger);font-size:2rem;"></i>
-                                <p class="text-danger mt-2">${message}</p>
-                                <button class="btn btn-primary btn-sm mt-1" onclick="location.reload()">
-                                    <i class="bi bi-arrow-clockwise me-1"></i> Retry
-                                </button>
-                            </div>`;
+                              <div class="empty-state py-5">
+                                  <i class="bi bi-exclamation-triangle" style="color:var(--danger);font-size:2rem;"></i>
+                                  <p class="text-danger mt-2">${message}</p>
+                                  <button class="btn btn-primary btn-sm mt-1" onclick="location.reload()">
+                                      <i class="bi bi-arrow-clockwise me-1"></i> Retry
+                                  </button>
+                              </div>`;
       }
     }
 
