@@ -6,8 +6,10 @@ use App\Models\Admin;
 use App\Models\RequisitionApproval;
 use App\Models\RequisitionForm;
 use App\Models\FormStatus;
+use App\Models\DepartmentRole;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ApprovalChainService
@@ -56,69 +58,68 @@ class ApprovalChainService
      */
     public function createApprovalChain($requisitionForm)
     {
-        // Initialize collection to store unique admin IDs for Stage 1
-        $stage1AdminIds = collect();
 
-        // 1. Collect department managers from requested facilities
-        // Each facility has a 'managed_by' field indicating which department oversees it
-        $facilityDepartmentIds = $requisitionForm->requestedFacilities
-            ->pluck('facility.managed_by')
-            ->filter()              // Remove null/empty values
-            ->unique();             // Remove duplicate department IDs
+        // ============================================
+        // Stage 1: Department Heads for all four resource types
+        // ============================================
+        $resourceDeptIds = collect();
 
-        foreach ($facilityDepartmentIds as $deptId) {
-            // Find admins with role_id=3 (department managers) belonging to this department
-            $admins = Admin::whereHas('departments', function ($q) use ($deptId) {
-                $q->where('departments.department_id', $deptId);
-            })->where('role_id', 3)->pluck('admin_id');
-            $stage1AdminIds = $stage1AdminIds->merge($admins);
+        // Facilities
+        $resourceDeptIds = $resourceDeptIds->merge(
+            $requisitionForm->requestedFacilities
+                ->map(fn($rf) => $rf->facility?->managed_by)
+                ->filter()
+        );
+
+        // Equipment
+        $resourceDeptIds = $resourceDeptIds->merge(
+            $requisitionForm->requestedEquipment
+                ->map(fn($re) => $re->equipment?->managed_by)
+                ->filter()
+        );
+
+        // Services
+        $resourceDeptIds = $resourceDeptIds->merge(
+            $requisitionForm->requestedServices
+                ->map(fn($rs) => $rs->service?->managed_by)
+                ->filter()
+        );
+
+        // Purpose routing
+        if ($requisitionForm->purpose?->routes_to) {
+            $resourceDeptIds->push($requisitionForm->purpose->routes_to);
         }
 
-        // 2. Collect department managers from requested equipment
-        $equipmentDepartmentIds = $requisitionForm->requestedEquipment
-            ->pluck('equipment.managed_by')
-            ->filter()
-            ->unique();
+        $resourceDeptIds = $resourceDeptIds->unique()->values();
 
-        foreach ($equipmentDepartmentIds as $deptId) {
-            $admins = Admin::whereHas('departments', function ($q) use ($deptId) {
-                $q->where('departments.department_id', $deptId);
-            })->where('role_id', 3)->pluck('admin_id');
-            $stage1AdminIds = $stage1AdminIds->merge($admins);
-        }
+        // Find the Department Head for each department
+        $stage1AdminIds = DB::table('admins')
+            ->join('admin_departments', 'admins.admin_id', '=', 'admin_departments.admin_id')
+            ->whereIn('admin_departments.department_id', $resourceDeptIds)
+            ->where('admin_departments.role_id', DepartmentRole::HEAD)
+            ->distinct()
+            ->pluck('admins.admin_id');
 
-        // 3. Collect department managers from requested services
-        $serviceDepartmentIds = $requisitionForm->requestedServices
-            ->pluck('service.managed_by')
-            ->filter()
-            ->unique();
+        // ============================================
+        // Stage 2: Final Approving Officers
+        // ============================================
+        $stage2AdminIds = Admin::whereHas('role', function ($q) {
+            $q->where('role_title', 'Final Approving Officer');
+        })
+            ->pluck('admin_id');
 
-        foreach ($serviceDepartmentIds as $deptId) {
-            $admins = Admin::whereHas('departments', function ($q) use ($deptId) {
-                $q->where('departments.department_id', $deptId);
-            })->where('role_id', 3)->pluck('admin_id');
-            $stage1AdminIds = $stage1AdminIds->merge($admins);
-        }
+        // ============================================
+        // Stage 3: Issuing Officers
+        // ============================================
+        $stage3AdminIds = Admin::whereHas('role', function ($q) {
+            $q->where('role_title', 'Issuing Officer');
+        })
+            ->pluck('admin_id');
 
-        // 4. Add the purpose signatory's department manager
-        // The 'routes_to' field specifies which department should approve based on the requisition's purpose
-        if ($requisitionForm->purpose && $requisitionForm->purpose->routes_to) {
-            $admins = Admin::whereHas('departments', function ($q) use ($requisitionForm) {
-                $q->where('departments.department_id', $requisitionForm->purpose->routes_to);
-            })->where('role_id', 3)->pluck('admin_id');
-            $stage1AdminIds = $stage1AdminIds->merge($admins);
-        }
-
-        // Remove any duplicate admin IDs from Stage 1 collection
-        $stage1AdminIds = $stage1AdminIds->unique()->values();
-
-        // Stage 2: Get all Final Approving Officers (role_id = 2)
-        $stage2AdminIds = Admin::where('role_id', 2)->pluck('admin_id');
-
-        // Stage 3: Get all Issuing Officers (role_id = 5)
-        $stage3AdminIds = Admin::where('role_id', 5)->pluck('admin_id');
-
+        // ============================================
         // Create approval records for Stage 1, ensuring no duplicate admin entries
+        // ============================================
+
         $createdCount = 0;
         $processedAdmins = [];
 
@@ -138,7 +139,10 @@ class ApprovalChainService
             $createdCount++;
         }
 
+        // ============================================
         // Create approval records for Stage 2
+        // ============================================
+
         foreach ($stage2AdminIds as $adminId) {
             RequisitionApproval::create([
                 'request_id' => $requisitionForm->request_id,
@@ -150,7 +154,10 @@ class ApprovalChainService
             $createdCount++;
         }
 
+        // ============================================
         // Create approval records for Stage 3
+        // ============================================
+
         foreach ($stage3AdminIds as $adminId) {
             RequisitionApproval::create([
                 'request_id' => $requisitionForm->request_id,
@@ -355,7 +362,7 @@ class ApprovalChainService
             'is_read' => false
         ]);
     }
-    
+
     /**
      * Notify all Head Administrators that payment assessment is needed
      * 
@@ -373,7 +380,9 @@ class ApprovalChainService
         $requisition = RequisitionForm::find($requestId);
 
         // Get all Head Administrators (role_id = 1)
-        $headAdmins = Admin::where('role_id', 1)->get();
+        $headAdmins = Admin::whereHas('role', function ($q) {
+            $q->where('role_title', 'Head Administrator');
+        })->get();
 
         foreach ($headAdmins as $admin) {
             Notification::create([

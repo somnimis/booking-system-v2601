@@ -30,6 +30,33 @@ class RequisitionPurposeController extends Controller
         }
     }
 
+    public function dropdown(): JsonResponse
+    {
+        try {
+            $purposes = RequisitionPurpose::select('purpose_id', 'purpose_name')
+                ->orderBy('purpose_name')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $purposes
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching purposes dropdown', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch purposes dropdown',
+                'debug' => env('APP_DEBUG', false) ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
     public function show(int $id): JsonResponse
     {
         try {

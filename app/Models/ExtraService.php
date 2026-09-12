@@ -37,20 +37,9 @@ class ExtraService extends Model
             'service_id'
         );
     }
-
-    public function adminServices()
+    
+    public function managingDepartment()
     {
-        return $this->hasMany(AdminService::class, 'service_id', 'service_id');
-    }
-
-    public function admins()
-    {
-        return $this->belongsToMany(Admin::class, 'admin_services', 'service_id', 'admin_id');
-    }
-
-    // NEW: single assigned manager (from migration)
-    public function manager()
-    {
-        return $this->belongsTo(Admin::class, 'managed_by', 'admin_id');
+        return $this->belongsTo(Department::class, 'managed_by', 'department_id');
     }
 }

@@ -11,14 +11,14 @@ use Illuminate\Http\Request;
 
 class ManageAdminsController extends Controller
 {
-/**
+    /**
      * Get simplified admin listing with pagination
      * GET /api/manage/admins?page=1
      */
     public function index(Request $request)
     {
         $perPage = $request->get('per_page', 10);
-        
+
         $admins = Admin::select(
             'admin_id',
             'first_name',
@@ -30,13 +30,15 @@ class ManageAdminsController extends Controller
             'school_id',
             'role_id'
         )
-        ->with(['role' => function($query) {
-            $query->select('role_id', 'role_title');
-        }])
-        ->paginate($perPage);
-        
+            ->with([
+                'role' => function ($query) {
+                    $query->select('role_id', 'role_title');
+                }
+            ])
+            ->paginate($perPage);
+
         // Transform the data
-        $admins->getCollection()->transform(function($admin) {
+        $admins->getCollection()->transform(function ($admin) {
             return [
                 'admin_id' => $admin->admin_id,
                 'full_name' => $this->getFullName($admin),
@@ -58,62 +60,53 @@ class ManageAdminsController extends Controller
         ]);
     }
 
-/**
- * Get single admin with all relationships
- * GET /api/manage/admins/{id}
- */
-public function show($id)
-{
-    $admin = Admin::with([
-        'role',
-        'departments' => function($query) {
-            $query->select('departments.department_id', 'departments.department_name', 'departments.department_code')
-                  ->withPivot('role_id', 'is_primary');
-        },
-        'services' => function($query) {
-            $query->select('extra_services.service_id', 'extra_services.service_name');
+    /**
+     * Get single admin with all relationships
+     * GET /api/manage/admins/{id}
+     */
+    public function show($id)
+    {
+        $admin = Admin::with([
+            'role',
+            'departments' => function ($query) {
+                $query->select('departments.department_id', 'departments.department_name', 'departments.department_code')
+                    ->withPivot('role_id', 'is_primary');
+            },
+        ])->find($id);
+
+        if (!$admin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin not found'
+            ], 404);
         }
-    ])->find($id);
 
-    if (!$admin) {
         return response()->json([
-            'success' => false,
-            'message' => 'Admin not found'
-        ], 404);
+            'success' => true,
+            'data' => [
+                'admin_id' => $admin->admin_id,
+                'full_name' => $this->getFullName($admin),
+                'first_name' => $admin->first_name,
+                'last_name' => $admin->last_name,
+                'middle_name' => $admin->middle_name,
+                'title' => $admin->title,
+                'email' => $admin->email,
+                'contact_number' => $admin->contact_number,
+                'school_id' => $admin->school_id,
+                'role_id' => $admin->role_id,
+                'role_title' => $admin->role ? $admin->role->role_title : null,
+                'departments' => $admin->departments->map(function ($dept) {
+                    return [
+                        'department_id' => $dept->department_id,
+                        'department_name' => $dept->department_name,
+                        'department_code' => $dept->department_code,
+                        'is_primary' => $dept->pivot->is_primary ?? false,
+                        'role_id' => $dept->pivot->role_id ?? null  // Add this line
+                    ];
+                })
+            ]
+        ]);
     }
-
-    return response()->json([
-        'success' => true,
-        'data' => [
-            'admin_id' => $admin->admin_id,
-            'full_name' => $this->getFullName($admin),
-            'first_name' => $admin->first_name,
-            'last_name' => $admin->last_name,
-            'middle_name' => $admin->middle_name,
-            'title' => $admin->title,
-            'email' => $admin->email,
-            'contact_number' => $admin->contact_number,
-            'school_id' => $admin->school_id,
-            'role_id' => $admin->role_id,
-            'role_title' => $admin->role ? $admin->role->role_title : null,
-            'departments' => $admin->departments->map(function($dept) {
-                return [
-                    'department_id' => $dept->department_id,
-                    'department_name' => $dept->department_name,
-                    'department_code' => $dept->department_code,
-                    'is_primary' => $dept->pivot->is_primary ?? false,
-                    'role_id' => $dept->pivot->role_id ?? null  // Add this line
-                ];
-            }),
-            'services' => $admin->services->map(function($service) {
-                return [
-                    'service_id' => $service->service_id,
-                    'service_name' => $service->service_name
-                ];
-            })
-        ]
-    ]);
-}
 
     /**
      * Get admins grouped by department
@@ -121,25 +114,29 @@ public function show($id)
      */
     public function getAdminsByDepartment()
     {
-        $departments = Department::with(['admins' => function($query) {
-            $query->select(
-                'admins.admin_id',
-                'admins.first_name',
-                'admins.last_name',
-                'admins.middle_name',
-                'admins.title',
-                'admins.email'
-            )->with(['role' => function($q) {
-                $q->select('role_id', 'role_title');
-            }]);
-        }])->get();
+        $departments = Department::with([
+            'admins' => function ($query) {
+                $query->select(
+                    'admins.admin_id',
+                    'admins.first_name',
+                    'admins.last_name',
+                    'admins.middle_name',
+                    'admins.title',
+                    'admins.email'
+                )->with([
+                            'role' => function ($q) {
+                                $q->select('role_id', 'role_title');
+                            }
+                        ]);
+            }
+        ])->get();
 
-        $result = $departments->map(function($department) {
+        $result = $departments->map(function ($department) {
             return [
                 'department_id' => $department->department_id,
                 'department_name' => $department->department_name,
                 'department_code' => $department->department_code,
-                'admins' => $department->admins->map(function($admin) use ($department) {
+                'admins' => $department->admins->map(function ($admin) use ($department) {
                     return [
                         'admin_id' => $admin->admin_id,
                         'full_name' => $this->getFullName($admin),
@@ -164,19 +161,21 @@ public function show($id)
      */
     public function getDepartmentsWithAdmins()
     {
-        $departments = Department::with(['admins' => function($query) {
-            $query->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
-        }])->get();
+        $departments = Department::with([
+            'admins' => function ($query) {
+                $query->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
+            }
+        ])->get();
 
         return response()->json([
             'success' => true,
-            'data' => $departments->map(function($dept) {
+            'data' => $departments->map(function ($dept) {
                 return [
                     'department_id' => $dept->department_id,
                     'department_name' => $dept->department_name,
                     'department_code' => $dept->department_code,
                     'admin_count' => $dept->admins->count(),
-                    'admins' => $dept->admins->map(function($admin) {
+                    'admins' => $dept->admins->map(function ($admin) {
                         return [
                             'admin_id' => $admin->admin_id,
                             'full_name' => $this->getFullName($admin)
@@ -193,25 +192,28 @@ public function show($id)
      */
     public function getServicesWithManager()
     {
-        $services = ExtraService::with(['manager' => function($query) {
-            $query->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
-        }])->get();
+        $services = ExtraService::with([
+            'managingDepartment' => function ($query) {
+                $query->select('department_id', 'department_name', 'department_code');
+            }
+        ])->get();
 
         return response()->json([
             'success' => true,
-            'data' => $services->map(function($service) {
+            'data' => $services->map(function ($service) {
                 return [
                     'service_id' => $service->service_id,
                     'service_name' => $service->service_name,
                     'managed_by' => $service->managed_by,
                     'service_fee' => $service->service_fee,
                     'account_number' => $service->account_number,
-                    'manager' => $service->manager ? [
-                        'admin_id' => $service->manager->admin_id,
-                        'full_name' => $this->getFullName($service->manager)
-                    ] : null
+                    'managing_department' => $service->managingDepartment ? [
+                        'department_id' => $service->managingDepartment->department_id,
+                        'department_name' => $service->managingDepartment->department_name,
+                        'department_code' => $service->managingDepartment->department_code,
+                    ] : null,
                 ];
-            })
+            }),
         ]);
     }
 
@@ -221,22 +223,26 @@ public function show($id)
      */
     public function getPurposesWithRoutes()
     {
-        $purposes = RequisitionPurpose::with(['routedAdmin' => function($query) {
-            $query->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
-        }])->get();
+        $purposes = RequisitionPurpose::with([
+            'routedDepartment' => function ($query) {
+                $query->select('department_id', 'department_name', 'department_code');
+            }
+        ])->get();
+
 
         return response()->json([
             'success' => true,
-            'data' => $purposes->map(function($purpose) {
+            'data' => $purposes->map(function ($purpose) {
                 return [
                     'purpose_id' => $purpose->purpose_id,
                     'purpose_name' => $purpose->purpose_name,
                     'routes_to' => $purpose->routes_to,
                     'discount_fee' => $purpose->discount_fee,
                     'discount_type' => $purpose->discount_type,
-                    'routed_admin' => $purpose->routedAdmin ? [
-                        'admin_id' => $purpose->routedAdmin->admin_id,
-                        'full_name' => $this->getFullName($purpose->routedAdmin)
+                    'routed_department' => $purpose->routedDepartment ? [
+                        'department_id' => $purpose->routedDepartment->department_id,
+                        'department_name' => $purpose->routedDepartment->department_name,
+                        'department_code' => $purpose->routedDepartment->department_code,
                     ] : null
                 ];
             })
@@ -252,54 +258,51 @@ public function show($id)
         // Get all admins with their departments and services
         $admins = Admin::with([
             'role',
-            'departments' => function($q) {
+            'departments' => function ($q) {
                 $q->select('departments.department_id', 'departments.department_name', 'departments.department_code');
             },
-            'services' => function($q) {
-                $q->select('extra_services.service_id', 'extra_services.service_name');
-            }
         ])->get();
 
         // Get all departments with their admins
-        $departments = Department::with(['admins' => function($q) {
-            $q->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
-        }])->get();
+        $departments = Department::with([
+            'admins' => function ($q) {
+                $q->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
+            }
+        ])->get();
 
         // Get services with manager
-        $services = ExtraService::with(['manager' => function($q) {
-            $q->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
-        }])->get();
+        $services = ExtraService::with([
+            'managingDepartment' => function ($query) {
+                $query->select('department_id', 'department_name', 'department_code');
+            }
+        ])->get();
 
         // Get purposes with routes
-        $purposes = RequisitionPurpose::with(['routedAdmin' => function($q) {
-            $q->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
-        }])->get();
+        $purposes = RequisitionPurpose::with([
+            'routedAdmin' => function ($q) {
+                $q->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
+            }
+        ])->get();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'admins' => $admins->map(function($admin) {
+                'admins' => $admins->map(function ($admin) {
                     return [
                         'admin_id' => $admin->admin_id,
                         'full_name' => $this->getFullName($admin),
                         'title' => $admin->title,
                         'email' => $admin->email,
                         'role_title' => $admin->role ? $admin->role->role_title : null,
-                        'departments' => $admin->departments->map(function($dept) {
+                        'departments' => $admin->departments->map(function ($dept) {
                             return [
                                 'department_id' => $dept->department_id,
                                 'department_name' => $dept->department_name
                             ];
-                        }),
-                        'services' => $admin->services->map(function($service) {
-                            return [
-                                'service_id' => $service->service_id,
-                                'service_name' => $service->service_name
-                            ];
                         })
                     ];
                 }),
-                'departments' => $departments->map(function($dept) {
+                'departments' => $departments->map(function ($dept) {
                     return [
                         'department_id' => $dept->department_id,
                         'department_name' => $dept->department_name,
@@ -307,7 +310,7 @@ public function show($id)
                         'admin_count' => $dept->admins->count()
                     ];
                 }),
-                'services' => $services->map(function($service) {
+                'services' => $services->map(function ($service) {
                     return [
                         'service_id' => $service->service_id,
                         'service_name' => $service->service_name,
@@ -315,7 +318,7 @@ public function show($id)
                         'manager' => $service->manager ? $this->getFullName($service->manager) : null
                     ];
                 }),
-                'purposes' => $purposes->map(function($purpose) {
+                'purposes' => $purposes->map(function ($purpose) {
                     return [
                         'purpose_id' => $purpose->purpose_id,
                         'purpose_name' => $purpose->purpose_name,
@@ -338,101 +341,110 @@ public function show($id)
     }
 
     /**
- * Get all static data in ONE API call (departments, services, purposes, roles)
- * GET /api/manage/static-data
- */
-public function getStaticData()
-{
-    // Get all departments with their admins (for departments tab)
-    $departments = Department::with(['admins' => function($query) {
-        $query->select(
-            'admins.admin_id',
-            'admins.first_name',
-            'admins.last_name',
-            'admins.middle_name',
-            'admins.title',
-            'admins.email'
-        )->with(['role' => function($q) {
-            $q->select('role_id', 'role_title');
-        }]);
-    }])->get();
+     * Get all static data in ONE API call (departments, services, purposes, roles)
+     * GET /api/manage/static-data
+     */
+    public function getStaticData()
+    {
+        // Get all departments with their admins (for departments tab)
+        $departments = Department::with([
+            'admins' => function ($query) {
+                $query->select(
+                    'admins.admin_id',
+                    'admins.first_name',
+                    'admins.last_name',
+                    'admins.middle_name',
+                    'admins.title',
+                    'admins.email'
+                )->with([
+                            'role' => function ($q) {
+                                $q->select('role_id', 'role_title');
+                            }
+                        ]);
+            }
+        ])->get();
 
-    // Get services with manager
-    $services = ExtraService::with(['manager' => function($query) {
-        $query->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
-    }])->get();
+        // Get services with manager
+        $services = ExtraService::with([
+            'manager' => function ($query) {
+                $query->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
+            }
+        ])->get();
 
-    // Get purposes with routes
-    $purposes = RequisitionPurpose::with(['routedAdmin' => function($query) {
-        $query->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
-    }])->get();
+        // Get purposes with routes
+        $purposes = RequisitionPurpose::with([
+            'routedAdmin' => function ($query) {
+                $query->select('admins.admin_id', 'admins.first_name', 'admins.last_name', 'admins.middle_name');
+            }
+        ])->get();
 
-    // Get roles
-    $roles = \App\Models\LookupTables\AdminRole::all();
+        // Get roles
+        $roles = \App\Models\LookupTables\AdminRole::all();
 
-    // Get departments list for checkboxes (simplified)
-    $departmentsList = Department::select('department_id', 'department_name', 'department_code')->get();
+        // Get departments list for checkboxes (simplified)
+        $departmentsList = Department::select('department_id', 'department_name', 'department_code')->get();
 
-    return response()->json([
-        'success' => true,
-        'data' => [
-            'departments' => $departments->map(function($department) {
-                return [
-                    'department_id' => $department->department_id,
-                    'department_name' => $department->department_name,
-                    'department_code' => $department->department_code,
-                    'admins' => $department->admins->map(function($admin) {
-                        return [
-                            'admin_id' => $admin->admin_id,
-                            'full_name' => $this->getFullName($admin),
-                            'title' => $admin->title,
-                            'email' => $admin->email,
-                            'role_title' => $admin->role ? $admin->role->role_title : null,
-                            'is_primary' => $admin->pivot->is_primary ?? false
-                        ];
-                    })
-                ];
-            }),
-            'services' => $services->map(function($service) {
-                return [
-                    'service_id' => $service->service_id,
-                    'service_name' => $service->service_name,
-                    'managed_by' => $service->managed_by,
-                    'service_fee' => $service->service_fee,
-                    'account_number' => $service->account_number,
-                    'manager' => $service->manager ? [
-                        'admin_id' => $service->manager->admin_id,
-                        'full_name' => $this->getFullName($service->manager)
-                    ] : null
-                ];
-            }),
-            'purposes' => $purposes->map(function($purpose) {
-                return [
-                    'purpose_id' => $purpose->purpose_id,
-                    'purpose_name' => $purpose->purpose_name,
-                    'routes_to' => $purpose->routes_to,
-                    'discount_fee' => $purpose->discount_fee,
-                    'discount_type' => $purpose->discount_type,
-                    'routed_admin' => $purpose->routedAdmin ? [
-                        'admin_id' => $purpose->routedAdmin->admin_id,
-                        'full_name' => $this->getFullName($purpose->routedAdmin)
-                    ] : null
-                ];
-            }),
-            'roles' => $roles->map(function($role) {
-                return [
-                    'role_id' => $role->role_id,
-                    'role_title' => $role->role_title
-                ];
-            }),
-            'departments_list' => $departmentsList->map(function($dept) {
-                return [
-                    'department_id' => $dept->department_id,
-                    'department_name' => $dept->department_name,
-                    'department_code' => $dept->department_code
-                ];
-            })
-        ]
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'departments' => $departments->map(function ($department) {
+                    return [
+                        'department_id' => $department->department_id,
+                        'department_name' => $department->department_name,
+                        'department_code' => $department->department_code,
+                        'admins' => $department->admins->map(function ($admin) {
+                            return [
+                                'admin_id' => $admin->admin_id,
+                                'full_name' => $this->getFullName($admin),
+                                'title' => $admin->title,
+                                'email' => $admin->email,
+                                'role_title' => $admin->role ? $admin->role->role_title : null,
+                                'is_primary' => $admin->pivot->is_primary ?? false
+                            ];
+                        })
+                    ];
+                }),
+                'services' => $services->map(function ($service) {
+                    return [
+                        'service_id' => $service->service_id,
+                        'service_name' => $service->service_name,
+                        'managed_by' => $service->managed_by,
+                        'service_fee' => $service->service_fee,
+                        'account_number' => $service->account_number,
+                        'managing_department' => $service->managingDepartment ? [
+                            'department_id' => $service->managingDepartment->department_id,
+                            'department_name' => $service->managingDepartment->department_name,
+                            'department_code' => $service->managingDepartment->department_code,
+                        ] : null,
+                    ];
+                }),
+                'purposes' => $purposes->map(function ($purpose) {
+                    return [
+                        'purpose_id' => $purpose->purpose_id,
+                        'purpose_name' => $purpose->purpose_name,
+                        'routes_to' => $purpose->routes_to,
+                        'discount_fee' => $purpose->discount_fee,
+                        'discount_type' => $purpose->discount_type,
+                        'routed_admin' => $purpose->routedAdmin ? [
+                            'admin_id' => $purpose->routedAdmin->admin_id,
+                            'full_name' => $this->getFullName($purpose->routedAdmin)
+                        ] : null
+                    ];
+                }),
+                'roles' => $roles->map(function ($role) {
+                    return [
+                        'role_id' => $role->role_id,
+                        'role_title' => $role->role_title
+                    ];
+                }),
+                'departments_list' => $departmentsList->map(function ($dept) {
+                    return [
+                        'department_id' => $dept->department_id,
+                        'department_name' => $dept->department_name,
+                        'department_code' => $dept->department_code
+                    ];
+                })
+            ]
+        ]);
+    }
 }

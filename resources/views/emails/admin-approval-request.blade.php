@@ -107,12 +107,23 @@
         }
 
         .badge-equipment {
-            background: {{ $equipment_badge_color ?? '#17a2b8' }};
+            background:
+                {{ $equipment_badge_color ?? '#17a2b8' }}
+            ;
             color: white;
         }
 
         .badge-service {
-            background: {{ $service_badge_color ?? '#28a745' }};
+            background:
+                {{ $service_badge_color ?? '#28a745' }}
+            ;
+            color: white;
+        }
+
+        .badge-purpose {
+            background:
+                {{ $purpose_badge_color ?? '#6f42c1' }}
+            ;
             color: white;
         }
 
@@ -214,19 +225,19 @@
 
             <p>Greetings from Central Philippine University!</p>
 
-            <p>A new booking request has been submitted that requires your approval. You are receiving this email because
+            <p>A new booking request has been submitted that requires your approval. You are receiving this email
+                because
                 you are listed as an administrator for one or more resources in this request based on:</p>
-            
+
             <ul style="margin-bottom: 20px;">
-                @if(isset($has_facilities) && $has_facilities)
-                    <li>Facilities managed by your department(s)</li>
-                @endif
-                @if(isset($has_equipment) && $has_equipment)
-                    <li>Equipment managed by your department(s)</li>
-                @endif
-                @if(isset($has_services) && $has_services)
-                    <li>Services you directly manage</li>
-                @endif
+                @if($has_facilities)
+                <li>Facilities managed by your department</li> @endif
+                @if($has_equipment)
+                <li>Equipment managed by your department</li> @endif
+                @if($has_services)
+                <li>Services managed by your department</li> @endif
+                @if($has_purposes)
+                <li>The booking purpose routed to your department</li> @endif
             </ul>
 
             <div class="info-box">
@@ -261,9 +272,9 @@
 
             <div class="resource-box">
                 <h3 style="margin-top: 0; color: #003366;">📌 Resources You Manage</h3>
-                
+
                 @if(isset($grouped_resources) && (!empty($grouped_resources['facilities']) || !empty($grouped_resources['equipment']) || !empty($grouped_resources['services'])))
-                    
+
                     @if(!empty($grouped_resources['facilities']))
                         <div class="resource-section">
                             <h4>🏛️ Facilities ({{ count($grouped_resources['facilities']) }})</h4>
@@ -306,8 +317,23 @@
                         </div>
                     @endif
 
+                    @if(!empty($grouped_resources['purposes']))
+                        <div class="resource-section">
+                            <h4>🎯 Purpose Routing ({{ count($grouped_resources['purposes']) }})</h4>
+                            <ul class="resource-list">
+                                @foreach($grouped_resources['purposes'] as $resource)
+                                    <li>
+                                        <span class="badge badge-purpose">Purpose</span>
+                                        {{ $resource['name'] }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <p style="margin-top: 15px; font-size: 13px; color: #666;">
-                        <strong>Total:</strong> {{ $total_resources ?? count($resources) }} resource(s) requiring your approval
+                        <strong>Total:</strong> {{ $total_resources ?? count($resources) }} resource(s) requiring your
+                        approval
                     </p>
 
                 @elseif(isset($resources) && count($resources) > 0)
@@ -321,8 +347,11 @@
                                     <span class="badge badge-equipment">Equipment</span>
                                 @elseif($resource['type'] == 'service')
                                     <span class="badge badge-service">Service</span>
+                                @elseif($resource['type'] == 'purpose')
+                                    <span class="badge badge-purpose">Purpose</span>
                                 @else
-                                    <span class="badge" style="background: #6c757d; color: white;">{{ ucfirst($resource['type']) }}</span>
+                                    <span class="badge"
+                                        style="background: #6c757d; color: white;">{{ ucfirst($resource['type']) }}</span>
                                 @endif
                                 {{ $resource['name'] }}
                             </li>
@@ -336,7 +365,8 @@
             </div>
 
             <div class="approval-note">
-                <strong>📝 Note:</strong> The booking cannot be confirmed until <strong>all responsible administrators</strong> have approved it. 
+                <strong>📝 Note:</strong> The booking cannot be confirmed until <strong>all responsible
+                    administrators</strong> have approved it.
                 Other administrators will be notified separately for resources they manage.
             </div>
 
@@ -358,13 +388,14 @@
             </p>
 
             <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-            
+
             <p style="font-size: 12px; color: #666;">
                 <strong>Why am I receiving this?</strong><br>
                 You are receiving this email because you are registered as an administrator for:
                 @if(isset($has_facilities) && $has_facilities) facilities, @endif
                 @if(isset($has_equipment) && $has_equipment) equipment, @endif
-                @if(isset($has_services) && $has_services) services @endif
+                @if(isset($has_services) && $has_services) services, @endif
+                @if(isset($has_purposes) && $has_purposes) purpose routing @endif
                 in the CPU Booking System.
             </p>
         </div>
