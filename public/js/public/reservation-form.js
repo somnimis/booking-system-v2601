@@ -3,22 +3,22 @@ const cache = {
     facilities: {
         data: null,
         timestamp: null,
-        expiry: 300000 // 5 minutes in milliseconds
+        expiry: 300000, // 5 minutes in milliseconds
     },
     equipment: {
         data: null,
         timestamp: null,
-        expiry: 300000
+        expiry: 300000,
     },
     facilityCategories: {
         data: null,
         timestamp: null,
-        expiry: 300000
+        expiry: 300000,
     },
     equipmentCategories: {
         data: null,
         timestamp: null,
-        expiry: 300000
+        expiry: 300000,
     },
     isExpired(key) {
         if (!this[key].timestamp) return true;
@@ -35,7 +35,7 @@ const cache = {
     clear(key) {
         this[key].data = null;
         this[key].timestamp = null;
-    }
+    },
 };
 
 // ========== GLOBAL VARIABLES ==========
@@ -348,6 +348,104 @@ function populateTimeSelects() {
     document.getElementById("endTimeField").innerHTML = options;
 }
 
+// ========== LOAD ACTIVITY PURPOSES DROPDOWN ==========
+async function loadActivityPurposes() {
+    const select = document.getElementById("activityPurposeField");
+    if (!select) return;
+
+    // Optional: cache it since it rarely changes
+    const CACHE_KEY = "activity_purposes";
+    const CACHE_EXPIRY = 10 * 60 * 1000; // 10 minutes
+
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+        try {
+            const parsed = JSON.parse(cached);
+            if (Date.now() - parsed.timestamp < CACHE_EXPIRY) {
+                renderPurposeOptions(select, parsed.data);
+                return;
+            }
+        } catch (_) {
+            // ignore parse errors and refetch
+        }
+    }
+
+    try {
+        const response = await fetch("/api/purposes/dropdown", {
+            headers: {
+                Accept: "application/json",
+                "X-CSRF-TOKEN": csrfToken,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success || !Array.isArray(result.data)) {
+            throw new Error(result.message || "Invalid response format");
+        }
+
+        renderPurposeOptions(select, result.data);
+
+        // Cache the result
+        sessionStorage.setItem(
+            CACHE_KEY,
+            JSON.stringify({ data: result.data, timestamp: Date.now() }),
+        );
+    } catch (error) {
+        console.error("Error loading activity purposes:", error);
+
+        // Fallback UI so the user can still see something is wrong
+        select.innerHTML =
+            '<option value="" selected disabled>Failed to load purposes</option>';
+
+        // Optional: retry once after a short delay
+        setTimeout(() => loadActivityPurposes(), 3000);
+    }
+}
+
+function renderPurposeOptions(select, purposes) {
+    // Preserve the currently selected value (e.g. if restored from localStorage)
+    const currentValue = select.value;
+
+    let html =
+        '<option value="" selected disabled>Select Activity/Purpose</option>';
+
+    purposes.forEach((purpose) => {
+        // Support both {id, purpose_name} and just purpose_name (flat array)
+        const id = purpose.id ?? purpose.purpose_id ?? "";
+        const name = purpose.purpose_name ?? purpose.name ?? "";
+
+        if (!id || !name) return;
+
+        html += `<option value="${id}">${escapeHtml(name)}</option>`;
+    });
+
+    select.innerHTML = html;
+
+    // Restore previous selection if it still exists
+    if (currentValue) {
+        const exists = Array.from(select.options).some(
+            (opt) => opt.value === currentValue,
+        );
+        if (exists) {
+            select.value = currentValue;
+        }
+    }
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 // ========== STEP NAVIGATION FUNCTIONS ==========
 function showStep(stepNumber) {
     document.querySelectorAll(".step-section").forEach((section) => {
@@ -373,7 +471,9 @@ function nextStep(nextStepNumber) {
 }
 
 function previousStep(prevStepNumber) {
-    document.querySelectorAll(".is-invalid").forEach((input) => clearFieldError(input));
+    document
+        .querySelectorAll(".is-invalid")
+        .forEach((input) => clearFieldError(input));
     showStep(prevStepNumber);
 }
 
@@ -439,15 +539,21 @@ function validateStep2() {
         "num_participants",
         "num_chairs",
         "num_tables",
-        "num_microphones"
+        "num_microphones",
     ];
 
-    reservationForm.querySelectorAll(".is-invalid").forEach((input) => clearFieldError(input));
+    reservationForm
+        .querySelectorAll(".is-invalid")
+        .forEach((input) => clearFieldError(input));
 
     requiredFields.forEach((name) => {
         const input = reservationForm.querySelector(`[name="${name}"]`);
         if (input) {
-            if (!input.value || (name === "user_type" && input.value === "") || (name === "purpose_id" && input.value === "")) {
+            if (
+                !input.value ||
+                (name === "user_type" && input.value === "") ||
+                (name === "purpose_id" && input.value === "")
+            ) {
                 showFieldError(input, "Please fill in this field.");
                 valid = false;
                 if (!firstInvalid) firstInvalid = input;
@@ -486,7 +592,10 @@ function validateStep2() {
     if (contactNumberField && contactNumberField.value) {
         clearFieldError(contactNumberField);
         if (!/^\d{1,15}$/.test(contactNumberField.value)) {
-            showFieldError(contactNumberField, "Contact number must be numbers only (max 15 digits).");
+            showFieldError(
+                contactNumberField,
+                "Contact number must be numbers only (max 15 digits).",
+            );
             valid = false;
             if (!firstInvalid) firstInvalid = contactNumberField;
         }
@@ -497,22 +606,39 @@ function validateStep2() {
     // Validate numeric fields are not negative
     const numChairsInput = document.querySelector('input[name="num_chairs"]');
     const numTablesInput = document.querySelector('input[name="num_tables"]');
-    const numMicrophonesInput = document.querySelector('input[name="num_microphones"]');
+    const numMicrophonesInput = document.querySelector(
+        'input[name="num_microphones"]',
+    );
 
-    if (numChairsInput && numChairsInput.value !== "" && parseInt(numChairsInput.value) < 0) {
+    if (
+        numChairsInput &&
+        numChairsInput.value !== "" &&
+        parseInt(numChairsInput.value) < 0
+    ) {
         showFieldError(numChairsInput, "Number of chairs cannot be negative.");
         valid = false;
         if (!firstInvalid) firstInvalid = numChairsInput;
     }
 
-    if (numTablesInput && numTablesInput.value !== "" && parseInt(numTablesInput.value) < 0) {
+    if (
+        numTablesInput &&
+        numTablesInput.value !== "" &&
+        parseInt(numTablesInput.value) < 0
+    ) {
         showFieldError(numTablesInput, "Number of tables cannot be negative.");
         valid = false;
         if (!firstInvalid) firstInvalid = numTablesInput;
     }
 
-    if (numMicrophonesInput && numMicrophonesInput.value !== "" && parseInt(numMicrophonesInput.value) < 0) {
-        showFieldError(numMicrophonesInput, "Number of microphones cannot be negative.");
+    if (
+        numMicrophonesInput &&
+        numMicrophonesInput.value !== "" &&
+        parseInt(numMicrophonesInput.value) < 0
+    ) {
+        showFieldError(
+            numMicrophonesInput,
+            "Number of microphones cannot be negative.",
+        );
         valid = false;
         if (!firstInvalid) firstInvalid = numMicrophonesInput;
     }
@@ -880,44 +1006,53 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     populateTimeSelects();
+    loadActivityPurposes();
 
     // ========== EQUIPMENT SEARCH ==========
     let equipmentSearchTimer;
-    document.getElementById("equipmentSearch").addEventListener("input", function () {
-        clearTimeout(equipmentSearchTimer);
-        equipmentSearchTimer = setTimeout(() => {
-            equipmentSearch = this.value;
-            equipmentCurrentPage = 1;
-            cache.clear('equipment');
-            loadEquipment(true);
-        }, 300);
-    });
+    document
+        .getElementById("equipmentSearch")
+        .addEventListener("input", function () {
+            clearTimeout(equipmentSearchTimer);
+            equipmentSearchTimer = setTimeout(() => {
+                equipmentSearch = this.value;
+                equipmentCurrentPage = 1;
+                cache.clear("equipment");
+                loadEquipment(true);
+            }, 300);
+        });
 
     // ========== FACILITY SEARCH ==========
     let facilitySearchTimer;
-    document.getElementById("facilitySearch").addEventListener("input", function () {
-        clearTimeout(facilitySearchTimer);
-        facilitySearchTimer = setTimeout(() => {
-            facilitySearch = this.value;
-            facilityCurrentPage = 1;
-            cache.clear('facilities');
-            loadFacilities(true);
-        }, 300);
-    });
+    document
+        .getElementById("facilitySearch")
+        .addEventListener("input", function () {
+            clearTimeout(facilitySearchTimer);
+            facilitySearchTimer = setTimeout(() => {
+                facilitySearch = this.value;
+                facilityCurrentPage = 1;
+                cache.clear("facilities");
+                loadFacilities(true);
+            }, 300);
+        });
 
     // ========== FACILITY CATEGORY FILTER ==========
-    document.getElementById("facilityCategoryFilter")?.addEventListener("change", function() {
-        facilityCurrentPage = 1;
-        cache.clear('facilities');
-        loadFacilities(true);
-    });
+    document
+        .getElementById("facilityCategoryFilter")
+        ?.addEventListener("change", function () {
+            facilityCurrentPage = 1;
+            cache.clear("facilities");
+            loadFacilities(true);
+        });
 
     // ========== EQUIPMENT CATEGORY FILTER ==========
-    document.getElementById("equipmentCategoryFilter")?.addEventListener("change", function() {
-        equipmentCurrentPage = 1;
-        cache.clear('equipment');
-        loadEquipment(true);
-    });
+    document
+        .getElementById("equipmentCategoryFilter")
+        ?.addEventListener("change", function () {
+            equipmentCurrentPage = 1;
+            cache.clear("equipment");
+            loadEquipment(true);
+        });
 
     // ========== 2. INITIALIZE STEP SYSTEM ==========
     showStep(1);
@@ -979,7 +1114,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const endDateField = document.getElementById("endDateField");
             const startTimeField = document.getElementById("startTimeField");
             const endTimeField = document.getElementById("endTimeField");
-            const availabilityResult = document.getElementById("availabilityResult");
+            const availabilityResult =
+                document.getElementById("availabilityResult");
 
             if (startDateField) startDateField.value = "";
             if (endDateField) endDateField.value = "";
@@ -2626,7 +2762,8 @@ async function openFacilityModal() {
     const btn = document.getElementById("addFacilityBtn");
     btn.disabled = true;
     btn.classList.add("opacity-50");
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Add item';
+    btn.innerHTML =
+        '<span class="spinner-border spinner-border-sm me-1"></span> Add item';
 
     const modal = new bootstrap.Modal(document.getElementById("facilityModal"));
     facilityCurrentPage = 1;
@@ -2635,10 +2772,10 @@ async function openFacilityModal() {
     selectedFacilities = [];
     document.getElementById("facilitySearch").value = "";
     document.getElementById("facilityCategoryFilter").value = "";
-    
+
     const countElement = document.getElementById("facilityCount");
     if (countElement) countElement.textContent = "0";
-    
+
     await loadFacilityCategories();
     await loadFacilities();
     modal.show();
@@ -2650,18 +2787,18 @@ async function openFacilityModal() {
 
 async function loadFacilityCategories() {
     // Check cache first
-    const cached = cache.get('facilityCategories');
+    const cached = cache.get("facilityCategories");
     if (cached) {
         const select = document.getElementById("facilityCategoryFilter");
         select.innerHTML = '<option value="">All Categories</option>';
-        cached.forEach(category => {
-            const option = document.createElement('option');
+        cached.forEach((category) => {
+            const option = document.createElement("option");
             option.value = `category:${category.category_id}`;
             option.textContent = category.category_name;
             select.appendChild(option);
             if (category.subcategories && category.subcategories.length > 0) {
-                category.subcategories.forEach(sub => {
-                    const subOption = document.createElement('option');
+                category.subcategories.forEach((sub) => {
+                    const subOption = document.createElement("option");
                     subOption.value = `subcategory:${sub.subcategory_id}`;
                     subOption.textContent = `-- ${sub.subcategory_name}`;
                     select.appendChild(subOption);
@@ -2674,18 +2811,18 @@ async function loadFacilityCategories() {
     try {
         const response = await fetch(`/api/facility-categories/venues`);
         const data = await response.json();
-        cache.set('facilityCategories', data);
-        
+        cache.set("facilityCategories", data);
+
         const select = document.getElementById("facilityCategoryFilter");
         select.innerHTML = '<option value="">All Categories</option>';
-        data.forEach(category => {
-            const option = document.createElement('option');
+        data.forEach((category) => {
+            const option = document.createElement("option");
             option.value = `category:${category.category_id}`;
             option.textContent = category.category_name;
             select.appendChild(option);
             if (category.subcategories && category.subcategories.length > 0) {
-                category.subcategories.forEach(sub => {
-                    const subOption = document.createElement('option');
+                category.subcategories.forEach((sub) => {
+                    const subOption = document.createElement("option");
                     subOption.value = `subcategory:${sub.subcategory_id}`;
                     subOption.textContent = `-- ${sub.subcategory_name}`;
                     select.appendChild(subOption);
@@ -2693,20 +2830,22 @@ async function loadFacilityCategories() {
             }
         });
     } catch (error) {
-        console.error('Error loading facility categories:', error);
+        console.error("Error loading facility categories:", error);
     }
 }
 
 async function loadFacilities(forceRefresh = false) {
     const container = document.getElementById("facilityListContainer");
-    container.innerHTML = '<div class="text-center py-3"><div class="spinner-border"></div></div>';
+    container.innerHTML =
+        '<div class="text-center py-3"><div class="spinner-border"></div></div>';
 
     try {
-        const categoryFilter = document.getElementById("facilityCategoryFilter")?.value || "";
+        const categoryFilter =
+            document.getElementById("facilityCategoryFilter")?.value || "";
         const cacheKey = `facilities_${facilityCurrentPage}_${facilitySearch}_${categoryFilter}`;
 
         if (!forceRefresh) {
-            const cached = cache.get('facilities');
+            const cached = cache.get("facilities");
             if (cached && cached[cacheKey]) {
                 buildFacilityList(cached[cacheKey]);
                 return;
@@ -2719,17 +2858,20 @@ async function loadFacilities(forceRefresh = false) {
             filter: categoryFilter,
         });
 
-        const response = await fetch(`/api/requisition/facilities/with-selected?${params}`);
+        const response = await fetch(
+            `/api/requisition/facilities/with-selected?${params}`,
+        );
         const data = await response.json();
 
-        const facilitiesCache = cache.get('facilities') || {};
+        const facilitiesCache = cache.get("facilities") || {};
         facilitiesCache[cacheKey] = data;
-        cache.set('facilities', facilitiesCache);
+        cache.set("facilities", facilitiesCache);
 
         buildFacilityList(data);
     } catch (error) {
-        console.error('Error loading facilities:', error);
-        container.innerHTML = '<div class="text-danger text-center py-3">Failed to load facilities</div>';
+        console.error("Error loading facilities:", error);
+        container.innerHTML =
+            '<div class="text-danger text-center py-3">Failed to load facilities</div>';
     }
 }
 
@@ -2739,13 +2881,14 @@ function buildFacilityList(data) {
     const parentNames = data.parent_names || {};
 
     if (data.data.length === 0) {
-        container.innerHTML = '<div class="text-muted text-center py-3">No facilities found.</div>';
+        container.innerHTML =
+            '<div class="text-muted text-center py-3">No facilities found.</div>';
         return;
     }
 
     // Get all facility IDs that are parents (have children)
     const parentIds = new Set();
-    data.data.forEach(f => {
+    data.data.forEach((f) => {
         if (f.parent_facility_id) {
             parentIds.add(f.parent_facility_id);
         }
@@ -2755,7 +2898,7 @@ function buildFacilityList(data) {
     const grouped = {};
     const orphans = [];
 
-    data.data.forEach(f => {
+    data.data.forEach((f) => {
         if (f.parent_facility_id) {
             if (!grouped[f.parent_facility_id]) {
                 grouped[f.parent_facility_id] = [];
@@ -2765,55 +2908,55 @@ function buildFacilityList(data) {
             orphans.push(f);
         }
     });
-let html = '';
+    let html = "";
 
-// Render orphan facilities (no parent) - these are selectable
-orphans.forEach(f => {
-    // Check if this orphan is actually a parent (has children)
-    const isParent = parentIds.has(f.facility_id);
-    // If it has children, skip it (it will be rendered as a parent container below)
-    if (isParent) {
-        // Skip adding to orphans, it will be handled as a parent container
-        return;
-    }
+    // Render orphan facilities (no parent) - these are selectable
+    orphans.forEach((f) => {
+        // Check if this orphan is actually a parent (has children)
+        const isParent = parentIds.has(f.facility_id);
+        // If it has children, skip it (it will be rendered as a parent container below)
+        if (isParent) {
+            // Skip adding to orphans, it will be handled as a parent container
+            return;
+        }
 
-    const isSelected = selectedFacilities.includes(f.facility_id);
-    const isInForm = selectedItemIds.includes(f.facility_id);
-    const isDisabled = isInForm || isSelected;
+        const isSelected = selectedFacilities.includes(f.facility_id);
+        const isInForm = selectedItemIds.includes(f.facility_id);
+        const isDisabled = isInForm || isSelected;
 
-    html += `
+        html += `
         <div
-            class="d-flex align-items-center p-3 mb-2 facility-item ${isDisabled ? 'opacity-50' : ''} ${isSelected ? 'selected' : ''}"
+            class="d-flex align-items-center p-3 mb-2 facility-item ${isDisabled ? "opacity-50" : ""} ${isSelected ? "selected" : ""}"
             data-id="${f.facility_id}"
             style="
-                cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
+                cursor: ${isDisabled ? "not-allowed" : "pointer"};
                 border-radius: 12px;
-                border: 1px solid ${isSelected ? 'rgba(11, 45, 114, 0.5)' : 'rgba(0, 0, 0, 0.06)'};
-                background: ${isSelected ? 'rgba(11, 45, 114, 0.15)' : '#ffffff'};
-                backdrop-filter: ${isSelected ? 'blur(4px)' : 'none'};
-                color: ${isSelected ? '#0b2d72' : '#212529'};
+                border: 1px solid ${isSelected ? "rgba(11, 45, 114, 0.5)" : "rgba(0, 0, 0, 0.06)"};
+                background: ${isSelected ? "rgba(11, 45, 114, 0.15)" : "#ffffff"};
+                backdrop-filter: ${isSelected ? "blur(4px)" : "none"};
+                color: ${isSelected ? "#0b2d72" : "#212529"};
                 transition: 0.2s ease;
-                box-shadow: ${isSelected ? '0 2px 12px rgba(11, 45, 114, 0.15)' : 'none'};
+                box-shadow: ${isSelected ? "0 2px 12px rgba(11, 45, 114, 0.15)" : "none"};
             "
         >
             <div class="flex-grow-1">
                 <strong>${f.facility_name}</strong>
-                <small class="${isSelected ? 'text-secondary' : 'text-muted'} d-block">
+                <small class="${isSelected ? "text-secondary" : "text-muted"} d-block">
                     ${f.facility_code}
                 </small>
-                ${isInForm ? '<span class="badge bg-success ms-2">Already Added</span>' : ''}
+                ${isInForm ? '<span class="badge bg-success ms-2">Already Added</span>' : ""}
             </div>
-            ${isSelected ? '<i class="bi bi-check-circle-fill text-primary ms-2" style="color: #0b2d72 !important;"></i>' : ''}
+            ${isSelected ? '<i class="bi bi-check-circle-fill text-primary ms-2" style="color: #0b2d72 !important;"></i>' : ""}
         </div>
     `;
-});
+    });
 
-// Render parent buildings with children (parent is NOT selectable, only children are)
-Object.keys(grouped).forEach(parentId => {
-    const children = grouped[parentId];
-    const parentName = parentNames[parentId] || 'Unknown Building';
+    // Render parent buildings with children (parent is NOT selectable, only children are)
+    Object.keys(grouped).forEach((parentId) => {
+        const children = grouped[parentId];
+        const parentName = parentNames[parentId] || "Unknown Building";
 
-    html += `
+        html += `
         <div class="border-bottom">
             <div class="d-flex align-items-center p-2 parent-item" style="cursor: pointer; background-color: #f8f9fa; border-radius: 8px; margin-bottom: 4px;">
                 <span class="toggle-icon me-2" data-parent="${parentId}" style="cursor: pointer; font-weight: bold;">
@@ -2825,82 +2968,86 @@ Object.keys(grouped).forEach(parentId => {
             <div class="child-container" data-parent="${parentId}" style="padding-left: 20px;">
     `;
 
-    children.forEach(f => {
-        const isSelected = selectedFacilities.includes(f.facility_id);
-        const isInForm = selectedItemIds.includes(f.facility_id);
-        const isDisabled = isInForm || isSelected;
+        children.forEach((f) => {
+            const isSelected = selectedFacilities.includes(f.facility_id);
+            const isInForm = selectedItemIds.includes(f.facility_id);
+            const isDisabled = isInForm || isSelected;
 
-        html += `
+            html += `
             <div
-                class="d-flex align-items-center p-3 mb-2 facility-item ${isDisabled ? 'opacity-50' : ''} ${isSelected ? 'selected' : ''}"
+                class="d-flex align-items-center p-3 mb-2 facility-item ${isDisabled ? "opacity-50" : ""} ${isSelected ? "selected" : ""}"
                 data-id="${f.facility_id}"
                 style="
-                    cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
+                    cursor: ${isDisabled ? "not-allowed" : "pointer"};
                     border-radius: 12px;
-                    border: 1px solid ${isSelected ? 'rgba(11, 45, 114, 0.5)' : 'rgba(0, 0, 0, 0.06)'};
-                    background: ${isSelected ? 'rgba(1, 86, 255, 0.15)' : '#ffffff'};
-                    backdrop-filter: ${isSelected ? 'blur(4px)' : 'none'};
-                    color: ${isSelected ? '#0b2d72' : '#212529'};
+                    border: 1px solid ${isSelected ? "rgba(11, 45, 114, 0.5)" : "rgba(0, 0, 0, 0.06)"};
+                    background: ${isSelected ? "rgba(1, 86, 255, 0.15)" : "#ffffff"};
+                    backdrop-filter: ${isSelected ? "blur(4px)" : "none"};
+                    color: ${isSelected ? "#0b2d72" : "#212529"};
                     transition: 0.2s ease;
-                    box-shadow: ${isSelected ? '0 2px 12px rgba(11, 45, 114, 0.15)' : 'none'};
+                    box-shadow: ${isSelected ? "0 2px 12px rgba(11, 45, 114, 0.15)" : "none"};
                 "
             >
                 <div class="flex-grow-1">
                     <span class="text-muted me-2">—</span>
                     <strong>${f.facility_name}</strong>
-                    <small class="${isSelected ? 'text-secondary' : 'text-muted'} d-block" style="padding-left: 20px;">
+                    <small class="${isSelected ? "text-secondary" : "text-muted"} d-block" style="padding-left: 20px;">
                         ${f.facility_code}
                     </small>
-                    ${isInForm ? '<span class="badge bg-success ms-2">Already Added</span>' : ''}
+                    ${isInForm ? '<span class="badge bg-success ms-2">Already Added</span>' : ""}
                 </div>
-                ${isSelected ? '<i class="bi bi-check-circle-fill text-primary ms-2" style="color: #0b2d72 !important;"></i>' : ''}
+                ${isSelected ? '<i class="bi bi-check-circle-fill text-primary ms-2" style="color: #0b2d72 !important;"></i>' : ""}
             </div>
         `;
-    });
+        });
 
-    html += `
+        html += `
             </div>
         </div>
     `;
-});
+    });
 
-container.innerHTML = html;
+    container.innerHTML = html;
 
     // Toggle functionality for parent items
-    document.querySelectorAll('.parent-item').forEach(parentItem => {
-        parentItem.addEventListener('click', function(e) {
-            const parentId = this.querySelector('.toggle-icon')?.dataset.parent;
+    document.querySelectorAll(".parent-item").forEach((parentItem) => {
+        parentItem.addEventListener("click", function (e) {
+            const parentId = this.querySelector(".toggle-icon")?.dataset.parent;
             if (!parentId) return;
 
-            const childContainer = document.querySelector(`.child-container[data-parent="${parentId}"]`);
-            const icon = this.querySelector('.toggle-icon i');
+            const childContainer = document.querySelector(
+                `.child-container[data-parent="${parentId}"]`,
+            );
+            const icon = this.querySelector(".toggle-icon i");
 
             if (childContainer) {
-                if (childContainer.style.display === 'none') {
-                    childContainer.style.display = 'block';
-                    icon.className = 'bi bi-chevron-down';
+                if (childContainer.style.display === "none") {
+                    childContainer.style.display = "block";
+                    icon.className = "bi bi-chevron-down";
                 } else {
-                    childContainer.style.display = 'none';
-                    icon.className = 'bi bi-chevron-right';
+                    childContainer.style.display = "none";
+                    icon.className = "bi bi-chevron-right";
                 }
             }
         });
 
-        const toggleIcon = parentItem.querySelector('.toggle-icon');
+        const toggleIcon = parentItem.querySelector(".toggle-icon");
         if (toggleIcon) {
-            toggleIcon.addEventListener('click', function(e) {
+            toggleIcon.addEventListener("click", function (e) {
                 e.stopPropagation();
                 const parentId = this.dataset.parent;
-                const childContainer = document.querySelector(`.child-container[data-parent="${parentId}"]`);
-                const icon = this.querySelector('i');
+                const childContainer = document.querySelector(
+                    `.child-container[data-parent="${parentId}"]`,
+                );
+                const icon = this.querySelector("i");
 
                 if (childContainer) {
-                    if (childContainer.style.display === 'none') {
-                        childContainer.style.display = 'block';
-                        icon.className = 'bi bi-chevron-down';
+                    if (childContainer.style.display === "none") {
+                        childContainer.style.display = "block";
+                        icon.className = "bi bi-chevron-down";
                     } else {
-                        childContainer.style.display = 'none';
-                        icon.className = 'bi bi-chevron-right';
+                        childContainer.style.display = "none";
+                        icon.className = "bi bi-chevron-right";
                     }
                 }
             });
@@ -2908,66 +3055,68 @@ container.innerHTML = html;
     });
 
     // Click handlers for facility items (only children and orphans without children)
-document.querySelectorAll('.facility-item').forEach(item => {
-    item.addEventListener('click', function() {
-        const id = parseInt(this.dataset.id);
+    document.querySelectorAll(".facility-item").forEach((item) => {
+        item.addEventListener("click", function () {
+            const id = parseInt(this.dataset.id);
 
-        if (selectedItemIds.includes(id)) {
-            showToast("This facility is already in your form", "info");
-            return;
-        }
-
-        const index = selectedFacilities.indexOf(id);
-
-        if (index > -1) {
-            selectedFacilities.splice(index, 1);
-            this.classList.remove('selected');
-            // Reset to unselected styles
-            this.style.backgroundColor = '#ffffff';
-            this.style.color = '#212529';
-            this.style.border = '1px solid rgba(0, 0, 0, 0.06)';
-            this.style.boxShadow = 'none';
-            this.style.backdropFilter = 'none';
-            this.style.borderRadius = '12px';
-            this.style.cursor = 'pointer';
-            
-            const checkIcon = this.querySelector('.bi-check-circle-fill');
-            if (checkIcon) checkIcon.remove();
-            
-            const smallElements = this.querySelectorAll('small');
-            smallElements.forEach(el => {
-                el.classList.remove('text-secondary');
-                el.classList.add('text-muted');
-            });
-        } else {
-            selectedFacilities.push(id);
-            this.classList.add('selected');
-            // Set selected styles with glassy blue
-            this.style.backgroundColor = 'rgba(11, 45, 114, 0.15)';
-            this.style.color = '#0b2d72';
-            this.style.border = '1px solid rgba(11, 45, 114, 0.5)';
-            this.style.boxShadow = '0 2px 12px rgba(11, 45, 114, 0.15)';
-            this.style.backdropFilter = 'blur(4px)';
-            this.style.borderRadius = '12px';
-            this.style.cursor = 'pointer';
-            
-            if (!this.querySelector('.bi-check-circle-fill')) {
-                const icon = document.createElement('i');
-                icon.className = 'bi bi-check-circle-fill text-primary ms-2';
-                icon.style.color = '#0b2d72 !important';
-                this.appendChild(icon);
+            if (selectedItemIds.includes(id)) {
+                showToast("This facility is already in your form", "info");
+                return;
             }
-            
-            const smallElements = this.querySelectorAll('small');
-            smallElements.forEach(el => {
-                el.classList.remove('text-muted');
-                el.classList.add('text-secondary');
-            });
-        }
-        const countElement = document.getElementById("facilityCount");
-        if (countElement) countElement.textContent = selectedFacilities.length;
+
+            const index = selectedFacilities.indexOf(id);
+
+            if (index > -1) {
+                selectedFacilities.splice(index, 1);
+                this.classList.remove("selected");
+                // Reset to unselected styles
+                this.style.backgroundColor = "#ffffff";
+                this.style.color = "#212529";
+                this.style.border = "1px solid rgba(0, 0, 0, 0.06)";
+                this.style.boxShadow = "none";
+                this.style.backdropFilter = "none";
+                this.style.borderRadius = "12px";
+                this.style.cursor = "pointer";
+
+                const checkIcon = this.querySelector(".bi-check-circle-fill");
+                if (checkIcon) checkIcon.remove();
+
+                const smallElements = this.querySelectorAll("small");
+                smallElements.forEach((el) => {
+                    el.classList.remove("text-secondary");
+                    el.classList.add("text-muted");
+                });
+            } else {
+                selectedFacilities.push(id);
+                this.classList.add("selected");
+                // Set selected styles with glassy blue
+                this.style.backgroundColor = "rgba(11, 45, 114, 0.15)";
+                this.style.color = "#0b2d72";
+                this.style.border = "1px solid rgba(11, 45, 114, 0.5)";
+                this.style.boxShadow = "0 2px 12px rgba(11, 45, 114, 0.15)";
+                this.style.backdropFilter = "blur(4px)";
+                this.style.borderRadius = "12px";
+                this.style.cursor = "pointer";
+
+                if (!this.querySelector(".bi-check-circle-fill")) {
+                    const icon = document.createElement("i");
+                    icon.className =
+                        "bi bi-check-circle-fill text-primary ms-2";
+                    icon.style.color = "#0b2d72 !important";
+                    this.appendChild(icon);
+                }
+
+                const smallElements = this.querySelectorAll("small");
+                smallElements.forEach((el) => {
+                    el.classList.remove("text-muted");
+                    el.classList.add("text-secondary");
+                });
+            }
+            const countElement = document.getElementById("facilityCount");
+            if (countElement)
+                countElement.textContent = selectedFacilities.length;
+        });
     });
-});
     const pagination = document.getElementById("facilityPagination");
     pagination.innerHTML = `
         <nav>
@@ -3033,7 +3182,7 @@ async function batchAddFacilities() {
             if (modal) modal.hide();
 
             // Clear cache and reload AFTER modal is closed
-            cache.clear('facilities');
+            cache.clear("facilities");
             await loadFacilities(true);
         } else {
             showToast(result.message || "Failed to add facilities", "error");
@@ -3057,19 +3206,22 @@ async function openEquipmentModal() {
     const btn = document.getElementById("addEquipmentBtn");
     btn.disabled = true;
     btn.classList.add("opacity-50");
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Add item';
+    btn.innerHTML =
+        '<span class="spinner-border spinner-border-sm me-1"></span> Add item';
 
-    const modal = new bootstrap.Modal(document.getElementById("equipmentModal"));
+    const modal = new bootstrap.Modal(
+        document.getElementById("equipmentModal"),
+    );
     equipmentCurrentPage = 1;
     equipmentSearch = "";
     equipmentCategoryFilter = "";
     selectedEquipment = [];
     document.getElementById("equipmentSearch").value = "";
     document.getElementById("equipmentCategoryFilter").value = "";
-    
+
     const countElement = document.getElementById("equipmentCount");
     if (countElement) countElement.textContent = "0";
-    
+
     await loadEquipmentCategories();
     await loadEquipment();
     modal.show();
@@ -3081,12 +3233,12 @@ async function openEquipmentModal() {
 
 async function loadEquipmentCategories() {
     // Check cache first
-    const cached = cache.get('equipmentCategories');
+    const cached = cache.get("equipmentCategories");
     if (cached) {
         const select = document.getElementById("equipmentCategoryFilter");
         select.innerHTML = '<option value="">All Categories</option>';
-        cached.forEach(category => {
-            const option = document.createElement('option');
+        cached.forEach((category) => {
+            const option = document.createElement("option");
             option.value = `category:${category.category_id}`;
             option.textContent = category.category_name;
             select.appendChild(option);
@@ -3097,31 +3249,33 @@ async function loadEquipmentCategories() {
     try {
         const response = await fetch(`/api/equipment-categories`);
         const data = await response.json();
-        cache.set('equipmentCategories', data);
-        
+        cache.set("equipmentCategories", data);
+
         const select = document.getElementById("equipmentCategoryFilter");
         select.innerHTML = '<option value="">All Categories</option>';
-        data.forEach(category => {
-            const option = document.createElement('option');
+        data.forEach((category) => {
+            const option = document.createElement("option");
             option.value = `category:${category.category_id}`;
             option.textContent = category.category_name;
             select.appendChild(option);
         });
     } catch (error) {
-        console.error('Error loading equipment categories:', error);
+        console.error("Error loading equipment categories:", error);
     }
 }
 
 async function loadEquipment(forceRefresh = false) {
     const container = document.getElementById("equipmentListContainer");
-    container.innerHTML = '<div class="text-center py-3"><div class="spinner-border"></div></div>';
+    container.innerHTML =
+        '<div class="text-center py-3"><div class="spinner-border"></div></div>';
 
     try {
-        const filter = document.getElementById("equipmentCategoryFilter")?.value || "";
+        const filter =
+            document.getElementById("equipmentCategoryFilter")?.value || "";
         const cacheKey = `equipment_${equipmentCurrentPage}_${equipmentSearch}_${filter}`;
 
         if (!forceRefresh) {
-            const cached = cache.get('equipment');
+            const cached = cache.get("equipment");
             if (cached && cached[cacheKey]) {
                 buildEquipmentList(cached[cacheKey]);
                 return;
@@ -3134,17 +3288,20 @@ async function loadEquipment(forceRefresh = false) {
             filter: filter,
         });
 
-        const response = await fetch(`/api/requisition/equipment/with-selected?${params}`);
+        const response = await fetch(
+            `/api/requisition/equipment/with-selected?${params}`,
+        );
         const data = await response.json();
 
-        const equipmentCache = cache.get('equipment') || {};
+        const equipmentCache = cache.get("equipment") || {};
         equipmentCache[cacheKey] = data;
-        cache.set('equipment', equipmentCache);
+        cache.set("equipment", equipmentCache);
 
         buildEquipmentList(data);
     } catch (error) {
-        console.error('Error loading equipment:', error);
-        container.innerHTML = '<div class="text-danger text-center py-3">Failed to load equipment</div>';
+        console.error("Error loading equipment:", error);
+        container.innerHTML =
+            '<div class="text-danger text-center py-3">Failed to load equipment</div>';
     }
 }
 
@@ -3154,14 +3311,17 @@ function buildEquipmentList(data) {
     const filtered = data.data || [];
 
     if (filtered.length === 0) {
-        container.innerHTML = '<div class="text-muted text-center py-3">No equipment found.</div>';
+        container.innerHTML =
+            '<div class="text-muted text-center py-3">No equipment found.</div>';
         return;
     }
 
-    let html = '';
+    let html = "";
 
-    filtered.forEach(e => {
-        const isUnavailable = e.status_name === "Unavailable" || e.status_name === "Under Maintenance";
+    filtered.forEach((e) => {
+        const isUnavailable =
+            e.status_name === "Unavailable" ||
+            e.status_name === "Under Maintenance";
         const isSelected = selectedEquipment.includes(e.equipment_id);
         const isInForm = selectedItemIds.includes(e.equipment_id);
         const isDisabled = isUnavailable || isInForm || isSelected;
@@ -3181,33 +3341,33 @@ function buildEquipmentList(data) {
 
         html += `
             <div
-                class="d-flex align-items-center p-3 mb-2 equipment-item ${isDisabled ? 'opacity-50' : ''} ${isSelected ? 'selected' : ''}"
+                class="d-flex align-items-center p-3 mb-2 equipment-item ${isDisabled ? "opacity-50" : ""} ${isSelected ? "selected" : ""}"
                 data-id="${e.equipment_id}"
                 style="
-                    cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
+                    cursor: ${isDisabled ? "not-allowed" : "pointer"};
                     border-radius: 12px;
-                    border: 1px solid ${isSelected ? 'rgba(11, 45, 114, 0.5)' : 'rgba(0, 0, 0, 0.06)'};
-                    background: ${isSelected ? 'rgba(11, 45, 114, 0.15)' : '#ffffff'};
-                    backdrop-filter: ${isSelected ? 'blur(4px)' : 'none'};
-                    color: ${isSelected ? '#0b2d72' : '#212529'};
+                    border: 1px solid ${isSelected ? "rgba(11, 45, 114, 0.5)" : "rgba(0, 0, 0, 0.06)"};
+                    background: ${isSelected ? "rgba(11, 45, 114, 0.15)" : "#ffffff"};
+                    backdrop-filter: ${isSelected ? "blur(4px)" : "none"};
+                    color: ${isSelected ? "#0b2d72" : "#212529"};
                     transition: 0.2s ease;
-                    box-shadow: ${isSelected ? '0 2px 12px rgba(11, 45, 114, 0.15)' : 'none'};
+                    box-shadow: ${isSelected ? "0 2px 12px rgba(11, 45, 114, 0.15)" : "none"};
                 "
             >
                 <div class="flex-grow-1">
                     <strong>${e.equipment_name}</strong>
                     <span class="badge ${e.status_name === "Available" ? "bg-success" : "bg-warning"} ms-2">${e.status_name}</span>
-                    ${isInForm ? '<span class="badge bg-success ms-2">Already Added</span>' : ''}
+                    ${isInForm ? '<span class="badge bg-success ms-2">Already Added</span>' : ""}
                 </div>
-                ${isSelected ? '<i class="bi bi-check-circle-fill text-primary ms-2" style="color: #0b2d72 !important;"></i>' : ''}
+                ${isSelected ? '<i class="bi bi-check-circle-fill text-primary ms-2" style="color: #0b2d72 !important;"></i>' : ""}
             </div>
         `;
     });
 
     container.innerHTML = html;
 
-    document.querySelectorAll('.equipment-item').forEach(item => {
-        item.addEventListener('click', function() {
+    document.querySelectorAll(".equipment-item").forEach((item) => {
+        item.addEventListener("click", function () {
             const id = parseInt(this.dataset.id);
 
             if (selectedItemIds.includes(id)) {
@@ -3219,39 +3379,41 @@ function buildEquipmentList(data) {
 
             if (index > -1) {
                 selectedEquipment.splice(index, 1);
-                this.classList.remove('selected');
+                this.classList.remove("selected");
                 // Reset to unselected styles
-                this.style.backgroundColor = '#ffffff';
-                this.style.color = '#212529';
-                this.style.border = '1px solid rgba(0, 0, 0, 0.06)';
-                this.style.boxShadow = 'none';
-                this.style.backdropFilter = 'none';
-                this.style.borderRadius = '12px';
-                this.style.cursor = 'pointer';
-                
-                const checkIcon = this.querySelector('.bi-check-circle-fill');
+                this.style.backgroundColor = "#ffffff";
+                this.style.color = "#212529";
+                this.style.border = "1px solid rgba(0, 0, 0, 0.06)";
+                this.style.boxShadow = "none";
+                this.style.backdropFilter = "none";
+                this.style.borderRadius = "12px";
+                this.style.cursor = "pointer";
+
+                const checkIcon = this.querySelector(".bi-check-circle-fill");
                 if (checkIcon) checkIcon.remove();
             } else {
                 selectedEquipment.push(id);
-                this.classList.add('selected');
+                this.classList.add("selected");
                 // Set selected styles with glassy blue
-                this.style.backgroundColor = 'rgba(11, 45, 114, 0.15)';
-                this.style.color = '#0b2d72';
-                this.style.border = '1px solid rgba(11, 45, 114, 0.5)';
-                this.style.boxShadow = '0 2px 12px rgba(11, 45, 114, 0.15)';
-                this.style.backdropFilter = 'blur(4px)';
-                this.style.borderRadius = '12px';
-                this.style.cursor = 'pointer';
-                
-                if (!this.querySelector('.bi-check-circle-fill')) {
-                    const icon = document.createElement('i');
-                    icon.className = 'bi bi-check-circle-fill text-primary ms-2';
-                    icon.style.color = '#0b2d72 !important';
+                this.style.backgroundColor = "rgba(11, 45, 114, 0.15)";
+                this.style.color = "#0b2d72";
+                this.style.border = "1px solid rgba(11, 45, 114, 0.5)";
+                this.style.boxShadow = "0 2px 12px rgba(11, 45, 114, 0.15)";
+                this.style.backdropFilter = "blur(4px)";
+                this.style.borderRadius = "12px";
+                this.style.cursor = "pointer";
+
+                if (!this.querySelector(".bi-check-circle-fill")) {
+                    const icon = document.createElement("i");
+                    icon.className =
+                        "bi bi-check-circle-fill text-primary ms-2";
+                    icon.style.color = "#0b2d72 !important";
                     this.appendChild(icon);
                 }
             }
             const countElement = document.getElementById("equipmentCount");
-            if (countElement) countElement.textContent = selectedEquipment.length;
+            if (countElement)
+                countElement.textContent = selectedEquipment.length;
         });
     });
 
@@ -3321,7 +3483,7 @@ async function batchAddEquipment() {
             if (modal) modal.hide();
 
             // Clear cache and reload AFTER modal is closed
-            cache.clear('equipment');
+            cache.clear("equipment");
             await loadEquipment(true);
         } else {
             showToast(result.message || "Failed to add equipment", "error");

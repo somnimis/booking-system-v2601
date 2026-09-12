@@ -138,6 +138,7 @@ Route::get('/department-roles', [DepartmentRoleController::class, 'index']);
 
 // ---------------- Requisition Purposes - CRUD ---------------- //
 Route::get('/purposes', [RequisitionPurposeController::class, 'index']);
+Route::get('/purposes/dropdown', [RequisitionPurposeController::class, 'dropdown']);
 Route::get('/purposes/{id}', [RequisitionPurposeController::class, 'show']);
 Route::post('/purposes', [RequisitionPurposeController::class, 'store']);
 Route::put('/purposes/{id}', [RequisitionPurposeController::class, 'update']);
@@ -149,10 +150,6 @@ Route::get('/services/dropdown', [ExtraServicesController::class, 'getDropdown']
 Route::post('/extra-services', [ExtraServicesController::class, 'store']);
 Route::put('/extra-services/{service_id}', [ExtraServicesController::class, 'update']);
 Route::delete('/extra-services/{service_id}', [ExtraServicesController::class, 'destroy']);
-Route::post('/extra-services/assign', [ExtraServicesController::class, 'assignService'])
-    ->middleware('auth:sanctum');
-Route::get('/admin-services/{adminId?}', [ExtraServicesController::class, 'getAdminServices']);
-Route::delete('/admin-services/{adminServiceId}', [ExtraServicesController::class, 'unassignService']);
 
 // ---------------- Requisition Forms (public) ---------------- //
 Route::prefix('requisition')->middleware(['web'])->group(function () {
@@ -251,8 +248,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Department relationships
     Route::get('/manage/departments/admins', [ManageAdminsController::class, 'getAdminsByDepartment']);
     Route::get('/manage/departments', [ManageAdminsController::class, 'getDepartmentsWithAdmins']);
-    // Service relationships
-    Route::get('/manage/services', [ManageAdminsController::class, 'getServicesWithManager']);
     // Purpose relationships
     Route::get('/manage/purposes', [ManageAdminsController::class, 'getPurposesWithRoutes']);
     // Complete dashboard data (all in one)

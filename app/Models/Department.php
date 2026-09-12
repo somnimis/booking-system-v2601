@@ -25,7 +25,7 @@ class Department extends Model
     public function admins()
     {
         return $this->belongsToMany(Admin::class, 'admin_departments', 'department_id', 'admin_id')
-            ->withPivot('is_primary')
+            ->withPivot('role_id', 'is_primary')
             ->withTimestamps();
     }
     public function equipment()

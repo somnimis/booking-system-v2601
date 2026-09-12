@@ -172,15 +172,15 @@ class Admin extends Authenticatable
     {
         return $this->hasMany(RequisitionComment::class, 'admin_id', 'admin_id');
     }
-    public function adminServices()
-    {
-        return $this->hasMany(AdminService::class, 'admin_id', 'admin_id');
-    }
 
-    public function departments(): BelongsToMany
+    public function departments()
     {
-        return $this->belongsToMany(Department::class, 'admin_departments', 'admin_id', 'department_id')
-            ->withPivot('is_primary', 'role_id')
+        return $this->belongsToMany(
+            Department::class,
+            'admin_departments',
+            'admin_id',
+            'department_id'
+        )->withPivot('role_id', 'is_primary') 
             ->withTimestamps();
     }
 
@@ -203,14 +203,6 @@ class Admin extends Authenticatable
         return $dept && $dept->pivot->role_id === $headRole->role_id;
     }
 
-    /**
-     * The services that belong to the admin.
-     */
-    public function services()
-    {
-        return $this->belongsToMany(ExtraService::class, 'admin_services', 'admin_id', 'service_id')
-            ->withPivot([]); // No timestamps or extra pivot fields
-    }
     public function facilities()
     {
         return $this->belongsToMany(
