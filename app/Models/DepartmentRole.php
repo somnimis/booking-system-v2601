@@ -17,8 +17,7 @@ class DepartmentRole extends Model
 
     // Constants for easy reference
     const HEAD = 1;
-    const APPROVER = 2;
-    const STAFF = 3;
+    const STAFF = 2;
 
     public function admins()
     {

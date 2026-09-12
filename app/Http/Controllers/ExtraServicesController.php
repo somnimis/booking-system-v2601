@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\ExtraService;
-use App\Models\AdminService;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 
@@ -78,77 +77,4 @@ class ExtraServicesController extends Controller
         ], 200);
     }
 
-    /* ----- Assigning admins to extra services ----- */
-
-    public function assignService(Request $request)
-    {
-        $admin = $request->user();
-
-        $validated = $request->validate([
-            'service_ids' => 'required|array',
-            'service_ids.*' => 'exists:extra_services,service_id',
-        ]);
-
-        $assignedServices = [];
-        $skippedServices = [];
-
-        foreach ($validated['service_ids'] as $serviceId) {
-            $exists = AdminService::where('admin_id', $admin->admin_id)
-                ->where('service_id', $serviceId)
-                ->exists();
-
-            if ($exists) {
-                $skippedServices[] = $serviceId;
-                continue;
-            }
-
-            $adminService = AdminService::create([
-                'admin_id' => $admin->admin_id,
-                'service_id' => $serviceId
-            ]);
-
-            $assignedServices[] = [
-                'service_id' => $serviceId,
-                'service_name' => ExtraService::find($serviceId)->service_name
-            ];
-        }
-
-        $messageParts = [];
-        if (!empty($assignedServices)) {
-            $assignedNames = implode(', ', array_column($assignedServices, 'service_name'));
-            $messageParts[] = "Assigned: {$assignedNames}";
-        }
-        if (!empty($skippedServices)) {
-            $skippedNames = implode(', ', ExtraService::whereIn('service_id', $skippedServices)->pluck('service_name')->toArray());
-            $messageParts[] = "Skipped (already assigned): {$skippedNames}";
-        }
-
-        return response()->json([
-            'message' => implode(' | ', $messageParts),
-            'data' => $assignedServices
-        ], 201);
-    }
-
-    public function getAdminServices($adminId = null)
-    {
-        if ($adminId) {
-            $services = AdminService::where('admin_id', $adminId)->get();
-        } else {
-            $services = AdminService::all();
-        }
-
-        return response()->json($services, 200);
-    }
-
-    public function unassignService($adminServiceId)
-    {
-        $adminService = AdminService::findOrFail($adminServiceId);
-        $serviceName = $adminService->service->service_name ?? 'Service';
-
-        $adminService->delete();
-
-        return response()->json([
-            'message' => "Service '{$serviceName}' unassigned successfully"
-        ], 200);
-    }
 }

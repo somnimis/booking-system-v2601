@@ -397,34 +397,26 @@
                             <div class="col-12">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <label class="form-label fw-bold">Department</label>
+                                        <label class="form-label">Department</label>
                                         <select class="form-select" id="addDepartmentSelect" name="department_id">
                                             <option value="">Select department</option>
                                         </select>
                                         <input type="hidden" name="department_ids" id="addSelectedDeptIds">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label fw-bold">Department Role</label>
+                                        <label class="form-label">Department Role</label>
                                         <select class="form-select" id="addDepartmentRoleSelect" name="department_role_id">
                                             <option value="">Select role</option>
                                         </select>
                                         <input type="hidden" name="department_roles" id="addSelectedDeptRoles">
                                     </div>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label fw-bold">Services</label>
-                                <div class="card border">
-                                    <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                                        <div id="addServiceChecklist">
-                                            <div class="text-muted">Loading services...</div>
-                                        </div>
+                                    <div class="col-12">
+                                        <small class="text-muted d-block mt-1">
+                                            Select <strong>Department Head</strong> to make this admin approve
+                                            requisitions for the department's resources.
+                                        </small>
                                     </div>
                                 </div>
-                                <div class="mt-2">
-                                    <span id="addServiceCounter" class="text-muted small">0 services selected</span>
-                                </div>
-                                <input type="hidden" name="service_ids" id="addSelectedServiceIds">
                             </div>
                         </div>
                     </form>
@@ -472,7 +464,7 @@
                                     <input type="text" class="form-control" id="edit_title" name="title">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">School ID</label>
+                                    <label class="form-label">School ID </label><small class="text-muted"> (Optional)</small>
                                     <input type="text" class="form-control" id="edit_school_id" name="school_id">
                                 </div>
                                 <div class="col-md-6">
@@ -512,19 +504,10 @@
                                             <input type="hidden" id="editSelectedDeptRoles" name="department_roles">
                                         </div>
                                         <div class="col-12">
-                                            <label class="form-label fw-bold">Services</label>
-                                            <div class="card border">
-                                                <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                                                    <div id="editServiceChecklist">
-                                                        <div class="text-muted">Loading services...</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mt-2">
-                                                <span id="editServiceCounter" class="text-muted small">0 services
-                                                    selected</span>
-                                            </div>
-                                            <input type="hidden" id="editSelectedServiceIds" name="service_ids">
+                                            <small class="text-muted d-block mt-1">
+                                                Select <strong>Department Head</strong> to make this admin approve
+                                                requisitions for the department's resources.
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -573,7 +556,6 @@
         let departmentsList = [];
         let rolesList = [];
         let departmentRolesList = [];
-        let servicesList = [];
 
         document.addEventListener('DOMContentLoaded', function () {
             const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
@@ -598,7 +580,7 @@
             if (tableWrapper) tableWrapper.style.display = 'none';
 
             try {
-                const [adminsRes, rolesRes, deptsRes, deptRolesRes, servicesRes] = await Promise.all([
+                const [adminsRes, rolesRes, deptsRes, deptRolesRes] = await Promise.all([
                     fetch(`/api/manage/admins?page=${currentAdminPage}&per_page=${itemsPerPage}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     }),
@@ -610,9 +592,6 @@
                     }),
                     fetch('/api/department-roles', {
                         headers: { 'Authorization': `Bearer ${token}` }
-                    }),
-                    fetch('/api/services/dropdown', {
-                        headers: { 'Authorization': `Bearer ${token}` }
                     })
                 ]);
 
@@ -620,7 +599,6 @@
                 const rolesResult = await rolesRes.json();
                 const deptsResult = await deptsRes.json();
                 const deptRolesResult = await deptRolesRes.json();
-                const servicesResult = await servicesRes.json();
 
                 // Handle admins
                 if (adminsResult.success && adminsResult.data) {
@@ -646,15 +624,9 @@
                     departmentRolesList = deptRolesResult.data || [];
                 }
 
-                // Handle services
-                if (servicesResult.success) {
-                    servicesList = servicesResult.data || [];
-                }
-
                 populateRoleDropdowns();
                 populateAddModalFormData();
                 populateDepartmentRoleDropdowns();
-                populateServiceChecklists()
                 renderAdminList();
 
                 if (loadingEl) loadingEl.style.display = 'none';
@@ -664,14 +636,14 @@
                 console.error('Error loading data:', error);
                 if (loadingEl) {
                     loadingEl.innerHTML = `
-                                                                            <div class="alert alert-danger">
-                                                                                <strong>Failed to load administrators</strong>
-                                                                                <br>
-                                                                                <small class="text-muted">${error.message || 'Unknown error'}</small>
-                                                                                <br>
-                                                                                <small class="text-muted">Check console for details</small>
-                                                                            </div>
-                                                                        `;
+                                                                                        <div class="alert alert-danger">
+                                                                                            <strong>Failed to load administrators</strong>
+                                                                                            <br>
+                                                                                            <small class="text-muted">${error.message || 'Unknown error'}</small>
+                                                                                            <br>
+                                                                                            <small class="text-muted">Check console for details</small>
+                                                                                        </div>
+                                                                                    `;
                 }
             }
         }
@@ -706,11 +678,11 @@
                 addDeptContainer.innerHTML = '';
                 departmentsList.forEach(dept => {
                     addDeptContainer.innerHTML += `
-                                                                                                                                        <div class="form-check">
-                                                                                                                                            <input class="form-check-input add-dept-cb" type="checkbox" value="${dept.department_id}" id="dept_${dept.department_id}">
-                                                                                                                                            <label class="form-check-label" for="dept_${dept.department_id}">${dept.department_name} ${dept.department_code ? '(' + dept.department_code + ')' : ''}</label>
-                                                                                                                                        </div>
-                                                                                                                                    `;
+                                                                                                                                                    <div class="form-check">
+                                                                                                                                                        <input class="form-check-input add-dept-cb" type="checkbox" value="${dept.department_id}" id="dept_${dept.department_id}">
+                                                                                                                                                        <label class="form-check-label" for="dept_${dept.department_id}">${dept.department_name} ${dept.department_code ? '(' + dept.department_code + ')' : ''}</label>
+                                                                                                                                                    </div>
+                                                                                                                                                `;
                 });
                 document.querySelectorAll('.add-dept-cb').forEach(cb => {
                     cb.addEventListener('change', updateAddDeptPreview);
@@ -742,8 +714,8 @@
                 deptSelect.innerHTML = '<option value="">Select department</option>';
                 departmentsList.forEach(dept => {
                     deptSelect.innerHTML += `
-                                                                                            <option value="${dept.department_id}">${dept.department_name} ${dept.department_code ? '(' + dept.department_code + ')' : ''}</option>
-                                                                                        `;
+                                                                                                        <option value="${dept.department_id}">${dept.department_name} ${dept.department_code ? '(' + dept.department_code + ')' : ''}</option>
+                                                                                                    `;
                 });
             }
 
@@ -753,8 +725,8 @@
                 roleSelect.innerHTML = '<option value="">Select role</option>';
                 departmentRolesList.forEach(role => {
                     roleSelect.innerHTML += `
-                                                                                            <option value="${role.role_id}">${role.role_name}</option>
-                                                                                        `;
+                                                                                                        <option value="${role.role_id}">${role.role_name}</option>
+                                                                                                    `;
                 });
             }
         }
@@ -873,26 +845,26 @@
 
             adminsData.forEach(admin => {
                 const row = `
-                                                                                                                                    <tr>
-                                                                                                                                        <td>${String(admin.admin_id).padStart(4, '0')}</td>
-                                                                                                                                        <td>${admin.school_id || 'N/A'}</td>
-                                                                                                                                        <td>${admin.full_name}</td>
-                                                                                                                                        <td>${admin.title || 'N/A'}</td>
-                                                                                                                                        <td title="${admin.email}">${admin.email}</td>
-                                                                                                                                        <td>${admin.contact_number || 'N/A'}</td>
-                                                                                                                                        <td>${admin.role_title || 'N/A'}</td>
-                                                                                                                                        <td>
-                                                                                                                                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                                                                                                                                <button class="btn btn-sm btn-primary action-btn" onclick="editAdmin(${admin.admin_id})" title="Edit" style="background-color: var(--navy); border-color: var(--navy);">
-                                                                                                                                                    <i class="bi bi-pencil"></i> Edit
-                                                                                                                                                </button>
-                                                                                                                                                <button class="btn btn-sm btn-danger action-btn" onclick="deleteAdmin(${admin.admin_id})" title="Delete" style="background-color: var(--danger); border-color: var(--danger);">
-                                                                                                                                                    <i class="bi bi-trash"></i> Delete
-                                                                                                                                                </button>
-                                                                                                                                            </div>
-                                                                                                                                        </td>
-                                                                                                                                    </tr>
-                                                                                                                                `;
+                                                                                                                                                <tr>
+                                                                                                                                                    <td>${String(admin.admin_id).padStart(4, '0')}</td>
+                                                                                                                                                    <td>${admin.school_id || 'N/A'}</td>
+                                                                                                                                                    <td>${admin.full_name}</td>
+                                                                                                                                                    <td>${admin.title || 'N/A'}</td>
+                                                                                                                                                    <td title="${admin.email}">${admin.email}</td>
+                                                                                                                                                    <td>${admin.contact_number || 'N/A'}</td>
+                                                                                                                                                    <td>${admin.role_title || 'N/A'}</td>
+                                                                                                                                                    <td>
+                                                                                                                                                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                                                                                                                                            <button class="btn btn-sm btn-primary action-btn" onclick="editAdmin(${admin.admin_id})" title="Edit" style="background-color: var(--navy); border-color: var(--navy);">
+                                                                                                                                                                <i class="bi bi-pencil"></i> Edit
+                                                                                                                                                            </button>
+                                                                                                                                                            <button class="btn btn-sm btn-danger action-btn" onclick="deleteAdmin(${admin.admin_id})" title="Delete" style="background-color: var(--danger); border-color: var(--danger);">
+                                                                                                                                                                <i class="bi bi-trash"></i> Delete
+                                                                                                                                                            </button>
+                                                                                                                                                        </div>
+                                                                                                                                                    </td>
+                                                                                                                                                </tr>
+                                                                                                                                            `;
                 tbody.insertAdjacentHTML('beforeend', row);
             });
 
@@ -913,10 +885,10 @@
 
                 if (totalPages > 1) {
                     paginationEl.innerHTML += `
-                                                                                                                                        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                                                                                                                                            <a class="page-link" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'tabindex="-1"' : ''}>&laquo; Prev</a>
-                                                                                                                                        </li>
-                                                                                                                                    `;
+                                                                                                                                                    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                                                                                                                                                        <a class="page-link" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'tabindex="-1"' : ''}>&laquo; Prev</a>
+                                                                                                                                                    </li>
+                                                                                                                                                `;
 
                     let startPage = Math.max(1, currentPage - 2);
                     let endPage = Math.min(totalPages, startPage + 4);
@@ -927,10 +899,10 @@
 
                     for (let i = startPage; i <= endPage; i++) {
                         paginationEl.innerHTML += `
-                                                                                                                                            <li class="page-item ${i === currentPage ? 'active' : ''}">
-                                                                                                                                                <a class="page-link" onclick="goToPage(${i})">${i}</a>
-                                                                                                                                            </li>
-                                                                                                                                        `;
+                                                                                                                                                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                                                                                                                                                            <a class="page-link" onclick="goToPage(${i})">${i}</a>
+                                                                                                                                                        </li>
+                                                                                                                                                    `;
                     }
 
                     if (endPage < totalPages) {
@@ -938,10 +910,10 @@
                     }
 
                     paginationEl.innerHTML += `
-                                                                                                                                        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                                                                                                                                            <a class="page-link" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'tabindex="-1"' : ''}>Next &raquo;</a>
-                                                                                                                                        </li>
-                                                                                                                                    `;
+                                                                                                                                                    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                                                                                                                                                        <a class="page-link" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'tabindex="-1"' : ''}>Next &raquo;</a>
+                                                                                                                                                    </li>
+                                                                                                                                                `;
                 }
             }
 
@@ -995,13 +967,6 @@
                 const roleId = admin.departments && admin.departments.length > 0 ? admin.departments[0].role_id : null;
                 populateEditDepartmentChecklist(deptId, roleId);
 
-                // Populate services checkboxes
-                const serviceIds = admin.services ? admin.services.map(s => s.service_id) : [];
-                document.querySelectorAll('.edit-service-cb').forEach(cb => {
-                    cb.checked = serviceIds.includes(parseInt(cb.value));
-                });
-                updateEditServicePreview();
-
                 if (loadingDiv) loadingDiv.style.display = 'none';
                 if (contentDiv) contentDiv.style.display = 'block';
 
@@ -1015,13 +980,13 @@
             const detailsEl = document.getElementById('deleteAdminDetails');
             if (detailsEl) {
                 detailsEl.innerHTML = `
-                                                                                                                                    <div class="row">
-                                                                                                                                        <div class="col-4 fw-bold">Name:</div>
-                                                                                                                                        <div class="col-8">${admin ? admin.full_name : 'Admin ID: ' + adminId}</div>
-                                                                                                                                        <div class="col-4 fw-bold">Email:</div>
-                                                                                                                                        <div class="col-8">${admin ? admin.email : 'N/A'}</div>
-                                                                                                                                    </div>
-                                                                                                                                `;
+                                                                                                                                                <div class="row">
+                                                                                                                                                    <div class="col-4 fw-bold">Name:</div>
+                                                                                                                                                    <div class="col-8">${admin ? admin.full_name : 'Admin ID: ' + adminId}</div>
+                                                                                                                                                    <div class="col-4 fw-bold">Email:</div>
+                                                                                                                                                    <div class="col-8">${admin ? admin.email : 'N/A'}</div>
+                                                                                                                                                </div>
+                                                                                                                                            `;
             }
 
             window.adminToDelete = adminId;
@@ -1082,15 +1047,6 @@
             saveAdminBtn.addEventListener('click', async function () {
                 const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
                 const adminId = document.getElementById('edit_admin_id')?.value;
-
-                let serviceIds = [];
-                try {
-                    const serviceIdsRaw = document.getElementById('editSelectedServiceIds')?.value || '[]';
-                    serviceIds = JSON.parse(serviceIdsRaw);
-                } catch (e) {
-                    serviceIds = [];
-                }
-
                 const formData = {
                     admin_id: adminId,
                     first_name: document.getElementById('edit_first_name')?.value,
@@ -1104,7 +1060,6 @@
                     password: document.getElementById('edit_password')?.value || undefined,
                     department_ids: document.getElementById('editDepartmentSelect').value ? [parseInt(document.getElementById('editDepartmentSelect').value)] : [],
                     department_roles: document.getElementById('editDepartmentRoleSelect').value ? [parseInt(document.getElementById('editDepartmentRoleSelect').value)] : [],
-                    service_ids: serviceIds
                 };
 
                 const btn = this;
@@ -1181,15 +1136,6 @@
                 const deptIds = document.getElementById('addDepartmentSelect').value ? [parseInt(document.getElementById('addDepartmentSelect').value)] : [];
                 const deptRoles = document.getElementById('addDepartmentRoleSelect').value ? [parseInt(document.getElementById('addDepartmentRoleSelect').value)] : [];
 
-                const serviceIdsRaw = document.getElementById('addSelectedServiceIds')?.value || '[]';
-
-                let serviceIds = [];
-                try {
-                    serviceIds = JSON.parse(serviceIdsRaw);
-                } catch (e) {
-                    serviceIds = [];
-                }
-
                 const data = {
                     first_name: formData.get('first_name'),
                     middle_name: formData.get('middle_name'),
@@ -1202,7 +1148,6 @@
                     password: formData.get('password'),
                     department_ids: deptIds,
                     department_roles: deptRoles,
-                    service_ids: serviceIds,
                     photo_url: 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png',
                     photo_public_id: 'ksdmh4mmpxdtjogdgjmm'
                 };
@@ -1236,9 +1181,7 @@
                         this.reset();
 
                         document.getElementById('addSelectedDeptIds').value = '[]';
-                        document.getElementById('addSelectedServiceIds').value = '[]';
                         document.querySelectorAll('.add-dept-cb').forEach(cb => cb.checked = false);
-                        document.querySelectorAll('.add-service-cb').forEach(cb => cb.checked = false);
 
                         await loadAdminsTab(1);
                     } else {
@@ -1292,21 +1235,6 @@
             }
         }
 
-        function updateAddServicePreview() {
-            const selected = Array.from(document.querySelectorAll('.add-service-cb:checked')).map(cb => cb.value);
-            const hiddenInput = document.getElementById('addSelectedServiceIds');
-            const preview = document.getElementById('addSelectedServicePreview');
-
-            if (hiddenInput) hiddenInput.value = JSON.stringify(selected);
-            if (preview) {
-                if (selected.length === 0) {
-                    preview.innerHTML = '<div class="text-muted">No services selected</div>';
-                } else {
-                    preview.innerHTML = selected.map(id => `<div class="p-2 bg-light rounded mb-1">Service ID: ${id}</div>`).join('');
-                }
-            }
-        }
-
         function populateEditDepartmentChecklist(selectedDeptId, selectedRoleId) {
             // Populate department dropdown
             const deptSelect = document.getElementById('editDepartmentSelect');
@@ -1315,8 +1243,8 @@
                 departmentsList.forEach(dept => {
                     const selected = dept.department_id === selectedDeptId ? 'selected' : '';
                     deptSelect.innerHTML += `
-                                                <option value="${dept.department_id}" ${selected}>${dept.department_name} ${dept.department_code ? '(' + dept.department_code + ')' : ''}</option>
-                                            `;
+                                                            <option value="${dept.department_id}" ${selected}>${dept.department_name} ${dept.department_code ? '(' + dept.department_code + ')' : ''}</option>
+                                                        `;
                 });
                 // Store selected dept ID for role lookup
                 deptSelect.dataset.selectedDept = selectedDeptId || '';
@@ -1329,92 +1257,12 @@
                 departmentRolesList.forEach(role => {
                     const selected = role.role_id === selectedRoleId ? 'selected' : '';
                     roleSelect.innerHTML += `
-                                                <option value="${role.role_id}" ${selected}>${role.role_name}</option>
-                                            `;
+                                                            <option value="${role.role_id}" ${selected}>${role.role_name}</option>
+                                                        `;
                 });
                 // Store selected role ID
                 roleSelect.dataset.selectedRole = selectedRoleId || '';
             }
         }
-
-        function updateEditDeptPreview() {
-            const selected = Array.from(document.querySelectorAll('.edit-dept-cb:checked')).map(cb => cb.value);
-            const hiddenIds = document.getElementById('editSelectedDeptIds');
-            const counter = document.getElementById('editDeptCounter');
-
-            if (hiddenIds) hiddenIds.value = JSON.stringify(selected);
-            if (counter) {
-                counter.textContent = `${selected.length} department${selected.length !== 1 ? 's' : ''} selected`;
-            }
-        }
-
-        function populateServiceChecklists() {
-            // Add modal
-            const addContainer = document.getElementById('addServiceChecklist');
-            if (addContainer) {
-                addContainer.innerHTML = '';
-                if (servicesList.length === 0) {
-                    addContainer.innerHTML = '<div class="text-muted">No services available</div>';
-                    return;
-                }
-                servicesList.forEach(service => {
-                    addContainer.innerHTML += `
-                                                        <div class="form-check">
-                                                            <input class="form-check-input add-service-cb" type="checkbox" value="${service.service_id}" id="add_service_${service.service_id}">
-                                                            <label class="form-check-label" for="add_service_${service.service_id}">${service.service_name}</label>
-                                                        </div>
-                                                    `;
-                });
-                document.querySelectorAll('.add-service-cb').forEach(cb => {
-                    cb.addEventListener('change', updateAddServicePreview);
-                });
-                updateAddServicePreview();
-            }
-
-            // Edit modal
-            const editContainer = document.getElementById('editServiceChecklist');
-            if (editContainer) {
-                editContainer.innerHTML = '';
-                if (servicesList.length === 0) {
-                    editContainer.innerHTML = '<div class="text-muted">No services available</div>';
-                    return;
-                }
-                servicesList.forEach(service => {
-                    editContainer.innerHTML += `
-                                                        <div class="form-check">
-                                                            <input class="form-check-input edit-service-cb" type="checkbox" value="${service.service_id}" id="edit_service_${service.service_id}">
-                                                            <label class="form-check-label" for="edit_service_${service.service_id}">${service.service_name}</label>
-                                                        </div>
-                                                    `;
-                });
-                document.querySelectorAll('.edit-service-cb').forEach(cb => {
-                    cb.addEventListener('change', updateEditServicePreview);
-                });
-                updateEditServicePreview();
-            }
-        }
-
-        function updateAddServicePreview() {
-            const selected = Array.from(document.querySelectorAll('.add-service-cb:checked')).map(cb => cb.value);
-            const hiddenInput = document.getElementById('addSelectedServiceIds');
-            const counter = document.getElementById('addServiceCounter');
-
-            if (hiddenInput) hiddenInput.value = JSON.stringify(selected);
-            if (counter) {
-                counter.textContent = `${selected.length} service${selected.length !== 1 ? 's' : ''} selected`;
-            }
-        }
-
-        function updateEditServicePreview() {
-            const selected = Array.from(document.querySelectorAll('.edit-service-cb:checked')).map(cb => cb.value);
-            const hiddenInput = document.getElementById('editSelectedServiceIds');
-            const counter = document.getElementById('editServiceCounter');
-
-            if (hiddenInput) hiddenInput.value = JSON.stringify(selected);
-            if (counter) {
-                counter.textContent = `${selected.length} service${selected.length !== 1 ? 's' : ''} selected`;
-            }
-        }
-
     </script>
 @endsection

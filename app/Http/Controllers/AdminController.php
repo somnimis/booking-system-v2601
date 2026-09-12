@@ -50,33 +50,7 @@ class AdminController extends Controller
         }
     }
 
-    public function getExtraServices(Request $request)
-    {
-        try {
-            // Cache the results for 1 hour to reduce database queries
-            // Clear cache automatically when services are updated
-            $services = Cache::remember('extra_services', 3600, function () {
-                return ExtraService::select('service_id', 'service_name')
-                    ->orderBy('service_name')
-                    ->get();
-            });
-
-            return response()->json([
-                'success' => true,
-                'data' => $services,
-                'count' => $services->count()
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch extra services',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    // Get all admin information for Admin Listing page with Department and Service Relationships.
+    // Get all admin information for Admin Listing page with Department Relationships.
     public function getAllAdmins(Request $request)
     {
         try {
@@ -86,7 +60,6 @@ class AdminController extends Controller
                 return Admin::with([
                     'role:role_id,role_title',
                     'departments:department_id,department_name,department_code',
-                    'services:service_id,service_name'
                 ])
                     ->where('admin_id', '!=', $currentAdminId)
                     ->get()
@@ -110,7 +83,6 @@ class AdminController extends Controller
                             'role' => $admin->role,
                             'role_id' => $admin->role_id,
                             'departments' => $admin->departments,
-                            'services' => $admin->services
                         ];
                     });
             });
@@ -135,7 +107,6 @@ class AdminController extends Controller
         try {
             $admin->load([
                 'departments:department_id,department_name,department_code',
-                'services:service_id,service_name'
             ]);
 
             // Build a custom response that explicitly includes all needed data
@@ -153,10 +124,8 @@ class AdminController extends Controller
                 'signature_url' => $admin->signature_url,
                 'signature_public_id' => $admin->signature_public_id,
                 'departments' => $admin->departments,
-                'services' => $admin->services,
                 // Explicitly include just the IDs for easy frontend use
                 'department_ids' => $admin->departments->pluck('department_id'),
-                'service_ids' => $admin->services->pluck('service_id')
             ];
 
             return response()->json($response);
@@ -175,205 +144,175 @@ class AdminController extends Controller
     {
         $admin->load([
             'departments:department_id,department_name,department_code',
-            'services:service_id,service_name'
         ]);
 
-        // Convert to array but we need to ensure service_ids are visible
-        $adminArray = $admin->toArray();
-
-        // Manually add the service_ids array
-        $adminArray['service_ids'] = $admin->services->pluck('service_id');
-
-        return response()->json($adminArray);
+        return response()->json($admin->toArray());
     }
 
-    // Add a new method to create admin records
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'first_name' => 'required|string|max:50',
-        'last_name' => 'required|string|max:50',
-        'middle_name' => 'nullable|string|max:50',
-        'title' => 'nullable|string|max:100',
-        'email' => 'required|email|unique:admins,email|max:150',
-        'contact_number' => 'nullable|string|max:20',
-        'role_id' => 'required|exists:admin_roles,role_id',
-        'school_id' => 'nullable|string|max:20',
-        'password' => 'required|string|min:8|max:50',
-        'department_ids' => 'nullable|array',
-        'department_ids.*' => 'exists:departments,department_id',
-        'department_roles' => 'nullable|array',
-        'department_roles.*' => 'exists:department_roles,role_id',
-        'service_ids' => 'nullable|array',
-        'service_ids.*' => 'exists:extra_services,service_id',
-        'photo_url' => 'nullable|string',
-        'photo_public_id' => 'nullable|string',
-        'wallpaper_url' => 'nullable|string',
-        'wallpaper_public_id' => 'nullable|string',
-        'signature_url' => 'nullable|string',
-        'signature_public_id' => 'nullable|string',
-    ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'middle_name' => 'nullable|string|max:50',
+            'title' => 'nullable|string|max:100',
+            'email' => 'required|email|unique:admins,email|max:150',
+            'contact_number' => 'nullable|string|max:20',
+            'role_id' => 'required|exists:admin_roles,role_id',
+            'school_id' => 'nullable|string|max:20',
+            'password' => 'required|string|min:8|max:50',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,department_id',
+            'department_roles' => 'nullable|array',
+            'department_roles.*' => 'exists:department_roles,role_id',
+            'photo_url' => 'nullable|string',
+            'photo_public_id' => 'nullable|string',
+            'wallpaper_url' => 'nullable|string',
+            'wallpaper_public_id' => 'nullable|string',
+            'signature_url' => 'nullable|string',
+            'signature_public_id' => 'nullable|string',
+        ]);
 
-    $validated['photo_url'] = $validated['photo_url'] ?? 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png';
-    $validated['photo_public_id'] = $validated['photo_public_id'] ?? 'ksdmh4mmpxdtjogdgjmm';
-    $validated['hashed_password'] = bcrypt($validated['password']);
-    unset($validated['password']);
+        $validated['photo_url'] = $validated['photo_url'] ?? 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png';
+        $validated['photo_public_id'] = $validated['photo_public_id'] ?? 'ksdmh4mmpxdtjogdgjmm';
+        $validated['hashed_password'] = bcrypt($validated['password']);
+        unset($validated['password']);
 
-    $departmentIds = $validated['department_ids'] ?? [];
-    $departmentRoles = $validated['department_roles'] ?? [];
-    $serviceIds = $validated['service_ids'] ?? [];
-    unset($validated['department_ids'], $validated['department_roles'], $validated['service_ids']);
+        $departmentIds = $validated['department_ids'] ?? [];
+        $departmentRoles = $validated['department_roles'] ?? [];
+        unset($validated['department_ids'], $validated['department_roles']);
 
-    \DB::beginTransaction();
-    try {
-        $admin = Admin::create($validated);
+        \DB::beginTransaction();
+        try {
+            $admin = Admin::create($validated);
 
-        // Handle department assignments with roles
-        if (!empty($departmentIds)) {
-            $syncData = [];
-            foreach ($departmentIds as $index => $deptId) {
-                $syncData[$deptId] = [
-                    'role_id' => $departmentRoles[$index] ?? 2, // Default to Staff (role_id = 2)
-                    'is_primary' => $index === 0 // First department is primary
-                ];
+            if (!empty($departmentIds)) {
+                $syncData = [];
+                foreach ($departmentIds as $index => $deptId) {
+                    $syncData[$deptId] = [
+                        'role_id' => $departmentRoles[$index] ?? \App\Models\DepartmentRole::STAFF,
+                        'is_primary' => $index === 0,
+                    ];
+                }
+                $admin->departments()->sync($syncData);
+                \Log::info("Assigned departments to new admin: {$admin->admin_id}", ['depts' => $departmentIds]);
             }
-            $admin->departments()->sync($syncData);
-            \Log::info("Assigned departments to new admin: {$admin->admin_id}", ['depts' => $departmentIds]);
+
+            \DB::commit();
+            $this->clearAdminCaches($admin->admin_id);
+
+            return response()->json([
+                'message' => 'Admin created successfully',
+                'admin' => $admin->load('departments'),
+            ], 201);
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Error creating admin: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to create admin',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        if (!empty($serviceIds)) {
-            $admin->services()->sync($serviceIds);
-            \Log::info("Assigned services to new admin: {$admin->admin_id}", ['services' => $serviceIds]);
-        }
-
-        \DB::commit();
-        $this->clearAdminCaches($admin->admin_id);
-
-        return response()->json([
-            'message' => 'Admin created successfully',
-            'admin' => $admin->load(['departments', 'services'])
-        ], 201);
-
-    } catch (\Exception $e) {
-        \DB::rollBack();
-        \Log::error('Error creating admin: ' . $e->getMessage());
-        return response()->json([
-            'message' => 'Failed to create admin',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 
     // Delete an admin
     public function deleteAdmin(Admin $admin)
     {
         try {
-            // Get the admin ID before deletion
             $adminId = $admin->admin_id;
 
-            // Detach all relationships
             $admin->departments()->detach();
-            $admin->services()->detach();
             $admin->facilities()->detach();
             $admin->delete();
 
-            // CLEAR ALL RELATED CACHES
             $this->clearAdminCaches($adminId);
 
             return response()->json([
-                'message' => 'Admin deleted successfully'
+                'message' => 'Admin deleted successfully',
             ]);
         } catch (\Exception $e) {
             \Log::error('Error deleting admin: ' . $e->getMessage());
 
             return response()->json([
                 'message' => 'Failed to delete admin',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
-public function update(Request $request, Admin $admin)
-{
-    \Log::info('Update request data:', $request->all());
 
-    $validated = $request->validate([
-        'first_name' => 'required|string|max:50',
-        'last_name' => 'required|string|max:50',
-        'middle_name' => 'nullable|string|max:50',
-        'title' => 'nullable|string|max:100',
-        'email' => 'required|email|max:150|unique:admins,email,' . $admin->admin_id . ',admin_id',
-        'contact_number' => 'nullable|string|max:20',
-        'role_id' => 'required|exists:admin_roles,role_id',
-        'school_id' => 'nullable|string|max:20',
-        'password' => 'nullable|string|min:8|max:50',
-        'department_ids' => 'nullable|array',
-        'department_ids.*' => 'exists:departments,department_id',
-        'department_roles' => 'nullable|array',
-        'department_roles.*' => 'exists:department_roles,role_id',
-        'service_ids' => 'nullable|array',
-        'service_ids.*' => 'exists:extra_services,service_id',
-        'signature_url' => 'nullable|string',
-        'signature_public_id' => 'nullable|string',
-    ]);
+    public function update(Request $request, Admin $admin)
+    {
+        \Log::info('Update request data:', $request->all());
 
-    if (!empty($validated['password'])) {
-        $validated['hashed_password'] = bcrypt($validated['password']);
-    }
-    unset($validated['password']);
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'middle_name' => 'nullable|string|max:50',
+            'title' => 'nullable|string|max:100',
+            'email' => 'required|email|max:150|unique:admins,email,' . $admin->admin_id . ',admin_id',
+            'contact_number' => 'nullable|string|max:20',
+            'role_id' => 'required|exists:admin_roles,role_id',
+            'school_id' => 'nullable|string|max:20',
+            'password' => 'nullable|string|min:8|max:50',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,department_id',
+            'department_roles' => 'nullable|array',
+            'department_roles.*' => 'exists:department_roles,role_id',
+            'signature_url' => 'nullable|string',
+            'signature_public_id' => 'nullable|string',
+        ]);
 
-    $departmentIds = $validated['department_ids'] ?? [];
-    $departmentRoles = $validated['department_roles'] ?? [];
-    $serviceIds = $validated['service_ids'] ?? [];
-    unset($validated['department_ids'], $validated['department_roles'], $validated['service_ids']);
+        if (!empty($validated['password'])) {
+            $validated['hashed_password'] = bcrypt($validated['password']);
+        }
+        unset($validated['password']);
 
-    \DB::beginTransaction();
-    try {
-        $admin->update($validated);
+        $departmentIds = $validated['department_ids'] ?? [];
+        $departmentRoles = $validated['department_roles'] ?? [];
+        unset($validated['department_ids'], $validated['department_roles']);
 
-        // Handle department assignments with roles
-        if (!empty($departmentIds)) {
-            $syncData = [];
-            foreach ($departmentIds as $index => $deptId) {
-                $syncData[$deptId] = [
-                    'role_id' => $departmentRoles[$index] ?? 2, // Default to Staff
-                    'is_primary' => $index === 0
-                ];
+        \DB::beginTransaction();
+        try {
+            $admin->update($validated);
+
+            if (!empty($departmentIds)) {
+                $syncData = [];
+                foreach ($departmentIds as $index => $deptId) {
+                    $syncData[$deptId] = [
+                        'role_id' => $departmentRoles[$index] ?? \App\Models\DepartmentRole::STAFF,
+                        'is_primary' => $index === 0,
+                    ];
+                }
+                $admin->departments()->sync($syncData);
+                \Log::info('Synced departments for admin', ['depts' => $departmentIds]);
+            } else {
+                $admin->departments()->detach();
+                \Log::info('Detached all departments for admin');
             }
-            $admin->departments()->sync($syncData);
-            \Log::info('Synced departments for admin', ['depts' => $departmentIds]);
-        } else {
-            $admin->departments()->detach();
-            \Log::info('Detached all departments for admin');
+
+            \DB::commit();
+            $this->clearAdminCaches($admin->admin_id);
+            $admin->load('departments');
+
+            return response()->json([
+                'message' => 'Admin updated successfully',
+                'admin' => $admin,
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Error updating admin: ' . $e->getMessage(), [
+                'admin_id' => $admin->admin_id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to update admin',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        if (empty($serviceIds)) {
-            $admin->services()->detach();
-        } else {
-            $admin->services()->sync($serviceIds);
-        }
-
-        \DB::commit();
-        $this->clearAdminCaches($admin->admin_id);
-        $admin->load(['departments', 'services']);
-
-        return response()->json([
-            'message' => 'Admin updated successfully',
-            'admin' => $admin
-        ]);
-
-    } catch (\Exception $e) {
-        \DB::rollBack();
-        \Log::error('Error updating admin: ' . $e->getMessage(), [
-            'admin_id' => $admin->admin_id,
-            'trace' => $e->getTraceAsString()
-        ]);
-
-        return response()->json([
-            'message' => 'Failed to update admin',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 
     /**
      * Clear all admin-related caches
@@ -383,9 +322,6 @@ public function update(Request $request, Admin $admin)
         try {
             // Clear the roles cache
             Cache::forget('admin_roles');
-
-            // Clear the services cache
-            Cache::forget('extra_services');
 
             // Clear the departments cache (if you have one)
             Cache::forget('departments');
@@ -442,118 +378,118 @@ public function update(Request $request, Admin $admin)
         return response()->json(['message' => 'Department assigned successfully']);
     }
 
-public function updatePhoto(Request $request)
-{
-    try {
-        $request->validate([
-            'photo' => 'required_without_all:wallpaper,signature|image|max:2048',
-            'wallpaper' => 'required_without_all:photo,signature|image|max:5120',
-            'signature' => 'required_without_all:photo,wallpaper|image|max:2048',
-            'type' => 'required|in:photo,wallpaper,signature'
-        ]);
-
-        $admin = $request->user();
-        $type = $request->type;
-        $file = $request->file($type);
-
-        if (!$file) {
-            throw new \Exception('No file provided');
-        }
-
-        // Define paths based on type
-        $paths = [
-            'photo' => [
-                'folder' => 'admin-photos',
-                'disk' => 'public',
-                'field' => 'photo_url',
-                'public_id_field' => 'photo_public_id',
-            ],
-            'wallpaper' => [
-                'folder' => 'admin-wallpapers',
-                'disk' => 'public',
-                'field' => 'wallpaper_url',
-                'public_id_field' => 'wallpaper_public_id',
-            ],
-            'signature' => [
-                'folder' => 'admin-signatures',
-                'disk' => 'public',
-                'field' => 'signature_url',
-                'public_id_field' => 'signature_public_id',
-            ]
-        ][$type];
-
-        // Get the old file path before updating
-        $oldFilePath = $admin->{$paths['field']};
-        
-        // Generate unique filename
-        $extension = $file->getClientOriginalExtension();
-        $filename = Str::random(40) . '.' . $extension;
-        
-        // Store the file using public disk
-        $storedPath = Storage::disk($paths['disk'])->putFileAs($paths['folder'], $file, $filename);
-
-        if (!$storedPath) {
-            throw new \Exception('Failed to store file');
-        }
-
-        // Update admin record with new path
-        $updateData = [
-            $paths['field'] => $storedPath,
-            $paths['public_id_field'] => null
-        ];
-        
-        $admin->update($updateData);
-
-        // Delete the old file if it exists and is a local file (not Cloudinary)
-        if ($oldFilePath && !Str::contains($oldFilePath, 'cloudinary.com') && !Str::contains($oldFilePath, 'defaults/')) {
-            // Extract the storage path from the old file path
-            $cleanPath = $oldFilePath;
-            
-            // If it's a full URL, extract the path
-            if (filter_var($oldFilePath, FILTER_VALIDATE_URL)) {
-                $parsedUrl = parse_url($oldFilePath);
-                $cleanPath = ltrim($parsedUrl['path'], '/');
-                // Remove 'storage/' prefix if present
-                $cleanPath = str_replace('storage/', '', $cleanPath);
-            } else {
-                // Remove 'storage/' prefix if present
-                $cleanPath = str_replace('storage/', '', $oldFilePath);
-            }
-            
-            // Remove any query parameters
-            $cleanPath = explode('?', $cleanPath)[0];
-            
-            Log::info("Attempting to delete old {$type} file", [
-                'original_path' => $oldFilePath,
-                'clean_path' => $cleanPath
+    public function updatePhoto(Request $request)
+    {
+        try {
+            $request->validate([
+                'photo' => 'required_without_all:wallpaper,signature|image|max:2048',
+                'wallpaper' => 'required_without_all:photo,signature|image|max:5120',
+                'signature' => 'required_without_all:photo,wallpaper|image|max:2048',
+                'type' => 'required|in:photo,wallpaper,signature'
             ]);
-            
-            // Check if file exists and delete it
-            if (Storage::disk($paths['disk'])->exists($cleanPath)) {
-                Storage::disk($paths['disk'])->delete($cleanPath);
-                Log::info("Successfully deleted old {$type} file: {$cleanPath}");
-            } else {
-                Log::warning("Old {$type} file not found: {$cleanPath}");
+
+            $admin = $request->user();
+            $type = $request->type;
+            $file = $request->file($type);
+
+            if (!$file) {
+                throw new \Exception('No file provided');
             }
+
+            // Define paths based on type
+            $paths = [
+                'photo' => [
+                    'folder' => 'admin-photos',
+                    'disk' => 'public',
+                    'field' => 'photo_url',
+                    'public_id_field' => 'photo_public_id',
+                ],
+                'wallpaper' => [
+                    'folder' => 'admin-wallpapers',
+                    'disk' => 'public',
+                    'field' => 'wallpaper_url',
+                    'public_id_field' => 'wallpaper_public_id',
+                ],
+                'signature' => [
+                    'folder' => 'admin-signatures',
+                    'disk' => 'public',
+                    'field' => 'signature_url',
+                    'public_id_field' => 'signature_public_id',
+                ]
+            ][$type];
+
+            // Get the old file path before updating
+            $oldFilePath = $admin->{$paths['field']};
+
+            // Generate unique filename
+            $extension = $file->getClientOriginalExtension();
+            $filename = Str::random(40) . '.' . $extension;
+
+            // Store the file using public disk
+            $storedPath = Storage::disk($paths['disk'])->putFileAs($paths['folder'], $file, $filename);
+
+            if (!$storedPath) {
+                throw new \Exception('Failed to store file');
+            }
+
+            // Update admin record with new path
+            $updateData = [
+                $paths['field'] => $storedPath,
+                $paths['public_id_field'] => null
+            ];
+
+            $admin->update($updateData);
+
+            // Delete the old file if it exists and is a local file (not Cloudinary)
+            if ($oldFilePath && !Str::contains($oldFilePath, 'cloudinary.com') && !Str::contains($oldFilePath, 'defaults/')) {
+                // Extract the storage path from the old file path
+                $cleanPath = $oldFilePath;
+
+                // If it's a full URL, extract the path
+                if (filter_var($oldFilePath, FILTER_VALIDATE_URL)) {
+                    $parsedUrl = parse_url($oldFilePath);
+                    $cleanPath = ltrim($parsedUrl['path'], '/');
+                    // Remove 'storage/' prefix if present
+                    $cleanPath = str_replace('storage/', '', $cleanPath);
+                } else {
+                    // Remove 'storage/' prefix if present
+                    $cleanPath = str_replace('storage/', '', $oldFilePath);
+                }
+
+                // Remove any query parameters
+                $cleanPath = explode('?', $cleanPath)[0];
+
+                Log::info("Attempting to delete old {$type} file", [
+                    'original_path' => $oldFilePath,
+                    'clean_path' => $cleanPath
+                ]);
+
+                // Check if file exists and delete it
+                if (Storage::disk($paths['disk'])->exists($cleanPath)) {
+                    Storage::disk($paths['disk'])->delete($cleanPath);
+                    Log::info("Successfully deleted old {$type} file: {$cleanPath}");
+                } else {
+                    Log::warning("Old {$type} file not found: {$cleanPath}");
+                }
+            }
+
+            // Generate the public URL
+            $publicUrl = Storage::disk($paths['disk'])->url($storedPath);
+
+            return response()->json([
+                'message' => ucfirst($type) . ' updated successfully',
+                $type . '_url' => $publicUrl,
+                $type . '_public_id' => null
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Image upload error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to update ' . ($request->type ?? 'image'),
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Generate the public URL
-        $publicUrl = Storage::disk($paths['disk'])->url($storedPath);
-
-        return response()->json([
-            'message' => ucfirst($type) . ' updated successfully',
-            $type . '_url' => $publicUrl,
-            $type . '_public_id' => null
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('Image upload error: ' . $e->getMessage());
-        return response()->json([
-            'message' => 'Failed to update ' . ($request->type ?? 'image'),
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
     public function updatePhotoRecords(Request $request)
     {
         try {

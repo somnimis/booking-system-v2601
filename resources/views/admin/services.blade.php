@@ -192,37 +192,6 @@
         </div>
     </div>
 
-    <!-- Assign Services Modal -->
-    <div class="modal fade" id="assignServiceModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header border-bottom">
-                    <h6 class="modal-title fw-bold">Assign Services to Admin</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="assignServiceForm">
-                        @csrf
-                        <div class="mb-3">
-                            <label class="form-label">Select Admin</label>
-                            <select class="form-select" id="assign_admin_id" name="admin_id" required>
-                                <option value="">Select administrator</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Select Services</label>
-                            <div id="assignServiceChecklist" class="border rounded p-3"
-                                style="max-height: 200px; overflow-y: auto;"></div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer border-top">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="assignServicesBtn">Assign Services</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
 @endsection
 
@@ -230,7 +199,6 @@
     <script src="{{ asset('js/admin/toast.js') }}"></script>
     <script>
         let servicesData = [];
-        let adminsList = [];
 
         document.addEventListener('DOMContentLoaded', function () {
             const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
@@ -283,22 +251,18 @@
             const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
 
             try {
-                const [servicesRes, adminsRes, deptsRes] = await Promise.all([
+                const [servicesRes, deptsRes] = await Promise.all([
                     fetch('/api/extra-services', { headers: { 'Authorization': `Bearer ${token}` } }),
-                    fetch('/api/admins', { headers: { 'Authorization': `Bearer ${token}` } }),
                     fetch('/api/departments', { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
 
                 const servicesResult = await servicesRes.json();
-                const adminsResult = await adminsRes.json();
                 const deptsResult = await deptsRes.json();
 
                 servicesData = Array.isArray(servicesResult) ? servicesResult : (servicesResult.data || []);
-                adminsList = adminsResult.success ? (adminsResult.data || []) : [];
                 departmentsData = Array.isArray(deptsResult) ? deptsResult : (deptsResult.data || []);
 
                 renderServices();
-                populateAdminDropdowns();
                 populateDepartmentDropdowns();
                 populateAssignChecklist();
 
@@ -309,23 +273,6 @@
             } catch (error) {
                 console.error('Error loading services:', error);
                 document.getElementById('servicesLoading').innerHTML = '<div class="alert alert-danger">Failed to load services</div>';
-            }
-        }
-
-        function populateAdminDropdowns() {
-            const editSelect = document.getElementById('edit_admin_id');
-            const assignSelect = document.getElementById('assign_admin_id');
-
-            const options = adminsList.map(admin =>
-                `<option value="${admin.admin_id}">${admin.full_name} ${admin.title ? '(' + admin.title + ')' : ''}</option>`
-            ).join('');
-
-            if (editSelect) {
-                editSelect.innerHTML = '<option value="">Select administrator</option>' + options;
-            }
-
-            if (assignSelect) {
-                assignSelect.innerHTML = '<option value="">Select administrator</option>' + options;
             }
         }
 
@@ -647,74 +594,6 @@
                     }
                 } finally {
                     btn.innerHTML = 'Delete Service';
-                    btn.disabled = false;
-                }
-            });
-        }
-
-        // Assign services to admin
-        const assignServicesBtn = document.getElementById('assignServicesBtn');
-        if (assignServicesBtn) {
-            assignServicesBtn.addEventListener('click', async function () {
-                const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-                const adminId = document.getElementById('assign_admin_id')?.value;
-                const selectedServices = Array.from(document.querySelectorAll('.assign-service-cb:checked')).map(cb => parseInt(cb.value));
-
-                if (!adminId) {
-                    if (typeof showToast === 'function') {
-                        showToast('Please select an administrator', 'error');
-                    }
-                    return;
-                }
-
-                if (selectedServices.length === 0) {
-                    if (typeof showToast === 'function') {
-                        showToast('Please select at least one service', 'error');
-                    }
-                    return;
-                }
-
-                const btn = this;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Assigning...';
-                btn.disabled = true;
-
-                try {
-                    const response = await fetch('api/extra-services/assign', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`,
-                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value
-                        },
-                        body: JSON.stringify({
-                            admin_id: parseInt(adminId),
-                            service_ids: selectedServices
-                        })
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        if (typeof showToast === 'function') {
-                            showToast(result.message || 'Services assigned successfully', 'success');
-                        }
-                        bootstrap.Modal.getInstance(document.getElementById('assignServiceModal')).hide();
-                        document.querySelectorAll('.assign-service-cb').forEach(cb => cb.checked = false);
-                        document.getElementById('assign_admin_id').value = '';
-                        await loadServices();
-                    } else {
-                        if (typeof showToast === 'function') {
-                            showToast(result.message || 'Assignment failed', 'error');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    if (typeof showToast === 'function') {
-                        showToast('Error assigning services', 'error');
-                    }
-                } finally {
-                    btn.innerHTML = originalText;
                     btn.disabled = false;
                 }
             });

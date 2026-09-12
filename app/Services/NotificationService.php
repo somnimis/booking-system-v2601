@@ -93,9 +93,6 @@ class NotificationService
     /**
      * Send approval request emails to all admins responsible for this requisition
      * 
-     * Business Rule: Admins are considered approvers if:
-     * - For facilities/equipment: They manage departments that match the resource's departments
-     * - For services: They are directly assigned to manage the service
      */
     public function sendAdminApprovalEmails(RequisitionForm $requisitionForm)
     {
@@ -148,7 +145,8 @@ class NotificationService
                     $resourceTypes = [
                         'facility' => 'Facility',
                         'equipment' => 'Equipment',
-                        'service' => 'Service'
+                        'service' => 'Service',
+                        'purpose' => 'Purpose',
                     ];
 
                     if (isset($adminData->resources) && is_array($adminData->resources)) {
@@ -172,7 +170,8 @@ class NotificationService
                     $groupedResources = [
                         'facilities' => array_filter($resources, fn($r) => $r['type'] === 'facility'),
                         'equipment' => array_filter($resources, fn($r) => $r['type'] === 'equipment'),
-                        'services' => array_filter($resources, fn($r) => $r['type'] === 'service')
+                        'services' => array_filter($resources, fn($r) => $r['type'] === 'service'),
+                        'purposes' => array_filter($resources, fn($r) => $r['type'] === 'purpose'),
                     ];
 
                     // Create a simple string list for fallback
@@ -203,13 +202,16 @@ class NotificationService
                         'has_facilities' => !empty($groupedResources['facilities']),
                         'has_equipment' => !empty($groupedResources['equipment']),
                         'has_services' => !empty($groupedResources['services']),
+                        'has_purposes'      => !empty($groupedResources['purposes']),
                         'facilities_count' => count($groupedResources['facilities']),
                         'equipment_count' => count($groupedResources['equipment']),
                         'services_count' => count($groupedResources['services']),
+                        'purposes_count'    => count($groupedResources['purposes']),
                         'total_resources' => count($resources),
                         'equipment_badge_color' => '#17a2b8',
                         'facility_badge_color' => '#28a745',
-                        'service_badge_color' => '#ffc107'
+                        'service_badge_color' => '#ffc107',
+                        'purpose_badge_color' => '#6f42c1'
                     ];
 
                     \Log::info('Sending approval email to admin:', [

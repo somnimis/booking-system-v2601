@@ -38,7 +38,7 @@ class Equipment extends Model
     }
     public function manager()
     {
-        return $this->belongsTo(Admin::class, 'managed_by', 'admin_id');
+        return $this->belongsTo(Department::class, 'managed_by', 'department_id');
     }
 
     public function category()
