@@ -334,61 +334,9 @@
                   <div class="col-12">
                     <label class="form-label mb-2">Extra Resources or Services Needed</label>
                     <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                      <div class="row">
-                        <div class="col-md-6">
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="1"
-                              id="service_projector">
-                            <label class="form-check-label" for="service_projector">Projector</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="2"
-                              id="service_screen">
-                            <label class="form-check-label" for="service_screen">Projection Screen</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="3"
-                              id="service_sound">
-                            <label class="form-check-label" for="service_sound">Sound Reinforcement System</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="4"
-                              id="service_led">
-                            <label class="form-check-label" for="service_led">LED Wall</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="5"
-                              id="service_electrical">
-                            <label class="form-check-label" for="service_electrical">Electrical</label>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="6"
-                              id="service_internet">
-                            <label class="form-check-label" for="service_internet">Internet Connection</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="7"
-                              id="service_plants">
-                            <label class="form-check-label" for="service_plants">Plants for Decoration</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="8"
-                              id="service_platform">
-                            <label class="form-check-label" for="service_platform">Platform</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="9"
-                              id="service_security">
-                            <label class="form-check-label" for="service_security">Security Guard</label>
-                          </div>
-                          <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="extra_services[]" value="10"
-                              id="service_emergency">
-                            <label class="form-check-label" for="service_emergency">Emergency Response Team</label>
-                          </div>
-                        </div>
+                      <div class="row" id="extraServicesContainer">
+                        <!-- Rendered by reservation-form.js from /api/requisition/services/with-selected -->
+                        <div class="text-muted small">Loading services...</div>
                       </div>
                     </div>
                     <small class="text-muted mt-2 d-block">Select any additional resource/services you need for your
@@ -492,10 +440,6 @@
                         <div class="summary-item">
                           <strong>Additional Requests:</strong>
                           <span id="summary-requests"></span>
-                        </div>
-                        <div class="summary-item">
-                          <strong>Extra Services:</strong>
-                          <span id="summary-services"></span>
                         </div>
                       </div>
                     </div>

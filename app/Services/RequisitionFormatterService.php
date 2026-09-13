@@ -103,7 +103,8 @@ class RequisitionFormatterService
                 'breakdown' => [
                     'subtotal' => [
                         'facilities' => collect($feeSummary['breakdown']['facilities'] ?? [])->sum('fee'),
-                        'equipment' => collect($feeSummary['breakdown']['equipment'] ?? [])->sum('fee')
+                        'equipment' => collect($feeSummary['breakdown']['equipment'] ?? [])->sum('fee'),
+                        'services' => collect($feeSummary['breakdown']['services'] ?? [])->sum('fee'), 
                     ],
                     'additional_fees' => $feeSummary['additional_fees'] ?? 0,
                     'discounts' => $feeSummary['discounts'] ?? 0,
@@ -247,6 +248,7 @@ class RequisitionFormatterService
                     'late_penalty' => $feeSummary['late_penalty'],
                     'facilities' => $feeSummary['breakdown']['facilities'],
                     'equipment' => $feeSummary['breakdown']['equipment'],
+                    'services'   => $feeSummary['breakdown']['services'],
                 ],
             ],
             'total_fee' => $feeSummary['approved_fee'],
@@ -325,9 +327,16 @@ class RequisitionFormatterService
                 'is_waived' => $equipment->is_waived,
                 'total_fee' => $equipment->equipment->base_fee * $equipment->quantity,
             ])->values(),
+            'services' => $form->requestedServices->map(fn($service) => [
+                'requested_service_id' => $service->requested_service_id,
+                'service_id' => $service->service_id,
+                'name' => $service->service->service_name,
+                'fee' => $service->service->service_fee ?? 0,
+                'rate_type' => 'Flat',
+                'is_waived' => $service->is_waived,
+            ])->values(),
         ];
     }
-
     public function formatRequisitionFee($fee): array
     {
         return [
@@ -428,6 +437,7 @@ class RequisitionFormatterService
                 'late_penalty' => $feeSummary['late_penalty'],
                 'facilities' => $feeSummary['breakdown']['facilities'],
                 'equipment' => $feeSummary['breakdown']['equipment'],
+                'services' => $feeSummary['breakdown']['services'], // ← ADD
             ],
             'requisition_fees' => $form->requisitionFees->map(
                 fn($fee) => $this->formatRequisitionFee($fee)

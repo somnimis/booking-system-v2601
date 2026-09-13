@@ -797,27 +797,6 @@ function populateFormSummary() {
         schoolIdContainer.style.display = "none";
     }
 
-    // Extra Services
-    const extraServicesCheckboxes = document.querySelectorAll(
-        'input[name="extra_services[]"]:checked',
-    );
-    let selectedServices = [];
-    extraServicesCheckboxes.forEach((checkbox) => {
-        const label = document.querySelector(
-            `label[for="${checkbox.id}"]`,
-        )?.textContent;
-        if (label) {
-            selectedServices.push(label.trim());
-        }
-    });
-
-    if (selectedServices.length > 0) {
-        document.getElementById("summary-services").textContent =
-            selectedServices.join(", ");
-    } else {
-        document.getElementById("summary-services").textContent = "None";
-    }
-
     // Reservation Details
     const eventTitle = document.querySelector('input[name="event_title"]');
     const purposeSelect = document.getElementById("activityPurposeField");
@@ -1007,6 +986,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     populateTimeSelects();
     loadActivityPurposes();
+    loadExtraServices();
 
     // ========== EQUIPMENT SEARCH ==========
     let equipmentSearchTimer;
@@ -1730,8 +1710,34 @@ async function generateFeeBreakdownForSummary() {
       </div>`;
         }
 
+        // Services breakdown
+        const serviceItems = items.filter((i) => i.type === "service");
+        let serviceTotal = 0;
+
+        if (serviceItems.length > 0) {
+            htmlContent +=
+                '<div class="fee-section mt-3"><p class="mb-3 text-primary">Services</p>';
+            serviceItems.forEach((item) => {
+                const fee = parseFloat(item.base_fee || 0);
+                serviceTotal += fee;
+                htmlContent += `
+            <div class="fee-item d-flex justify-content-between mb-2">
+                <span>${item.name}</span>
+                <span>₱${fee.toLocaleString()}</span>
+            </div>
+        `;
+            });
+            htmlContent += `
+        <div class="subtotal d-flex justify-content-between mt-2 pt-2 border-top">
+            <strong>Subtotal</strong>
+            <strong>₱${serviceTotal.toLocaleString()}</strong>
+        </div>
+    </div>`;
+        }
+
         // Total with prominent dark navy blue background
-        const total = facilityTotal + equipmentTotal;
+        const total = facilityTotal + equipmentTotal + serviceTotal;
+
         if (total > 0) {
             htmlContent += `
         <div class="total-fee mt-4 pt-3 border-top">
@@ -2037,8 +2043,34 @@ window.calculateAndDisplayFees = async function () {
                 </div>`;
         }
 
+        // Services breakdown
+        const serviceItems = items.filter((i) => i.type === "service");
+        let serviceTotal = 0;
+
+        if (serviceItems.length > 0) {
+            htmlContent +=
+                '<div class="fee-section mt-3"><h6 class="mb-3">Services</h6>';
+            serviceItems.forEach((item) => {
+                const fee = parseFloat(item.base_fee || 0);
+                serviceTotal += fee;
+                htmlContent += `
+            <div class="fee-item d-flex justify-content-between mb-2">
+                <span>${item.name}</span>
+                <span>₱${fee.toLocaleString()}</span>
+            </div>
+        `;
+            });
+            htmlContent += `
+        <div class="subtotal d-flex justify-content-between mt-2 pt-2 border-top">
+            <strong>Subtotal</strong>
+            <strong>₱${serviceTotal.toLocaleString()}</strong>
+        </div>
+    </div>`;
+        }
+
         // Total
-        const total = facilityTotal + equipmentTotal;
+        const total = facilityTotal + equipmentTotal + serviceTotal;
+
         if (total > 0) {
             htmlContent += `
                     <div class="total-fee d-flex justify-content-between mt-4 pt-3 border-top">
@@ -2326,15 +2358,6 @@ window.submitForm = async function () {
             );
         }
 
-        // Get selected extra services
-        const extraServices = [];
-        const extraServiceCheckboxes = document.querySelectorAll(
-            'input[name="extra_services[]"]:checked',
-        );
-        extraServiceCheckboxes.forEach((checkbox) => {
-            extraServices.push(parseInt(checkbox.value));
-        });
-
         // Prepare form data with all_day support
         const formData = {
             event_title:
@@ -2391,7 +2414,6 @@ window.submitForm = async function () {
                     ? document.querySelector('input[name="school_id"]')
                           ?.value || null
                     : null,
-            extra_services: extraServices.length > 0 ? extraServices : null,
         };
 
         const submitResponse = await fetch("/requisition/submit", {
@@ -3495,6 +3517,146 @@ async function batchAddEquipment() {
         showToast("Error adding equipment", "error");
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-plus"></i> Add Selected';
+    }
+}
+
+// ========== EXTRA SERVICES MODAL (cart checkboxes) ==========
+
+async function loadExtraServices() {
+    const container = document.getElementById("extraServicesContainer");
+    if (!container) return;
+
+    try {
+        const response = await fetch(
+            "/api/requisition/services/with-selected",
+            {
+                headers: {
+                    "X-CSRF-TOKEN": csrfToken,
+                    Accept: "application/json",
+                },
+            },
+        );
+
+        if (!response.ok) throw new Error("Failed to load services");
+
+        const result = await response.json();
+        const services = result.data || [];
+        const selectedIds = result.selected_ids || [];
+
+        if (services.length === 0) {
+            container.innerHTML =
+                '<div class="text-muted small">No services available.</div>';
+            return;
+        }
+
+        // Two-column layout to match the original blade.
+        const half = Math.ceil(services.length / 2);
+        const columns = [services.slice(0, half), services.slice(half)];
+
+        let html = "";
+        columns.forEach((column) => {
+            html += '<div class="col-md-6">';
+            column.forEach((service) => {
+                const checked = selectedIds.includes(service.service_id);
+                const fee = parseFloat(service.service_fee || 0);
+                const feeText = fee > 0 ? ` (₱${fee.toFixed(2)})` : "";
+
+                html += `
+                    <div class="form-check mb-2">
+                        <input class="form-check-input service-checkbox"
+                               type="checkbox"
+                               value="${service.service_id}"
+                               id="service_${service.service_id}"
+                               ${checked ? "checked" : ""}>
+                        <label class="form-check-label" for="service_${service.service_id}">
+                            ${service.service_name}${feeText}
+                        </label>
+                    </div>
+                `;
+            });
+            html += "</div>";
+        });
+
+        container.innerHTML = html;
+
+        // Wire up change handlers.
+        container.querySelectorAll(".service-checkbox").forEach((checkbox) => {
+            checkbox.addEventListener("change", handleServiceToggle);
+        });
+    } catch (error) {
+        console.error("Error loading services:", error);
+        container.innerHTML =
+            '<div class="text-danger small">Failed to load services.</div>';
+    }
+}
+
+/**
+ * Add or remove a service from the session cart based on checkbox state.
+ * After the API call, refresh the selected-items list and fee display
+ * so the UI stays in sync with the server.
+ * Fires a toast on success, matching the UX for facilities/equipment.
+ */
+
+async function handleServiceToggle(event) {
+    const checkbox = event.target;
+    const serviceId = parseInt(checkbox.value);
+    const isChecked = checkbox.checked;
+    const serviceName =
+        checkbox.nextElementSibling?.textContent.trim().split(" (")[0] ||
+        "Service";
+
+    // Prevent double-toggle during the request.
+    // Note: .service-checkbox:disabled has opacity: 1 to avoid flickering
+    checkbox.disabled = true;
+
+    try {
+        const endpoint = isChecked
+            ? "/api/requisition/batch-add-items"
+            : "/api/requisition/batch-remove-items";
+
+        const payload = {
+            items: [{ type: "service", service_id: serviceId }],
+        };
+
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "X-CSRF-TOKEN": csrfToken,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.message || "Failed to update service");
+        }
+
+        // Match the toast wording used for facility/equipment add/remove.
+        showToast(
+            isChecked
+                ? `${serviceName} added successfully`
+                : `${serviceName} removed successfully`,
+            "success",
+        );
+
+        // Refresh dependent UI.
+        await Promise.all([
+            window.renderSelectedItems(),
+            window.calculateAndDisplayFees(),
+        ]);
+
+        if (currentStep === 3 && typeof populateFormSummary === "function") {
+            populateFormSummary();
+        }
+    } catch (error) {
+        console.error("Service toggle error:", error);
+        showToast(error.message || "Failed to update service", "error");
+        checkbox.checked = !isChecked; // Revert on failure.
+    } finally {
+        checkbox.disabled = false;
     }
 }
 
