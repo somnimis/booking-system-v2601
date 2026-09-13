@@ -680,34 +680,6 @@ class FacilityController extends Controller
         }
     }
 
-    public function testCloudinaryConnection()
-    {
-        try {
-            // Test basic Cloudinary connectivity
-            $ping = Cloudinary::uploadApi()->ping();
-
-            \Log::info('Cloudinary ping test', ['result' => $ping]);
-
-            return response()->json([
-                'success' => true,
-                'ping_result' => $ping,
-                'message' => 'Cloudinary connection successful'
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Cloudinary connection test failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-                'message' => 'Cloudinary connection failed - check credentials'
-            ], 500);
-        }
-    }
-
     public function checkCloudinaryConfig()
     {
         try {

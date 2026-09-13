@@ -1,3 +1,18 @@
+/* Target the input, its pseudo-elements, and its label sibling */
+.form-check .service-checkbox:disabled,
+input.service-checkbox:disabled,
+input.service-checkbox:disabled ~ .form-check-label {
+    opacity: 1 !important;
+    cursor: wait !important;
+}
+
+/* Override Bootstrap's specific background/border opacity opacity */
+input.service-checkbox:disabled::before,
+input.service-checkbox:disabled::after {
+    opacity: 1 !important;
+}
+
+
 /* Pagination color */
 .page-item.active .page-link {
     background-color: #0b2d72;
@@ -228,6 +243,7 @@
         height: 1.2em;
         margin-top: 0.2em;
     }
+
 
     /* Adjust text sizes for mobile */
     h5 {
