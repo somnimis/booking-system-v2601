@@ -156,6 +156,7 @@ Route::prefix('requisition')->middleware(['web'])->group(function () {
     Route::post('/save-request-info', [RequisitionFormController::class, 'saveRequestInfo']);
     Route::get('/facilities/with-selected', [FacilityController::class, 'getFacilitiesWithSelected']);
     Route::get('/equipment/with-selected', [EquipmentController::class, 'getEquipmentWithSelected']);
+    Route::get('/services/with-selected', [ExtraServicesController::class, 'getServicesWithSelected']);
     Route::post('/batch-add-items', [RequisitionFormController::class, 'batchAddToForm']);
     Route::post('/batch-remove-items', [RequisitionFormController::class, 'batchRemoveFromForm']);
     Route::post('/add-item', [RequisitionFormController::class, 'addToForm']);

@@ -3,19 +3,7 @@
 @section('content')
 
     <style>
-        .bg-danger-subtle {
-            background-color: #f8d7da !important;
-        }
-
-        .bg-success-subtle {
-            background-color: #d1e7dd !important;
-        }
-
-        .min-w-0 {
-            min-width: 0;
-        }
-
-        /* Tab Styles */
+        /* Request Tabs */
         .request-tabs {
             border-bottom: 1px solid #dee2e6;
             margin-bottom: 1.5rem;
@@ -65,6 +53,18 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        .bg-danger-subtle {
+            background-color: #f8d7da !important;
+        }
+
+        .bg-success-subtle {
+            background-color: #d1e7dd !important;
+        }
+
+        .min-w-0 {
+            min-width: 0;
         }
 
         /* Action Buttons */
@@ -251,9 +251,41 @@
             }
         }
 
-        .skeleton-text {
-            height: 1rem;
+        /* Letter Reader */
+        .letter-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: .15rem;
         }
+
+        .letter-meta {
+            color: #6c757d;
+            font-size: .9rem;
+        }
+
+        .letter-section {
+            margin-bottom: 1.25rem;
+        }
+
+        .letter-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .letter-section-label {
+            font-size: .7rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: #6c757d;
+            margin-bottom: .35rem;
+        }
+
+        .letter-item {
+            display: flex;
+            justify-content: space-between;
+            padding: .25rem 0;
+        }
+
     </style>
 
     <main id="main">
@@ -292,27 +324,23 @@
             </div>
 
             <!-- Loading State -->
-            <div id="loadingState">
-                <div class="row g-3">
-                    <div class="col-md-8">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <div class="skeleton skeleton-text mb-3" style="width: 150px;"></div>
-                                <hr>
-                                <div class="skeleton skeleton-text mb-2" style="width: 100%;"></div>
-                                <div class="skeleton skeleton-text mb-2" style="width: 90%;"></div>
-                                <div class="skeleton skeleton-text mb-2" style="width: 95%;"></div>
-                            </div>
+            <div id="loadingState" class="row g-3">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="skeleton mb-3" style="height:1.5rem;width:150px"></div>
+                            <div class="skeleton mb-2" style="height:1rem"></div>
+                            <div class="skeleton mb-2" style="height:1rem;width:90%"></div>
+                            <div class="skeleton mb-2" style="height:1rem;width:95%"></div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <div class="skeleton skeleton-text mb-3" style="width: 120px;"></div>
-                                <hr>
-                                <div class="skeleton skeleton-text mb-2" style="width: 100%;"></div>
-                                <div class="skeleton skeleton-text mb-2" style="width: 85%;"></div>
-                            </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="skeleton mb-3" style="height:1.5rem;width:120px"></div>
+                            <div class="skeleton mb-2" style="height:1rem"></div>
+                            <div class="skeleton mb-2" style="height:1rem;width:85%"></div>
                         </div>
                     </div>
                 </div>
@@ -320,86 +348,82 @@
 
             <!-- Content State -->
             <div id="contentState" style="display: none;">
-                <!-- Details Tab -->
-                <div id="detailsPane" class="tab-pane active">
-                    <div class="row g-3">
-                        <div class="col-lg-8">
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">Request Information</h5>
-                                    <i class="bi bi-info-circle text-muted"></i>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row g-3" id="detailsContainer"></div>
+                <div class="tab-content">
+                    <!-- Details Tab -->
+                    <div id="detailsPane" class="tab-pane active">
+                        <div class="row g-3">
+                            <div class="col-lg-8">
+                                <div class="card">
+                                    <div class="card-body border-bottom bg-light" id="letterHeader"></div>
+                                    <div class="card-body" id="letterBody">
+                                        <div id="detailsContainer" class="d-none"></div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-lg-4 d-flex flex-column gap-3">
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">Booking Details</h5>
-                                    <i class="bi bi-calendar text-muted"></i>
+                            <div class="col-lg-4 d-flex flex-column gap-3">
+                                <div class="card">
+                                    <x-card-header title="Booking Details" icon="calendar" />
+                                    <div class="card-body" id="eventDetails"></div>
                                 </div>
-                                <div class="card-body" id="eventDetails"></div>
-                            </div>
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">Attachments</h5>
-                                    <i class="bi bi-paperclip text-muted"></i>
+                                <div class="card">
+                                    <x-card-header title="Attachments" icon="paperclip" />
+                                    <div class="card-body" id="attachmentsContainer"></div>
                                 </div>
-                                <div class="card-body" id="attachmentsContainer"></div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Timeline Tab -->
-                <div id="timelinePane" class="tab-pane">
-                    <div class="row g-3">
-                        <div class="col-lg-7">
-                            <div class="card h-100">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">Activity Timeline</h5>
-                                    <div class="d-flex gap-2">
-                                        <select id="timelineFilter" class="form-select form-select-sm" style="width: auto;">
-                                            <option value="all">All</option>
-                                            <option value="comment">Comments</option>
-                                            <option value="fee">Fees</option>
-                                            <option value="approval">Approvals</option>
-                                        </select>
-                                        <button class="btn btn-sm btn-outline-secondary" id="refreshTimeline">
-                                            <i class="bi bi-arrow-clockwise"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="card-body d-flex flex-column" style="min-height: 400px;">
-                                    <div id="timelineContent" class="flex-grow-1 overflow-auto" style="max-height: 350px;">
-                                        <div class="text-center text-muted py-4">
-                                            <div class="spinner-border spinner-border-sm"></div>
-                                            <p class="small mb-0 mt-2">Loading...</p>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 pt-3 border-top">
+                    <!-- Timeline Tab -->
+                    <div id="timelinePane" class="tab-pane">
+                        <div class="row g-3">
+                            <div class="col-lg-7">
+                                <div class="card h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">Activity Timeline</h5>
                                         <div class="d-flex gap-2">
-                                            <input type="text" class="form-control" placeholder="Add a comment..."
-                                                id="commentInput">
-                                            <button class="btn btn-primary" id="sendCommentBtn">
-                                                <i class="bi bi-send"></i>
+                                            <select id="timelineFilter" class="form-select form-select-sm"
+                                                style="width: auto;">
+                                                <option value="all">All</option>
+                                                <option value="comment">Comments</option>
+                                                <option value="fee">Fees</option>
+                                                <option value="approval">Approvals</option>
+                                            </select>
+                                            <button class="btn btn-sm btn-outline-secondary" id="refreshTimeline">
+                                                <i class="bi bi-arrow-clockwise"></i>
                                             </button>
                                         </div>
                                     </div>
+                                    <div class="card-body d-flex flex-column" style="min-height: 400px;">
+                                        <div id="timelineContent" class="flex-grow-1 overflow-auto"
+                                            style="max-height: 350px;">
+                                            <div class="text-center text-muted py-4">
+                                                <div class="spinner-border spinner-border-sm"></div>
+                                                <p class="small mb-0 mt-2">Loading...</p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 pt-3 border-top">
+                                            <div class="d-flex gap-2">
+                                                <input type="text" class="form-control" placeholder="Add a comment..."
+                                                    id="commentInput">
+                                                <button class="btn btn-primary" id="sendCommentBtn">
+                                                    <i class="bi bi-send"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-lg-5">
-                            <div class="card h-100">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">Approval Status</h5>
-                                    <span class="badge bg-primary" id="approvalCountBadge">0/0</span>
-                                </div>
-                                <div class="card-body overflow-auto p-2" id="approvalsContainer" style="max-height: 550px;">
-                                    <div class="text-center text-muted py-4">
-                                        <div class="spinner-border spinner-border-sm"></div>
+                            <div class="col-lg-5">
+                                <div class="card h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">Approval Status</h5>
+                                        <span class="badge bg-primary" id="approvalCountBadge">0/0</span>
+                                    </div>
+                                    <div class="card-body overflow-auto p-2" id="approvalsContainer"
+                                        style="max-height: 550px;">
+                                        <div class="text-center text-muted py-4">
+                                            <div class="spinner-border spinner-border-sm"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -408,138 +432,18 @@
                 </div>
             </div>
 
-            <!-- Modals -->
-            <!-- Approve Modal -->
-            <div class="modal fade" id="approveModal" tabindex="-1">
+            <!-- Generic Action Modal -->
+            <div class="modal fade" id="actionModal" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Confirm Approval</h5>
+                            <h5 class="modal-title" id="actionModalTitle"></h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <div class="modal-body">
-                            <p>Are you sure you want to approve this request?</p>
-                            <div class="mb-3">
-                                <label class="form-label">Remarks (Optional)</label>
-                                <textarea class="form-control" id="approveRemarks" rows="3"></textarea>
-                            </div>
-                        </div>
+                        <div class="modal-body" id="actionModalBody"></div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-success" id="confirmApprove">Confirm</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reject Modal -->
-            <div class="modal fade" id="rejectModal" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Confirm Rejection</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Are you sure you want to reject this request?</p>
-                            <div class="mb-3">
-                                <label class="form-label">Reason (Optional)</label>
-                                <textarea class="form-control" id="rejectRemarks" rows="3"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-danger" id="confirmReject">Confirm</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Finalize Modal -->
-            <div class="modal fade" id="finalizeModal" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Finalize Request</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row g-2 mb-3">
-                                <div class="col">
-                                    <div class="alert alert-success mb-0">
-                                        <strong>Approvals:</strong> <span id="approvalCountFinalize">0</span>
-                                    </div>
-                                </div>
-                                <div class="col">
-                                    <div class="alert alert-danger mb-0">
-                                        <strong>Rejections:</strong> <span id="rejectionCountFinalize">0</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="text-center fw-bold">Are you sure? This action cannot be undone.</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="confirmFinalize">Finalize</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Mark Scheduled Modal -->
-            <div class="modal fade" id="markScheduledModal" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Mark as Scheduled</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label">Official Receipt Number *</label>
-                                <input type="text" class="form-control" id="officialReceiptNum" required>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="confirmMarkScheduled">Confirm</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Close Form Modal -->
-            <div class="modal fade" id="closeFormModal" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Close Form</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body text-center">
-                            <i class="bi bi-exclamation-triangle fs-1 text-danger mb-3 d-block"></i>
-                            <p>Are you sure you want to close this form?</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-danger" id="confirmCloseForm">Close Form</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Status Update Modal -->
-            <div class="modal fade" id="statusUpdateModal" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Confirm Status Change</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body" id="statusModalContent"></div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="confirmStatusUpdate">Confirm</button>
+                            <button type="button" class="btn" id="actionModalConfirm">Confirm</button>
                         </div>
                     </div>
                 </div>
@@ -556,18 +460,4 @@
 
 @section('scripts')
     <script src="{{ asset('js/admin/request-view.js') }}" defer></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const pathParts = window.location.pathname.split('/');
-            const requestId = pathParts[pathParts.length - 1];
-
-            if (typeof RequestViewThin !== 'undefined') {
-                RequestViewThin.init(requestId);
-            } else {
-                console.error('RequestViewThin module not loaded');
-                document.getElementById('loadingState').innerHTML =
-                    '<div class="alert alert-danger">Failed to load module. Please refresh.</div>';
-            }
-        });
-    </script>
 @endsection

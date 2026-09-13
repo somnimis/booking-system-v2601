@@ -34,8 +34,6 @@ class RequisitionSubmitRequest extends FormRequest
             'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
             'event_documents_url' => 'nullable|url',
             'event_documents_public_id' => 'nullable|string|max:255',
-            'extra_services' => 'nullable|array',
-            'extra_services.*' => 'integer|exists:extra_services,service_id',
         ];
 
         if (!$this->all_day) {
