@@ -371,8 +371,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // ---- 2.4 Status Management - HEAD ADMINISTRATOR ----
         Route::post('/{requestId}/update-status', [AdminActionsController::class, 'updateStatus']); // manual overrides 
-        Route::post('/{requestId}/mark-scheduled', [AdminActionsController::class, 'markAsScheduled']);
-        Route::post('/{requestId}/finalize', [AdminActionsController::class, 'finalizeForm']);
+        Route::post('/{requestId}/finalize-reservation', [AdminActionsController::class, 'finalizeReservation']);
         Route::post('/{requestId}/close', [AdminActionsController::class, 'closeForm']);
         Route::post('/{requestId}/cancel', [AdminActionsController::class, 'cancelForm']);
 

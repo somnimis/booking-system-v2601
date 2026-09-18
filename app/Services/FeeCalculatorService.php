@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 /**
@@ -10,56 +9,36 @@ use Carbon\Carbon;
  * ----------------------------------------------------------------------------
  * Centralizes all fee math for requisition forms.
  *
+ * Price resolution (Task B — price snapshot):
+ *   - Prefer `requested_*.fee_snapshot` when present (frozen at submission).
+ *   - Fall back to the live parent price (`base_fee` / `service_fee`) for
+ *     session-cart previews and any legacy rows before backfill.
+ *
  * Fee composition at submission time:
- *   tentative_fee = facilities + equipment + services
+ *   tentative_fee = facilities + equipment + services  (waivers NOT applied)
  *
- * Fee composition at approval time (admin-side, not this service's concern here):
- *   approved_fee = tentative_fee + requisitionFees.additional - discounts + late_penalty
- *
- * Rate types:
- *   - Facilities : 'Per Hour' or flat
- *   - Equipment  : 'Per Hour' or flat, multiplied by quantity
- *   - Services   : always flat (extra_services has no rate_type column)
- *
- * Waivers:
- *   Any requested_* row can be waived (is_waived = true) → contributes 0.
- *
- * IMPORTANT: This service must be callable on a *persisted* RequisitionForm
- * with the following relationships loaded:
- *   - requestedFacilities.facility
- *   - requestedEquipment.equipment
- *   - requestedServices.service
- * Otherwise you'll trigger N+1 queries (or null errors) during breakdown.
+ * Fee composition at approval time (admin-side, not this service's concern):
+ *   approved_fee = tentative_fee + requisitionFees.additional - discounts
+ *                  + late_penalty (waivers handled there)
  * ----------------------------------------------------------------------------
  */
 class FeeCalculatorService
 {
-    /**
-     * Calculate base fee (facilities + equipment + services) for a form.
-     *
-     * This is the value that gets persisted to `requisition_forms.tentative_fee`
-     * at submission time.
-     */
     public function calculateBaseFee($form): float
     {
         $duration = $this->getDurationDetails($form);
 
-        $facilityTotal  = $this->calculateFacilityTotal($form, $duration['hours']);
-        $equipmentTotal = $this->calculateEquipmentTotal($form, $duration['hours']);
-        $serviceTotal   = $this->calculateServiceTotal($form);
-
-        return $facilityTotal + $equipmentTotal + $serviceTotal;
+        return $this->calculateFacilityTotal($form, $duration['hours'])
+             + $this->calculateEquipmentTotal($form, $duration['hours'])
+             + $this->calculateServiceTotal($form);
     }
 
-    /**
-     * Get facilities breakdown with individual fees.
-     */
     public function getFacilitiesBreakdown($form): array
     {
         $duration = $this->getDurationDetails($form);
 
         return $form->requestedFacilities->map(function ($facility) use ($duration) {
-            $unitPrice = $facility->facility->base_fee;
+            $unitPrice = $this->resolveUnitPrice($facility, $facility->facility, 'base_fee');
             $fee = $this->calculateFacilityFee(
                 $unitPrice,
                 $facility->facility->rate_type,
@@ -78,15 +57,12 @@ class FeeCalculatorService
         })->values()->toArray();
     }
 
-    /**
-     * Get equipment breakdown with individual fees.
-     */
     public function getEquipmentBreakdown($form): array
     {
         $duration = $this->getDurationDetails($form);
 
         return $form->requestedEquipment->map(function ($equipment) use ($duration) {
-            $unitPrice = $equipment->equipment->base_fee;
+            $unitPrice = $this->resolveUnitPrice($equipment, $equipment->equipment, 'base_fee');
             $fee = $this->calculateEquipmentFee(
                 $unitPrice,
                 $equipment->equipment->rate_type,
@@ -107,65 +83,45 @@ class FeeCalculatorService
         })->values()->toArray();
     }
 
-    /**
-     * Get services breakdown with individual fees.
-     *
-     * Services are flat-fee (extra_services.service_fee) and are NOT affected
-     * by booking duration. Waived services contribute 0.
-     */
     public function getServicesBreakdown($form): array
     {
-        // Guard against unloaded relationship to keep this method safe when
-        // called from contexts that may not have eager-loaded services.
         if (!$form->relationLoaded('requestedServices')) {
             $form->load('requestedServices.service');
         }
 
         return $form->requestedServices->map(function ($requestedService) {
-            $service = $requestedService->service;
-            $unitPrice = $service->service_fee ?? 0;
-            $isWaived = (bool) $requestedService->is_waived;
+            $service   = $requestedService->service;
+            $unitPrice = $this->resolveUnitPrice($requestedService, $service, 'service_fee');
+            $isWaived  = (bool) $requestedService->is_waived;
 
             return [
                 'name'          => $service->service_name,
                 'unit_price'    => $unitPrice,
                 'fee'           => $isWaived ? 0 : $unitPrice,
-                'rate_type'     => 'Flat', // services have no rate_type column
+                'rate_type'     => 'Flat',
                 'is_waived'     => $isWaived,
                 'duration_text' => null,
             ];
         })->values()->toArray();
     }
 
-    /**
-     * Calculate approved fee (base + additional - discounts + late penalty).
-     *
-     * Used by admin flows AFTER approval. Not used at submission time.
-     */
     public function calculateApprovedFee($form): float
     {
-        $baseFee       = $this->calculateBaseFee($form);
+        $baseFee        = $this->calculateBaseFee($form);
         $additionalFees = $form->requisitionFees->sum('fee_amount');
-        $discounts     = $this->calculateTotalDiscounts($form, $baseFee + $additionalFees);
-        $latePenalty   = $form->is_late ? $form->late_penalty_fee : 0;
+        $discounts      = $this->calculateTotalDiscounts($form, $baseFee + $additionalFees);
+        $latePenalty    = $form->is_late ? $form->late_penalty_fee : 0;
 
         return max(0, $baseFee + $additionalFees - $discounts + $latePenalty);
     }
 
-    /**
-     * Get complete fee summary for a form.
-     *
-     * Used by:
-     *   - The submission preview endpoint (calculateFeeBreakdown)
-     *   - The admin request view (getRequestViewData)
-     */
     public function getFeeSummary($form): array
     {
-        $duration      = $this->getDurationDetails($form);
-        $baseFee       = $this->calculateBaseFee($form);
+        $duration       = $this->getDurationDetails($form);
+        $baseFee        = $this->calculateBaseFee($form);
         $additionalFees = $form->requisitionFees->sum('fee_amount');
-        $discounts     = $this->calculateTotalDiscounts($form, $baseFee + $additionalFees);
-        $latePenalty   = $form->is_late ? $form->late_penalty_fee : 0;
+        $discounts      = $this->calculateTotalDiscounts($form, $baseFee + $additionalFees);
+        $latePenalty    = $form->is_late ? $form->late_penalty_fee : 0;
 
         return [
             'duration'        => $duration,
@@ -183,14 +139,30 @@ class FeeCalculatorService
     }
 
     // ------------------------------------------------------------------------
-    // Private calculation helpers
+    // Private helpers
     // ------------------------------------------------------------------------
+
+    /**
+     * Resolve the unit price for a requested item.
+     *
+     * Prefers the frozen `fee_snapshot` column. Falls back to the live parent
+     * price for session-cart preview objects (which have no snapshot) and for
+     * legacy rows created before the snapshot column existed.
+     */
+    private function resolveUnitPrice($requestedItem, $parentModel, string $liveField): float
+    {
+        if (isset($requestedItem->fee_snapshot) && $requestedItem->fee_snapshot !== null) {
+            return (float) $requestedItem->fee_snapshot;
+        }
+
+        return (float) ($parentModel->{$liveField} ?? 0);
+    }
 
     private function calculateFacilityTotal($form, float $durationHours): float
     {
         return $form->requestedFacilities->sum(function ($facility) use ($durationHours) {
             return $this->calculateFacilityFee(
-                $facility->facility->base_fee,
+                $this->resolveUnitPrice($facility, $facility->facility, 'base_fee'),
                 $facility->facility->rate_type,
                 $durationHours,
                 $facility->is_waived
@@ -202,7 +174,7 @@ class FeeCalculatorService
     {
         return $form->requestedEquipment->sum(function ($equipment) use ($durationHours) {
             return $this->calculateEquipmentFee(
-                $equipment->equipment->base_fee,
+                $this->resolveUnitPrice($equipment, $equipment->equipment, 'base_fee'),
                 $equipment->equipment->rate_type,
                 $equipment->quantity,
                 $durationHours,
@@ -211,11 +183,6 @@ class FeeCalculatorService
         });
     }
 
-    /**
-     * Sum of all requested services, respecting waivers.
-     *
-     * Services are always flat-fee; duration is intentionally NOT applied.
-     */
     private function calculateServiceTotal($form): float
     {
         if (!$form->relationLoaded('requestedServices')) {
@@ -227,7 +194,7 @@ class FeeCalculatorService
                 return 0;
             }
 
-            return (float) ($requestedService->service->service_fee ?? 0);
+            return $this->resolveUnitPrice($requestedService, $requestedService->service, 'service_fee');
         });
     }
 

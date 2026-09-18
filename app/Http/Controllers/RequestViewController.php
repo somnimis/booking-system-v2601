@@ -72,11 +72,9 @@ class RequestViewController extends Controller
                 }
             ])->findOrFail($requestId);
 
-            // Use the existing calculateDurationHours method
+            // Duration (hours + human-readable text) — display-only, computed locally.
             $durationHours = $this->calculateDurationHours($form);
-
-            // Calculate base fees from items
-            $feeCalculation = $this->calculateFeesFromItems($form, $durationHours);
+            $durationText = $this->formatDurationText($form, $durationHours);
 
             // Format schedule
             $scheduleFormatted = $this->scheduleFormatter->forApi($form);
@@ -116,12 +114,26 @@ class RequestViewController extends Controller
                     ],
                     'schedule' => $scheduleFormatted,
                     'duration_hours' => $durationHours,
+                    'duration' => [
+                        'hours' => $durationHours,
+                        'text' => $durationText,
+                    ],
                     'is_multi_day' => $form->start_date !== $form->end_date,
                     'requested_items' => [
                         'facilities' => $this->formatFacilitiesWithFees($form->requestedFacilities, $durationHours),
                         'equipment' => $this->formatEquipmentWithFees($form->requestedEquipment, $durationHours),
+                        'services' => $this->formatServicesWithFees($form->requestedServices),
                     ],
-                    'fees' => $feeCalculation,
+                    'fees' => [
+                        // Frozen at submission — never mutates. Read-only reference.
+                        'tentative_fee' => (float) $form->tentative_fee,
+                        // Live, current-state approved value. Persisted by every
+                        // AdminActionsController mutation (fees, discounts, waivers).
+                        'approved_fee' => (float) $form->approved_fee,
+                        // Signed sum of all post-submission deltas. Negative = net
+                        // savings (waivers/discounts). Positive = net additions.
+                        'adjustments_total' => (float) $form->approved_fee - (float) $form->tentative_fee,
+                    ],
                     'documents' => [
                         'formal_letter' => [
                             'url' => $form->event_documents_url,
@@ -138,6 +150,9 @@ class RequestViewController extends Controller
                         ],
                     ],
                     'approval_info' => [
+                        // Admin ID from the authenticated token
+                        'current_admin_id' => auth('sanctum')->id(),
+                        'current_admin_can_act' => $this->currentAdminCanAct($form, auth('sanctum')->id()),
                         'approval_count' => $form->requisitionApprovals->where('status', 'Approved')->count(),
                         'rejection_count' => $form->requisitionApprovals->where('status', 'Rejected')->count(),
                         'pending_count' => $form->requisitionApprovals->where('status', 'Pending')->count(),
@@ -163,7 +178,16 @@ class RequestViewController extends Controller
                             ],
                         ],
                         'is_finalized' => $form->is_finalized,
-                        'can_finalize' => $form->requisitionApprovals->where('status', 'Approved')->count() >= 3 && !$form->is_finalized,
+                        // Finalizable once every stage-1 officer has acted (Approved or Rejected).
+                        // Rejections do NOT block finalization — the flag is a readiness signal for
+                        // stage-2 approvers, not an authorization gate. Zero stage-1 rows also
+                        // count as "ready" (forms with no dept-head approvers skip to stage 2).
+                        'can_finalize' => !$form->is_finalized
+                            && !$form->is_closed
+                            && $form->requisitionApprovals
+                                ->where('stage', 1)
+                                ->where('status', 'Pending')
+                                ->count() === 0,
                     ],
                     'approval_history' => $this->formatApprovalHistory($form->requisitionApprovals),
                     'comments' => $this->formatComments($form->requisitionComments),
@@ -174,6 +198,23 @@ class RequestViewController extends Controller
                         'returned_at' => $form->returned_at,
                         'created_at' => $form->created_at,
                         'updated_at' => $form->updated_at,
+
+                        // Finalization / closure tracking
+                        'is_finalized' => $form->is_finalized,
+                        'finalized_at' => $form->finalized_at,
+                        'finalized_by' => $form->finalizedBy ? [
+                            'admin_id' => $form->finalizedBy->admin_id,
+                            'first_name' => $form->finalizedBy->first_name,
+                            'last_name' => $form->finalizedBy->last_name,
+                        ] : null,
+                        'is_closed' => $form->is_closed,
+                        'closed_at' => $form->closed_at,
+                        'closed_by' => $form->closedBy ? [
+                            'admin_id' => $form->closedBy->admin_id,
+                            'first_name' => $form->closedBy->first_name,
+                            'last_name' => $form->closedBy->last_name,
+                        ] : null,
+                        'closure_reason' => $form->closure_reason,
                     ],
                 ]
             ];
@@ -199,6 +240,22 @@ class RequestViewController extends Controller
     }
 
     /**
+     * Returns true if the given admin has a still-pending approval row
+     * for this form. Used by the UI to decide whether to render
+     * Approve/Reject buttons for that specific admin.
+     */
+    private function currentAdminCanAct($form, $adminId): bool
+    {
+        if (!$adminId)
+            return false;
+
+        return $form->requisitionApprovals
+            ->where('admin_id', $adminId)
+            ->where('status', 'Pending')
+            ->isNotEmpty();
+    }
+
+    /**
      * Calculate duration in hours based on all_day flag
      */
     private function calculateDurationHours($form)
@@ -220,134 +277,94 @@ class RequestViewController extends Controller
     }
 
     /**
-     * Calculate fees from requested items
+     * Human-readable duration text for the Booking Details UI.
+     * All-day bookings are expressed in day(s); timed bookings in hours.
      */
-    private function calculateFeesFromItems($form, $durationHours)
+    private function formatDurationText($form, int $durationHours): string
     {
-        $facilityBaseTotal = 0;
-        $facilityWaivedTotal = 0;
-        $equipmentBaseTotal = 0;
-        $equipmentWaivedTotal = 0;
-
-        // Calculate facility fees
-        foreach ($form->requestedFacilities as $facility) {
-            $fee = $facility->facility->base_fee;
-            $total = $facility->facility->rate_type === 'Per Hour' ? $fee * $durationHours : $fee;
-
-            if ($facility->is_waived) {
-                $facilityWaivedTotal += $total;
-            } else {
-                $facilityBaseTotal += $total;
-            }
+        if ($form->all_day) {
+            $start = Carbon::parse($form->start_date);
+            $end = Carbon::parse($form->end_date);
+            $days = $start->diffInDays($end) + 1;
+            return $days === 1 ? '1 day (All Day)' : $days . ' days (All Day)';
         }
 
-        // Calculate equipment fees
-        foreach ($form->requestedEquipment as $equipment) {
-            $fee = $equipment->equipment->base_fee;
-            $quantity = $equipment->quantity;
-            $total = $equipment->equipment->rate_type === 'Per Hour'
-                ? ($fee * $durationHours) * $quantity
-                : $fee * $quantity;
-
-            if ($equipment->is_waived) {
-                $equipmentWaivedTotal += $total;
-            } else {
-                $equipmentBaseTotal += $total;
-            }
-        }
-
-        $baseTotal = $facilityBaseTotal + $equipmentBaseTotal;
-        $waivedTotal = $facilityWaivedTotal + $equipmentWaivedTotal;
-
-        // Calculate additional fees and discounts
-        $additionalFeesTotal = 0;
-        $discountsTotal = 0;
-
-        foreach ($form->requisitionFees as $fee) {
-            if ($fee->fee_amount > 0) {
-                $additionalFeesTotal += $fee->fee_amount;
-            }
-            if ($fee->discount_amount > 0) {
-                if ($fee->discount_type === 'Percentage') {
-                    $discountsTotal += ($fee->discount_amount / 100) * ($baseTotal + $additionalFeesTotal);
-                } else {
-                    $discountsTotal += $fee->discount_amount;
-                }
-            }
-        }
-
-        $approvedFee = $baseTotal + $additionalFeesTotal - $discountsTotal;
-        if ($form->is_late) {
-            $approvedFee += $form->late_penalty_fee;
-        }
-
-        return [
-            'base_fee' => $baseTotal,
-            'waived_fee' => $waivedTotal,
-            'tentative_fee' => $baseTotal + $waivedTotal,
-            'additional_fees_total' => $additionalFeesTotal,
-            'discounts_total' => $discountsTotal,
-            'late_penalty_fee' => $form->late_penalty_fee,
-            'approved_fee' => max(0, $approvedFee),
-            'breakdown' => [
-                'facilities_base' => $facilityBaseTotal,
-                'facilities_waived' => $facilityWaivedTotal,
-                'equipment_base' => $equipmentBaseTotal,
-                'equipment_waived' => $equipmentWaivedTotal,
-            ]
-        ];
+        return $durationHours === 1 ? '1 hour' : $durationHours . ' hours';
     }
 
     /**
-     * Format facilities with fee calculations
+     * Format facilities for Booking Details.
+     *
+     * Reads the frozen `fee_snapshot' and falls back to live `base_fee`
+     * for legacy rows. Emits `subtotal` for Per Hour items so the JS can render
+     * the per-line total without any client-side math.
      */
-    private function formatFacilitiesWithFees($facilities, $durationHours)
+    private function formatFacilitiesWithFees($facilities, int $durationHours)
     {
         return $facilities->map(function ($item) use ($durationHours) {
-            $fee = $item->facility->base_fee;
-            $total = $item->facility->rate_type === 'Per Hour' ? $fee * $durationHours : $fee;
-            $rateDescription = $item->facility->rate_type === 'Per Hour'
-                ? "₱" . number_format($fee, 2) . "/hr × " . $durationHours . " hrs"
-                : "₱" . number_format($fee, 2) . "/event";
+            $unit = (float) ($item->fee_snapshot ?? $item->facility->base_fee);
+            $rateType = $item->facility->rate_type;
+            $isPerHour = $rateType === 'Per Hour';
 
             return [
                 'requested_facility_id' => $item->requested_facility_id,
                 'facility_id' => $item->facility_id,
                 'name' => $item->facility->facility_name,
-                'fee' => $fee,
-                'rate_type' => $item->facility->rate_type,
+                'rate_type' => $rateType,
+                'fee' => $unit,
+                'subtotal' => $isPerHour ? $unit * $durationHours : $unit,
                 'is_waived' => (bool) $item->is_waived,
-                'total_fee' => $total,
-                'rate_description' => $rateDescription,
             ];
         })->values();
     }
 
     /**
-     * Format equipment with fee calculations
+     * Format equipment for Booking Details. Same snapshot rules as facilities,
+     * but subtotal also multiplies by quantity for both rate types.
      */
-    private function formatEquipmentWithFees($equipment, $durationHours)
+    private function formatEquipmentWithFees($equipment, int $durationHours)
     {
         return $equipment->map(function ($item) use ($durationHours) {
-            $fee = $item->equipment->base_fee;
-            $quantity = $item->quantity;
-            $total = $item->equipment->rate_type === 'Per Hour'
-                ? ($fee * $durationHours) * $quantity
-                : $fee * $quantity;
-            $rateDescription = $item->equipment->rate_type === 'Per Hour'
-                ? "₱" . number_format($fee, 2) . "/hr × " . $durationHours . " hrs × " . $quantity
-                : "₱" . number_format($fee, 2) . "/event × " . $quantity;
+            $unit = (float) ($item->fee_snapshot ?? $item->equipment->base_fee);
+            $qty = (int) $item->quantity;
+            $rateType = $item->equipment->rate_type;
+            $isPerHour = $rateType === 'Per Hour';
+
+            $subtotal = $unit * $qty;
+            if ($isPerHour) {
+                $subtotal *= $durationHours;
+            }
 
             return [
                 'requested_equipment_id' => $item->requested_equipment_id,
                 'equipment_id' => $item->equipment_id,
                 'name' => $item->equipment->equipment_name,
-                'fee' => $fee,
-                'quantity' => $quantity,
-                'rate_type' => $item->equipment->rate_type,
+                'quantity' => $qty,
+                'rate_type' => $rateType,
+                'fee' => $unit,
+                'subtotal' => $subtotal,
                 'is_waived' => (bool) $item->is_waived,
-                'total_fee' => $total,
-                'rate_description' => $rateDescription,
+            ];
+        })->values();
+    }
+
+    /**
+     * Format requested services for Booking Details. Services are flat-fee;
+     * no duration or quantity multiplier.
+     */
+    private function formatServicesWithFees($services)
+    {
+        return $services->map(function ($item) {
+            $unit = (float) ($item->fee_snapshot ?? $item->service->service_fee ?? 0);
+
+            return [
+                'requested_service_id' => $item->requested_service_id,
+                'service_id' => $item->service_id,
+                'name' => $item->service->service_name,
+                'rate_type' => 'Flat',
+                'fee' => $unit,
+                'subtotal' => $unit,
+                'is_waived' => (bool) $item->is_waived,
             ];
         })->values();
     }

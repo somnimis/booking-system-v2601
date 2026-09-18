@@ -925,10 +925,13 @@ class RequisitionFormController extends Controller
             ]);
 
             // 4. Calculate and persist the authoritative tentative fee.
+            //    `approved_fee` is seeded with the same value so admins have a
+            //    starting point to mutate (fees/discounts/waivers) pre-finalization.
             $tentativeFee = $this->feeCalculator->calculateBaseFee($requisitionForm);
 
             $requisitionForm->update([
                 'tentative_fee' => round($tentativeFee, 2),
+                'approved_fee'  => round($tentativeFee, 2),
             ]);
 
             // 5. Build the approval chain.
@@ -1091,18 +1094,31 @@ class RequisitionFormController extends Controller
 
     private function saveRequisitionItems(RequisitionForm $form, array $selectedItems): void
     {
+        // Pre-fetch parents once (cart is capped at 10 items, so this is cheap).
+        $facilityIds = collect($selectedItems)->where('type', 'facility')->pluck('facility_id');
+        $equipmentIds = collect($selectedItems)->where('type', 'equipment')->pluck('equipment_id');
+
+        $facilities = Facility::whereIn('facility_id', $facilityIds)->get()->keyBy('facility_id');
+        $equipment = Equipment::whereIn('equipment_id', $equipmentIds)->get()->keyBy('equipment_id');
+
         foreach ($selectedItems as $item) {
             if ($item['type'] === 'facility') {
+                $parent = $facilities->get($item['facility_id']);
+
                 RequestedFacility::create([
                     'request_id' => $form->request_id,
                     'facility_id' => $item['facility_id'],
+                    'fee_snapshot' => $parent?->base_fee, // snapshot price at submission
                     'is_waived' => false,
                 ]);
             } elseif ($item['type'] === 'equipment') {
+                $parent = $equipment->get($item['equipment_id']);
+
                 RequestedEquipment::create([
                     'request_id' => $form->request_id,
                     'equipment_id' => $item['equipment_id'],
                     'quantity' => $item['quantity'] ?? 1,
+                    'fee_snapshot' => $parent?->base_fee, // snapshot price at submission
                     'is_waived' => false,
                 ]);
             }
@@ -1123,14 +1139,20 @@ class RequisitionFormController extends Controller
      */
     private function saveCartServices(RequisitionForm $form, array $selectedItems): void
     {
+        $serviceIds = collect($selectedItems)->where('type', 'service')->pluck('service_id');
+        $services = ExtraService::whereIn('service_id', $serviceIds)->get()->keyBy('service_id');
+
         foreach ($selectedItems as $item) {
             if ($item['type'] !== 'service') {
                 continue;
             }
 
+            $parent = $services->get($item['service_id']);
+
             RequestedService::create([
                 'request_id' => $form->request_id,
                 'service_id' => $item['service_id'],
+                'fee_snapshot' => $parent?->service_fee, // snapshot price at submission
                 'is_waived' => false,
             ]);
         }
