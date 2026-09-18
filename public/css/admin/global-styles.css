@@ -34,7 +34,7 @@
     --radius-xl: 24px; /* from main-layout */
     --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     --cpu-primary: #041a4b;
-    --btn-primary: #041a4b;
+    --btn-primary: #05225f;
     --btn-primary-hover: #0b2d72;
 }
 
@@ -341,10 +341,8 @@ main {
 }
 
 /* ============================================
-   BUTTONS (merged: base from main-layout, variants from global-styles)
+   BUTTONS
    ============================================ */
-
-/* Allow small buttons to have less padding */
 
 .btn {
     border-radius: 8px !important;
@@ -359,16 +357,32 @@ main {
     font-size: 0.9rem !important;
 }
 
+/* PRIMARY — Navy */
 .btn-primary {
-    background-color: #003366 !important;
+    background-color: #164a78 !important;
+    border-color: #003366 !important;
+    color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: #003d6e !important;
     border-color: #002d5b !important;
     color: #fff !important;
 }
 
-.btn-primary:hover {
-    background-color: #003366 !important;
-    border-color: #002d5b !important;
-    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.15) !important;
+/* OUTLINE SECONDARY */
+
+.btn-secondary {
+    color: #6c757d !important;
+    border-color: #dee2e6 !important;
+    background-color: #fff !important;
+}
+
+.btn-secondary:hover {
+    background-color: #f8f9fa !important;
+    border-color: #ced4da !important;
+    color: #495057 !important;
 }
 
 .btn-outline-secondary {
@@ -383,38 +397,32 @@ main {
     color: #495057 !important;
 }
 
+/* SUCCESS — Pastel Green */
 .btn-success {
-    background-color: #198754 !important;
-    border-color: #198754 !important;
+    background-color: #d4edda !important;
+    color: #155724 !important;
+    border: 1px solid #c3e6cb !important;
 }
 
-.btn-success:hover {
-    background-color: #157347 !important;
-    box-shadow: 0 4px 8px rgba(25, 135, 84, 0.15) !important;
+.btn-success:hover,
+.btn-success:focus {
+    background-color: #c3e6cb !important;
+    color: #155724 !important;
+    border-color: #b1dfbb !important;
 }
 
-/* Override Bootstrap primary */
-.btn-primary,
-.btn-outline-primary {
-    --bs-btn-bg: var(--navy) !important;
-    --bs-btn-border-color: var(--navy) !important;
-    --bs-btn-hover-bg: var(--navy-mid) !important;
-    --bs-btn-hover-border-color: var(--navy-mid) !important;
-    --bs-btn-active-bg: var(--navy-mid) !important;
-    --bs-btn-active-border-color: var(--navy-mid) !important;
-    --bs-btn-disabled-bg: var(--navy) !important;
-    --bs-btn-disabled-border-color: var(--navy) !important;
+/* DANGER — Pastel Red */
+.btn-danger {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    border: 1px solid #f5c6cb !important;
 }
 
-.btn-outline-primary {
-    --bs-btn-color: var(--navy) !important;
-    --bs-btn-border-color: var(--navy) !important;
-    --bs-btn-hover-bg: var(--navy) !important;
-    --bs-btn-hover-border-color: var(--navy) !important;
-    --bs-btn-active-bg: var(--navy) !important;
-    --bs-btn-active-border-color: var(--navy) !important;
-    --bs-btn-disabled-color: var(--navy) !important;
-    --bs-btn-disabled-border-color: var(--navy) !important;
+.btn-danger:hover,
+.btn-danger:focus {
+    background-color: #f5c6cb !important;
+    color: #721c24 !important;
+    border-color: #f1b0b7 !important;
 }
 
 /* ============================================
@@ -424,7 +432,7 @@ main {
     background: var(--white);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
+    overflow: hidden;
 }
 
 .card-header {
@@ -528,8 +536,8 @@ main {
 
 .form-control:focus,
 .form-select:focus {
-    border-color: var(--navy);
-    box-shadow: 0 0 0 3px rgba(4, 26, 75, 0.1);
+    border-color: #0b2d7277;
+    box-shadow: 0 0 0 3px rgba(4, 26, 75, 0);
     outline: none;
 }
 

@@ -7,7 +7,7 @@ use App\Models\RequisitionApproval;
 use App\Models\RequisitionForm;
 use App\Models\FormStatus;
 use App\Models\DepartmentRole;
-use App\Models\Notification;
+use App\Services\FeeCalculatorService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -32,6 +32,17 @@ use Illuminate\Support\Facades\DB;
  */
 class ApprovalChainService
 {
+    protected NotificationService $notificationService;
+    protected FeeCalculatorService $feeCalculator;
+
+    public function __construct(
+        NotificationService $notificationService,
+        FeeCalculatorService $feeCalculator,
+    ) {
+        $this->notificationService = $notificationService;
+        $this->feeCalculator = $feeCalculator;
+    }
+
     /**
      * Create approval chain records for a requisition form
      * 
@@ -99,6 +110,12 @@ class ApprovalChainService
             ->where('admin_departments.role_id', DepartmentRole::HEAD)
             ->distinct()
             ->pluck('admins.admin_id');
+
+        // Notify stage-1 approvers that they have a pending action.
+        // Zero stage-1 approvers = skip (the form auto-advances below).
+        if ($stage1AdminIds->isNotEmpty()) {
+            $this->notificationService->notifyStage1Ready($requisitionForm, $stage1AdminIds);
+        }
 
         // ============================================
         // Stage 2: Final Approving Officers
@@ -204,7 +221,7 @@ class ApprovalChainService
      * @param int $currentStage The completed stage (1, 2, or 3)
      * @return void
      */
-    public function moveToNextStage($requestId, $currentStage)
+    public function moveToNextStage($requestId, $currentStage, $actingAdminId = null)
     {
         $nextStage = $currentStage + 1;
 
@@ -221,49 +238,68 @@ class ApprovalChainService
                 'request_id' => $requestId,
                 'skipped_stage' => $nextStage
             ]);
-            $this->moveToNextStage($requestId, $nextStage);
+            $this->moveToNextStage($requestId, $nextStage, $actingAdminId);
             return;
         }
 
-        // Handle completion of Stage 3 - transition to payment assessment
+        // Stage 3 completed — readiness signal only. Workflow already
+        // advanced to Awaiting Payment when stage 2 cleared.
         if ($nextStage > 3) {
-            // Stage 3 completed! Move to Stage 4: Payment Assessment
-            $awaitingPaymentStatus = FormStatus::where('status_name', 'Awaiting Payment')->first();
-
-            if ($awaitingPaymentStatus) {
-                // Update requisition status to "Awaiting Payment"
-                $requisition = RequisitionForm::find($requestId);
-                $requisition->status_id = $awaitingPaymentStatus->status_id;
-                $requisition->save();
-
-                // Notify Head Administrators (role_id = 1) that payment assessment is needed
-                $this->notifyHeadAdminForPaymentAssessment($requestId);
-
-                // Schedule automated payment reminders (Day 3 warning, Day 5 auto-cancel)
-                $this->schedulePaymentReminders($requestId);
-
-                Log::info('Stage 3 completed - Moving to Stage 4 (Payment Assessment)', [
-                    'request_id' => $requestId,
-                    'new_status' => 'Awaiting Payment'
-                ]);
-            }
+            Log::info('Stage 3 completed — awaiting manual finalization', [
+                'request_id' => $requestId,
+            ]);
             return;
         }
 
-        // Notify all admins in the next stage about their pending approvals
-        $stageNames = [
-            1 => 'Approving Officers',
-            2 => 'Final Approving Officer',
-            3 => 'Issuing Officer'
-        ];
+        // Stage 1 → 2: notify stage-2 approvers.
+        if ($currentStage === 1) {
+            $form = RequisitionForm::find($requestId);
+            if ($form) {
+                $stage2Ids = $nextStageApprovals
+                    ->where('status', 'Pending')
+                    ->pluck('admin_id');
+                $this->notificationService->notifyStage2Ready($form, $stage2Ids);
+            }
+        }
 
-        foreach ($nextStageApprovals as $approval) {
-            $this->notifyAdmin($approval->admin_id, $requestId, $nextStage, $stageNames[$nextStage]);
+        // Stage 2 → Awaiting Payment: workflow advances AND fee is auto-locked.
+        // Finalization fields are set here because "payment due" only makes
+        // sense once the fee is frozen — otherwise the amount could still drift.
+        if ($currentStage === 2) {
+            $form = RequisitionForm::with([
+                'requestedFacilities.facility',
+                'requestedEquipment.equipment',
+                'requisitionFees',
+                'purpose',
+            ])->find($requestId);
+
+            if ($form) {
+                $awaitingPaymentStatus = FormStatus::where('status_name', 'Awaiting Payment')->first();
+
+                if ($awaitingPaymentStatus) {
+                    // Auto-finalize: lock the fee at this moment.
+                    $form->is_finalized = true;
+                    $form->finalized_at = now();
+                    $form->finalized_by = $actingAdminId;
+                    $form->approved_fee = $this->feeCalculator->calculateApprovedFee($form);
+
+                    // Advance workflow status.
+                    $form->status_id = $awaitingPaymentStatus->status_id;
+                    $form->save();
+
+                    // Notify the requester that payment is now due.
+                    $this->notificationService->sendApprovalEmail($form);
+
+                    Log::info('Stage 2 complete — auto-finalized and advanced to Awaiting Payment', [
+                        'request_id' => $requestId,
+                        'finalized_by' => $form->finalized_by,
+                    ]);
+                }
+            }
         }
 
         Log::info('Moved to stage ' . $nextStage, [
             'request_id' => $requestId,
-            'stage_name' => $stageNames[$nextStage],
             'notified_admins' => $nextStageApprovals->pluck('admin_id')->toArray()
         ]);
     }
@@ -301,13 +337,16 @@ class ApprovalChainService
             ];
         }
 
-        // Update the approval record with the admin's decision
+        // Map the action verb to the stored past-tense status expected by the
+        // ENUM('Pending','Approved','Rejected') column and the rest of the app.
+        $newStatus = $action === 'approve' ? 'Approved' : 'Rejected';
+
         $approval->update([
             'acted_by' => $adminId,
             'acted_at' => now(),
-            'status' => ucfirst($action),  // 'approve' becomes 'Approve'
+            'status' => $newStatus,
             'remarks' => $remarks,
-            'date_updated' => now()
+            'date_updated' => now(),
         ]);
 
         // TODO: Create comment record for activity timeline
@@ -325,7 +364,7 @@ class ApprovalChainService
 
             // If no pending approvals remain, move to the next stage
             if ($pendingInStage === 0) {
-                $this->moveToNextStage($requestId, $currentStage);
+                $this->moveToNextStage($requestId, $currentStage, $adminId);
             }
         }
 
@@ -336,69 +375,6 @@ class ApprovalChainService
         ];
     }
 
-    /**
-     * Send a notification to an admin about an approval request
-     * 
-     * Creates a notification record in the database for the specified admin.
-     * Notifications are used for:
-     * - Alerting admins when their approval is required
-     * - Providing context about the requisition (requestor name, ID, stage)
-     * 
-     * @param int $adminId The ID of the admin to notify
-     * @param int $requestId The requisition ID
-     * @param int $stage The approval stage number (1, 2, or 3)
-     * @param string $stageName Human-readable name of the stage
-     * @return void
-     */
-    private function notifyAdmin($adminId, $requestId, $stage, $stageName)
-    {
-        $requisition = RequisitionForm::find($requestId);
-
-        Notification::create([
-            'admin_id' => $adminId,
-            'type' => 'approval_request',
-            'message' => "Requisition #{$requisition->request_id} from {$requisition->first_name} {$requisition->last_name} requires your approval (Stage {$stage}: {$stageName}).",
-            'request_id' => $requisition->request_id,
-            'is_read' => false
-        ]);
-    }
-
-    /**
-     * Notify all Head Administrators that payment assessment is needed
-     * 
-     * This is called after Stage 3 (Issuing) is completed.
-     * Head Administrators (role_id = 1) are responsible for:
-     * - Reviewing the financial aspects of the requisition
-     * - Confirming fund availability
-     * - Approving or rejecting payment
-     * 
-     * @param int $requestId The requisition ID
-     * @return void
-     */
-    private function notifyHeadAdminForPaymentAssessment($requestId)
-    {
-        $requisition = RequisitionForm::find($requestId);
-
-        // Get all Head Administrators (role_id = 1)
-        $headAdmins = Admin::whereHas('role', function ($q) {
-            $q->where('role_title', 'Head Administrator');
-        })->get();
-
-        foreach ($headAdmins as $admin) {
-            Notification::create([
-                'admin_id' => $admin->admin_id,
-                'type' => 'payment_assessment',
-                'message' => "Requisition #{$requisition->request_id} from {$requisition->first_name} {$requisition->last_name} is awaiting payment assessment.",
-                'request_id' => $requisition->request_id,
-                'is_read' => false
-            ]);
-        }
-
-        Log::info('Head Administrators notified for payment assessment', [
-            'request_id' => $requestId,
-            'notified_admins' => $headAdmins->pluck('admin_id')->toArray()
-        ]);
-    }
 
     /**
      * Schedule automated reminders for payment completion
@@ -419,7 +395,7 @@ class ApprovalChainService
      * - Create SendWarningEmailJob to send payment reminders
      * - Create AutoCancelFormJob to handle automatic cancellation
      * - Configure queue worker for delayed job processing
-     * - Set up email templates for payment reminders
+     * - Set up templates for payment reminders
      * 
      * @param int $requestId The requisition ID
      * @return void

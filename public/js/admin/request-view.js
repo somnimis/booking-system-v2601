@@ -27,10 +27,10 @@ const RequestViewThin = (function () {
      * subsequently referenced by renderers, actions, and event handlers.
      * ========================================================================
      */
-    let requestId = null;        // The requisition request ID (from URL path)
-    let adminToken = null;       // Admin auth token (from localStorage)
-    let requestData = null;      // Full request payload from the API
-    let timelineFilter = "all";  // Active timeline filter (all|comment|fee|approval)
+    let requestId = null; // The requisition request ID (from URL path)
+    let adminToken = null; // Admin auth token (from localStorage)
+    let requestData = null; // Full request payload from the API
+    let timelineFilter = "all"; // Active timeline filter (all|comment|fee|approval)
 
     /**
      * ========================================================================
@@ -109,23 +109,22 @@ const RequestViewThin = (function () {
     };
 
     /**
-     * Display a temporary toast notification at the bottom-left.
-     * @param {string} message - Text to display (escaped internally)
-     * @param {"success"|"error"} [type="success"]
+     * Format an ISO timestamp as an absolute date + time string,
+     * e.g. "Sep 13, 2026, 5:10 PM". Used for submission / completion dates.
+     * @param {string} iso
+     * @returns {string}
      */
-    const showToast = (message, type = "success") => {
-        const toast = document.createElement("div");
-        toast.className =
-            "position-fixed bottom-0 start-0 m-3 p-3 rounded text-white";
-        toast.style.cssText = `z-index:1100;background:${type === "success" ? "#004080" : "#dc3545"};opacity:0;transition:opacity 0.3s`;
-        toast.innerHTML = `<i class="bi ${type === "success" ? "bi-check-circle" : "bi-exclamation-circle"} me-2"></i>${escapeHtml(message)}`;
-        document.body.appendChild(toast);
-
-        requestAnimationFrame(() => (toast.style.opacity = "1"));
-        setTimeout(() => {
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
+    const formatAbsoluteDate = (iso) => {
+        if (!iso) return "N/A";
+        const dt = new Date(iso);
+        return dt.toLocaleString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+        });
     };
 
     /**
@@ -178,8 +177,12 @@ const RequestViewThin = (function () {
             },
         );
         const result = await response.json();
-        if (!response.ok)
-            throw new Error(result.error || result.message || "Action failed");
+        if (!response.ok) {
+            const parts = [result.error, result.details].filter(Boolean);
+            throw new Error(
+                parts.join(". ") || result.message || "Action failed",
+            );
+        }
         return result;
     };
 
@@ -194,17 +197,85 @@ const RequestViewThin = (function () {
      */
 
     /**
-     * Render the request ID and colored status badge in the page header.
+     * Render the request ID, status badge, and subtitle row.
+     *
+     * Subtitle composition:
+     *   - "Submitted {date}" (+ "· Finalized on {date} by {admin}" when finalized)
+     *   - Finalization indicator: color-coded dot + label
+     *   - "Completed on {date}" only for terminal statuses
+     *
      * @param {Object} data - Full request payload
      */
     const renderHeader = (data) => {
-        document.getElementById("requestIdDisplay").textContent = String(
-            data.request_id,
-        ).padStart(4, "0");
+        const formattedId = String(data.request_id).padStart(4, "0");
+        document.getElementById("requestIdDisplay").textContent = formattedId;
+        document.getElementById("requestIdDisplayMirror").textContent =
+            formattedId;
 
         const status = data.form_details.status;
         document.getElementById("statusBadgeContainer").innerHTML =
             `<span class="badge" style="background:${status.color};color:white;padding:8px 16px;font-size:0.9rem">${status.name}</span>`;
+
+        // ----- Subtitle -----
+        const tracking = data.status_tracking || {};
+        const approval = data.approval_info || {};
+
+        const submittedAt = formatAbsoluteDate(tracking.created_at);
+
+        // Finalization indicator — color-coded dot + label (no pill chrome)
+        let pillLabel, dotColor;
+        if (approval.is_finalized) {
+            pillLabel = "Finalized";
+            dotColor = "#198754"; // Bootstrap success
+        } else if (approval.can_finalize) {
+            pillLabel = "Can Finalize";
+            dotColor = "#ffc107"; // Bootstrap warning
+        } else {
+            pillLabel = "Not Finalized";
+            dotColor = "#6c757d"; // Bootstrap secondary
+        }
+
+        const tooltipText =
+            "Once finalized, the form can no longer be edited and the approved fee is locked in.";
+
+        // Terminal statuses where we surface the completion timestamp
+        const terminalStatuses = ["Completed", "Rejected", "Cancelled"];
+        const showCompletedOn =
+            terminalStatuses.includes(status.name) && tracking.returned_at;
+
+        const finalizedBy = tracking.finalized_by
+            ? `${tracking.finalized_by.first_name} ${tracking.finalized_by.last_name}`
+            : null;
+        const closedBy = tracking.closed_by
+            ? `${tracking.closed_by.first_name} ${tracking.closed_by.last_name}`
+            : null;
+
+        // Build the finalized suffix as a single inline string so it merges
+        // into the "Submitted ..." segment (no flex-gap between).
+        const finalizedSuffix =
+            tracking.is_finalized && tracking.finalized_at
+                ? ` &middot; <i class="bi bi-circle-fill me-1" style="color:#198754;font-size:0.5rem;vertical-align:middle;"></i>Finalized on ${escapeHtml(formatAbsoluteDate(tracking.finalized_at))}${finalizedBy ? ` by ${escapeHtml(finalizedBy)}` : ""}`
+                : "";
+
+        const parts = [
+            `<span><i class="bi bi-calendar3 me-1"></i>Submitted ${escapeHtml(submittedAt)}${finalizedSuffix}</span>`,
+        ];
+
+        // Indicator only renders pre-finalization — once finalized, the
+        // timestamp sentence above carries the full context.
+        if (!approval.is_finalized) {
+            parts.push(`<span class="text-muted">&middot;</span>`);
+            parts.push(
+                `<span data-bs-toggle="tooltip"
+                       data-bs-placement="top"
+                       title="${escapeHtml(tooltipText)}"
+                       style="cursor:help;">
+                    <i class="bi bi-circle-fill me-1" style="color:${dotColor};font-size:0.5rem;vertical-align:middle;"></i>${pillLabel}
+                </span>`,
+            );
+        }
+
+        document.getElementById("requestSubtitle").innerHTML = parts.join(" ");
     };
 
     /**
@@ -217,34 +288,93 @@ const RequestViewThin = (function () {
         const container = document.getElementById("actionButtonsTop");
         const statusId = data.form_details.status.id;
         const approvalInfo = data.approval_info;
+        const canAct = approvalInfo.current_admin_can_act === true;
 
-        let html = "";
+        const FINALIZED_STATUS = 2;
+        const TERMINAL_STATUSES = [5, 6, 7];
 
-        // Approve/Reject for pending statuses (1, 2)
-        if ([1, 2].includes(statusId)) {
-            html = `
-                <button class="btn" id="approveBtn"><i class="bi bi-check-lg"></i> Approve</button>
-                <button class="btn" id="rejectBtn"><i class="bi bi-x-lg"></i> Reject</button>
+        // Terminal statuses: no actions at all.
+        if (TERMINAL_STATUSES.includes(statusId)) {
+            container.innerHTML =
+                '<span class="text-muted small fst-italic">No actions available</span>';
+            return;
+        }
+
+        const dropdownItems = [];
+
+        // Order per design: Reject · Finalize · ⋮ · Approve
+        // Each segment is built separately, then concatenated in visual order.
+        // Event bindings below are unchanged — IDs are preserved.
+        const rejectHtml = canAct
+            ? `<button class="btn btn-outline-secondary" id="rejectBtn"><i class="bi bi-x-lg"></i> Reject</button>`
+            : "";
+        const approveHtml = canAct
+            ? `<button class="btn btn-success fw-bold" id="approveBtn"><i class="bi bi-check-lg"></i> Approve Request</button>`
+            : "";
+
+        // Finalize visibility:
+        //   - Finalize (status 1) is only for Head Admin (role 1) and
+        //     Final Approving Officer (role 2). Stage-1 dept heads don't
+        //     see it; the backend also 403s them if the button is forced.
+        //   - Finalize Reservation (status 3) stays visible for all — the
+        //     backend authorizes by role when the action fires.
+        const currentRoleId = window.Admin?.role_id;
+        const isStage1Officer = currentRoleId === 3;
+
+        // Finalize (status 1) is gone — finalization is automatic when the
+        // last stage-2 approver acts. Only Finalize Reservation (status 3)
+        // remains as a manual action.
+        let finalizeHtml = "";
+        if (statusId === 3) {
+            finalizeHtml = `<button class="btn btn-primary" id="finalizeReservationBtn"><i class="bi bi-bookmark-check"></i> Finalize Reservation</button>`;
+        }
+
+        // Dropdown is hidden for stage-1 approvers (role 3). They only act on
+        // Approve/Reject; Close Form is reserved for higher-authority roles.
+        // Dropdown items — Close Form is the sole entry now.
+        if (!isStage1Officer) {
+            dropdownItems.push(
+                `<li><button class="dropdown-item" id="closeFormBtn"><i class="bi bi-x-circle me-2"></i>Close Form</button></li>`,
+            );
+        }
+
+        let dropdownHtml = "";
+        if (dropdownItems.length > 0) {
+            dropdownHtml = `
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More Actions">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu shadow-sm dropdown-menu-end">
+                        ${dropdownItems.join("")}
+                    </ul>
+                </div>
             `;
         }
 
-        // Head admin actions
-        if ([1, 2].includes(statusId)) {
-            html += `<button class="btn" id="finalizeBtn"><i class="bi bi-check-circle"></i> Finalize</button>`;
-        } else if (statusId === 3) {
-            html = `<button class="btn" id="markScheduledBtn"><i class="bi bi-calendar-check"></i> Mark Scheduled</button>`;
-        } else if (statusId === 4) {
-            html = `<button class="btn" id="markOngoingBtn"><i class="bi bi-play-circle"></i> Mark Ongoing</button>`;
-        }
+        // Message shown when this admin has already acted on this request.
+        // Pairs visually with the missing Approve/Reject buttons.
+        const actedMsgHtml = !canAct
+            ? `<span class="d-inline-flex flex-column align-items-center justify-content-center text-muted small pe-2"
+             style="min-height:42px;line-height:1.15;">
+           <i class="bi bi-check-circle-fill text-success mb-1"></i>
+           <span class="text-center">You have already<br>acted on this request</span>
+            </span>`
+            : "";
 
-        // Close form for non-terminal
-        if (![7, 8, 9].includes(statusId)) {
-            html += `<button class="btn" id="closeFormBtn"><i class="bi bi-x-circle"></i> Close</button>`;
-        }
-
+        // Final composition: [acted message] · Reject · Finalize · ⋮ | Approve Request
+        const dividerHtml = approveHtml
+            ? `<div class="vr mx-1 align-self-stretch"></div>`
+            : "";
         container.innerHTML =
-            html || '<span class="text-muted">No actions available</span>';
-        // Bind events
+            actedMsgHtml +
+            rejectHtml +
+            finalizeHtml +
+            dropdownHtml +
+            dividerHtml +
+            approveHtml;
+
+        // ----- Event bindings (unchanged handlers, but finalize now sends closure reason for close) -----
         document.getElementById("approveBtn")?.addEventListener("click", () =>
             showActionModal({
                 title: "Confirm Approval",
@@ -257,8 +387,8 @@ const RequestViewThin = (function () {
                     const remarks =
                         document.getElementById("approveRemarks").value;
                     await postAction("approve", { remarks: remarks || null });
-                    showToast("Request approved");
-                    setTimeout(() => location.reload(), 1000);
+                    showToast("Request approved", "success");
+                    await refreshAfterAction();
                 },
             }),
         );
@@ -275,81 +405,108 @@ const RequestViewThin = (function () {
                     const remarks =
                         document.getElementById("rejectRemarks").value;
                     await postAction("reject", { remarks: remarks || null });
-                    showToast("Request rejected");
-                    setTimeout(
-                        () => (location.href = "/admin/manage-requests"),
-                        1000,
-                    );
-                },
-            }),
-        );
-
-        document.getElementById("finalizeBtn")?.addEventListener("click", () =>
-            showActionModal({
-                title: "Finalize Request",
-                body: `<div class="row g-2 mb-3">
-                     <div class="col"><div class="alert alert-success mb-0">
-                       <strong>Approvals:</strong> ${approvalInfo.approval_count}
-                     </div></div>
-                     <div class="col"><div class="alert alert-danger mb-0">
-                       <strong>Rejections:</strong> ${approvalInfo.rejection_count}
-                     </div></div>
-                   </div>
-                   <p class="text-center fw-bold mb-0">Are you sure? This action cannot be undone.</p>`,
-                confirmClass: "btn-primary",
-                confirmText: "Finalize",
-                onConfirm: async () => {
-                    await postAction("finalize");
-                    showToast("Request finalized");
-                    setTimeout(() => location.reload(), 1000);
+                    showToast("Request rejected", "success");
+                    await refreshAfterAction();
                 },
             }),
         );
 
         document
-            .getElementById("markScheduledBtn")
+            .getElementById("finalizeReservationBtn")
             ?.addEventListener("click", () =>
                 showActionModal({
-                    title: "Mark as Scheduled",
-                    body: `<label class="form-label">Official Receipt Number *</label>
+                    title: "Finalize Reservation",
+                    body: `<p class="small text-muted">Confirm the official receipt number to finalize this reservation.</p>
+                   <label class="form-label">Official Receipt Number *</label>
                    <input type="text" class="form-control" id="officialReceiptNum" required>`,
                     confirmClass: "btn-primary",
-                    confirmText: "Confirm",
+                    confirmText: "Finalize Reservation",
                     onConfirm: async () => {
                         const receiptNum = document
                             .getElementById("officialReceiptNum")
                             .value.trim();
                         if (!receiptNum)
                             throw new Error("Please enter receipt number");
-                        await postAction("mark-scheduled", {
+                        await postAction("finalize-reservation", {
                             official_receipt_num: receiptNum,
                         });
-                        showToast("Marked as scheduled");
+                        showToast("Reservation finalized", "success");
                         setTimeout(() => location.reload(), 1000);
                     },
                 }),
             );
 
-        document
-            .getElementById("markOngoingBtn")
-            ?.addEventListener("click", () => updateStatus("Ongoing"));
-
         document.getElementById("closeFormBtn")?.addEventListener("click", () =>
             showActionModal({
                 title: "Close Form",
-                body: `<div class="text-center">
-                     <i class="bi bi-exclamation-triangle fs-1 text-danger mb-3 d-block"></i>
-                     <p class="mb-0">Are you sure you want to close this form?</p>
-                   </div>`,
+                body: `<div class="text-left mb-3">
+                     <p class="mb-0">Are you sure you want to close this form?<br><strong>This action cannot be undone.</strong></p>
+                   </div>
+                   <label class="form-label">Closure Reason (Optional)</label>
+                   <textarea class="form-control" id="closureReason" rows="3"></textarea>`,
                 confirmClass: "btn-danger",
                 confirmText: "Close Form",
                 onConfirm: async () => {
-                    await postAction("close");
-                    showToast("Form closed");
+                    const reason = document
+                        .getElementById("closureReason")
+                        .value.trim();
+                    await postAction("close", {
+                        closure_reason: reason || null,
+                    });
+                    showToast("Form closed", "success");
                     setTimeout(() => (location.href = "/admin/calendar"), 1000);
                 },
             }),
         );
+    };
+
+    /**
+     * Render one requested item (facility/equipment/service) as a line in
+     * Booking Details.
+     *
+     * Rules:
+     *   - Flat rate        → name [×qty]                          ₱X/event
+     *   - Per Hour         → name [×qty] (N hrs)                  ₱X/hr
+     *                                                              ₱subtotal
+     *
+     * All values come straight from the API. No client-side math.
+     */
+    const renderLineItem = (item) => {
+        const isPerHour = item.rate_type === "Per Hour";
+        const suffix = isPerHour ? "/hr" : "/event";
+
+        // Left side: name + optional qty + optional duration hint
+        const qtyText =
+            item.quantity && item.quantity > 1
+                ? ` &times;${item.quantity}`
+                : "";
+        const durText = isPerHour
+            ? ` (${escapeHtml(item.duration_text || "")})`
+            : "";
+        // Prefer duration text from item if provided; fall back to data.duration.text via closure is
+        // not available here, so we rely on the caller to have set it. Currently we don't pass it
+        // per item, so we omit the parenthetical when unknown.
+        const left = `${escapeHtml(item.name)}${qtyText}`;
+
+        const waivedClass = item.is_waived
+            ? "text-muted text-decoration-line-through"
+            : "";
+
+        return `
+        <div class="d-flex justify-content-between small">
+            <span>${left}</span>
+            <span class="${waivedClass}">
+                ${formatMoney(item.fee)}${suffix}
+            </span>
+        </div>
+        ${
+            isPerHour && !item.is_waived
+                ? `<div class="d-flex justify-content-end small">
+                       <span class="text-muted">${formatMoney(item.subtotal)}</span>
+                   </div>`
+                : ""
+        }
+    `;
     };
 
     /**
@@ -367,11 +524,6 @@ const RequestViewThin = (function () {
         document.getElementById("letterHeader").innerHTML = `
         <div>
             <div class="letter-title">${escapeHtml(cal.title || "Untitled Request")}</div>
-            <div class="letter-meta">
-                ${escapeHtml(schedule.formatted.start)} &mdash; ${escapeHtml(schedule.formatted.end)}
-                &middot; ${data.duration_hours} hr${data.duration_hours > 1 ? "s" : ""}
-                ${data.is_multi_day ? " &middot; multi-day" : ""}
-            </div>
         </div>
     `;
 
@@ -397,106 +549,174 @@ const RequestViewThin = (function () {
             </div>
         </div>
 
-        <div class="letter-section">
-            <div class="letter-section-label">Purpose &amp; Participants</div>
-            <div class="letter-item">
-                <span class="text-muted">Purpose</span>
-                <span class="fw-medium">${escapeHtml(form.purpose || "N/A")}</span>
-            </div>
-            <div class="letter-item">
-                <span class="text-muted">Participants</span>
-                <span class="fw-medium">${form.num_participants || 0}</span>
-            </div>
-            <div class="letter-item">
-                <span class="text-muted">Tables / Chairs</span>
-                <span class="fw-medium">${form.num_tables || 0} / ${form.num_chairs || 0}</span>
-            </div>
-            <div class="letter-item">
-                <span class="text-muted">Microphones</span>
-                <span class="fw-medium">${form.num_microphones || 0}</span>
-            </div>
-        </div>
-
         ${
             form.additional_requests
                 ? `<div class="letter-section">
-                    <div class="letter-section-label">Additional Requests</div>
-                    <div class="letter-meta">${escapeHtml(form.additional_requests)}</div>
-                </div>`
+            <div class="letter-section-label">Additional Requests</div>
+            <div class="letter-meta">${escapeHtml(form.additional_requests)}</div>
+        </div>`
                 : ""
         }
-    `;
+
+        <div class="letter-section">
+            <!-- 1. Main Parent Layout Row -->
+            <div class="row g-4 align-items-start">
+                
+                <!-- 2. Left Column Content (8 out of 12 columns wide) -->
+                <div class="col-md-8">
+                    <div class="letter-section-label">Purpose &amp; Participants</div>
+                    
+                    <!-- Purpose Text -->
+                    <div class="mb-1.5">
+                        <div class="d-flex align-items-start gap-1.5 text-dark" style="font-size: 0.95rem;">
+                            <i class="fa-solid fa-calendar-days text-secondary" style="width: 14px; margin-right: 10px; margin-top: 4px;"></i>
+                            <div class="letter-meta">
+                            <span style="white-space: pre-wrap;">${escapeHtml(form.purpose || "N/A")}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nested Logistics Matrix Row (Stacks on mobile, 2x2 on tablets/desktops) -->
+                    <div class="row g-2 mt-0 text-dark" style="letter-spacing: -0.1px; max-width: 450px;">
+                        
+                        <!-- Top Left: Participants -->
+                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                            <i class="fa-solid fa-user text-secondary" style="width: 16px; margin-right: 10px;"></i> 
+                            <span>Participants: ${form.num_participants || 0}</span>
+                        </div>
+                        
+                        <!-- Top Right: Tables -->
+                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                            <i class="fa-solid fa-table-columns text-secondary" style="width: 16px; margin-right: 10px;"></i> 
+                            <span>Tables: ${form.num_tables || 0}</span>
+                        </div>
+                        
+                        <!-- Bottom Left: Chairs -->
+                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                            <!-- Removed font-size: 0.9rem custom string icon scale rule -->
+                            <i class="fa-solid fa-chair text-secondary" style="width: 16px; margin-right: 10px;"></i> 
+                            <span>Chairs: ${form.num_chairs || 0}</span>
+                        </div>
+                        
+                        <!-- Bottom Right: Microphones -->
+                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                            <i class="fa-solid fa-microphone-lines text-secondary" style="width: 16px; margin-right: 10px;"></i> 
+                            <span>Microphones: ${form.num_microphones || 0}</span>
+                        </div>
+                        
+                    </div> <!-- Closes Inner Matrix Row -->
+
+                                    
+                </div> <!-- Closes Main Left Column (col-md-8) cleanly! -->
+
+                <!-- 3. Right Column Content (4 out of 12 columns wide) -->
+                <div class="col-md-4">
+                    <div class="letter-section-label">Attachments</div>
+                    <!-- Dynamic elements load right into here -->
+                    <div id="attachmentsContainer"></div>
+                </div> <!-- Closes Main Right Column (col-md-4) -->
+
+            </div> <!-- Closes Main Parent Layout Row -->
+        </div> <!-- Closes Main Letter Section Block -->
+
+        `;
 
         const facilities = data.requested_items.facilities || [];
         const equipment = data.requested_items.equipment || [];
+        const services = data.requested_items.services || [];
 
         document.getElementById("eventDetails").innerHTML = `
         <div class="mb-3">
-            <div class="fw-bold text-primary small">Start</div>
+            <div class="fw-bold letter-section-label">Start</div>
             <div>${formatDateTime(schedule.start_date, schedule.start_time)}</div>
         </div>
         <div class="mb-3">
-            <div class="fw-bold text-primary small">End</div>
+            <div class="fw-bold letter-section-label">End</div>
             <div>${formatDateTime(schedule.end_date, schedule.end_time)}</div>
+        </div>
+        <div class="mb-3">
+            <div class="fw-bold letter-section-label">Duration</div>
+            <div>${escapeHtml(data.duration?.text || `${data.duration_hours} hours`)}</div>
         </div>
         ${
             facilities.length
                 ? `<div class="mb-3">
-                    <div class="fw-bold text-primary small">Facilities</div>
-                    ${facilities
-                        .map(
-                            (
-                                f,
-                            ) => `<div class="d-flex justify-content-between small">
-                                <span>${escapeHtml(f.name)}</span>
-                                <span class="${f.is_waived ? "text-muted text-decoration-line-through" : ""}">
-                                    ${formatMoney(f.total_fee)}
-                                </span>
-                            </div>`,
-                        )
-                        .join("")}
+                    <div class="fw-bold letter-section-label">Facilities</div>
+                    ${facilities.map(renderLineItem).join("")}
                 </div>`
                 : ""
         }
         ${
             equipment.length
                 ? `<div class="mb-3">
-                    <div class="fw-bold text-primary small">Equipment</div>
-                    ${equipment
-                        .map(
-                            (
-                                e,
-                            ) => `<div class="d-flex justify-content-between small">
-                                <span>${escapeHtml(e.name)} ${e.quantity > 1 ? `&times;${e.quantity}` : ""}</span>
-                                <span class="${e.is_waived ? "text-muted text-decoration-line-through" : ""}">
-                                    ${formatMoney(e.total_fee)}
-                                </span>
-                            </div>`,
-                        )
-                        .join("")}
+                    <div class="fw-bold letter-section-label">Equipment</div>
+                    ${equipment.map(renderLineItem).join("")}
                 </div>`
                 : ""
         }
-        <div class="pt-2 border-top">
-            <div class="fw-bold text-primary small">Total Fee</div>
-            <div class="fs-4 fw-bold text-primary">${formatMoney(data.fees.approved_fee)}</div>
+        ${
+            services.length
+                ? `<div class="mb-3">
+                    <div class="fw-bold letter-section-label">Services</div>
+                    ${services.map(renderLineItem).join("")}
+                </div>`
+                : ""
+        }
+        <div class="pt-3 border-top"> <!-- Increased padding-top to lower content from top border -->
+            <!-- Align-items-baseline ensures the label matches the vertical alignment of its value -->
+            <div class="d-flex justify-content-between align-items-baseline">
+                <span class="fw-bold letter-section-label">Tentative Fee</span>
+                <span class="fw-semibold">${formatMoney(data.fees.tentative_fee)}</span>
+            </div>
+            ${
+                data.fees.adjustments_total !== 0
+                    ? `<div class="d-flex justify-content-between align-items-baseline small mt-1">
+                           <span class="text-muted">Fee Adjustments</span>
+                           <span class="${data.fees.adjustments_total > 0 ? "text-success" : "text-danger"}">
+                               ${data.fees.adjustments_total > 0 ? "+" : "-"}${formatMoney(Math.abs(data.fees.adjustments_total))}
+                           </span>
+                       </div>`
+                    : ""
+            }
+            <div class="border-top mt-3 mb-3"></div> <!-- Increased bottom margin from mb-2 to mb-3 -->
+            <div class="d-flex justify-content-between align-items-center">
+                <!-- lh-sm reduces line-height to bring the Approved Fee label and value closer together -->
+                <div class="lh-sm">
+                    <div class="fw-bold letter-section-label">Approved Fee</div>
+                    <div class="fs-4 fw-bold text-primary">${formatMoney(data.fees.approved_fee)}</div>
+                </div>
+                ${
+                    data.approval_info.is_finalized
+                        ? `<span data-bs-toggle="tooltip" data-bs-placement="top"
+                                 title="Fees are locked once the form is finalized"
+                                 style="cursor:not-allowed;">
+                               <button class="btn btn-sm btn-outline-secondary" disabled style="pointer-events:none;">
+                                   <i class="bi bi-lock me-1"></i> Fees Locked
+                               </button>
+                           </span>`
+                        : `<a href="/admin/requisition/${requestId}/financials"
+                              class="btn btn-sm btn-outline-secondary">
+                               <i class="bi bi-pencil me-1"></i> Edit Fees
+                           </a>`
+                }
+            </div>
         </div>
-    `;
+        `;
 
         const docs = data.documents;
         document.getElementById("attachmentsContainer").innerHTML = `
         <div class="d-flex flex-column gap-2">
             <a href="${docs.formal_letter.url || "#"}" target="_blank"
-               class="btn btn-sm ${docs.formal_letter.url ? "btn-outline-primary" : "btn-outline-secondary disabled"}">
+               class="btn btn-sm ${docs.formal_letter.url ? "btn-outline-secondary" : "btn-outline-secondary disabled"}">
                 <i class="bi bi-file-text me-1"></i> Formal Letter
             </a>
             <a href="${docs.proof_of_payment.url || "#"}" target="_blank"
-               class="btn btn-sm ${docs.proof_of_payment.url ? "btn-outline-primary" : "btn-outline-secondary disabled"}">
+               class="btn btn-sm ${docs.proof_of_payment.url ? "btn-outline-secondary" : "btn-outline-secondary disabled"}">
                 <i class="bi bi-receipt me-1"></i> Proof of Payment
             </a>
             ${
                 docs.official_receipt.number
-                    ? `<a href="/official-receipt/${requestId}" target="_blank" class="btn btn-sm btn-outline-success">
+                    ? `<a href="/official-receipt/${requestId}" target="_blank" class="btn btn-sm btn-outline-secondary">
                         <i class="bi bi-receipt-cutoff me-1"></i> Official Receipt
                        </a>`
                     : `<button class="btn btn-sm btn-outline-secondary disabled">
@@ -504,7 +724,7 @@ const RequestViewThin = (function () {
                        </button>`
             }
         </div>
-    `;
+        `;
     };
 
     /**
@@ -604,7 +824,12 @@ const RequestViewThin = (function () {
                         <small class="text-muted">${formatTimeAgo(a.date_updated || a.acted_at)}</small>
                     </div>
                     <div class="small bg-white p-2 rounded mt-1">
-                        ${item.type === "approval" ? "✅ Approved" : "❌ Rejected"} at stage ${a.stage}
+                        ${
+                            item.type === "approval"
+                                ? `<i class="bi bi-check-circle-fill text-success me-1"></i>Approved`
+                                : `<i class="bi bi-x-circle-fill text-danger me-1"></i>Rejected`
+                        }
+                        <span class="text-muted">&middot; Stage ${a.stage}</span>
                         ${a.remarks ? `<br><em>"${escapeHtml(a.remarks)}"</em>` : ""}
                     </div>
                 </div>
@@ -633,7 +858,7 @@ const RequestViewThin = (function () {
                 status_name: statusName,
                 ...extra,
             });
-            showToast(`Status updated to ${statusName}`);
+            showToast(`Status updated to ${statusName}, "success"`);
             setTimeout(() => location.reload(), 1000);
         } catch (error) {
             showToast(error.message, "error");
@@ -657,9 +882,45 @@ const RequestViewThin = (function () {
             const freshData = await fetchData();
             requestData.comments = freshData.data.comments;
             renderTimeline();
-            showToast("Comment added");
+            showToast("Comment added", "success");
         } catch (error) {
             showToast(error.message, "error");
+        }
+    };
+
+    /**
+     * Surgical refresh after an approve/reject action.
+     *
+     * Mirrors the approach used by addComment: re-fetch view-data once,
+     * assign ONLY the fields that change on approve/reject, then re-render
+     * only the sections those fields drive. No full-page reload.
+     *
+     * Sections touched:
+     *   - Header (status badge + finalization pill via status_tracking)
+     *   - Action buttons (approval_info.current_admin_can_act flips)
+     *   - Timeline (approval_history gains a row)
+     *   - Approval tracker card (separate endpoint)
+     */
+    const refreshAfterAction = async () => {
+        const fresh = await fetchData();
+
+        // Patch only the fields that can change on approve/reject.
+        requestData.approval_history = fresh.data.approval_history;
+        requestData.approval_info = fresh.data.approval_info;
+        requestData.form_details.status = fresh.data.form_details.status;
+        requestData.status_tracking = fresh.data.status_tracking;
+
+        // Re-render affected sections only.
+        renderHeader(requestData);
+        renderActionButtons(requestData);
+        renderTimeline();
+
+        // Tracker card uses its own endpoint — refresh it too.
+        try {
+            const tracker = await fetchApprovalTracker();
+            renderApprovalTracker(tracker);
+        } catch (err) {
+            console.error("Approval tracker refresh failed:", err);
         }
     };
 
@@ -704,8 +965,8 @@ const RequestViewThin = (function () {
         const current = tracker.current_approvals || 0;
         const max = tracker.max_approvals || 0;
 
-        badge.textContent = `${current}/${max}`;
-        badge.className = `badge ${tracker.is_fully_approved ? "bg-success" : "bg-primary"}`;
+        badge.textContent = `${current} of ${max} acted`;
+        badge.className = "ms-auto text-muted small fw-normal";
 
         const admins = tracker.required_admins || [];
 
@@ -727,21 +988,18 @@ const RequestViewThin = (function () {
                 key: "stage1",
                 label: "Approving Officers",
                 icon: "bi-people",
-                color: "info",
                 stage: 1,
             },
             {
                 key: "stage2",
                 label: "Final Approving Officer",
                 icon: "bi-shield-check",
-                color: "primary",
                 stage: 2,
             },
             {
                 key: "stage3",
                 label: "Issuing Officer",
                 icon: "bi-box-seam",
-                color: "warning",
                 stage: 3,
             },
         ];
@@ -787,7 +1045,7 @@ const RequestViewThin = (function () {
                 ? "bg-success"
                 : isRejected
                   ? "bg-danger"
-                  : "bg-warning text-dark";
+                  : "bg-secondary text-white";
             const badgeLabel = isApproved
                 ? "Approved"
                 : isRejected
@@ -796,10 +1054,10 @@ const RequestViewThin = (function () {
 
             const overlayIcon = isApproved
                 ? `<i class="bi bi-check-circle-fill text-success position-absolute"
-                    style="bottom:-2px;right:-2px;font-size:14px;background:white;border-radius:50%;"></i>`
+        style="bottom:-2px;right:-2px;font-size:14px;"></i>`
                 : isRejected
                   ? `<i class="bi bi-x-circle-fill text-danger position-absolute"
-                    style="bottom:-2px;right:-2px;font-size:14px;background:white;border-radius:50%;"></i>`
+          style="bottom:-2px;right:-2px;font-size:14px;"></i>`
                   : "";
 
             return `
@@ -845,19 +1103,19 @@ const RequestViewThin = (function () {
             if (!group.length) return;
 
             html += `
-        <div class="mb-3">
-            <div class="d-flex align-items-center mb-2 px-1">
-                <i class="bi ${cat.icon} text-${cat.color} me-2"></i>
-                <span class="text-uppercase fw-bold text-muted"
-                      style="font-size:0.7rem;letter-spacing:0.05em;">
-                    ${cat.label}
-                </span>
-                <span class="badge bg-${cat.color} ms-auto" style="font-size:0.65rem;">
-                    ${group.length}
-                </span>
-            </div>
-            ${group.map(renderAdminRow).join("")}
-        </div>
+<div class="mb-3">
+    <div class="d-flex align-items-center mb-2 px-1">
+        <i class="bi ${cat.icon} text-secondary me-2"></i>
+        <span class="text-uppercase fw-bold text-muted"
+              style="font-size:0.7rem;letter-spacing:0.05em;">
+            ${cat.label}
+        </span>
+        <span class="ms-auto text-muted" style="font-size:0.7rem;">
+            ${group.length}
+        </span>
+    </div>
+    ${group.map(renderAdminRow).join("")}
+</div>
     `;
         });
 
@@ -964,11 +1222,28 @@ const RequestViewThin = (function () {
             .getElementById("refreshTimeline")
             ?.addEventListener("click", async () => {
                 const freshData = await fetchData();
+                // Timeline-related fields.
                 requestData.comments = freshData.data.comments;
                 requestData.requisition_fees = freshData.data.requisition_fees;
                 requestData.approval_history = freshData.data.approval_history;
+                // Header + actions.
+                requestData.approval_info = freshData.data.approval_info;
+                requestData.status_tracking = freshData.data.status_tracking;
+                requestData.form_details.status = freshData.data.form_details.status;
+
                 renderTimeline();
-                showToast("Timeline refreshed");
+                renderHeader(requestData);
+                renderActionButtons(requestData);
+
+                // Approval Status card.
+                try {
+                    const tracker = await fetchApprovalTracker();
+                    renderApprovalTracker(tracker);
+                } catch (err) {
+                    console.error("Approval tracker refresh failed:", err);
+                }
+
+                showToast("Refreshed", "success");
             });
 
         document
@@ -979,6 +1254,11 @@ const RequestViewThin = (function () {
             ?.addEventListener("keydown", (e) => {
                 if (e.key === "Enter") addComment();
             });
+
+        // Bootstrap tooltips (re-init after header render)
+        document
+            .querySelectorAll('[data-bs-toggle="tooltip"]')
+            .forEach((el) => bootstrap.Tooltip.getOrCreateInstance(el));
 
         // Back to top
         const backToTop = document.getElementById("backToTop");
