@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('title', 'Review Request')
 @section('content')
-
+    <link rel="stylesheet" href="https://cloudflare.com">
     <style>
         /* Request Tabs */
         .request-tabs {
@@ -67,47 +67,24 @@
             min-width: 0;
         }
 
-        /* Action Buttons */
-        #actionButtonsTop .btn {
-            min-width: 180px;
-        }
-
-        @media (max-width: 576px) {
-            #actionButtonsTop .btn {
-                width: 100%;
-            }
-        }
-
-        /* Pastel Action Buttons */
+        /* Custom Approval Button */
         #approveBtn,
         #confirmApprove {
-            background-color: #d4edda !important;
-            color: #155724 !important;
-            border: 1px solid #c3e6cb !important;
+            background-color: #0c923d !important;
+            color: white !important;
+            font-weight: 700 !important;
+            border: 1px solid #08732f !important;
+            transition: background-color 0.2s ease-in-out,
+                border-color 0.2s ease-in-out !important;
         }
 
-        #rejectBtn,
-        #confirmReject {
-            background-color: #f8d7da !important;
-            color: #721c24 !important;
-            border: 1px solid #f5c6cb !important;
-        }
-
-        #finalizeBtn,
-        #confirmFinalize,
-        #confirmMarkScheduled,
-        #markScheduledBtn,
-        #markOngoingBtn {
-            background-color: #d1ecf1 !important;
-            color: #0c5460 !important;
-            border: 1px solid #bee5eb !important;
-        }
-
-        #closeFormBtn,
-        #closeForm {
-            background-color: #e2e3e5 !important;
-            color: #383d41 !important;
-            border: 1px solid #d6d8db !important;
+        /* Hover Effect */
+        #approveBtn:hover,
+        #confirmApprove:hover {
+            background-color: #08732f !important;
+            border-color: #065a25 !important;
+            color: white !important;
+            box-shadow: none !important;
         }
 
         /* Back to Top */
@@ -253,9 +230,10 @@
 
         /* Letter Reader */
         .letter-title {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
+            font-family: "Fraunces", Georgia, serif;
             font-weight: 700;
-            margin-bottom: .15rem;
+            color: var(--navy);
         }
 
         .letter-meta {
@@ -276,7 +254,7 @@
             font-weight: 700;
             letter-spacing: .06em;
             text-transform: uppercase;
-            color: #6c757d;
+            color: #416c97;
             margin-bottom: .35rem;
         }
 
@@ -286,25 +264,49 @@
             padding: .25rem 0;
         }
 
+        .breadcrumb-back {
+            transition: color 0.15s ease-in-out;
+        }
+
+        .breadcrumb-back:hover {
+            color: #343a40 !important;
+        }
     </style>
 
     <main id="main">
         <div class="view-container">
-            <!-- Header -->
-            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-end mb-3 gap-3">
-                <div>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb mb-1">
-                            <li class="breadcrumb-item"><a href="/admin/pending-requests">Requests</a></li>
-                            <li class="breadcrumb-item active">View Details</li>
-                        </ol>
-                    </nav>
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <h2 class="fw-bold mb-0">Request #<span id="requestIdDisplay">--</span></h2>
-                        <div id="statusBadgeContainer"></div>
+            <!-- Header Card -->
+            <div class="card mb-3" style="overflow: visible;">
+                <div class="card-body">
+                    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                        <!-- Left: breadcrumb + title + subtitle -->
+                        <div class="flex-grow-1">
+                            <nav aria-label="breadcrumb" class="mb-3">
+                                <ol class="breadcrumb small mb-0">
+                                    <li class="breadcrumb-item">
+                                        <a href="/admin/pending-requests" class="text-decoration-none text-secondary">
+                                            <i class="bi bi-arrow-left me-1"></i>Requests
+                                        </a>
+                                    </li>
+                                    <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">
+                                        Request #<span id="requestIdDisplay">--</span>
+                                    </li>
+                                </ol>
+                            </nav>
+
+                            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                <h1 class="h3 fw-bold mb-0 text-dark">Request #<span id="requestIdDisplayMirror">--</span>
+                                </h1>
+                                <div id="statusBadgeContainer"></div>
+                            </div>
+                            <div id="requestSubtitle" class="text-muted small d-flex align-items-center gap-2 flex-wrap">
+                            </div>
+                        </div>
+
+                        <!-- Right: actions (flex-shrink-0 keeps buttons from being squeezed) -->
+                        <div class="d-flex align-items-center gap-2 flex-wrap pe-3 flex-shrink-0" id="actionButtonsTop"></div>
                     </div>
                 </div>
-                <div class="d-flex flex-column flex-sm-row gap-2" id="actionButtonsTop"></div>
             </div>
 
             <!-- Tabs -->
@@ -354,7 +356,7 @@
                         <div class="row g-3">
                             <div class="col-lg-8">
                                 <div class="card">
-                                    <div class="card-body border-bottom bg-light" id="letterHeader"></div>
+                                    <div class="card-body bg-light" id="letterHeader"></div>
                                     <div class="card-body" id="letterBody">
                                         <div id="detailsContainer" class="d-none"></div>
                                     </div>
@@ -365,10 +367,6 @@
                                     <x-card-header title="Booking Details" icon="calendar" />
                                     <div class="card-body" id="eventDetails"></div>
                                 </div>
-                                <div class="card">
-                                    <x-card-header title="Attachments" icon="paperclip" />
-                                    <div class="card-body" id="attachmentsContainer"></div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -378,9 +376,8 @@
                         <div class="row g-3">
                             <div class="col-lg-7">
                                 <div class="card h-100">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <h5 class="mb-0">Activity Timeline</h5>
-                                        <div class="d-flex gap-2">
+                                    <x-card-header title="Activity Timeline">
+                                        <x-slot:actions>
                                             <select id="timelineFilter" class="form-select form-select-sm"
                                                 style="width: auto;">
                                                 <option value="all">All</option>
@@ -391,8 +388,8 @@
                                             <button class="btn btn-sm btn-outline-secondary" id="refreshTimeline">
                                                 <i class="bi bi-arrow-clockwise"></i>
                                             </button>
-                                        </div>
-                                    </div>
+                                        </x-slot:actions>
+                                    </x-card-header>
                                     <div class="card-body d-flex flex-column" style="min-height: 400px;">
                                         <div id="timelineContent" class="flex-grow-1 overflow-auto"
                                             style="max-height: 350px;">
@@ -415,10 +412,12 @@
                             </div>
                             <div class="col-lg-5">
                                 <div class="card h-100">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <h5 class="mb-0">Approval Status</h5>
-                                        <span class="badge bg-primary" id="approvalCountBadge">0/0</span>
-                                    </div>
+                                    <x-card-header title="Approval Status">
+                                        <x-slot:actions>
+                                            <span id="approvalCountBadge" class="ms-auto text-muted small fw-normal"></span>
+                                        </x-slot:actions>
+                                    </x-card-header>
+
                                     <div class="card-body overflow-auto p-2" id="approvalsContainer"
                                         style="max-height: 550px;">
                                         <div class="text-center text-muted py-4">
@@ -426,6 +425,7 @@
                                         </div>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>

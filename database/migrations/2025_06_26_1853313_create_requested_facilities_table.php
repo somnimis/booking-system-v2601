@@ -12,6 +12,10 @@ return new class extends Migration {
     {
         Schema::create('requested_facilities', function (Blueprint $table) {
             $table->id('requested_facility_id');
+
+            // NEW -- Snapshot price. based on base_fee and rate_type from facilities pk: facility_id table
+            $table->decimal('fee_snapshot', 8, 2)->nullable();
+
             $table->unsignedBigInteger('request_id')->index();
             $table->unsignedBigInteger('facility_id')->index();
             $table->string('venue_details', 100)->nullable(); // To specify the location within the requested facility if needed.

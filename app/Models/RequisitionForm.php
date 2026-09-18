@@ -111,55 +111,6 @@ class RequisitionForm extends Model
     {
         return $query->orderBy('created_at', $direction);
     }
-
-    protected static function booted()
-{
-    static::updated(function ($requisition) {
-        // Check if status changed
-        if ($requisition->isDirty('status_id')) {
-            $oldStatus = FormStatus::find($requisition->getOriginal('status_id'));
-            $newStatus = FormStatus::find($requisition->status_id);
-            
-            // Create notification for Pending Approval -> Awaiting Payment
-            if ($oldStatus && $newStatus && 
-                $oldStatus->status_name === 'Pending Approval' && 
-                $newStatus->status_name === 'Awaiting Payment') {
-                
-                // Get all admins who should receive this notification
-                // You can modify this to notify specific admin roles
-                $admins = Admin::all(); // Or filter by role
-                
-                foreach ($admins as $admin) {
-                    Notification::create([
-                        'admin_id' => $admin->admin_id,
-                        'type' => 'status_update',
-                        'message' => "Requisition #{$requisition->request_id} from {$requisition->first_name} {$requisition->last_name} is now awaiting payment.",
-                        'request_id' => $requisition->request_id,
-                        'is_read' => false
-                    ]);
-                }
-            }
-            
-            // Optional: Create for other important status changes
-            if ($oldStatus && $newStatus && 
-                $oldStatus->status_name === 'Awaiting Payment' && 
-                $newStatus->status_name === 'Scheduled') {
-                
-                $admins = Admin::all();
-                
-                foreach ($admins as $admin) {
-                    Notification::create([
-                        'admin_id' => $admin->admin_id,
-                        'type' => 'payment_confirmed',
-                        'message' => "Payment for requisition #{$requisition->request_id} has been confirmed.",
-                        'request_id' => $requisition->request_id,
-                        'is_read' => false
-                    ]);
-                }
-            }
-        }
-    });
-}
     // Relationships
     public function notifications()
     {

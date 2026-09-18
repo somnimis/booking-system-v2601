@@ -17,6 +17,9 @@ return new class extends Migration
             $table->unsignedBigInteger('request_id')->index();
             $table->unsignedBigInteger('service_id')->index();
 
+            // NEW -- Snapshot price. based on 'service_fee' from extra_services (pk: service_id) table
+            $table->decimal('fee_snapshot', 8, 2)->nullable();
+
             // Waiver columns
             $table->boolean('is_waived')->default(false);
             $table->unsignedBigInteger('waived_by')->nullable();

@@ -2623,7 +2623,7 @@ window.submitForm = async function () {
         <p class="mb-1"><strong>Access Code:</strong> <span class="badge bg-primary">${result.data.access_code}</span></p>
         <p class="mb-0"><strong>Schedule:</strong><br>${scheduleText}</p>
     </div>
-`;
+    `;
 
         document.getElementById("userEmail").textContent = formData.email;
 

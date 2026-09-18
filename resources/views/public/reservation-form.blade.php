@@ -713,7 +713,6 @@
 
   @include('partials.footer')
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="{{ asset('js/admin/toast.js') }}"></script>
   <script src="{{ asset('js/public/reservation-form.js') }}"></script>
 </body>
 

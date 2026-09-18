@@ -65,7 +65,7 @@ class AdminActionsController extends Controller
         $this->approvalChainService = $approvalChainService;
     }
 
-        public function actionRequest(Request $request, $requestId, $action)
+    public function actionRequest(Request $request, $requestId, $action)
     {
         try {
             Log::debug('=== PROCESS APPROVAL ACTION CALLED ===', [
@@ -84,6 +84,16 @@ class AdminActionsController extends Controller
                 return response()->json(['error' => 'Admin not authenticated'], 401);
             }
 
+            // Guard: reject attempts on closed forms. Finalized forms are
+            // still acceptable — finalization locks the fee, not the workflow.
+            $form = RequisitionForm::find($requestId);
+            if (!$form) {
+                return response()->json(['error' => 'Requisition not found'], 404);
+            }
+            if ($form->is_closed) {
+                return response()->json(['error' => 'Form is already closed'], 422);
+            }
+
             $result = $this->approvalChainService->processAction(
                 $requestId,
                 $adminId,
@@ -94,14 +104,6 @@ class AdminActionsController extends Controller
             if (!$result['success']) {
                 return response()->json(['error' => $result['message']], 404);
             }
-
-            // Create comment record for activity timeline
-            $commentText = ucfirst($action) . " this request" . ($request->input('remarks') ? ": " . $request->input('remarks') : "");
-            RequisitionComment::create([
-                'request_id' => $requestId,
-                'admin_id' => $adminId,
-                'comment' => $commentText
-            ]);
 
             Log::debug('Approval action processed successfully', [
                 'approval_id' => $result['approval_id'],
@@ -570,77 +572,6 @@ class AdminActionsController extends Controller
         }
     }
 
-    public function finalizeForm(Request $request, $requestId)
-    {
-        try {
-            \Log::debug('Finalize form attempt', [
-                'request_id' => $requestId,
-                'admin_id' => auth()->id(),
-                'input_data' => $request->all()
-            ]);
-
-            // Validate
-            $validatedData = $request->validate([
-                'event_title' => 'sometimes|string|max:50|nullable',
-                'event_details' => 'sometimes|string|max:100|nullable',
-            ]);
-
-            $adminId = auth()->id();
-            if (!$adminId) {
-                return response()->json(['error' => 'Admin not authenticated'], 401);
-            }
-
-            // Get form with relationships
-            $form = RequisitionForm::with([
-                'requestedFacilities.facility',
-                'requestedEquipment.equipment',
-                'requisitionFees'
-            ])->findOrFail($requestId);
-
-            // Update form
-            $this->updateFinalizedForm($form, $validatedData, $adminId);
-
-            // Send email notification
-            $this->notificationService->sendApprovalEmail($form);
-
-            return response()->json([
-                'message' => 'Form finalized successfully',
-                'new_status' => 'Awaiting Payment',
-                'approved_fee' => $form->approved_fee
-            ]);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Finalize form validation failed', ['request_id' => $requestId, 'errors' => $e->errors()]);
-            return response()->json(['error' => 'Validation failed', 'details' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            \Log::error('Failed to finalize form', ['request_id' => $requestId, 'error' => $e->getMessage()]);
-            return response()->json(['error' => 'Failed to finalize form', 'details' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Update form with finalized status
-     */
-    private function updateFinalizedForm($form, $data, $adminId)
-    {
-        $form->is_finalized = true;
-        $form->finalized_at = now();
-        $form->finalized_by = $adminId;
-        $form->status_id = FormStatus::where('status_name', 'Awaiting Payment')->first()->status_id;
-
-        if (!empty($data['event_title'])) {
-            $form->event_title = $data['event_title'];
-        }
-        if (!empty($data['event_details'])) {
-            $form->event_details = $data['event_details'];
-        }
-
-        $form->approved_fee = $this->feeCalculator->calculateApprovedFee($form);
-        $form->save();
-
-        return $form;
-    }
-
     public function cancelForm(Request $request, $requestId)
     {
         try {
@@ -693,37 +624,70 @@ class AdminActionsController extends Controller
     }
 
 
-    public function closeForm($requestId)
+    /**
+     * Close a requisition form.
+     *
+     * Workflow: sets status to "Completed", stamps closed_at / closed_by,
+     * and stores an optional closure_reason. Idempotent guard prevents
+     * closing a form that's already closed.
+     */
+    public function closeForm(Request $request, $requestId)
     {
         try {
             $admin = auth()->user();
+            if (!$admin) {
+                return response()->json(['error' => 'Admin not authenticated'], 401);
+            }
+
+            $validated = $request->validate([
+                'closure_reason' => 'nullable|string|max:255',
+            ]);
 
             $form = RequisitionForm::findOrFail($requestId);
+
+            if ($form->is_closed) {
+                return response()->json(['error' => 'Form is already closed'], 422);
+            }
+
+            $completedStatus = FormStatus::where('status_name', 'Completed')->first();
+            if (!$completedStatus) {
+                throw new \Exception('Completed status not found');
+            }
+
+            DB::beginTransaction();
 
             $form->is_closed = true;
             $form->closed_at = now();
             $form->closed_by = $admin->admin_id;
-            $form->status_id = FormStatus::where('status_name', 'Completed')->first()->status_id;
+            $form->closure_reason = $validated['closure_reason'] ?? null;
+            $form->status_id = $completedStatus->status_id;
             $form->save();
 
-            // Create completed transaction record
-            CompletedTransaction::create([
-                'request_id' => $requestId,
-                'official_receipt_no' => null,
-                'official_receipt_url' => null,
-                'official_receipt_public_id' => null
-            ]);
+            if (!CompletedTransaction::where('request_id', $requestId)->exists()) {
+                CompletedTransaction::create([
+                    'request_id' => $requestId,
+                    'official_receipt_no' => $form->official_receipt_num,
+                    'official_receipt_url' => null,
+                    'official_receipt_public_id' => null,
+                ]);
+            }
 
             DB::commit();
 
             return response()->json([
                 'message' => 'Form closed successfully',
-                'form' => $form
+                'form' => $form,
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error' => 'Validation failed',
+                'details' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'error' => 'Failed to close form',
-                'details' => $e->getMessage()
+                'details' => $e->getMessage(),
             ], 500);
         }
     }
@@ -749,6 +713,10 @@ class AdminActionsController extends Controller
             }
 
             $form = RequisitionForm::with('formStatus')->findOrFail($requestId);
+
+            if ($form->is_closed) {
+                return response()->json(['error' => 'Form is already closed'], 422);
+            }
 
             // VALIDATION: Can only mark as Late if current status is Ongoing
             if ($validatedData['status_name'] === 'Late') {
@@ -860,13 +828,18 @@ class AdminActionsController extends Controller
         }
     }
 
-    public function markAsScheduled(Request $request, $requestId)
+    /**
+     * Finalize a reservation: sets status to Reserved after stage-3 approval
+     * and captures the official receipt number. Renamed from markAsScheduled
+     * (which targeted the now-deprecated 'Scheduled' status).
+     */
+    public function finalizeReservation(Request $request, $requestId)
     {
         try {
-            \Log::debug('Mark as scheduled request received', [
+            \Log::debug('Finalize reservation request received', [
                 'request_id' => $requestId,
                 'admin_id' => auth()->id(),
-                'official_receipt_num' => $request->official_receipt_num
+                'official_receipt_num' => $request->official_receipt_num,
             ]);
 
             $validatedData = $request->validate([
@@ -885,63 +858,60 @@ class AdminActionsController extends Controller
                 'requestedEquipment.equipment',
                 'requisitionFees',
                 'purpose',
-                'formStatus'
+                'formStatus',
             ])->findOrFail($requestId);
 
-            // Update form with official receipt number and status
-            $scheduledStatus = FormStatus::where('status_name', 'Scheduled')->first();
-            if (!$scheduledStatus) {
-                throw new \Exception('Scheduled status not found');
+            if ($form->is_closed) {
+                return response()->json(['error' => 'Form is already closed'], 422);
+            }
+
+            $reservedStatus = FormStatus::where('status_name', 'Reserved')->first();
+            if (!$reservedStatus) {
+                throw new \Exception('Reserved status not found');
             }
 
             $form->official_receipt_num = $validatedData['official_receipt_num'];
-            $form->status_id = $scheduledStatus->status_id;
+            $form->status_id = $reservedStatus->status_id;
 
             if (!empty($validatedData['event_title'])) {
                 $form->event_title = $validatedData['event_title'];
             }
-
             if (!empty($validatedData['event_details'])) {
                 $form->event_details = $validatedData['event_details'];
             }
 
             $form->save();
 
-            // Send confirmation email
+            // Send confirmation email to the requester.
             $this->notificationService->sendScheduledConfirmationEmail($form);
 
-            \Log::info('Form marked as scheduled successfully', [
+            \Log::info('Reservation finalized successfully', [
                 'request_id' => $requestId,
                 'official_receipt_num' => $form->official_receipt_num,
-                'admin_id' => $adminId
+                'admin_id' => $adminId,
             ]);
 
             return response()->json([
-                'message' => 'Form marked as scheduled successfully',
+                'message' => 'Reservation finalized successfully',
                 'official_receipt_num' => $form->official_receipt_num,
-                'new_status' => 'Scheduled'
+                'new_status' => 'Reserved',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Mark as scheduled validation failed', [
-                'request_id' => $requestId,
-                'errors' => $e->errors()
-            ]);
-
             return response()->json([
                 'error' => 'Validation failed',
-                'details' => $e->errors()
+                'details' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Failed to mark form as scheduled', [
+            \Log::error('Failed to finalize reservation', [
                 'request_id' => $requestId,
                 'admin_id' => auth()->id(),
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
-                'error' => 'Failed to mark form as scheduled',
-                'details' => $e->getMessage()
+                'error' => 'Failed to finalize reservation',
+                'details' => $e->getMessage(),
             ], 500);
         }
     }
