@@ -20,7 +20,8 @@ use Illuminate\Support\Facades\DB;
  * - Stage 1: Department-level approval (role_id = 3 - Department Managers)
  * - Stage 2: Final approval (role_id = 2 - Final Approving Officers)
  * - Stage 3: Issuing approval (role_id = 5 - Issuing Officers)
- * - Stage 4: Payment assessment (role_id = 1 - Head Administrators)
+ * - Role 1 (System Administrator) is NOT a participant in any stage.
+ *   Its access is observational and for emergency override only.
  * 
  * The service automatically determines which admins need to approve based on:
  * - Facilities requested (their managing departments)
@@ -103,11 +104,15 @@ class ApprovalChainService
 
         $resourceDeptIds = $resourceDeptIds->unique()->values();
 
-        // Find the Department Head for each department
+        // Find the Department Head for each department.
+        // Defensive: exclude System Administrators (role 1) even if they were
+        // mistakenly assigned as Department Head. Only approver roles (2, 3, 5)
+        // participate in Stage 1.
         $stage1AdminIds = DB::table('admins')
             ->join('admin_departments', 'admins.admin_id', '=', 'admin_departments.admin_id')
             ->whereIn('admin_departments.department_id', $resourceDeptIds)
             ->where('admin_departments.role_id', DepartmentRole::HEAD)
+            ->whereIn('admins.role_id', Admin::APPROVER_ROLE_IDS)
             ->distinct()
             ->pluck('admins.admin_id');
 
@@ -123,6 +128,7 @@ class ApprovalChainService
         $stage2AdminIds = Admin::whereHas('role', function ($q) {
             $q->where('role_title', 'Final Approving Officer');
         })
+            ->where('role_id', '!=', Admin::ROLE_SYSTEM_ADMIN) 
             ->pluck('admin_id');
 
         // ============================================
@@ -131,6 +137,7 @@ class ApprovalChainService
         $stage3AdminIds = Admin::whereHas('role', function ($q) {
             $q->where('role_title', 'Issuing Officer');
         })
+            ->where('role_id', '!=', Admin::ROLE_SYSTEM_ADMIN) 
             ->pluck('admin_id');
 
         // ============================================

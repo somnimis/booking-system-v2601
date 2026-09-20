@@ -13,7 +13,7 @@ use App\Services\RequisitionFormatterService;
 use App\Services\CheckAvailabilityService;
 use App\Services\ScheduleFormatterService;
 use App\Services\AdminActionsService;
-;
+use Illuminate\Support\Facades\DB; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -354,6 +354,203 @@ class ReservationListingsController extends Controller
                 'message' => 'An error occurred while fetching requisitions'
             ], 500);
         }
+    }
+
+        /**
+     * Return requisitions where the current admin has an actionable Pending approval.
+     *
+     * "Actionable" means: this admin holds a requisition_approvals row with
+     * status = 'Pending' at the form's currently-active stage.
+     *
+     * Active stage resolution:
+     *   1. Any stage=1 row Pending → stage 1
+     *   2. Else any stage=2 row Pending → stage 2
+     *   3. Else form status = 'Verifying Payment' → stage 3 (issuing officers)
+     *   4. Otherwise → form is not actionable
+     *
+     * Role 1 (System Administrator) bypasses the approval-row rule and instead
+     * sees all forms currently in 'Verifying Payment' — for oversight and
+     * emergency override only. Role 4 (Inventory Manager) has no approval
+     * responsibility → empty result.
+     */
+    public function paginatedActionableRequests(Request $request)
+    {
+        try {
+            /** @var Admin $admin */
+            $admin = $request->user();
+
+            if (!$admin) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated - Admin not found'
+                ], 401);
+            }
+
+            $perPage = (int) $request->input('per_page', 15);
+            $sortOrder = $request->input('sort_order', 'asc');
+            if (!in_array($sortOrder, ['asc', 'desc'], true)) {
+                $sortOrder = 'asc';
+            }
+
+            $verifyingStatusId = FormStatus::where('status_name', 'Verifying Payment')
+                ->value('status_id');
+
+            $query = RequisitionForm::query();
+
+            // ---- System Administrator: oversight view of Verifying Payment ----
+            if ((int) $admin->role_id === Admin::ROLE_SYSTEM_ADMIN) {
+                if (!$verifyingStatusId) {
+                    return $this->emptyActionableResponse($perPage, $sortOrder);
+                }
+                $query->where('status_id', $verifyingStatusId);
+            }
+            // ---- Inventory Manager: no approval responsibility ----
+            elseif ((int) $admin->role_id === 4) {
+                return $this->emptyActionableResponse($perPage, $sortOrder);
+            }
+            // ---- Approvers (2, 3, 5): my Pending row at the active stage ----
+            else {
+                $query->whereHas('requisitionApprovals', function ($q) use ($admin, $verifyingStatusId) {
+                    $q->where('admin_id', $admin->admin_id)
+                        ->where('status', 'Pending')
+                        ->where(function ($stageQ) use ($verifyingStatusId) {
+                            // Stage 1: this row is stage 1 (form still has open stage-1 work)
+                            $stageQ->where('stage', 1)
+                                // Stage 2: this row is stage 2 AND no pending stage-1 rows exist
+                                ->orWhere(function ($q2) {
+                                    $q2->where('stage', 2)
+                                        ->whereNotExists(function ($sub) {
+                                            $sub->select(DB::raw(1))
+                                                ->from('requisition_approvals as ra1')
+                                                ->whereColumn('ra1.request_id', 'requisition_approvals.request_id')
+                                                ->where('ra1.stage', 1)
+                                                ->where('ra1.status', 'Pending');
+                                        });
+                                })
+                                // Stage 3: this row is stage 3 AND form is Verifying Payment
+                                //          AND no pending stage-1/2 rows exist
+                                ->orWhere(function ($q3) use ($verifyingStatusId) {
+                                    $q3->where('stage', 3)
+                                        ->whereExists(function ($sub) use ($verifyingStatusId) {
+                                            $sub->select(DB::raw(1))
+                                                ->from('requisition_forms as rf')
+                                                ->whereColumn('rf.request_id', 'requisition_approvals.request_id')
+                                                ->where('rf.status_id', $verifyingStatusId);
+                                        })
+                                        ->whereNotExists(function ($sub) {
+                                            $sub->select(DB::raw(1))
+                                                ->from('requisition_approvals as ra2')
+                                                ->whereColumn('ra2.request_id', 'requisition_approvals.request_id')
+                                                ->whereIn('ra2.stage', [1, 2])
+                                                ->where('ra2.status', 'Pending');
+                                        });
+                                });
+                        });
+                });
+            }
+
+            $forms = $query
+                ->with(['formStatus', 'purpose'])
+                ->select([
+                    'request_id',
+                    'first_name',
+                    'last_name',
+                    'email',
+                    'organization_name',
+                    'status_id',
+                    'start_date',
+                    'end_date',
+                    'start_time',
+                    'end_time',
+                    'all_day',
+                    'created_at',
+                    'event_title',
+                    'event_details',
+                ])
+                ->orderBy('created_at', $sortOrder)
+                ->paginate($perPage);
+
+            $transformedForms = $forms->through(function ($form) {
+                try {
+                    $scheduleDetails = $this->formatter->getScheduleDetails($form);
+                    $durationDisplay = $this->scheduleFormatter->getFormattedDuration($form);
+
+                    return [
+                        'request_id' => $form->request_id,
+                        'requester' => [
+                            'name' => trim(($form->first_name ?? '') . ' ' . ($form->last_name ?? '')),
+                            'email' => $form->email ?? '',
+                            'organization' => $form->organization_name ?? 'No Organization',
+                        ],
+                        'status' => [
+                            'id' => $form->formStatus->status_id ?? null,
+                            'name' => $form->formStatus->status_name ?? 'Unknown',
+                            'color' => $form->formStatus->color_code ?? '#6c757d',
+                        ],
+                        'schedule' => [
+                            'display' => ($scheduleDetails['formatted']['start'] ?? '') . ' - ' . ($scheduleDetails['formatted']['end'] ?? ''),
+                            'start_date' => $form->start_date,
+                            'end_date' => $form->end_date,
+                            'all_day' => $form->all_day ?? false,
+                            'duration' => $durationDisplay ?? 'N/A',
+                        ],
+                        'event_title' => $form->event_title ?? 'No Title',
+                        'event_details' => $form->event_details ?? 'No Description',
+                        'created_at' => $form->created_at?->toIso8601String(),
+                    ];
+                } catch (\Exception $e) {
+                    Log::error('Error transforming actionable form: ' . $e->getMessage());
+                    return ['request_id' => $form->request_id, 'requester' => ['name' => 'Error loading data']];
+                }
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $transformedForms->values(),
+                'meta' => [
+                    'current_page' => $forms->currentPage(),
+                    'last_page' => $forms->lastPage(),
+                    'per_page' => $forms->perPage(),
+                    'total' => $forms->total(),
+                    'from' => $forms->firstItem(),
+                    'to' => $forms->lastItem(),
+                    'sort_order' => $sortOrder,
+                ],
+                'links' => [
+                    'first' => $forms->url(1),
+                    'last' => $forms->url($forms->lastPage()),
+                    'prev' => $forms->previousPageUrl(),
+                    'next' => $forms->nextPageUrl(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('paginatedActionableRequests error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching actionable requisitions',
+            ], 500);
+        }
+    }
+
+    /**
+     * Standard empty paginated response for the actionable list.
+     */
+    private function emptyActionableResponse(int $perPage, string $sortOrder)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => [],
+            'meta' => [
+                'current_page' => 1,
+                'last_page' => 1,
+                'per_page' => $perPage,
+                'total' => 0,
+                'from' => null,
+                'to' => null,
+                'sort_order' => $sortOrder,
+            ],
+            'links' => ['first' => null, 'last' => null, 'prev' => null, 'next' => null],
+        ]);
     }
 
     /**

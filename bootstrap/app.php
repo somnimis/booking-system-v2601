@@ -13,7 +13,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'check.admin.role' => \App\Http\Middleware\CheckAdminRole::class,
             'inventory.access' => \App\Http\Middleware\CheckInventoryAccess::class,
         ]);
     })
