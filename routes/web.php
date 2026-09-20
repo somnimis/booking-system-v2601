@@ -226,27 +226,20 @@ Route::get('/admin/reservations/create', function (Request $request) {
         return view('admin.create-reservation');
     });
 });
-
-// Reservations List
-Route::get('/admin/reservations', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.reservations');
-    });
-});
-
-// Pending Requests
+// ALL Requests List (For System Administrators - debugging/oversight)
 Route::get('/admin/pending-requests', function (Request $request) {
     return requireAdminAuth($request, function () use ($request) {
         return view('admin.pending-requests');
     });
 });
 
-// Manage Requests
-Route::get('/admin/manage-requests', function (Request $request) {
+// Actionable Requests 
+Route::get('/admin/actionable-requests', function (Request $request) {
     return requireAdminAuth($request, function () use ($request) {
-        return view('admin.manage-requests');
+        return view('admin.actionable-requests');
     });
 });
+
 
 // Requisition View
 Route::get('/admin/requisition/{requestId}', function (Request $request, $requestId) {
