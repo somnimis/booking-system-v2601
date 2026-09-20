@@ -107,17 +107,17 @@
           <!-- Left Column -->
           <div class="col-lg-6">
 
-            <!-- Pending Approvals -->
+            <!-- Needs My Action -->
             <div class="section-card">
               <div class="section-header">
                 <h6 class="section-title">
-                  <i class="bi bi-clock-history"></i> Pending Approvals
+                  <i class="bi bi-lightning-charge"></i> Needs My Action
                 </h6>
-                <a href="{{ url('/admin/pending-requests') }}" class="view-all-link">View all <i
+                <a href="{{ url('/admin/actionable-requests') }}" class="view-all-link">View all <i
                     class="bi bi-arrow-right"></i></a>
               </div>
 
-              <div class="section-body" id="pendingApprovalsList">
+              <div class="section-body" id="actionablePreviewList">
                 <!-- Dynamic content -->
               </div>
             </div>
@@ -226,6 +226,7 @@
       // Then lazy load the paginated sections
       loadTodayEventsPage(1);
       loadActivityTimelinePage(1);
+      loadActionablePreview();
     });
 
     // ========== INITIAL LOAD (Static content only - FAST) ==========
@@ -509,6 +510,91 @@
         });
     }
 
+        // ========== NEEDS MY ACTION PREVIEW (Lazy Loaded) ==========
+    /**
+     * Fetch up to 3 actionable requisitions for this admin.
+     * Uses the same endpoint as /admin/actionable-requests so both surfaces
+     * always display identical data.
+     */
+    function loadActionablePreview() {
+      const token = localStorage.getItem('adminToken');
+      const container = document.getElementById('actionablePreviewList');
+
+      if (!token || !container) return;
+
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+          <p class="mt-2">Loading...</p>
+        </div>`;
+
+      fetch(`/api/admin/requisitions/actionable?per_page=3&sort_order=asc`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
+        credentials: 'include'
+      })
+        .then(response => response.json())
+        .then(response => {
+          if (response.success) {
+            renderActionablePreview(response.data || []);
+          } else {
+            container.innerHTML = `
+              <div class="empty-state">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p>Failed to load</p>
+                <button class="btn btn-sm btn-primary mt-2" onclick="loadActionablePreview()">Retry</button>
+              </div>`;
+          }
+        })
+        .catch(error => {
+          console.error('Error loading actionable preview:', error);
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-exclamation-triangle"></i>
+              <p>Network error</p>
+              <button class="btn btn-sm btn-primary mt-2" onclick="loadActionablePreview()">Retry</button>
+            </div>`;
+        });
+    }
+
+    function renderActionablePreview(items) {
+      const container = document.getElementById('actionablePreviewList');
+
+      if (!items || items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-check-circle"></i>
+            <p>Nothing needs your action</p>
+            <small>You're all caught up!</small>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(item => {
+        const requesterName = escapeHtml(item.requester?.name || 'Unknown');
+        const organization = escapeHtml(item.requester?.organization || '');
+        const eventTitle = escapeHtml(item.event_title || 'No Title');
+        const scheduleStart = escapeHtml(item.schedule?.start_date || '');
+
+        return `
+          <div class="pending-item" onclick="goToRequest(${item.request_id})">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div class="flex-grow-1">
+                <div class="item-name">${requesterName}</div>
+                <div class="item-sub">${eventTitle}</div>
+                <div class="item-meta">
+                  <i class="bi bi-building"></i>${organization}
+                  <span class="text-light">·</span>
+                  <i class="bi bi-calendar3"></i>${scheduleStart}
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
     function renderActivityTimeline() {
       const container = document.getElementById('activityTimelineList');
 
@@ -575,38 +661,7 @@
         month: 'short', day: 'numeric', year: 'numeric'
       });
 
-      renderPendingApprovals();
       renderFeedback();
-    }
-
-    function renderPendingApprovals() {
-      const container = document.getElementById('pendingApprovalsList');
-      const approvals = dashboardData.pending_approvals || [];
-
-      if (approvals.length === 0) {
-        container.innerHTML = `
-                              <div class="empty-state">
-                                  <i class="bi bi-check-circle"></i>
-                                  <p>No pending approvals</p>
-                                  <small>All caught up!</small>
-                              </div>`;
-        return;
-      }
-
-      container.innerHTML = approvals.map(a => `
-                          <div class="pending-item" onclick="goToRequest(${a.request_id})">
-                              <div class="d-flex justify-content-between align-items-start gap-2">
-                                  <div class="flex-grow-1">
-                                      <div class="item-name">${escapeHtml(a.requester_name)}</div>
-                                      <div class="item-sub">${escapeHtml(a.event_title)}</div>
-                                      <div class="item-meta">
-                                          <i class="bi bi-building"></i>${escapeHtml(a.organization)}
-                                          <span class="text-light">·</span>
-                                          <i class="bi bi-calendar3"></i>${a.start_date}
-                                      </div>
-                                  </div>
-                              </div>
-                          </div>`).join('');
     }
 
     function renderFeedback() {

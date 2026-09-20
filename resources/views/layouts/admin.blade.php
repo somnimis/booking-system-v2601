@@ -160,8 +160,8 @@
             </div>
 
             <div id="pending-nav-item" style="display: none;">
-                <a class="nav-link {{ Request::is('admin/pending-requests') ? 'active' : '' }}"
-                    href="{{ url('/admin/pending-requests') }}">
+                <a class="nav-link {{ Request::is('admin/actionable-requests') ? 'active' : '' }}"
+                    href="{{ url('/admin/actionable-requests') }}">
                     <i class="fa-solid fa-clipboard-list"></i>
                     <span>Request Forms</span>
                 </a>

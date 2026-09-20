@@ -14,6 +14,17 @@ class Admin extends Authenticatable
     protected $table = 'admins';
     protected $primaryKey = 'admin_id';
 
+    /**
+     * Global admin role IDs (mirrors admin_roles.role_id).
+     *
+     * NOTE: SYSTEM_ADMIN is intentionally excluded from APPROVER_ROLE_IDS.
+     * It is an observational / override-only role and must never be part of
+     * the automatic approval chain, even if a fat-fingered assignment tries
+     * to place them into a department or a role with an approver title.
+     */
+    public const ROLE_SYSTEM_ADMIN = 1;
+    public const APPROVER_ROLE_IDS = [2, 3, 5]; // Final Approver, Approving Officer, Issuing Officer
+
     protected $fillable = [
         'photo_url',
         'photo_public_id',
@@ -180,7 +191,7 @@ class Admin extends Authenticatable
             'admin_departments',
             'admin_id',
             'department_id'
-        )->withPivot('role_id', 'is_primary') 
+        )->withPivot('role_id', 'is_primary')
             ->withTimestamps();
     }
 

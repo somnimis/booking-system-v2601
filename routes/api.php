@@ -347,6 +347,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/completed', [ReservationListingsController::class, 'completedRequests']);
         Route::get('/archives', [ReservationListingsController::class, 'getArchivedRequisitions']);
         Route::get('/pending-count', [ReservationListingsController::class, 'getPendingCount']);
+        Route::get('/actionable', [ReservationListingsController::class, 'paginatedActionableRequests']);
     });
 
     // ====================================================================
@@ -369,7 +370,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{requestId}/{action}', [AdminActionsController::class, 'actionRequest'])
             ->where('action', 'approve|reject');
 
-        // ---- 2.4 Status Management - HEAD ADMINISTRATOR ----
+        // ---- 2.4 Status Management - SYSTEM ADMINISTRATOR (override) ----
         Route::post('/{requestId}/update-status', [AdminActionsController::class, 'updateStatus']); // manual overrides 
         Route::post('/{requestId}/finalize-reservation', [AdminActionsController::class, 'finalizeReservation']);
         Route::post('/{requestId}/close', [AdminActionsController::class, 'closeForm']);

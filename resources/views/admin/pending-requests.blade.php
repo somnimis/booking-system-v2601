@@ -376,6 +376,7 @@
 @endsection
 
 @section('scripts')
+    <script src="{{ asset('js/admin/requests-list.js') }}"></script>
     <script>
         // State management
         let currentTab = 'pending';
@@ -563,19 +564,8 @@
                 });
         }
 
-
         function showTabLoading(tab) {
-            const container = getContainerForTab(tab);
-            if (container) {
-                container.innerHTML = `
-                                    <div class="text-center text-muted py-4">
-                                        <div class="spinner-border spinner-border-sm" role="status"></div>
-                                        <div class="mt-2">Loading requisitions...</div>
-                                    </div>
-                                `;
-            }
-
-            // Hide pagination while loading
+            RequestsList.showLoading(getContainerForTab(tab));
             const paginationContainer = getPaginationContainerForTab(tab);
             if (paginationContainer) {
                 paginationContainer.style.display = 'none';
@@ -583,21 +573,11 @@
         }
 
         function showTabError(tab, errorMessage) {
-            const container = getContainerForTab(tab);
-            if (container) {
-                container.innerHTML = `
-                                    <div class="text-center text-danger py-4">
-                                        <i class="bi bi-exclamation-triangle fs-4"></i>
-                                        <div class="mt-2">Failed to load requisitions</div>
-                                        <small class="text-muted">${escapeHtml(errorMessage)}</small>
-                                        <div class="mt-2">
-                                            <button class="btn btn-sm btn-outline-danger" onclick="retryLoadTab('${tab}')">
-                                                <i class="bi bi-arrow-repeat"></i> Retry
-                                            </button>
-                                        </div>
-                                    </div>
-                                `;
-            }
+            RequestsList.showError(
+                getContainerForTab(tab),
+                errorMessage,
+                () => retryLoadTab(tab)
+            );
         }
 
         window.retryLoadTab = function (tab) {
@@ -680,157 +660,17 @@
          * Display requisitions in the container
          */
         function displayRequisitions(requisitions, tab) {
-            const container = getContainerForTab(tab);
-
-            if (!container) return;
-
-            if (!requisitions || requisitions.length === 0) {
-                container.innerHTML = `
-                                    <div class="text-center text-muted py-4 small">
-                                        <i class="bi bi-inbox fs-4"></i>
-                                        <div class="mt-2">No requisitions found</div>
-                                    </div>
-                                `;
-                return;
-            }
-
-            const cardsHTML = requisitions.map(req => {
-                const requestId = req.request_id;
-                const requesterName = escapeHtml(req.requester.name);
-                const organization = escapeHtml(req.requester.organization);
-                const statusName = escapeHtml(req.status.name);
-                const statusColor = req.status.color;
-                const schedule = escapeHtml(req.schedule.display);
-
-                const dateSubmitted = req.created_at ? new Date(req.created_at).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                }) : 'Date unknown';
-
-                const eventTitle = escapeHtml(req.event_title && req.event_title.trim() !== '' ? req.event_title : 'No Event Title');
-                const eventDetails = escapeHtml(req.event_details && req.event_details.trim() !== '' ? req.event_details : 'No Description');
-
-                return `
-                                    <div class="requisition-card clickable-requisition-item py-2" data-request-id="${requestId}">
-                                        <div class="d-flex justify-content-between align-items-start mb-1">
-                                            <div class="d-flex align-items-center flex-wrap gap-1">
-                                                <span class="requester-name">${requesterName}</span>
-                                                <span class="text-muted small">- ${organization}</span>
-                                            </div>
-                                            <span class="status-badge" style="background-color: ${statusColor}; color: white; border: none;">
-                                                ${statusName}
-                                            </span>
-                                        </div>
-
-                                        <div class="mb-2 small">
-                                            <strong>${eventTitle}</strong> — ${eventDetails}
-                                        </div>
-
-                                        <div class="schedule-info">
-                                            <i class="bi bi-calendar3 me-1"></i> ${schedule}
-                                        </div>
-
-                                        <div class="schedule-info mt-1">
-                                            <i class="bi bi-clock-history me-1"></i> Submitted: ${dateSubmitted}
-                                        </div>
-
-                                        <div class="d-flex justify-content-between align-items-center mt-1">
-                                            <span class="request-id">#${requestId.toString().padStart(4, '0')}</span>
-                                            <i class="bi bi-chevron-right text-primary" style="font-size: 0.8rem;"></i>
-                                        </div>
-                                    </div>
-                                `;
-            }).join('');
-
-            container.innerHTML = cardsHTML;
-            addRequisitionItemClickListeners();
+            RequestsList.renderCards(requisitions, getContainerForTab(tab));
         }
 
         /**
          * Display pagination for a specific tab
          */
         function displayPagination(meta, tab) {
-            const paginationContainer = getPaginationContainerForTab(tab);
-
-            if (!paginationContainer) return;
-
-            if (!meta || meta.total === 0 || meta.last_page === 0) {
-                paginationContainer.style.display = 'none';
-                return;
-            }
-
-            paginationContainer.style.display = 'flex';
-            paginationContainer.innerHTML = `
-                                <div class="pagination-info">Showing ${meta.from || 0} to ${meta.to || 0} of ${meta.total} entries</div>
-                                <div class="pagination-controls" id="${tab}PaginationControls"></div>
-                            `;
-
-            const controlsContainer = document.getElementById(`${tab}PaginationControls`);
-            if (!controlsContainer) return;
-
-            let buttonsHTML = '';
-
-            // Previous button
-            buttonsHTML += `
-                                <button class="btn-pagination" onclick="changePage('${tab}', ${meta.current_page - 1})" ${meta.current_page === 1 ? 'disabled' : ''}>
-                                    <i class="bi bi-chevron-left"></i> Previous
-                                </button>
-                            `;
-
-            // Page numbers
-            if (meta.last_page <= 5) {
-                for (let i = 1; i <= meta.last_page; i++) {
-                    buttonsHTML += `
-                                        <button class="btn-pagination ${i === meta.current_page ? 'active' : ''}" onclick="changePage('${tab}', ${i})">
-                                            ${i}
-                                        </button>
-                                    `;
-                }
-            } else {
-                const startPage = Math.max(1, meta.current_page - 2);
-                const endPage = Math.min(meta.last_page, startPage + 4);
-
-                if (startPage > 1) {
-                    buttonsHTML += `
-                                        <button class="btn-pagination" onclick="changePage('${tab}', 1)">1</button>
-                                        ${startPage > 2 ? '<span class="px-1">...</span>' : ''}
-                                    `;
-                }
-
-                for (let i = startPage; i <= endPage; i++) {
-                    buttonsHTML += `
-                                        <button class="btn-pagination ${i === meta.current_page ? 'active' : ''}" onclick="changePage('${tab}', ${i})">
-                                            ${i}
-                                        </button>
-                                    `;
-                }
-
-                if (endPage < meta.last_page) {
-                    buttonsHTML += `
-                                        ${endPage < meta.last_page - 1 ? '<span class="px-1">...</span>' : ''}
-                                        <button class="btn-pagination" onclick="changePage('${tab}', ${meta.last_page})">${meta.last_page}</button>
-                                    `;
-                }
-            }
-
-            // Next button
-            buttonsHTML += `
-                                <button class="btn-pagination" onclick="changePage('${tab}', ${meta.current_page + 1})" ${meta.current_page === meta.last_page ? 'disabled' : ''}>
-                                    Next <i class="bi bi-chevron-right"></i>
-                                </button>
-                            `;
-
-            controlsContainer.innerHTML = buttonsHTML;
+            RequestsList.renderPagination(meta, getPaginationContainerForTab(tab), {
+                onPageChange: (page) => fetchRequisitionsByStatus(page, tab)
+            });
         }
-
-        /**
-         * Change page for a specific tab
-         */
-        window.changePage = function (tab, page) {
-            if (page < 1) return;
-            fetchRequisitionsByStatus(page, tab);
-        };
 
         /**
          * Get container element for a tab
@@ -856,35 +696,6 @@
                 'reserved': elements.reservedPagination
             };
             return mapping[tab];
-        }
-
-        /**
-         * Add click listeners to requisition items
-         */
-        function addRequisitionItemClickListeners() {
-            const requisitionItems = document.querySelectorAll('.clickable-requisition-item');
-
-            requisitionItems.forEach(item => {
-                item.removeEventListener('click', handleItemClick);
-                item.addEventListener('click', handleItemClick);
-            });
-        }
-
-        function handleItemClick() {
-            const requestId = this.getAttribute('data-request-id');
-            if (requestId) {
-                window.location.href = `/admin/requisition/${requestId}`;
-            }
-        }
-
-        /**
-         * Escape HTML to prevent XSS
-         */
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
 
         // Make retryLoadTab available globally
