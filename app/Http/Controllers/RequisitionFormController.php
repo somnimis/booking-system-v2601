@@ -26,6 +26,7 @@ use App\Http\Requests\RequisitionSubmitRequest;
 use App\Services\AccessCodeService;
 use App\Services\RequisitionFormatterService;
 use App\Services\ScheduleFormatterService;
+use App\Exceptions\BookingConflictException;
 
 /*
 |--------------------------------------------------------------------------
@@ -709,8 +710,14 @@ class RequisitionFormController extends Controller
             ],
         ]);
     }
+
+
     /**
      * Check for booking schedule conflicts.
+     *
+     * Supports three item types: facility, equipment, service.
+     * - facility / service: exclusive time-slot resources → conflict-list response
+     * - equipment: quantity-based → available-count response
      */
     public function checkAvailability(Request $request)
     {
@@ -719,9 +726,10 @@ class RequisitionFormController extends Controller
             'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
             'all_day' => 'required|boolean',
             'items' => 'required|array|min:1',
-            'items.*.type' => 'required|in:facility,equipment',
+            'items.*.type' => 'required|in:facility,equipment,service',
             'items.*.facility_id' => 'required_if:items.*.type,facility|exists:facilities,facility_id',
             'items.*.equipment_id' => 'required_if:items.*.type,equipment|exists:equipment,equipment_id',
+            'items.*.service_id' => 'required_if:items.*.type,service|exists:extra_services,service_id',
         ];
 
         if (!$request->all_day) {
@@ -788,6 +796,29 @@ class RequisitionFormController extends Controller
                         'id' => $item['facility_id'],
                         'name' => $facility ? $facility->facility_name : 'Unknown Facility',
                         'conflicts' => $facilityConflicts,
+                    ];
+                }
+            } elseif ($item['type'] === 'service') {
+                // Services are exclusive time-slot resources (like facilities).
+                // Any overlapping active booking on the same service = conflict.
+                $serviceConflicts = $this->availabilityChecker->checkServiceAvailability(
+                    $item['service_id'],
+                    $request->start_date,
+                    $request->end_date,
+                    $startTime,
+                    $endTime,
+                    $request->all_day
+                );
+
+                if (!empty($serviceConflicts)) {
+                    $conflicts = true;
+                    $service = ExtraService::find($item['service_id']);
+
+                    $conflictItems[] = [
+                        'type' => 'service',
+                        'id' => $item['service_id'],
+                        'name' => $service ? $service->service_name : 'Unknown Service',
+                        'conflicts' => $serviceConflicts,
                     ];
                 }
             } else {
@@ -931,7 +962,7 @@ class RequisitionFormController extends Controller
 
             $requisitionForm->update([
                 'tentative_fee' => round($tentativeFee, 2),
-                'approved_fee'  => round($tentativeFee, 2),
+                'approved_fee' => round($tentativeFee, 2),
             ]);
 
             // 5. Build the approval chain.
@@ -951,6 +982,19 @@ class RequisitionFormController extends Controller
                 'access_code' => $requisitionForm->access_code,
                 'request_id' => $requisitionForm->request_id,
             ]);
+        } catch (BookingConflictException $e) {
+            DB::rollBack();
+
+            // 409 Conflict — the frontend uses this status + payload shape to
+            // trigger showConflictModal() instead of a plain error toast.
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'data' => [
+                    'available' => false,
+                    'conflict_items' => $e->getConflictItems(),
+                ],
+            ], 409);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Submit form failed', [
@@ -1010,6 +1054,16 @@ class RequisitionFormController extends Controller
         }
     }
 
+    /**
+     * Validate availability for all selected items.
+     *
+     * Collects conflicts across facilities, equipment, AND services, then throws
+     * a single BookingConflictException carrying the conflict list so the
+     * controller can return a structured payload (same shape as the
+     * /requisition/check-availability endpoint).
+     *
+     * @throws BookingConflictException
+     */
     private function validateAvailability(array $selectedItems, RequisitionSubmitRequest $request): void
     {
         $conflictItems = [];
@@ -1030,7 +1084,12 @@ class RequisitionFormController extends Controller
                 );
 
                 if (!empty($conflicts)) {
-                    $conflictItems = array_merge($conflictItems, $conflicts);
+                    $conflictItems[] = [
+                        'type' => 'facility',
+                        'id' => $item['facility_id'],
+                        'name' => $item['name'] ?? 'Unknown Facility',
+                        'conflicts' => $conflicts,
+                    ];
                 }
             } elseif ($item['type'] === 'equipment') {
                 $quantity = $item['quantity'] ?? 1;
@@ -1042,14 +1101,38 @@ class RequisitionFormController extends Controller
                 );
 
                 if ($available < $quantity) {
-                    throw new \Exception("Not enough available items for {$item['name']}. Requested: {$quantity}, Available: {$available}");
+                    $conflictItems[] = [
+                        'type' => 'equipment',
+                        'id' => $item['equipment_id'],
+                        'name' => $item['name'] ?? 'Unknown Equipment',
+                        'available' => $available,
+                        'requested' => $quantity,
+                        'message' => "Only {$available} available, requested {$quantity}",
+                    ];
+                }
+            } elseif ($item['type'] === 'service') {
+                $conflicts = $this->availabilityChecker->checkServiceAvailability(
+                    $item['service_id'],
+                    $request->start_date,
+                    $request->end_date,
+                    $startTime,
+                    $endTime,
+                    $request->all_day
+                );
+
+                if (!empty($conflicts)) {
+                    $conflictItems[] = [
+                        'type' => 'service',
+                        'id' => $item['service_id'],
+                        'name' => $item['name'] ?? 'Unknown Service',
+                        'conflicts' => $conflicts,
+                    ];
                 }
             }
-            // 'service' items have no availability constraints — skip.
         }
 
         if (!empty($conflictItems)) {
-            throw new \Exception('Time slot conflicts with existing booking(s).');
+            throw new BookingConflictException($conflictItems);
         }
     }
     /**

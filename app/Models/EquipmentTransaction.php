@@ -12,18 +12,44 @@ class EquipmentTransaction extends Model
     use SoftDeletes;
 
     /**
+     * Per-item equipment tracking.
+     *
+     * Field semantics (four-layer availability model):
+     *   - status_id           → availability_statuses (Available/Unavailable/Under Maintenance/Reserved/Hidden).
+     *                           Manual operator override only. NOT mutated by release/return flows.
+     *   - condition_id        → conditions (New/Good/Fair/Needs Maintenance/Damaged/In Use).
+     *                           Physical item health.
+     *   - released_at/returned_at → physical custody layer. Source of truth for "is this in-flight?"
+     *   - expected_return_at  → denormalized requisition.end_date + end_time at release.
+     *                           Source of truth for overdue checks (time-level, not date-level).
+     *
+     * Transaction lifecycle is derived from returned_at only:
+     *   - in-flight  → returned_at IS NULL
+     *   - completed  → returned_at IS NOT NULL
+     *
+     * request_id / requested_equipment_id / item_id overlap is intentional:
+     *   - request_id              → fast "all equipment for this requisition" lookups
+     *   - requested_equipment_id  → per-group aggregations (e.g. "all 3 projectors returned?")
+     *   - item_id                 → per-physical-unit tracking (barcode, per-item condition)
+     *
+     * purpose_snapshot captures purpose_name at release time so historical records don't
+     * drift if the linked RequisitionPurpose is renamed.
+     *
      * The attributes that are mass assignable.
      */
+
     protected $fillable = [
         'request_id',
         'requested_equipment_id',
         'item_id',
         'released_at',
         'returned_at',
+        'expected_return_at',
         'released_by',
         'returned_by',
         'facility_id',
         'destination_name',
+        'purpose_snapshot',
         'condition_id',
         'release_notes',
         'return_notes',
@@ -36,11 +62,11 @@ class EquipmentTransaction extends Model
     protected $casts = [
         'released_at' => 'datetime',
         'returned_at' => 'datetime',
+        'expected_return_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-        'deleted_at' => 'datetime'
+        'deleted_at' => 'datetime',
     ];
-
     // === RELATIONSHIPS ===
 // In EquipmentTransaction.php - verify these exist
 
@@ -127,13 +153,16 @@ class EquipmentTransaction extends Model
     }
 
     /**
-     * Scope a query to overdue transactions (active + returned_at is null + released_at older than expected).
+     * Scope a query to overdue transactions.
+     *
+     * Overdue = in-flight (returned_at IS NULL) AND expected_return_at has passed.
+     * Uses the denormalized expected_return_at column (time-level), not requisition end_date.
      */
-    public function scopeOverdue($query, $expectedReturnDays = 7)
+    public function scopeOverdue($query)
     {
-        return $query->where('status_id', 1)
-            ->whereNull('returned_at')
-            ->where('released_at', '<=', now()->subDays($expectedReturnDays));
+        return $query->whereNull('returned_at')
+            ->whereNotNull('expected_return_at')
+            ->where('expected_return_at', '<', now());
     }
 
     /**
@@ -192,24 +221,15 @@ class EquipmentTransaction extends Model
     }
 
     /**
-     * Check if the return is overdue (if you have an expected return date).
+     * Check if this transaction is overdue.
+     *
+     * Overdue = not yet returned AND expected_return_at has passed.
      */
-    public function isOverdue(?Carbon $expectedReturnDate = null): bool
+    public function isOverdue(): bool
     {
-        if (!$this->isActive() || $this->returned_at) {
-            return false;
-        }
-        
-        if ($expectedReturnDate) {
-            return now()->gt($expectedReturnDate);
-        }
-        
-        // If you have an expected return date from the requisition form
-        if ($this->requisitionForm && $this->requisitionForm->end_date) {
-            return now()->gt($this->requisitionForm->end_date);
-        }
-        
-        return false;
+        return $this->returned_at === null
+            && $this->expected_return_at !== null
+            && now()->gt($this->expected_return_at);
     }
 
 }
