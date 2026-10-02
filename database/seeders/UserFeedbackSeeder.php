@@ -13,14 +13,15 @@ class UserFeedbackSeeder extends Seeder
      */
     public function run(): void
     {
+        // Scores are tinyint 1–5. Label map lives in App\Models\Feedback::RATING_LABELS.
         DB::table('feedback')->insert([
             [
                 'email' => 'user1@example.com',
                 'request_id' => 1,
-                'system_performance' => 'very good',
-                'booking_experience' => 'excellent',
-                'ease_of_use' => 'easy',
-                'useability' => 'very likely',
+                'system_performance' => 5, // very good
+                'booking_experience' => 5, // excellent
+                'ease_of_use' => 4,        // easy
+                'useability' => 5,         // very likely
                 'additional_feedback' => 'The system made it easy to track my request status.',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -28,10 +29,10 @@ class UserFeedbackSeeder extends Seeder
             [
                 'email' => 'user2@example.com',
                 'request_id' => null,
-                'system_performance' => 'satisfactory',
-                'booking_experience' => 'good',
-                'ease_of_use' => 'neutral',
-                'useability' => 'likely',
+                'system_performance' => 3, // satisfactory
+                'booking_experience' => 4, // good
+                'ease_of_use' => 3,        // neutral
+                'useability' => 4,         // likely
                 'additional_feedback' => 'Uploading documents took a while, but overall okay.',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -39,10 +40,10 @@ class UserFeedbackSeeder extends Seeder
             [
                 'email' => 'user3@example.com',
                 'request_id' => 2,
-                'system_performance' => 'outstanding',
-                'booking_experience' => 'very good',
-                'ease_of_use' => 'very easy',
-                'useability' => 'very likely',
+                'system_performance' => 5, // outstanding
+                'booking_experience' => 5, // very good
+                'ease_of_use' => 5,        // very easy
+                'useability' => 5,         // very likely
                 'additional_feedback' => 'Very responsive support team. Highly recommended!',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -50,10 +51,10 @@ class UserFeedbackSeeder extends Seeder
             [
                 'email' => 'user4@example.com',
                 'request_id' => null,
-                'system_performance' => 'fair',
-                'booking_experience' => 'fair',
-                'ease_of_use' => 'difficult',
-                'useability' => 'unlikely',
+                'system_performance' => 2, // fair
+                'booking_experience' => 2, // fair
+                'ease_of_use' => 2,        // difficult
+                'useability' => 2,         // unlikely
                 'additional_feedback' => 'Had trouble finding the payment upload section.',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -61,10 +62,10 @@ class UserFeedbackSeeder extends Seeder
             [
                 'email' => 'user5@example.com',
                 'request_id' => 1,
-                'system_performance' => 'very good',
-                'booking_experience' => 'excellent',
-                'ease_of_use' => 'easy',
-                'useability' => 'very likely',
+                'system_performance' => 5, // very good
+                'booking_experience' => 5, // excellent
+                'ease_of_use' => 4,        // easy
+                'useability' => 5,         // very likely
                 'additional_feedback' => 'The timeline view for activities is very helpful.',
                 'created_at' => now(),
                 'updated_at' => now(),

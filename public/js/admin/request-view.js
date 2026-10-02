@@ -279,18 +279,26 @@ const RequestViewThin = (function () {
     };
 
     /**
-     * Render contextual action buttons (approve, reject, finalize, schedule,
-     * ongoing, close) based on the current status, and bind their click
-     * handlers to confirmation modals / API calls.
-     * @param {Object} data - Full request payload
+     * Render contextual action buttons based on the current admin's role
+     * and the form's status.
+     *
+     * Role matrix:
+     *   Role 1 (Head Admin)              → Confirm Reservation · Close Reservation (always)
+     *   Role 5 (Issuing Officer)         → Confirm Reservation · Close Reservation (always)
+     *   Role 2 (Final Approving Officer) → Approve · Reject (status 1 only; reject also closes)
+     *   Role 3 (Approving Officer)       → Approve · Reject (status 1 only)
+     *   Other roles                      → no actions
+     *
+     * Terminal statuses (5/6/7) always show "No actions available".
+     * Head Admin overrides bypass all status guards (backend also permits this).
      */
     const renderActionButtons = (data) => {
         const container = document.getElementById("actionButtonsTop");
         const statusId = data.form_details.status.id;
         const approvalInfo = data.approval_info;
         const canAct = approvalInfo.current_admin_can_act === true;
+        const roleId = window.Admin?.role_id;
 
-        const FINALIZED_STATUS = 2;
         const TERMINAL_STATUSES = [5, 6, 7];
 
         // Terminal statuses: no actions at all.
@@ -300,92 +308,79 @@ const RequestViewThin = (function () {
             return;
         }
 
-        const dropdownItems = [];
+        // ---- Build button HTML per role ----
+        let buttonsHtml = "";
 
-        // Order per design: Reject · Finalize · ⋮ · Approve
-        // Each segment is built separately, then concatenated in visual order.
-        // Event bindings below are unchanged — IDs are preserved.
-        const rejectHtml = canAct
-            ? `<button class="btn btn-outline-secondary" id="rejectBtn"><i class="bi bi-x-lg"></i> Reject</button>`
-            : "";
-        const approveHtml = canAct
-            ? `<button class="btn btn-success fw-bold" id="approveBtn"><i class="bi bi-check-lg"></i> Approve Request</button>`
-            : "";
+        const isIssuingOrHeadAdmin = roleId === 1 || roleId === 5;
+        const isApprover = roleId === 2 || roleId === 3;
 
-        // Finalize visibility:
-        //   - Finalize (status 1) is only for Head Admin (role 1) and
-        //     Final Approving Officer (role 2). Stage-1 dept heads don't
-        //     see it; the backend also 403s them if the button is forced.
-        //   - Finalize Reservation (status 3) stays visible for all — the
-        //     backend authorizes by role when the action fires.
-        const currentRoleId = window.Admin?.role_id;
-        const isStage1Officer = currentRoleId === 3;
+        if (isIssuingOrHeadAdmin) {
+            // Confirm Reservation + Close Reservation — always shown.
+            // Head Admin gets a warning in the modals; Issuing Officer doesn't.
+            const isHeadAdmin = roleId === 1;
 
-        // Finalize (status 1) is gone — finalization is automatic when the
-        // last stage-2 approver acts. Only Finalize Reservation (status 3)
-        // remains as a manual action.
-        let finalizeHtml = "";
-        if (statusId === 3) {
-            finalizeHtml = `<button class="btn btn-primary" id="finalizeReservationBtn"><i class="bi bi-bookmark-check"></i> Finalize Reservation</button>`;
-        }
-
-        // Dropdown is hidden for stage-1 approvers (role 3). They only act on
-        // Approve/Reject; Close Form is reserved for higher-authority roles.
-        // Dropdown items — Close Form is the sole entry now.
-        if (!isStage1Officer) {
-            dropdownItems.push(
-                `<li><button class="dropdown-item" id="closeFormBtn"><i class="bi bi-x-circle me-2"></i>Close Form</button></li>`,
-            );
-        }
-
-        let dropdownHtml = "";
-        if (dropdownItems.length > 0) {
-            dropdownHtml = `
-                <div class="dropdown">
-                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More Actions">
-                        <i class="bi bi-three-dots"></i>
+            buttonsHtml = `
+                <div class="d-flex flex-column gap-2">
+                    <button class="btn btn-primary" id="confirmReservationBtn">
+                        <i class="bi bi-bookmark-check"></i> Confirm Reservation
                     </button>
-                    <ul class="dropdown-menu shadow-sm dropdown-menu-end">
-                        ${dropdownItems.join("")}
-                    </ul>
+                    <button class="btn btn-danger" id="closeReservationBtn">
+                        <i class="bi bi-x-circle"></i> Close Reservation
+                    </button>
                 </div>
+            `;
+            
+            // Head-admin warning banners (injected into modal bodies below).
+            container.dataset.headAdmin = isHeadAdmin ? "1" : "0";
+        } else if (isApprover && statusId === 1) {
+            // Approve + Reject — only on Pending Approval.
+            // Role 2 (Final Approving) reject also closes the form.
+            const isFinalApprover = roleId === 2;
+            container.dataset.finalApprover = isFinalApprover ? "1" : "0";
+
+            buttonsHtml = `
+                <button class="btn btn-outline-secondary" id="rejectBtn">
+                    <i class="bi bi-x-lg"></i> Reject
+                </button>
+                <div class="vr mx-1 align-self-stretch"></div>
+                <button class="btn btn-success fw-bold" id="approveBtn">
+                    <i class="bi bi-check-lg"></i> Approve Request
+                </button>
             `;
         }
 
         // Message shown when this admin has already acted on this request.
-        // Pairs visually with the missing Approve/Reject buttons.
-        const actedMsgHtml = !canAct
-            ? `<span class="d-inline-flex flex-column align-items-center justify-content-center text-muted small pe-2"
-             style="min-height:42px;line-height:1.15;">
-           <i class="bi bi-check-circle-fill text-success mb-1"></i>
-           <span class="text-center">You have already<br>acted on this request</span>
-            </span>`
-            : "";
+        const actedMsgHtml =
+            !canAct && isApprover
+                ? `<span class="d-inline-flex flex-column align-items-center justify-content-center text-muted small pe-2"
+                          style="min-height:42px;line-height:1.15;">
+                       <i class="bi bi-check-circle-fill text-success mb-1"></i>
+                       <span class="text-center">You have already<br>acted on this request</span>
+                   </span>`
+                : "";
 
-        // Final composition: [acted message] · Reject · Finalize · ⋮ | Approve Request
-        const dividerHtml = approveHtml
-            ? `<div class="vr mx-1 align-self-stretch"></div>`
-            : "";
-        container.innerHTML =
-            actedMsgHtml +
-            rejectHtml +
-            finalizeHtml +
-            dropdownHtml +
-            dividerHtml +
-            approveHtml;
+        // No buttons and no acted message → informational fallback.
+        if (!buttonsHtml && !actedMsgHtml) {
+            container.innerHTML =
+                '<span class="text-muted small fst-italic">No actions available for your role</span>';
+            return;
+        }
 
-        // ----- Event bindings (unchanged handlers, but finalize now sends closure reason for close) -----
+        container.innerHTML = actedMsgHtml + buttonsHtml;
+
+        // ---- Event bindings ----
+
+        // Approve (roles 2 & 3)
         document.getElementById("approveBtn")?.addEventListener("click", () =>
             showActionModal({
                 title: "Confirm Approval",
                 body: `<p>Are you sure you want to approve this request?</p>
-                   <label class="form-label">Remarks (Optional)</label>
-                   <textarea class="form-control" id="approveRemarks" rows="3"></textarea>`,
+                       <label class="form-label">Remarks (Optional)</label>
+                       <textarea class="form-control" id="approveRemarks" rows="3"></textarea>`,
                 confirmClass: "btn-success",
                 confirmText: "Approve",
                 onConfirm: async () => {
-                    const remarks =
-                        document.getElementById("approveRemarks").value;
+                    const remarks = document.getElementById("approveRemarks").value;
                     await postAction("approve", { remarks: remarks || null });
                     showToast("Request approved", "success");
                     await refreshAfterAction();
@@ -393,71 +388,114 @@ const RequestViewThin = (function () {
             }),
         );
 
+        // Reject (roles 2 & 3). Role 2 also closes the form with the same remark.
         document.getElementById("rejectBtn")?.addEventListener("click", () =>
             showActionModal({
                 title: "Confirm Rejection",
                 body: `<p>Are you sure you want to reject this request?</p>
-                   <label class="form-label">Reason (Optional)</label>
-                   <textarea class="form-control" id="rejectRemarks" rows="3"></textarea>`,
+                       <label class="form-label">Reason (Optional)</label>
+                       <textarea class="form-control" id="rejectRemarks" rows="3"></textarea>`,
                 confirmClass: "btn-danger",
                 confirmText: "Reject",
                 onConfirm: async () => {
-                    const remarks =
-                        document.getElementById("rejectRemarks").value;
+                    const remarks = document.getElementById("rejectRemarks").value;
+
+                    // 1. Reject the request.
                     await postAction("reject", { remarks: remarks || null });
+
+                    // 2. Final Approving Officers also close the form in the
+                    //    same action, using the same remark as the closure reason.
+                    if (container.dataset.finalApprover === "1") {
+                        await postAction("close", {
+                            closure_reason: remarks || null,
+                        });
+                    }
+
                     showToast("Request rejected", "success");
                     await refreshAfterAction();
                 },
             }),
         );
 
+        // Confirm Reservation (roles 1 & 5)
         document
-            .getElementById("finalizeReservationBtn")
-            ?.addEventListener("click", () =>
+            .getElementById("confirmReservationBtn")
+            ?.addEventListener("click", () => {
+                const isHeadAdmin = container.dataset.headAdmin === "1";
+                const warningHtml = isHeadAdmin
+                    ? `<div class="alert alert-warning small mb-3">
+                           <i class="bi bi-exclamation-triangle me-1"></i>
+                           You are about to confirm this reservation as Head Administrator.
+                       </div>`
+                    : "";
+
                 showActionModal({
-                    title: "Finalize Reservation",
-                    body: `<p class="small text-muted">Confirm the official receipt number to finalize this reservation.</p>
-                   <label class="form-label">Official Receipt Number *</label>
-                   <input type="text" class="form-control" id="officialReceiptNum" required>`,
+                    title: "Confirm Reservation",
+                    body: `${warningHtml}
+                           <p class="small text-muted">Enter the official receipt number to confirm this reservation.</p>
+                           <label class="form-label">Official Receipt Number *</label>
+                           <input type="text" class="form-control" id="officialReceiptNum" required>`,
                     confirmClass: "btn-primary",
-                    confirmText: "Finalize Reservation",
+                    confirmText: "Confirm Reservation",
                     onConfirm: async () => {
                         const receiptNum = document
                             .getElementById("officialReceiptNum")
                             .value.trim();
                         if (!receiptNum)
                             throw new Error("Please enter receipt number");
+
+                        // If this admin still has a pending approval row
+                        // (e.g., stage-3 officer who hasn't approved), record
+                        // approval before finalizing the reservation.
+                        if (canAct) {
+                            await postAction("approve", { remarks: null });
+                        }
+
                         await postAction("finalize-reservation", {
                             official_receipt_num: receiptNum,
                         });
-                        showToast("Reservation finalized", "success");
-                        setTimeout(() => location.reload(), 1000);
-                    },
-                }),
-            );
 
-        document.getElementById("closeFormBtn")?.addEventListener("click", () =>
-            showActionModal({
-                title: "Close Form",
-                body: `<div class="text-left mb-3">
-                     <p class="mb-0">Are you sure you want to close this form?<br><strong>This action cannot be undone.</strong></p>
-                   </div>
-                   <label class="form-label">Closure Reason (Optional)</label>
-                   <textarea class="form-control" id="closureReason" rows="3"></textarea>`,
-                confirmClass: "btn-danger",
-                confirmText: "Close Form",
-                onConfirm: async () => {
-                    const reason = document
-                        .getElementById("closureReason")
-                        .value.trim();
-                    await postAction("close", {
-                        closure_reason: reason || null,
-                    });
-                    showToast("Form closed", "success");
-                    setTimeout(() => (location.href = "/admin/calendar"), 1000);
-                },
-            }),
-        );
+                        showToast("Reservation confirmed", "success");
+                        await refreshAfterAction();
+                    },
+                });
+            });
+
+        // Close Reservation (roles 1 & 5)
+        document
+            .getElementById("closeReservationBtn")
+            ?.addEventListener("click", () => {
+                const isHeadAdmin = container.dataset.headAdmin === "1";
+                const warningHtml = isHeadAdmin
+                    ? `<div class="alert alert-warning small mb-3">
+                           <i class="bi bi-exclamation-triangle me-1"></i>
+                           You are about to close this reservation as Head Administrator.
+                       </div>`
+                    : "";
+
+                showActionModal({
+                    title: "Close Reservation",
+                    body: `${warningHtml}
+                           <p class="mb-3">Are you sure you want to close this reservation?<br>
+                           <strong>This action cannot be undone.</strong></p>
+                           <label class="form-label">Closure Reason (Optional)</label>
+                           <textarea class="form-control" id="closureReason" rows="3"></textarea>`,
+                    confirmClass: "btn-danger",
+                    confirmText: "Close Reservation",
+                    onConfirm: async () => {
+                        const reason = document
+                            .getElementById("closureReason")
+                            .value.trim();
+
+                        await postAction("close", {
+                            closure_reason: reason || null,
+                        });
+
+                        showToast("Reservation closed", "success");
+                        await refreshAfterAction();
+                    },
+                });
+            });
     };
 
     /**
@@ -1335,7 +1373,7 @@ const RequestViewThin = (function () {
             document.getElementById("loadingState").innerHTML =
                 `<div class="alert alert-danger">
                     <strong>Error:</strong> ${escapeHtml(error.message)}
-                    <br><button class="btn btn-sm btn-outline-danger mt-2" onclick="location.reload()">Retry</button>
+                    <br><button class="btn btn-sm btn-danger mt-2" onclick="location.reload()">Retry</button>
                 </div>`;
         }
     };

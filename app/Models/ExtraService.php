@@ -37,7 +37,22 @@ class ExtraService extends Model
             'service_id'
         );
     }
-    
+
+    /**
+     * Calendar events this service is assigned to.
+     * Inverse of CalendarEvent::services().
+     */
+    public function calendarEvents()
+    {
+        return $this->belongsToMany(
+            CalendarEvent::class,
+            'event_services',
+            'service_id',
+            'event_id'
+        )->withPivot(['event_service_id', 'notes'])
+            ->withTimestamps();
+    }
+
     public function managingDepartment()
     {
         return $this->belongsTo(Department::class, 'managed_by', 'department_id');

@@ -13,7 +13,7 @@ use App\Services\RequisitionFormatterService;
 use App\Services\CheckAvailabilityService;
 use App\Services\ScheduleFormatterService;
 use App\Services\AdminActionsService;
-use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -356,7 +356,7 @@ class ReservationListingsController extends Controller
         }
     }
 
-        /**
+    /**
      * Return requisitions where the current admin has an actionable Pending approval.
      *
      * "Actionable" means: this admin holds a requisition_approvals row with
@@ -391,22 +391,22 @@ class ReservationListingsController extends Controller
             if (!in_array($sortOrder, ['asc', 'desc'], true)) {
                 $sortOrder = 'asc';
             }
-
             $verifyingStatusId = FormStatus::where('status_name', 'Verifying Payment')
                 ->value('status_id');
 
             $query = RequisitionForm::query();
 
-            // ---- System Administrator: oversight view of Verifying Payment ----
+            // ---- System Administrator: oversight view of ALL forms (no filters) ----
+            // Role 1 is observational / override-only; per the Admin model it must
+            // bypass the approval-row rule AND any status scoping so it can see
+            // everything currently in the system.
             if ((int) $admin->role_id === Admin::ROLE_SYSTEM_ADMIN) {
-                if (!$verifyingStatusId) {
-                    return $this->emptyActionableResponse($perPage, $sortOrder);
-                }
-                $query->where('status_id', $verifyingStatusId);
+                // no additional where() clauses — full unfiltered list
             }
             // ---- Inventory Manager: no approval responsibility ----
             elseif ((int) $admin->role_id === 4) {
                 return $this->emptyActionableResponse($perPage, $sortOrder);
+
             }
             // ---- Approvers (2, 3, 5): my Pending row at the active stage ----
             else {
@@ -418,33 +418,33 @@ class ReservationListingsController extends Controller
                             $stageQ->where('stage', 1)
                                 // Stage 2: this row is stage 2 AND no pending stage-1 rows exist
                                 ->orWhere(function ($q2) {
-                                    $q2->where('stage', 2)
-                                        ->whereNotExists(function ($sub) {
-                                            $sub->select(DB::raw(1))
-                                                ->from('requisition_approvals as ra1')
-                                                ->whereColumn('ra1.request_id', 'requisition_approvals.request_id')
-                                                ->where('ra1.stage', 1)
-                                                ->where('ra1.status', 'Pending');
-                                        });
-                                })
+                                $q2->where('stage', 2)
+                                    ->whereNotExists(function ($sub) {
+                                        $sub->select(DB::raw(1))
+                                            ->from('requisition_approvals as ra1')
+                                            ->whereColumn('ra1.request_id', 'requisition_approvals.request_id')
+                                            ->where('ra1.stage', 1)
+                                            ->where('ra1.status', 'Pending');
+                                    });
+                            })
                                 // Stage 3: this row is stage 3 AND form is Verifying Payment
                                 //          AND no pending stage-1/2 rows exist
                                 ->orWhere(function ($q3) use ($verifyingStatusId) {
-                                    $q3->where('stage', 3)
-                                        ->whereExists(function ($sub) use ($verifyingStatusId) {
-                                            $sub->select(DB::raw(1))
-                                                ->from('requisition_forms as rf')
-                                                ->whereColumn('rf.request_id', 'requisition_approvals.request_id')
-                                                ->where('rf.status_id', $verifyingStatusId);
-                                        })
-                                        ->whereNotExists(function ($sub) {
-                                            $sub->select(DB::raw(1))
-                                                ->from('requisition_approvals as ra2')
-                                                ->whereColumn('ra2.request_id', 'requisition_approvals.request_id')
-                                                ->whereIn('ra2.stage', [1, 2])
-                                                ->where('ra2.status', 'Pending');
-                                        });
-                                });
+                                $q3->where('stage', 3)
+                                    ->whereExists(function ($sub) use ($verifyingStatusId) {
+                                        $sub->select(DB::raw(1))
+                                            ->from('requisition_forms as rf')
+                                            ->whereColumn('rf.request_id', 'requisition_approvals.request_id')
+                                            ->where('rf.status_id', $verifyingStatusId);
+                                    })
+                                    ->whereNotExists(function ($sub) {
+                                        $sub->select(DB::raw(1))
+                                            ->from('requisition_approvals as ra2')
+                                            ->whereColumn('ra2.request_id', 'requisition_approvals.request_id')
+                                            ->whereIn('ra2.stage', [1, 2])
+                                            ->where('ra2.status', 'Pending');
+                                    });
+                            });
                         });
                 });
             }
@@ -551,84 +551,6 @@ class ReservationListingsController extends Controller
             ],
             'links' => ['first' => null, 'last' => null, 'prev' => null, 'next' => null],
         ]);
-    }
-
-    /**
-     * Get dashboard stats only (pending, completed, feedback counts)
-     * 
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getDashboardStats()
-    {
-        try {
-            /** @var Admin $admin */
-            $admin = auth()->user();
-
-            if (!$admin) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthenticated - Admin not found'
-                ], 401);
-            }
-
-            $pendingStatusIds = [1];
-            $completedStatusIds = [4, 5, 6];
-            $isHeadAdmin = $admin->role_id === 1;
-
-            // Get department IDs managed by this admin
-            $managedDepartmentIds = $admin->departments()->pluck('departments.department_id')->toArray();
-
-            // Build pending query with department-based filtering
-            $pendingQuery = RequisitionForm::whereIn('status_id', $pendingStatusIds);
-            $completedQuery = RequisitionForm::whereIn('status_id', $completedStatusIds);
-
-            // Apply department-based filtering for non-head admins
-            if (!$isHeadAdmin && !empty($managedDepartmentIds)) {
-                $filterCallback = function ($query) use ($managedDepartmentIds) {
-                    $query->where(function ($subQuery) use ($managedDepartmentIds) {
-                        $subQuery->whereHas('requestedFacilities.facility', function ($q) use ($managedDepartmentIds) {
-                            $q->whereIn('managed_by', $managedDepartmentIds);
-                        })->orWhereHas('requestedEquipment.equipment', function ($q) use ($managedDepartmentIds) {
-                            $q->whereIn('managed_by', $managedDepartmentIds);
-                        })->orWhereHas('requestedServices.service', function ($q) use ($managedDepartmentIds) {
-                            $q->whereIn('managed_by', $managedDepartmentIds);
-                        })->orWhereHas('purpose', function ($q) use ($managedDepartmentIds) {
-                            $q->whereIn('routes_to', $managedDepartmentIds);
-                        });
-                    });
-                };
-
-                $pendingQuery->where($filterCallback);
-                $completedQuery->where($filterCallback);
-            } elseif (!$isHeadAdmin && empty($managedDepartmentIds)) {
-                // Admin has no managed departments - return zero counts
-                return response()->json([
-                    'success' => true,
-                    'stats' => [
-                        'pending_count' => 0,
-                        'completed_count' => 0,
-                        'feedback_count' => Feedback::count()
-                    ]
-                ]);
-            }
-
-            // For head admins, no additional filtering is applied (they see everything)
-
-            return response()->json([
-                'success' => true,
-                'stats' => [
-                    'pending_count' => $pendingQuery->count(),
-                    'completed_count' => $completedQuery->count(),
-                    'feedback_count' => Feedback::count()
-                ]
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('getDashboardStats error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch dashboard stats'
-            ], 500);
-        }
     }
     public function getAvailableForTransaction()
     {

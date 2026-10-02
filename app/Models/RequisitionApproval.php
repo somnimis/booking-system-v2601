@@ -8,7 +8,13 @@ class RequisitionApproval extends Model
 {
     protected $table = "requisition_approvals";
     protected $primaryKey = "approval_id";
-    public $timestamps = false;
+
+    /**
+     * We now track created_at (managed automatically by Eloquent) for aging
+     * calculations, but keep UPDATED_AT disabled because the table already
+     * has `date_updated` for that purpose (see migration).
+     */
+    public const UPDATED_AT = null;
 
     protected $fillable = [
         'request_id',
@@ -24,8 +30,9 @@ class RequisitionApproval extends Model
     protected $casts = [
         'acted_at' => 'datetime',
         'date_updated' => 'datetime',
+        'created_at' => 'datetime',
     ];
-
+    
     // Relationships
 
     public function requisition()

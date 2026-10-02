@@ -11,6 +11,9 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Models\EquipmentTransaction;
+use App\Models\RequisitionApproval;
+use App\Models\FormStatus;
 
 class DashboardService
 {
@@ -28,11 +31,72 @@ class DashboardService
         $departmentIds = $this->getManagedDepartmentIds($admin);
         $isHeadAdmin = $admin->role_id === 1;
 
+        // Role-aware stat cards: signatories get personal workload cards,
+        // system admin gets oversight cards, other roles get none (hidden in UI).
+        $roleStats = null;
+        if (in_array((int) $admin->role_id, Admin::APPROVER_ROLE_IDS, true)) {
+            $roleStats = $this->getSignatoryStats($admin);
+        } elseif ((int) $admin->role_id === Admin::ROLE_SYSTEM_ADMIN) {
+            $roleStats = $this->getSystemAdminStats();
+        }
+
         return [
             'pending_approvals' => $this->getPendingApprovals($isHeadAdmin, $departmentIds),
             'latest_feedback' => $this->getLatestFeedback(),
             'stats' => $this->getDashboardStats($isHeadAdmin, $departmentIds),
+            'ops_stats' => $this->getOpsStats(),
+            'role_stats' => $roleStats, // null for role 4
         ];
+    }
+
+    /**
+     * Operational stats for the dashboard top row.
+     *
+     * These are org-wide metrics (not department-filtered) since they describe
+     * system-wide activity, not an admin's personal work queue.
+     */
+    public function getOpsStats(): array
+    {
+        return Cache::remember(self::CACHE_KEY_PREFIX . 'ops_stats', self::CACHE_DURATION, function () {
+            $today = Carbon::today();
+            $weekEnd = Carbon::today()->addDays(7);
+
+            $todayBookings = RequisitionForm::where('status_id', 4)
+                ->whereDate('start_date', '<=', $today)
+                ->whereDate('end_date', '>=', $today)
+                ->count();
+
+            $weekBookings = RequisitionForm::where('status_id', 4)
+                ->whereDate('start_date', '>=', $today)
+                ->whereDate('start_date', '<=', $weekEnd)
+                ->count();
+
+            $overdueReturns = EquipmentTransaction::whereNull('returned_at')
+                ->whereNotNull('expected_return_at')
+                ->where('expected_return_at', '<', now())
+                ->count();
+
+            $satisfactionAvg = (float) (Feedback::whereNotNull('system_performance')
+                ->where('created_at', '>=', now()->subDays(30))
+                ->avg('system_performance') ?? 0);
+
+            $satisfactionCount = Feedback::whereNotNull('system_performance')
+                ->where('created_at', '>=', now()->subDays(30))
+                ->count();
+
+            return [
+                'today_bookings' => $todayBookings,
+                'week_bookings' => $weekBookings,
+                'overdue_returns' => $overdueReturns,
+                'satisfaction' => [
+                    'value' => round($satisfactionAvg, 2),
+                    'label' => $satisfactionAvg > 0
+                        ? Feedback::averageToTier($satisfactionAvg)
+                        : 'No data',
+                    'count' => $satisfactionCount,
+                ],
+            ];
+        });
     }
 
     /**
@@ -324,6 +388,9 @@ class DashboardService
             self::CACHE_KEY_PREFIX . 'pending_*',
             self::CACHE_KEY_PREFIX . 'departments_' . $admin->admin_id,
             self::CACHE_KEY_PREFIX . 'feedback',
+            self::CACHE_KEY_PREFIX . 'ops_stats',
+            self::CACHE_KEY_PREFIX . 'system_admin_stats',
+            self::CACHE_KEY_PREFIX . 'signatory_stats_' . $admin->admin_id,
         ];
 
         foreach ($patterns as $pattern) {
@@ -356,7 +423,7 @@ class DashboardService
             'pending_count' => 0,
             'reserved_count' => 0,
             'awaiting_payment_count' => 0,
-            'verifying_count' => 0,  
+            'verifying_count' => 0,
             'feedback_count' => 0
         ];
     }
@@ -369,4 +436,158 @@ class DashboardService
         $identifier = $isHeadAdmin ? 'head' : implode('_', $departmentIds);
         return self::CACHE_KEY_PREFIX . $section . '_' . $identifier;
     }
+
+    /**
+     * Personal stats for signatory roles (2, 3, 5).
+     *
+     * All counts are scoped strictly to the logged-in admin (admin_id = me).
+     * Scope mirrors ReservationListingsController::paginatedActionableRequests
+     * so the card numbers match the "Needs My Action" list page.
+     */
+    public function getSignatoryStats(Admin $admin): array
+    {
+        $cacheKey = self::CACHE_KEY_PREFIX . 'signatory_stats_' . $admin->admin_id;
+
+        return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($admin) {
+            $verifyingStatusId = FormStatus::where('status_name', 'Verifying Payment')
+                ->value('status_id');
+
+            // -- Needs My Review: active-stage pending rows for this admin --
+            $needsReview = $this->actionableFormsQuery($admin, $verifyingStatusId)->count();
+
+            // -- Due This Week: same scope, event starts within 7 days --
+            $today = Carbon::today();
+            $dueThisWeek = $this->actionableFormsQuery($admin, $verifyingStatusId)
+                ->whereDate('start_date', '>=', $today)
+                ->whereDate('start_date', '<=', $today->copy()->addDays(7))
+                ->count();
+
+            // -- Overdue Tasks: pending approval rows for this admin older than 3 days --
+            // Measures time waiting regardless of stage, per product decision.
+            $overdueTasks = RequisitionApproval::where('admin_id', $admin->admin_id)
+                ->where('status', 'Pending')
+                ->where('created_at', '<', now()->subDays(3))
+                ->count();
+
+            // -- Approved This Week: actions I actually took in the last 7 days --
+            $approvedThisWeek = RequisitionApproval::where('acted_by', $admin->admin_id)
+                ->where('status', 'Approved')
+                ->where('acted_at', '>=', now()->subDays(7))
+                ->count();
+
+            return [
+                'needs_review' => $needsReview,
+                'due_this_week' => $dueThisWeek,
+                'overdue_tasks' => $overdueTasks,
+                'approved_this_week' => $approvedThisWeek,
+            ];
+        });
+    }
+
+    /**
+     * Oversight stats for System Administrator (role 1).
+     *
+     * Role 1 does not approve/reject — it overrides Verifying Payment forms
+     * and monitors the pipeline. Cards reflect that remit.
+     *
+     * Edge cases handled:
+     * - Forms closed/cancelled but still carrying an active status are excluded.
+     * - "Awaiting Final Approval" uses whereHas on the requisitionApprovals
+     *   relationship (via a subquery) rather than distinct+count, so multiple
+     *   Stage-2 approvers per form never inflate the count.
+     * - Missing 'Verifying Payment' FormStatus row returns 0 instead of throwing.
+     */
+    public function getSystemAdminStats(): array
+    {
+        $cacheKey = self::CACHE_KEY_PREFIX . 'system_admin_stats';
+
+        return Cache::remember($cacheKey, self::CACHE_DURATION, function () {
+            $verifyingStatusId = FormStatus::where('status_name', 'Verifying Payment')
+                ->value('status_id');
+
+            // Forms in Verifying Payment awaiting signatory receipt review.
+            $verifyingPayment = $verifyingStatusId
+                ? RequisitionForm::where('status_id', $verifyingStatusId)
+                    ->where('is_closed', false)
+                    ->count()
+                : 0;
+
+            // Stage-2 bottleneck: forms still waiting on a Final Approving Officer.
+            // Subquery keeps multiple Stage-2 approvers from double-counting the form.
+            // Fee auto-locks when Stage 2 clears (see ApprovalChainService::moveToNextStage).
+            $awaitingFinalization = RequisitionForm::whereHas('requisitionApprovals', function ($q) {
+                $q->where('stage', 2)->where('status', 'Pending');
+            })->count();
+
+            // Intake this week: forms still at Pending Approval (status_id = 1)
+            // submitted within the last 7 days. Excludes everything that has
+            // moved past stage 1 or was closed/rejected.
+            $pendingThisWeek = RequisitionForm::where('status_id', 1)
+                ->where('created_at', '>=', now()->subDays(7))
+                ->count();
+
+            // Today's active events.
+            $today = Carbon::today();
+            $todayBookings = RequisitionForm::where('status_id', 4)
+                ->whereDate('start_date', '<=', $today)
+                ->whereDate('end_date', '>=', $today)
+                ->count();
+
+            return [
+                'today_bookings'        => $todayBookings,
+                'pending_this_week'     => $pendingThisWeek,
+                'awaiting_finalization' => $awaitingFinalization,
+                'verifying_payment'     => $verifyingPayment,
+            ];
+        });
+    }
+
+    /**
+     * Build the query that mirrors "actionable requests" for an approver.
+     *
+     * Kept in the service so the dashboard cards and the actionable list
+     * page share identical semantics. If the list page ever drifts, update
+     * this method too (or refactor the controller to call it).
+     */
+    private function actionableFormsQuery(Admin $admin, ?int $verifyingStatusId)
+    {
+        return RequisitionForm::query()
+            ->whereHas('requisitionApprovals', function ($q) use ($admin, $verifyingStatusId) {
+                $q->where('admin_id', $admin->admin_id)
+                    ->where('status', 'Pending')
+                    ->where(function ($stageQ) use ($verifyingStatusId) {
+                        // Stage 1: this row is stage 1
+                        $stageQ->where('stage', 1)
+                            // Stage 2: no pending stage-1 rows exist
+                            ->orWhere(function ($q2) {
+                            $q2->where('stage', 2)
+                                ->whereNotExists(function ($sub) {
+                                    $sub->select(DB::raw(1))
+                                        ->from('requisition_approvals as ra1')
+                                        ->whereColumn('ra1.request_id', 'requisition_approvals.request_id')
+                                        ->where('ra1.stage', 1)
+                                        ->where('ra1.status', 'Pending');
+                                });
+                        })
+                            // Stage 3: form is Verifying Payment, no pending stage 1/2 rows
+                            ->orWhere(function ($q3) use ($verifyingStatusId) {
+                            $q3->where('stage', 3)
+                                ->whereExists(function ($sub) use ($verifyingStatusId) {
+                                    $sub->select(DB::raw(1))
+                                        ->from('requisition_forms as rf')
+                                        ->whereColumn('rf.request_id', 'requisition_approvals.request_id')
+                                        ->where('rf.status_id', $verifyingStatusId);
+                                })
+                                ->whereNotExists(function ($sub) {
+                                    $sub->select(DB::raw(1))
+                                        ->from('requisition_approvals as ra2')
+                                        ->whereColumn('ra2.request_id', 'requisition_approvals.request_id')
+                                        ->whereIn('ra2.stage', [1, 2])
+                                        ->where('ra2.status', 'Pending');
+                                });
+                        });
+                    });
+            });
+    }
+
 }
