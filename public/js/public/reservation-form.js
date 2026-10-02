@@ -1243,14 +1243,17 @@ window.checkAvailability = async function () {
             end_time: endTime,
             all_day: isAllDay,
             items: items.map((item) => {
-                const itemData = {
-                    type: item.type,
-                };
+                const itemData = { type: item.type };
+
                 if (item.type === "facility") {
                     itemData.facility_id = item.facility_id || item.id;
-                } else {
+                } else if (item.type === "equipment") {
                     itemData.equipment_id = item.equipment_id || item.id;
+                } else if (item.type === "service") {
+                    // Services are exclusive time-slot resources; no quantity needed.
+                    itemData.service_id = item.service_id || item.id;
                 }
+
                 return itemData;
             }),
         };
@@ -2505,6 +2508,28 @@ window.submitForm = async function () {
         }
 
         if (!submitResponse.ok) {
+            // 409 Conflict → scheduling conflict. Use the same modal as the
+            // Step 1 "Check Availability" button for a consistent UX.
+            if (submitResponse.status === 409 && result?.data?.conflict_items) {
+                console.log("=== SCHEDULING CONFLICT (409) ===");
+                console.log("Conflicts:", result.data.conflict_items);
+
+                // Hide the terms modal so it doesn't stack on top of the conflict modal.
+                const termsModalInstance = bootstrap.Modal.getInstance(modal);
+                if (termsModalInstance) termsModalInstance.hide();
+
+                // Respect the all-day flag passed earlier in the function.
+                showConflictModal(result.data.conflict_items, isAllDay);
+
+                // Reset submit button state so the user can adjust and retry.
+                if (confirmBtn) {
+                    confirmBtn.classList.remove("loading");
+                    confirmBtn.disabled = false;
+                }
+
+                return; // Skip the generic error path.
+            }
+
             console.log("=== RESPONSE NOT OK ===");
             console.log("Response status:", submitResponse.status);
             console.log("Response status text:", submitResponse.statusText);
@@ -3623,7 +3648,7 @@ async function handleServiceToggle(event) {
             headers: {
                 "X-CSRF-TOKEN": csrfToken,
                 "Content-Type": "application/json",
-                "Accept": "application/json",
+                Accept: "application/json",
             },
             body: JSON.stringify(payload),
         });

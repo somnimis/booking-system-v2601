@@ -1,7 +1,75 @@
 @extends('layouts.admin')
 
 @section('title', 'Booking Dashboard')
+<style>
+  /* Signatory / System Admin stat cards — flat, no animation */
+  .rstat-card {
+    position: relative;
+    background: #fff;
+    border: 1px solid var(--bs-border-color, #e2e8f0);
+    border-radius: 10px;
+    padding: 16px 14px;
+    cursor: pointer;
+    overflow: hidden;
+  }
 
+  .rstat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: #2563eb;
+    opacity: 0.85;
+  }
+
+  .rstat-card.rstat-subset::before {
+    background: #f59e0b;
+    opacity: 0.7;
+  }
+
+  .rstat-card.rstat-subset.rstat-overdue::before {
+    background: #ef4444;
+    opacity: 0.6;
+  }
+
+  .rstat-card.rstat-success::before {
+    background: #10b981;
+  }
+
+  .rstat-card.rstat-system::before {
+    background: #6366f1;
+  }
+
+  .rstat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #1e293b;
+    margin-bottom: 6px;
+  }
+
+  @media (min-width: 768px) {
+    .rstat-value {
+      font-size: 2rem;
+    }
+  }
+
+  .rstat-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.2;
+    margin-bottom: 3px;
+  }
+
+  .rstat-subtext {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    line-height: 1.25;
+  }
+</style>
 @section('content')
   <link rel="stylesheet" href="{{ asset('css/public/dashboard.css') }}">
   <main id="main">
@@ -71,36 +139,15 @@
       <!-- ── Dashboard Content ── -->
       <div id="dashboardContent" style="display: none;">
 
-        <!-- Stat Cards -->
-        <div class="row g-3 mb-4" id="statsRow">
-          <div class="col-md-3 col-6">
-            <div class="stat-card" onclick="redirectToTab('pending')">
-              <i class="bi bi-chevron-right stat-arrow"></i>
-              <div class="stat-value" id="pendingCount">0</div>
-              <div class="stat-label">Pending Approval</div>
-            </div>
-          </div>
-          <div class="col-md-3 col-6">
-            <div class="stat-card" onclick="redirectToTab('awaiting')">
-              <i class="bi bi-chevron-right stat-arrow"></i>
-              <div class="stat-value" id="awaitingPaymentCount">0</div>
-              <div class="stat-label">Awaiting Payment</div>
-            </div>
-          </div>
-          <div class="col-md-3 col-6">
-            <div class="stat-card" onclick="redirectToTab('payment-submitted')">
-              <i class="bi bi-chevron-right stat-arrow"></i>
-              <div class="stat-value" id="paymentSubmittedCount">0</div>
-              <div class="stat-label">Verifying Payment</div>
-            </div>
-          </div>
-          <div class="col-md-3 col-6">
-            <div class="stat-card" onclick="redirectToTab('reserved')">
-              <i class="bi bi-chevron-right stat-arrow"></i>
-              <div class="stat-value" id="reservedCount">0</div>
-              <div class="stat-label">Reserved</div>
-            </div>
-          </div>
+        {{-- Scope clarifier — the stat cards below are personal to this admin --}}
+        <div id="statsHeader" class="mb-2" style="display: none;">
+          <h6 class="mb-0 fw-semibold" style="color:#1e293b;">Your Workload</h6>
+          <small class="text-muted" style="font-size:0.72rem;">Counts reflect requests assigned to you only.</small>
+        </div>
+
+        {{-- Stat cards — role-aware. Populated by renderInitialDashboard() in JS. --}}
+        <div class="row g-3 mb-4" id="statsRow" style="display: none;">
+          {{-- Rendered dynamically based on data.role_stats in JS --}}
         </div>
 
         <div class="row">
@@ -273,10 +320,10 @@
       // Show loading state only on first load or when manually refreshing
       if (!todayEventsData || page !== currentTodayEventsPage) {
         container.innerHTML = `
-                              <div class="empty-state">
-                                  <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                                  <p class="mt-2">Loading events...</p>
-                              </div>`;
+                                            <div class="empty-state">
+                                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                                <p class="mt-2">Loading events...</p>
+                                            </div>`;
       }
 
       fetch(`/api/admin/today-events?page=${page}`, {
@@ -297,118 +344,54 @@
           } else {
             console.error('Failed to load today\'s events:', response.message);
             container.innerHTML = `
-                                      <div class="empty-state">
-                                          <i class="bi bi-exclamation-triangle"></i>
-                                          <p>Failed to load events</p>
-                                          <button class="btn btn-sm btn-primary mt-2" onclick="loadTodayEventsPage(1)">Retry</button>
-                                      </div>`;
+                                                    <div class="empty-state">
+                                                        <i class="bi bi-exclamation-triangle"></i>
+                                                        <p>Failed to load events</p>
+                                                        <button class="btn btn-sm btn-primary mt-2" onclick="loadTodayEventsPage(1)">Retry</button>
+                                                    </div>`;
           }
         })
         .catch(error => {
           console.error('Error loading today\'s events:', error);
           container.innerHTML = `
-                                  <div class="empty-state">
-                                      <i class="bi bi-exclamation-triangle"></i>
-                                      <p>Network error loading events</p>
-                                      <button class="btn btn-sm btn-primary mt-2" onclick="loadTodayEventsPage(1)">Retry</button>
-                                  </div>`;
+                                                <div class="empty-state">
+                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                    <p>Network error loading events</p>
+                                                    <button class="btn btn-sm btn-primary mt-2" onclick="loadTodayEventsPage(1)">Retry</button>
+                                                </div>`;
         });
     }
 
-    // ========== TODAY'S EVENTS RENDERING (with sample data fallback) ==========
+    // ========== TODAY'S EVENTS RENDERING ==========
     function renderTodayEvents() {
       const container = document.getElementById('reservationsList');
 
       // Get real events from API
-      let events = todayEventsData?.data || [];
+      const events = todayEventsData?.data || [];
 
-      // 🔵 SAMPLE DATA - TEMPORARY PLACEHOLDER FOR PRESENTATION (REMOVE IN PRODUCTION)
-      // These only show when there are 0 real events
-      const SAMPLE_EVENTS = [
-        { request_id: 9999991, requester_name: '✨ Sample Event ✨', event_title: 'University General Assembly', time: '09:00 AM - 05:00 PM', locations: ['Main Auditorium'], is_sample: true },
-        { request_id: 9999992, requester_name: '📋 Sample Event 📋', event_title: 'Student Leadership Workshop', time: '01:00 PM - 04:00 PM', locations: ['Conference Room A'], is_sample: true },
-        { request_id: 9999993, requester_name: '🎭 Sample Event 🎭', event_title: 'Cultural Presentation', time: '02:00 PM - 06:00 PM', locations: ['Performing Arts Hall'], is_sample: true },
-        { request_id: 9999994, requester_name: '🏆 Sample Event 🏆', event_title: 'Awards Ceremony', time: '03:00 PM - 07:00 PM', locations: ['University Center'], is_sample: true },
-        { request_id: 9999995, requester_name: '📚 Sample Event 📚', event_title: 'Faculty Meeting', time: '10:00 AM - 12:00 PM', locations: ['Conference Room B'], is_sample: true },
-        { request_id: 9999996, requester_name: '🎪 Sample Event 🎪', event_title: 'Organization Fair', time: '11:00 AM - 04:00 PM', locations: ['Student Plaza'], is_sample: true }
-      ];
-
-      const showSamples = events.length === 0;
-      let displayEvents = [];
-      let totalPages = 1;
-      let itemsPerPage = 5;
-
-      if (showSamples) {
-        totalPages = Math.ceil(SAMPLE_EVENTS.length / itemsPerPage);
-        const start = (currentTodayEventsPage - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
-        displayEvents = SAMPLE_EVENTS.slice(start, end);
-      } else {
-        displayEvents = events;
-        totalPages = totalTodayEventsPages;
-      }
-
-      if (displayEvents.length === 0) {
+      if (events.length === 0) {
         container.innerHTML = `<div class="empty-state"><i class="bi bi-calendar-x"></i><p>No reservations today</p></div>`;
         document.getElementById('todayEventsPagination').style.display = 'none';
         return;
       }
 
       // Show pagination if needed
-      const showPagination = showSamples ? SAMPLE_EVENTS.length > itemsPerPage : totalTodayEventsPages > 1;
-
-      if (showPagination) {
+      if (totalTodayEventsPages > 1) {
         const paginationContainer = document.getElementById('todayEventsPagination');
         const infoSpan = document.getElementById('todayEventsInfo');
         const prevBtn = document.getElementById('todayEventsPrevBtn');
         const nextBtn = document.getElementById('todayEventsNextBtn');
 
         if (infoSpan) {
-          if (showSamples) {
-            infoSpan.textContent = `Page ${currentTodayEventsPage} of ${totalPages} (${SAMPLE_EVENTS.length} demo items)`;
-          } else {
-            infoSpan.textContent = `Page ${currentTodayEventsPage} of ${totalTodayEventsPages} (${totalTodayEventsItems} total)`;
-          }
+          infoSpan.textContent = `Page ${currentTodayEventsPage} of ${totalTodayEventsPages} (${totalTodayEventsItems} total)`;
         }
 
         if (prevBtn) {
           prevBtn.disabled = currentTodayEventsPage === 1;
-          // Replace the button to remove any existing listeners
-          const newPrevBtn = prevBtn.cloneNode(true);
-          prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-          newPrevBtn.onclick = (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (currentTodayEventsPage > 1) {
-              if (showSamples) {
-                currentTodayEventsPage--;
-                renderTodayEvents();
-              } else {
-                loadTodayEventsPrevPage();
-              }
-            }
-            return false;
-          };
         }
 
         if (nextBtn) {
-          nextBtn.disabled = currentTodayEventsPage === totalPages;
-          // Replace the button to remove any existing listeners
-          const newNextBtn = nextBtn.cloneNode(true);
-          nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-          newNextBtn.onclick = (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (currentTodayEventsPage < totalPages) {
-              if (showSamples) {
-                currentTodayEventsPage++;
-                renderTodayEvents();
-              } else {
-                loadTodayEventsNextPage();
-              }
-            }
-            return false;
-          };
+          nextBtn.disabled = currentTodayEventsPage === totalTodayEventsPages;
         }
 
         if (paginationContainer) paginationContainer.style.display = 'flex';
@@ -417,32 +400,23 @@
       }
 
       // Render events
-      container.innerHTML = displayEvents.map(r => `
-        <div class="reservation-item" onclick="handleEventClick(${r.request_id}, ${r.is_sample || false})">
-          <div class="d-flex justify-content-between align-items-start gap-2">
-            <div class="flex-grow-1">
-              <div class="item-name">${escapeHtml(r.requester_name)}</div>
-              <div class="item-sub">${escapeHtml(r.event_title)}</div>
-              <div class="item-meta">
-                <i class="bi bi-clock"></i>${r.time}
-                <span class="text-light">·</span>
-                <i class="bi bi-geo-alt"></i>
-                ${r.locations.map(loc => `<span class="location-chip">${escapeHtml(loc)}</span>`).join(' ')}
-              </div>
-            </div>
-            <i class="bi bi-chevron-right text-primary align-self-center" style="font-size:0.8rem; opacity:0.5;"></i>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // Handle click on events (with sample detection)
-    function handleEventClick(requestId, isSample) {
-      if (isSample) {
-        alert('Sample event only. Please submit a real reservation form with today\'s date.');
-      } else {
-        window.location.href = `/admin/requisition/${requestId}`;
-      }
+      container.innerHTML = events.map(r => `
+                  <div class="reservation-item" onclick="window.location.href='/admin/requisition/${r.request_id}'">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                      <div class="flex-grow-1">
+                        <div class="item-name">${escapeHtml(r.requester_name)}</div>
+                        <div class="item-sub">${escapeHtml(r.event_title)}</div>
+                        <div class="item-meta">
+                          <i class="bi bi-clock"></i>${r.time}
+                          <span class="text-light">·</span>
+                          <i class="bi bi-geo-alt"></i>
+                          ${r.locations.map(loc => `<span class="location-chip">${escapeHtml(loc)}</span>`).join(' ')}
+                        </div>
+                      </div>
+                      <i class="bi bi-chevron-right text-primary align-self-center" style="font-size:0.8rem; opacity:0.5;"></i>
+                    </div>
+                  </div>
+                `).join('');
     }
 
     function loadTodayEventsNextPage() {
@@ -468,10 +442,10 @@
       // Show loading state only on first load or when manually refreshing
       if (!activityTimelineData || page !== currentActivityPage) {
         container.innerHTML = `
-                              <div class="empty-state">
-                                  <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                                  <p class="mt-2">Loading activities...</p>
-                              </div>`;
+                                            <div class="empty-state">
+                                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                                <p class="mt-2">Loading activities...</p>
+                                            </div>`;
       }
 
       fetch(`/api/admin/activity-timeline?page=${page}`, {
@@ -492,25 +466,25 @@
           } else {
             console.error('Failed to load activity timeline:', response.message);
             container.innerHTML = `
-                                      <div class="empty-state">
-                                          <i class="bi bi-exclamation-triangle"></i>
-                                          <p>Failed to load activities</p>
-                                          <button class="btn btn-sm btn-primary mt-2" onclick="loadActivityTimelinePage(1)">Retry</button>
-                                      </div>`;
+                                                    <div class="empty-state">
+                                                        <i class="bi bi-exclamation-triangle"></i>
+                                                        <p>Failed to load activities</p>
+                                                        <button class="btn btn-sm btn-primary mt-2" onclick="loadActivityTimelinePage(1)">Retry</button>
+                                                    </div>`;
           }
         })
         .catch(error => {
           console.error('Error loading activity timeline:', error);
           container.innerHTML = `
-                                  <div class="empty-state">
-                                      <i class="bi bi-exclamation-triangle"></i>
-                                      <p>Network error loading activities</p>
-                                      <button class="btn btn-sm btn-primary mt-2" onclick="loadActivityTimelinePage(1)">Retry</button>
-                                  </div>`;
+                                                <div class="empty-state">
+                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                    <p>Network error loading activities</p>
+                                                    <button class="btn btn-sm btn-primary mt-2" onclick="loadActivityTimelinePage(1)">Retry</button>
+                                                </div>`;
         });
     }
 
-        // ========== NEEDS MY ACTION PREVIEW (Lazy Loaded) ==========
+    // ========== NEEDS MY ACTION PREVIEW (Lazy Loaded) ==========
     /**
      * Fetch up to 3 actionable requisitions for this admin.
      * Uses the same endpoint as /admin/actionable-requests so both surfaces
@@ -523,10 +497,10 @@
       if (!token || !container) return;
 
       container.innerHTML = `
-        <div class="empty-state">
-          <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-          <p class="mt-2">Loading...</p>
-        </div>`;
+                      <div class="empty-state">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <p class="mt-2">Loading...</p>
+                      </div>`;
 
       fetch(`/api/admin/requisitions/actionable?per_page=3&sort_order=asc`, {
         headers: {
@@ -541,21 +515,21 @@
             renderActionablePreview(response.data || []);
           } else {
             container.innerHTML = `
-              <div class="empty-state">
-                <i class="bi bi-exclamation-triangle"></i>
-                <p>Failed to load</p>
-                <button class="btn btn-sm btn-primary mt-2" onclick="loadActionablePreview()">Retry</button>
-              </div>`;
+                            <div class="empty-state">
+                              <i class="bi bi-exclamation-triangle"></i>
+                              <p>Failed to load</p>
+                              <button class="btn btn-sm btn-primary mt-2" onclick="loadActionablePreview()">Retry</button>
+                            </div>`;
           }
         })
         .catch(error => {
           console.error('Error loading actionable preview:', error);
           container.innerHTML = `
-            <div class="empty-state">
-              <i class="bi bi-exclamation-triangle"></i>
-              <p>Network error</p>
-              <button class="btn btn-sm btn-primary mt-2" onclick="loadActionablePreview()">Retry</button>
-            </div>`;
+                          <div class="empty-state">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <p>Network error</p>
+                            <button class="btn btn-sm btn-primary mt-2" onclick="loadActionablePreview()">Retry</button>
+                          </div>`;
         });
     }
 
@@ -564,11 +538,11 @@
 
       if (!items || items.length === 0) {
         container.innerHTML = `
-          <div class="empty-state">
-            <i class="bi bi-check-circle"></i>
-            <p>Nothing needs your action</p>
-            <small>You're all caught up!</small>
-          </div>`;
+                        <div class="empty-state">
+                          <i class="bi bi-check-circle"></i>
+                          <p>Nothing needs your action</p>
+                          <small>You're all caught up!</small>
+                        </div>`;
         return;
       }
 
@@ -579,19 +553,19 @@
         const scheduleStart = escapeHtml(item.schedule?.start_date || '');
 
         return `
-          <div class="pending-item" onclick="goToRequest(${item.request_id})">
-            <div class="d-flex justify-content-between align-items-start gap-2">
-              <div class="flex-grow-1">
-                <div class="item-name">${requesterName}</div>
-                <div class="item-sub">${eventTitle}</div>
-                <div class="item-meta">
-                  <i class="bi bi-building"></i>${organization}
-                  <span class="text-light">·</span>
-                  <i class="bi bi-calendar3"></i>${scheduleStart}
-                </div>
-              </div>
-            </div>
-          </div>`;
+                        <div class="pending-item" onclick="goToRequest(${item.request_id})">
+                          <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div class="flex-grow-1">
+                              <div class="item-name">${requesterName}</div>
+                              <div class="item-sub">${eventTitle}</div>
+                              <div class="item-meta">
+                                <i class="bi bi-building"></i>${organization}
+                                <span class="text-light">·</span>
+                                <i class="bi bi-calendar3"></i>${scheduleStart}
+                              </div>
+                            </div>
+                          </div>
+                        </div>`;
       }).join('');
     }
 
@@ -600,11 +574,11 @@
 
       if (!activityTimelineData || activityTimelineData.data.length === 0) {
         container.innerHTML = `
-                              <div class="empty-state">
-                                  <i class="bi bi-activity"></i>
-                                  <p>No recent activity</p>
-                                  <small>Comments will appear here</small>
-                              </div>`;
+                                            <div class="empty-state">
+                                                <i class="bi bi-activity"></i>
+                                                <p>No recent activity</p>
+                                                <small>Comments will appear here</small>
+                                            </div>`;
         document.getElementById('activityPagination').style.display = 'none';
         return;
       }
@@ -617,24 +591,24 @@
       document.getElementById('activityPagination').style.display = totalActivityPages > 1 ? 'flex' : 'none';
 
       container.innerHTML = activityTimelineData.data.map(activity => `
-                          <div class="activity-item" onclick="goToRequest(${activity.request_id})">
-                              <div class="d-flex gap-2">
-                                  <div class="activity-icon"><i class="bi bi-chat-dots"></i></div>
-                                  <div class="flex-grow-1">
-                                      <div class="activity-text">
-                                          <strong>${escapeHtml(activity.admin_name)}</strong>
-                                          ${activity.action_type} in
-                                          <strong class="request-link">Request #${activity.request_number}</strong>
-                                          <div class="item-sub mt-1">${escapeHtml(activity.event_title)}</div>
-                                      </div>
-                                      <div class="activity-comment">
-                                          <i class="bi bi-quote me-1"></i>${escapeHtml(activity.comment)}
-                                      </div>
-                                      <div class="activity-time"><i class="bi bi-clock me-1"></i>${activity.time_ago}</div>
-                                  </div>
-                                  <i class="bi bi-chevron-right align-self-center" style="color:var(--text-light); font-size:0.78rem;"></i>
-                              </div>
-                          </div>`).join('');
+                                        <div class="activity-item" onclick="goToRequest(${activity.request_id})">
+                                            <div class="d-flex gap-2">
+                                                <div class="activity-icon"><i class="bi bi-chat-dots"></i></div>
+                                                <div class="flex-grow-1">
+                                                    <div class="activity-text">
+                                                        <strong>${escapeHtml(activity.admin_name)}</strong>
+                                                        ${activity.action_type} in
+                                                        <strong class="request-link">Request #${activity.request_number}</strong>
+                                                        <div class="item-sub mt-1">${escapeHtml(activity.event_title)}</div>
+                                                    </div>
+                                                    <div class="activity-comment">
+                                                        <i class="bi bi-quote me-1"></i>${escapeHtml(activity.comment)}
+                                                    </div>
+                                                    <div class="activity-time"><i class="bi bi-clock me-1"></i>${activity.time_ago}</div>
+                                                </div>
+                                                <i class="bi bi-chevron-right align-self-center" style="color:var(--text-light); font-size:0.78rem;"></i>
+                                            </div>
+                                        </div>`).join('');
     }
 
     function loadActivityNextPage() {
@@ -651,11 +625,13 @@
 
     // ========== INITIAL RENDER (Static content only) ==========
     function renderInitialDashboard() {
-      document.getElementById('pendingCount').textContent = dashboardData.stats.pending_count || 0;
-      document.getElementById('awaitingPaymentCount').textContent = dashboardData.stats.awaiting_payment_count || 0;
-      document.getElementById('paymentSubmittedCount').textContent = dashboardData.stats.verifying_count || 0;
-      document.getElementById('reservedCount').textContent = dashboardData.stats.reserved_count || 0;
+      const ops = dashboardData.ops_stats || {};
+      const roleStats = dashboardData.role_stats;
 
+      // Role-aware stat cards
+      renderRoleStatCards(roleStats);
+
+      // Satisfaction card data (used only in system-admin set)
       const today = new Date();
       document.getElementById('todayDate').textContent = today.toLocaleDateString('en-US', {
         month: 'short', day: 'numeric', year: 'numeric'
@@ -664,32 +640,83 @@
       renderFeedback();
     }
 
+    /**
+     * Render the top stat row based on the admin's role.
+     * role_stats is null for Inventory Manager (role 4) → row stays hidden.
+     */
+    function renderRoleStatCards(roleStats) {
+
+      const row = document.getElementById('statsRow');
+      if (!roleStats) { row.style.display = 'none'; return; }
+
+      // Detect which shape we got (signatory vs system admin)
+      const isSystemAdmin = roleStats.hasOwnProperty('verifying_payment');
+
+
+      // Show the "Your Workload" header only for signatories (personal scope).
+      // System admin sees org-wide counts, so the header doesn't apply.
+      // Matches the inline style="display: none;" on #statsHeader in HTML.
+      const header = document.getElementById('statsHeader');
+      if (header) {
+        header.style.display = isSystemAdmin ? 'none' : 'block';
+      }
+
+
+      // href values map to routes in routes/web.php.
+      // - System admin cards deep-link into pending-requests tabs; ?tab= is
+      //   read by pending-requests.blade.php's handleUrlTabParameterAndLoad().
+      // - Signatory cards (roles 2/3/5) all funnel to their personal queue.
+      const cards = isSystemAdmin
+        ? [
+          { value: roleStats.today_bookings, label: "Today's Bookings", subtext: 'active events today', cls: 'rstat-system', href: '/admin/pending-requests?tab=reserved' },
+          { value: roleStats.pending_this_week, label: 'Pending This Week', subtext: 'new intake · 7 days', cls: 'rstat-system', href: '/admin/pending-requests?tab=pending' },
+          { value: roleStats.awaiting_finalization, label: 'Awaiting Final Approval', subtext: 'stage 2 · fee not yet locked', cls: 'rstat-system', href: '/admin/pending-requests?tab=pending' },
+          { value: roleStats.verifying_payment, label: 'Verifying Payment', subtext: 'signatories checking receipts', cls: 'rstat-system', href: '/admin/pending-requests?tab=payment-submitted' },
+        ]
+        : [
+          { value: roleStats.needs_review, label: 'Needs My Review', subtext: 'awaiting your action', cls: '', href: '/admin/actionable-requests' },
+          { value: roleStats.due_this_week, label: 'Due This Week', subtext: 'event within 7 days', cls: 'rstat-subset', href: '/admin/actionable-requests' },
+          { value: roleStats.overdue_tasks, label: 'Overdue Tasks', subtext: 'waiting over 3 days', cls: 'rstat-subset rstat-overdue', href: '/admin/actionable-requests' },
+          { value: roleStats.approved_this_week, label: 'Approved This Week', subtext: 'completed by you', cls: 'rstat-success', href: '/admin/actionable-requests' },
+        ];
+      row.innerHTML = cards.map(c => `
+                    <div class="col-md-3 col-6">
+                      <div class="rstat-card ${c.cls}" onclick="window.location.href='${c.href}'">
+                        <div class="rstat-value">${c.value ?? 0}</div>
+                        <div class="rstat-label">${escapeHtml(c.label)}</div>
+                        <div class="rstat-subtext">${escapeHtml(c.subtext)}</div>
+                      </div>
+                    </div>
+                  `).join('');
+
+      row.style.display = 'flex';
+    }
     function renderFeedback() {
       const container = document.getElementById('feedbackList');
       const feedbacks = dashboardData.latest_feedback || [];
 
       if (feedbacks.length === 0) {
         container.innerHTML = `
-                              <div class="empty-state">
-                                  <i class="bi bi-chat-square-text"></i>
-                                  <p>No feedback yet</p>
-                                  <small>Responses will appear here</small>
-                              </div>`;
+                                            <div class="empty-state">
+                                                <i class="bi bi-chat-square-text"></i>
+                                                <p>No feedback yet</p>
+                                                <small>Responses will appear here</small>
+                                            </div>`;
         return;
       }
 
       container.innerHTML = feedbacks.map(f => `
-                          <div class="feedback-item" onclick="goToRequest(${f.request_id})">
-                              <div class="d-flex justify-content-between align-items-start gap-2">
-                                  <div class="flex-grow-1">
-                                      <div class="item-name">${escapeHtml(f.requester_name)}</div>
-                                      <div class="item-sub">${escapeHtml(f.ratings_summary)}</div>
-                                      ${f.additional_feedback ? `<div class="item-meta fst-italic">"${escapeHtml(f.additional_feedback.substring(0, 80))}${f.additional_feedback.length > 80 ? '…' : ''}"</div>` : ''}
-                                      <div class="item-meta"><i class="bi bi-clock"></i>${f.created_at}</div>
-                                  </div>
-                                  <i class="bi bi-chat-dots align-self-start" style="color:var(--navy); font-size:0.85rem; opacity:0.6;"></i>
-                              </div>
-                          </div>`).join('');
+                                        <div class="feedback-item" onclick="goToRequest(${f.request_id})">
+                                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                                <div class="flex-grow-1">
+                                                    <div class="item-name">${escapeHtml(f.requester_name)}</div>
+                                                    <div class="item-sub">${escapeHtml(f.ratings_summary)}</div>
+                                                    ${f.additional_feedback ? `<div class="item-meta fst-italic">"${escapeHtml(f.additional_feedback.substring(0, 80))}${f.additional_feedback.length > 80 ? '…' : ''}"</div>` : ''}
+                                                    <div class="item-meta"><i class="bi bi-clock"></i>${f.created_at}</div>
+                                                </div>
+                                                <i class="bi bi-chat-dots align-self-start" style="color:var(--navy); font-size:0.85rem; opacity:0.6;"></i>
+                                            </div>
+                                        </div>`).join('');
     }
 
     // ========== UTILITY FUNCTIONS ==========
@@ -708,18 +735,15 @@
       const skeletonState = document.getElementById('skeletonState');
       if (skeletonState) {
         skeletonState.innerHTML = `
-                              <div class="empty-state py-5">
-                                  <i class="bi bi-exclamation-triangle" style="color:var(--danger);font-size:2rem;"></i>
-                                  <p class="text-danger mt-2">${message}</p>
-                                  <button class="btn btn-primary btn-sm mt-1" onclick="location.reload()">
-                                      <i class="bi bi-arrow-clockwise me-1"></i> Retry
-                                  </button>
-                              </div>`;
+                                            <div class="empty-state py-5">
+                                                <i class="bi bi-exclamation-triangle" style="color:var(--danger);font-size:2rem;"></i>
+                                                <p class="text-danger mt-2">${message}</p>
+                                                <button class="btn btn-primary btn-sm mt-1" onclick="location.reload()">
+                                                    <i class="bi bi-arrow-clockwise me-1"></i> Retry
+                                                </button>
+                                            </div>`;
       }
     }
 
-    function redirectToTab(tab) {
-      window.location.href = `/admin/pending-requests?tab=${tab}`;
-    }
   </script>
 @endsection

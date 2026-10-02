@@ -1,0 +1,30 @@
+# Dependencies / generated files
+vendor/
+node_modules/
+storage/
+bootstrap/cache/
+public/build/
+
+# IDE / local files
+.vscode/
+.idea/
+.fleet/
+.nova/
+.zed/
+
+# Logs / caches
+*.log
+.phpunit.result.cache
+.phpunit.cache/
+
+# Backup / obsolete code
+app/Http/Backups/
+resources/views/layouts/backup files/
+
+# Broad matching for any backup filename variations
+*BACKUP*
+*-BACKUP-*
+
+# Explicitly excluded legacy/unused single files
+resources/views/admin/reservations.php
+resources/views/admin/request-view.blade-BACKUP-NEW.php

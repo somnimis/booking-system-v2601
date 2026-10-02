@@ -27,6 +27,7 @@ return new class extends Migration
 
             //timestamps
             $table->timestamp('acted_at')->nullable();
+            $table->timestamp('created_at')->nullable();
             
             // stage field (1, 2, or 3)
             $table->tinyInteger('stage')->unsigned()->comment('1, 2, or 3');

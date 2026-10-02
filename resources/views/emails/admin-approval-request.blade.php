@@ -47,43 +47,45 @@
             border: 1px solid #e0e0e0;
             border-top: none;
             border-bottom: none;
+            font-size: 15px;
         }
 
-        .info-box {
-            background: white;
-            border-left: 4px solid #003366;
-            padding: 15px;
-            margin: 20px 0;
+        .test-banner {
+            background: #ffc107;
+            color: #333;
+            text-align: center;
+            padding: 10px;
             border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 13px;
         }
 
+        /* Resource block – inline, no background box */
         .resource-section {
-            margin: 20px 0;
+            margin: 16px 0 8px;
         }
 
         .resource-section h4 {
             color: #003366;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        .resource-box {
-            background: #e8f0fe;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 8px;
+            margin: 0 0 6px;
+            font-size: 15px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #d0d7e0;
         }
 
         .resource-list {
             list-style: none;
             padding: 0;
-            margin: 10px 0;
+            margin: 6px 0 0;
         }
 
         .resource-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #d0e0ff;
+            padding: 6px 0;
+            font-size: 15px;
+            border-bottom: 1px solid #ececec;
+            display: flex;
+            align-items: center;
         }
 
         .resource-list li:last-child {
@@ -96,9 +98,10 @@
             border-radius: 4px;
             font-size: 12px;
             font-weight: bold;
-            margin-right: 8px;
-            min-width: 60px;
+            margin-right: 10px;
+            min-width: 70px;
             text-align: center;
+            letter-spacing: 0.3px;
         }
 
         .badge-facility {
@@ -107,30 +110,68 @@
         }
 
         .badge-equipment {
-            background:
-                {{ $equipment_badge_color ?? '#17a2b8' }}
-            ;
+            background: {{ $equipment_badge_color ?? '#17a2b8' }};
             color: white;
         }
 
         .badge-service {
-            background:
-                {{ $service_badge_color ?? '#28a745' }}
-            ;
+            background: {{ $service_badge_color ?? '#28a745' }};
             color: white;
         }
 
         .badge-purpose {
-            background:
-                {{ $purpose_badge_color ?? '#6f42c1' }}
-            ;
+            background: {{ $purpose_badge_color ?? '#6f42c1' }};
             color: white;
         }
 
-        .resource-count {
-            font-size: 13px;
-            color: #666;
-            margin-left: 8px;
+        .resource-total {
+            font-size: 14px;
+            color: #555;
+            margin: 10px 0 0;
+            font-weight: normal;
+        }
+
+        /* Info box – still slightly boxed for request details */
+        .info-box {
+            background: #ffffff;
+            border-left: 4px solid #003366;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .info-box h3 {
+            margin: 0 0 10px;
+            color: #003366;
+            font-size: 16px;
+        }
+
+        .info-box table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        .info-box td {
+            padding: 4px 0;
+        }
+
+        /* Inline note – no background, no border */
+        .approval-note {
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 16px 0;
+            font-size: 14.5px;
+            color: #555;
+            border-left: 4px solid #ebbe39;
+            padding-left: 14px;
+        }
+
+        /* Button wrapper – uniform top/bottom spacing */
+        .button-wrapper {
+            text-align: center;
+            margin: 24px 0;
         }
 
         .button {
@@ -140,22 +181,13 @@
             color: white !important;
             text-decoration: none;
             border-radius: 5px;
-            margin: 20px 0;
             font-weight: bold;
+            font-size: 15px;
+            line-height: 1.4;
         }
 
         .button:hover {
             background: #135ba3;
-        }
-
-        .test-banner {
-            background: #ffc107;
-            color: #333;
-            text-align: center;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            font-weight: bold;
         }
 
         .no-resources-message {
@@ -194,14 +226,22 @@
             font-family: monospace;
         }
 
-        .approval-note {
-            background: #e7f3ff;
-            border: 1px solid #b8daff;
-            color: #004085;
-            padding: 12px;
-            border-radius: 4px;
-            margin: 15px 0;
-            font-size: 14px;
+        p {
+            margin: 10px 0;
+            font-size: 15px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 20px 0;
+        }
+
+        /* Compact spacing for the "why receiving" section */
+        .why-box {
+            font-size: 13px;
+            color: #666;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -225,113 +265,54 @@
 
             <p>Greetings from Central Philippine University!</p>
 
-            <p>A new booking request has been submitted that requires your approval. You are receiving this email
-                because
-                you are listed as an administrator for one or more resources in this request based on:</p>
+            <p>A new booking request requires your approval. You are receiving this because you administer one or more
+                resources in this request.</p>
 
-            <ul style="margin-bottom: 20px;">
-                @if($has_facilities)
-                <li>Facilities managed by your department</li> @endif
-                @if($has_equipment)
-                <li>Equipment managed by your department</li> @endif
-                @if($has_services)
-                <li>Services managed by your department</li> @endif
-                @if($has_purposes)
-                <li>The booking purpose routed to your department</li> @endif
-            </ul>
+            <!-- Merged resource list -->
+            <div class="resource-section">
+                <h4>Resources You Manage</h4>
 
-            <div class="info-box">
-                <h3 style="margin-top: 0; color: #003366;">📋 Request Details</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Request ID:</strong></td>
-                        <td style="padding: 5px 0;">#{{ $request_id }}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Access Code:</strong></td>
-                        <td style="padding: 5px 0;"><code>{{ $access_code }}</code></td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Requester:</strong></td>
-                        <td style="padding: 5px 0;">{{ $requester_name }} ({{ $requester_email }})</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Purpose:</strong></td>
-                        <td style="padding: 5px 0;">{{ $purpose }}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Participants:</strong></td>
-                        <td style="padding: 5px 0;">{{ $participants }}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Schedule:</strong></td>
-                        <td style="padding: 5px 0;">{{ $schedule_display }}</td>
-                    </tr>
-                </table>
-            </div>
+                @if(isset($grouped_resources) && (!empty($grouped_resources['facilities']) || !empty($grouped_resources['equipment']) || !empty($grouped_resources['services']) || !empty($grouped_resources['purposes'])))
 
-            <div class="resource-box">
-                <h3 style="margin-top: 0; color: #003366;">📌 Resources You Manage</h3>
+                    <ul class="resource-list">
+                        @if(!empty($grouped_resources['facilities']))
+                            @foreach($grouped_resources['facilities'] as $resource)
+                                <li>
+                                    <span class="badge badge-facility">Facility</span>
+                                    {{ $resource['name'] }}
+                                </li>
+                            @endforeach
+                        @endif
 
-                @if(isset($grouped_resources) && (!empty($grouped_resources['facilities']) || !empty($grouped_resources['equipment']) || !empty($grouped_resources['services'])))
+                        @if(!empty($grouped_resources['equipment']))
+                            @foreach($grouped_resources['equipment'] as $resource)
+                                <li>
+                                    <span class="badge badge-equipment">Equipment</span>
+                                    {{ $resource['name'] }}
+                                </li>
+                            @endforeach
+                        @endif
 
-                    @if(!empty($grouped_resources['facilities']))
-                        <div class="resource-section">
-                            <h4>🏛️ Facilities ({{ count($grouped_resources['facilities']) }})</h4>
-                            <ul class="resource-list">
-                                @foreach($grouped_resources['facilities'] as $resource)
-                                    <li>
-                                        <span class="badge badge-facility">Facility</span>
-                                        {{ $resource['name'] }}
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
+                        @if(!empty($grouped_resources['services']))
+                            @foreach($grouped_resources['services'] as $resource)
+                                <li>
+                                    <span class="badge badge-service">Service</span>
+                                    {{ $resource['name'] }}
+                                </li>
+                            @endforeach
+                        @endif
 
-                    @if(!empty($grouped_resources['equipment']))
-                        <div class="resource-section">
-                            <h4>🔧 Equipment ({{ count($grouped_resources['equipment']) }})</h4>
-                            <ul class="resource-list">
-                                @foreach($grouped_resources['equipment'] as $resource)
-                                    <li>
-                                        <span class="badge badge-equipment">Equipment</span>
-                                        {{ $resource['name'] }}
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
+                        @if(!empty($grouped_resources['purposes']))
+                            @foreach($grouped_resources['purposes'] as $resource)
+                                <li>
+                                    <span class="badge badge-purpose">Purpose</span>
+                                    {{ $resource['name'] }}
+                                </li>
+                            @endforeach
+                        @endif
+                    </ul>
 
-                    @if(!empty($grouped_resources['services']))
-                        <div class="resource-section">
-                            <h4>🛠️ Services ({{ count($grouped_resources['services']) }})</h4>
-                            <ul class="resource-list">
-                                @foreach($grouped_resources['services'] as $resource)
-                                    <li>
-                                        <span class="badge badge-service">Service</span>
-                                        {{ $resource['name'] }}
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    @if(!empty($grouped_resources['purposes']))
-                        <div class="resource-section">
-                            <h4>🎯 Purpose Routing ({{ count($grouped_resources['purposes']) }})</h4>
-                            <ul class="resource-list">
-                                @foreach($grouped_resources['purposes'] as $resource)
-                                    <li>
-                                        <span class="badge badge-purpose">Purpose</span>
-                                        {{ $resource['name'] }}
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    <p style="margin-top: 15px; font-size: 13px; color: #666;">
+                    <p class="resource-total">
                         <strong>Total:</strong> {{ $total_resources ?? count($resources) }} resource(s) requiring your
                         approval
                     </p>
@@ -364,46 +345,72 @@
                 @endif
             </div>
 
-            <div class="approval-note">
-                <strong>📝 Note:</strong> The booking cannot be confirmed until <strong>all responsible
-                    administrators</strong> have approved it.
-                Other administrators will be notified separately for resources they manage.
+            <!-- Request details – still boxed lightly -->
+            <div class="info-box">
+                <h3>Request Details</h3>
+                <table>
+                    <tr>
+                        <td><strong>Request ID:</strong></td>
+                        <td>#{{ $request_id }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Access Code:</strong></td>
+                        <td><code>{{ $access_code }}</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Requester:</strong></td>
+                        <td>{{ $requester_name }} ({{ $requester_email }})</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Purpose:</strong></td>
+                        <td>{{ $purpose }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Participants:</strong></td>
+                        <td>{{ $participants }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Schedule:</strong></td>
+                        <td>{{ $schedule_display }}</td>
+                    </tr>
+                </table>
             </div>
 
-            <p style="text-align: center;">
+            <!-- Note now inline, no background -->
+            <div class="approval-note">
+                <strong>Note:</strong> The booking cannot be confirmed until <strong>all responsible
+                    administrators</strong> have approved it. Other administrators will be notified separately. Please
+                take action on this request at your earliest convenience.
+            </div>
+
+            <!-- Button wrapper for uniform spacing -->
+            <div class="button-wrapper">
                 <a href="{{ $admin_link }}" class="button">
-                    🔍 Review & Approve Request
+                    Review &amp; Approve Request
                 </a>
+            </div>
+
+            <p style="margin-bottom: 4px;">
+                <strong>CPU Booking System</strong><br>
+                <small>This is an automated message. Please do not reply to this email.</small>
             </p>
 
-            <p><strong>Please take action on this request at your earliest convenience.</strong></p>
+            <hr>
 
-            <p>If you have any questions about this request, please contact the requester directly or reach out to the
-                system administrator.</p>
-
-            <p>Thank you for using the CPU Facility and Equipment Booking System.</p>
-
-            <p>Sincerely,<br>
-                <strong>CPU Booking Services Team</strong>
-            </p>
-
-            <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-
-            <p style="font-size: 12px; color: #666;">
+            <div class="why-box">
                 <strong>Why am I receiving this?</strong><br>
-                You are receiving this email because you are registered as an administrator for:
+                You are registered as an administrator for:
                 @if(isset($has_facilities) && $has_facilities) facilities, @endif
                 @if(isset($has_equipment) && $has_equipment) equipment, @endif
                 @if(isset($has_services) && $has_services) services, @endif
                 @if(isset($has_purposes) && $has_purposes) purpose routing @endif
-                in the CPU Booking System.
-            </p>
+                in the CPU Booking System. If you have any questions, please contact the system administrator.
+            </div>
         </div>
 
         <div class="footer">
             <p>For inquiries, please contact us at (033) 329-1971 local 1234</p>
             <p>Central Philippine University &copy; {{ date('Y') }}</p>
-            <p>This is an automated message. Please do not reply to this email.</p>
         </div>
     </div>
 </body>

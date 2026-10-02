@@ -7,6 +7,8 @@ use App\Models\EquipmentItem;
 use App\Models\RequestedEquipment;
 use App\Models\FormStatus;
 use App\Models\CalendarEvent;
+use App\Models\RequestedService;
+use App\Models\ExtraService;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
@@ -72,6 +74,104 @@ class CheckAvailabilityService
 
         return $conflicts;
     }
+
+    /**
+ * Check service availability from both requisition forms and calendar events.
+ *
+ * Services are exclusive time-slot resources (no quantity model), so any
+ * overlapping active booking on the same service is a hard conflict.
+ *
+ * @return array List of conflict entries (empty if available).
+ */
+public function checkServiceAvailability($serviceId, $startDate, $endDate, $startTime, $endTime, $allDay = false, $currentRequestId = null): array
+{
+    $conflicts = [];
+
+    // 1. Requisition forms (requested_services)
+    $requisitionQuery = RequestedService::where('service_id', $serviceId)
+        ->whereHas('requisitionForm', function ($q) use ($currentRequestId, $startDate, $endDate, $startTime, $endTime, $allDay) {
+            $q->whereIn('status_id', function ($sq) {
+                $sq->select('status_id')
+                    ->from('form_statuses')
+                    ->whereIn('status_name', self::ACTIVE_STATUSES);
+            });
+
+            if ($currentRequestId) {
+                $q->where('request_id', '!=', $currentRequestId);
+            }
+
+            $this->addDateOverlapCondition($q, $startDate, $endDate, $startTime, $endTime, $allDay, false);
+        })
+        ->with(['requisitionForm.formStatus', 'service']);
+
+    foreach ($requisitionQuery->get() as $requested) {
+        $form = $requested->requisitionForm;
+
+        $conflicts[] = [
+            'type' => 'service',
+            'id' => $requested->service_id,
+            'name' => $requested->service->service_name ?? 'Unknown Service',
+            'source' => 'requisition',
+            'status' => $form->formStatus->status_name ?? null,
+            'request_id' => $form->request_id,
+            'event_id' => null,
+            'schedule' => [
+                'start_date' => $form->start_date,
+                'end_date' => $form->end_date,
+                'start_time' => $form->start_time,
+                'end_time' => $form->end_time,
+                'all_day' => $form->all_day,
+            ],
+            'conflict_reason' => 'This service is already booked for an overlapping time slot',
+        ];
+    }
+
+    // 2. Calendar events (event_services)
+    // Mirrors checkCalendarFacilityConflicts() but without grace period logic,
+    // since services don't need cleanup buffers.
+    $calendarQuery = CalendarEvent::whereHas('services', function ($q) use ($serviceId) {
+        $q->where('event_services.service_id', $serviceId);
+    });
+
+    $calendarQuery->where(function ($dateQuery) use ($startDate, $endDate, $startTime, $endTime, $allDay) {
+        $dateQuery->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate);
+
+        $dateQuery->where(function ($timeQuery) use ($startTime, $endTime) {
+            $timeQuery->where('all_day', true);
+
+            $timeQuery->orWhere(function ($specificTime) use ($startTime, $endTime) {
+                $specificTime->where('all_day', false)
+                    ->whereRaw('TIME(start_time) < ?', [$endTime])
+                    ->whereRaw('TIME(end_time) > ?', [$startTime]);
+            });
+        });
+    });
+
+    foreach ($calendarQuery->get() as $event) {
+        $conflicts[] = [
+            'type' => 'service',
+            'id' => $serviceId,
+            'name' => $event->services->firstWhere('service_id', $serviceId)->service_name ?? 'Unknown Service',
+            'source' => 'calendar_event',
+            'status' => null,
+            'request_id' => null,
+            'event_id' => $event->event_id,
+            'conflict_reason' => $event->all_day
+                ? 'This service is reserved for an all-day school event'
+                : 'This service is reserved for a school event during this time',
+            'schedule' => [
+                'start_date' => $event->start_date,
+                'end_date' => $event->end_date,
+                'start_time' => $event->start_time,
+                'end_time' => $event->end_time,
+                'all_day' => $event->all_day,
+            ],
+        ];
+    }
+
+    return $conflicts;
+}
 
     /**
      * Check facility conflicts in requisition forms

@@ -78,4 +78,18 @@ class CalendarEvent extends Model
             ->withPivot('quantity', 'notes')
             ->using(EventEquipment::class);
     }
+
+    /**
+     * Services assigned to this calendar event.
+     */
+    public function services()
+    {
+        return $this->belongsToMany(
+            ExtraService::class,
+            'event_services',
+            'event_id',
+            'service_id'
+        )->withPivot(['event_service_id', 'notes'])
+            ->withTimestamps();
+    }
 }

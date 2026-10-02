@@ -251,8 +251,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/manage/departments', [ManageAdminsController::class, 'getDepartmentsWithAdmins']);
     // Purpose relationships
     Route::get('/manage/purposes', [ManageAdminsController::class, 'getPurposesWithRoutes']);
-    // Complete dashboard data (all in one)
-    Route::get('/manage/dashboard', [ManageAdminsController::class, 'getDashboardData']);
     // Combined static data endpoint
     Route::get('/manage/static-data', [ManageAdminsController::class, 'getStaticData']);
     // Admin CRUD endpoints
@@ -278,7 +276,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/notifications/mark-read/{notificationId?}', [NotificationController::class, 'markAsRead']);
     Route::post('/admin/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     Route::get('/feedback', [FeedbackController::class, 'index']);
-    Route::get('/dashboard-stats', [ReservationListingsController::class, 'getDashboardStats']);
     Route::post('/admin/notifications/requisition/{requisitionId}/mark-as-read', [NotificationController::class, 'markRequisitionAsRead']);
 
     // ---------------- Equipment Management ---------------- //

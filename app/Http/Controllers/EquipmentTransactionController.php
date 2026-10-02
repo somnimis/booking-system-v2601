@@ -12,14 +12,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
+use Carbon\Carbon;
 
 class EquipmentTransactionController extends Controller
 {
     /**
      * Store a new equipment transaction.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param  Request  $request
+     * @return JsonResponse
      */
    public function store(Request $request): JsonResponse
 {
@@ -84,23 +85,44 @@ class EquipmentTransactionController extends Controller
             'request_id' => $request->transaction_type === 'update' ? null : $request->request_id,
             'requested_equipment_id' => $requestedEquipmentId,
             'condition_id' => $request->condition_id ?? $equipmentItem->condition_id,
-            'status_id' => 1, // Default to active status for transactions
+            'status_id' => 1, // availability_statuses: 1 = Available
         ];
 
         // Handle different transaction types
         switch ($request->transaction_type) {
             case 'release':
+                // Expected return = requisition end_date + end_time (time-level).
+                // Denormalized here so overdue checks survive later requisition edits.
+                $expectedReturnAt = null;
+                $purposeSnapshot = null;
+                $requisition = RequisitionForm::with('purpose')->find($request->request_id);
+                if ($requisition && $requisition->end_date) {
+                    $timePart = $requisition->end_time ?: '23:59:59';
+                    try {
+                        $expectedReturnAt = Carbon::parse("{$requisition->end_date} {$timePart}");
+                    } catch (\Exception $e) {
+                        \Log::warning('Failed to parse expected return', [
+                            'request_id' => $request->request_id,
+                            'end_date' => $requisition->end_date,
+                            'end_time' => $requisition->end_time,
+                        ]);
+                    }
+                    $purposeSnapshot = $requisition->purpose?->purpose_name;
+                }
+
                 $transactionData = array_merge($transactionData, [
                     'released_at' => now(),
                     'released_by' => Auth::id(),
                     'facility_id' => $request->facility_id,
                     'destination_name' => $request->destination_name,
                     'release_notes' => $request->notes,
+                    'expected_return_at' => $expectedReturnAt,
+                    'purpose_snapshot' => $purposeSnapshot,
                 ]);
 
-                // Update equipment item status to 'In Use' (availability_statuses)
-                $equipmentItem->status_id = 2; // Assuming 2 = 'In Use' or 'Reserved'
-                $equipmentItem->save();
+                // NOTE (four-layer model): do NOT mutate equipment_items.status_id here.
+                // Physical custody is tracked by this transaction row; catalog availability
+                // is computed separately via reservation-window overlap.
                 break;
 
             case 'return':
@@ -115,20 +137,23 @@ class EquipmentTransactionController extends Controller
                     'returned_at' => now(),
                     'returned_by' => Auth::id(),
                     'return_notes' => $request->notes,
-                    'status_id' => 3, // Completed status
+                    // status_id inherits default (1 = Available) — return does not manually
+                    // set a status. Item health is captured via condition_id below.
                 ]);
 
-                // If this is a return, link to the original release transaction
+                // Link back to the original release's context.
                 if ($releaseTransaction) {
                     $transactionData['request_id'] = $releaseTransaction->request_id;
                     $transactionData['requested_equipment_id'] = $releaseTransaction->requested_equipment_id;
                     $transactionData['facility_id'] = $releaseTransaction->facility_id;
                     $transactionData['destination_name'] = $releaseTransaction->destination_name;
+                    $transactionData['expected_return_at'] = $releaseTransaction->expected_return_at;
+                    $transactionData['purpose_snapshot'] = $releaseTransaction->purpose_snapshot;
                 }
 
-                // Update equipment item status back to 'Available'
-                $equipmentItem->status_id = 1; // Assuming 1 = 'Available'
-                $equipmentItem->save();
+                // NOTE (four-layer model): do NOT mutate equipment_items.status_id here.
+                // If the return condition requires maintenance, an operator must explicitly
+                // set the item's status_id via the update transaction type.
 
                 // Handle late fee if applicable
                 if ($request->apply_late_fee && $transactionData['request_id']) {
@@ -142,7 +167,9 @@ class EquipmentTransactionController extends Controller
                 break;
 
             case 'update':
-                // For update, we don't need request_id or timestamps
+                // Operator-initiated status/condition update. No request context.
+                // This is the ONLY path that mutates equipment_items.status_id per the
+                // four-layer model (manual override).
                 $transactionData = array_merge($transactionData, [
                     'release_notes' => $request->notes,
                     'request_id' => null,
@@ -195,7 +222,7 @@ class EquipmentTransactionController extends Controller
      * Look up equipment by barcode.
      *
      * @param  string  $barcode
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function lookupByBarcode($barcode): JsonResponse
     {
@@ -245,8 +272,8 @@ class EquipmentTransactionController extends Controller
 /**
  * Get ongoing transactions for the list view.
  *
- * @param  \Illuminate\Http\Request  $request
- * @return \Illuminate\Http\JsonResponse
+ * @param  Request  $request
+ * @return JsonResponse
  */
 public function getOngoingTransactions(Request $request): JsonResponse
 {
