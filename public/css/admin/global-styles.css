@@ -1,11 +1,11 @@
 /* ============================================
-           REFINED INSTITUTIONAL THEME - ADMIN LAYOUT
-           Matching catalog.css design system
-           ============================================ */
+   REFINED INSTITUTIONAL THEME - ADMIN LAYOUT
+   Matching catalog.css design system
+   ============================================ */
 
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap");
 
-/* ── Design Tokens (global-styles wins, missing vars added) ── */
+/* ── Design Tokens ── */
 :root {
     --navy: #0b2d72;
     --navy-mid: #0d368a;
@@ -20,8 +20,8 @@
     --text-light: #9aaac5;
     --success: #22c55e;
     --danger: #ef4444;
-    --warning: #f59e0b; /* from main-layout */
-    --info: #3b82f6; /* from main-layout */
+    --warning: #f59e0b;
+    --info: #3b82f6;
     --shadow-sm:
         0 1px 3px rgba(4, 26, 75, 0.06), 0 1px 2px rgba(4, 26, 75, 0.04);
     --shadow-md:
@@ -31,11 +31,20 @@
     --radius-sm: 6px;
     --radius-md: 12px;
     --radius-lg: 18px;
-    --radius-xl: 24px; /* from main-layout */
+    --radius-xl: 24px;
     --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     --cpu-primary: #041a4b;
     --btn-primary: #05225f;
     --btn-primary-hover: #0b2d72;
+    /* Status tokens — used by availability matrix legend + status cards */
+    --status-available: #22c55e;
+    --status-available-bg: #e8f7ef;
+    --status-pending: #f5bc40;
+    --status-pending-bg: #fef8e8;
+    --status-booked: #ef4444;
+    --status-booked-bg: #fee8e8;
+    --status-event: #6f42c1;
+    --status-event-bg: #ede7f6;
 }
 
 #searchRequisition::placeholder {
@@ -43,14 +52,14 @@
     opacity: 1;
 }
 
-/* ── Global Reset (one copy) ── */
+/* ── Global Reset ── */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* ── Body (admin version) ── */
+/* ── Body ── */
 body {
     font-family: "DM Sans", sans-serif;
     background: linear-gradient(135deg, var(--surface) 0%, #f0f2f8 100%);
@@ -60,13 +69,12 @@ body {
     overflow-x: hidden;
 }
 
-/* ── Smooth transitions ── */
 .transition-all {
     transition: var(--transition);
 }
 
 /* ============================================
-   SIDEBAR & TOPBAR (global-styles)
+   SIDEBAR & TOPBAR
    ============================================ */
 #sidebar {
     position: fixed;
@@ -224,7 +232,7 @@ body {
     right: 0;
     width: calc(100% - 280px);
     box-shadow: var(--shadow-md);
-    z-index: 1020;
+    z-index: 1040; /* Above sidebar */
     transition: var(--transition);
 }
 
@@ -330,7 +338,7 @@ body {
     border-left: 3px solid var(--navy);
 }
 
-/* Main content area */
+/* Main content area (desktop) */
 main {
     margin-left: 95px;
     margin-top: 10px;
@@ -343,7 +351,6 @@ main {
 /* ============================================
    BUTTONS
    ============================================ */
-
 .btn {
     border-radius: 8px !important;
     padding: 0.5rem 1.25rem !important;
@@ -357,7 +364,6 @@ main {
     font-size: 0.9rem !important;
 }
 
-/* PRIMARY — Navy */
 .btn-primary {
     background-color: #164a78 !important;
     border-color: #003366 !important;
@@ -370,8 +376,6 @@ main {
     border-color: #002d5b !important;
     color: #fff !important;
 }
-
-/* OUTLINE SECONDARY */
 
 .btn-secondary {
     color: #6c757d !important;
@@ -397,7 +401,6 @@ main {
     color: #495057 !important;
 }
 
-/* SUCCESS — Pastel Green */
 .btn-success {
     background-color: #d4edda !important;
     color: #155724 !important;
@@ -411,7 +414,6 @@ main {
     border-color: #b1dfbb !important;
 }
 
-/* DANGER — Pastel Red */
 .btn-danger {
     background-color: #f8d7da !important;
     color: #721c24 !important;
@@ -426,7 +428,7 @@ main {
 }
 
 /* ============================================
-   CARDS & CONTAINERS (from both)
+   CARDS & CONTAINERS
    ============================================ */
 .card {
     background: var(--white);
@@ -522,7 +524,7 @@ main {
 }
 
 /* ============================================
-   FORM CONTROLS (merged)
+   FORM CONTROLS
    ============================================ */
 .form-control,
 .form-select {
@@ -592,7 +594,7 @@ main {
 }
 
 /* ============================================
-   DETAIL GRID, DOCUMENTS, TIMELINE (from main-layout)
+   DETAIL GRID, DOCUMENTS, TIMELINE
    ============================================ */
 .detail-grid {
     display: flex;
@@ -989,7 +991,7 @@ main {
 }
 
 /* ============================================
-   SKELETON LOADING (admin version)
+   SKELETON LOADING
    ============================================ */
 .skeleton {
     background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
@@ -1013,7 +1015,7 @@ main {
 }
 
 /* ============================================
-   SCROLLBAR (admin version)
+   SCROLLBAR
    ============================================ */
 ::-webkit-scrollbar {
     width: 6px;
@@ -1079,20 +1081,24 @@ main {
 }
 
 /* ============================================
-   RESPONSIVE (merged)
+   RESPONSIVE
    ============================================ */
+
+/* ── Tablet & mobile (≤ 991.98px): sidebar hidden, full-bleed layout ── */
 @media (max-width: 991.98px) {
+    /* Layout shell */
     main {
         margin-left: 0 !important;
-        margin-top: 64px !important;
+        margin-top: 70px !important;
         width: 100% !important;
-        padding: 1rem;
+        /* Full-bleed: kill horizontal padding, keep some vertical */
+        padding: 0.75rem 0 !important;
     }
 
     #sidebar {
         transform: translateX(-100%);
         top: 64px; /* Below the fixed topbar */
-        height: calc(100% - 64px); /* Full remaining height */
+        height: calc(100% - 64px);
     }
 
     #sidebar.active {
@@ -1100,9 +1106,10 @@ main {
     }
 
     #topbar {
-        margin-left: 0;
-        width: 100%;
+        left: 0 !important;
+        width: 100% !important;
         padding-left: 20px !important;
+        z-index: 1040 !important;
     }
 
     #topbar .d-flex.align-items-center.gap-2 {
@@ -1114,12 +1121,13 @@ main {
         position: fixed;
         left: 1rem;
         top: 0.75rem;
-        z-index: 1031;
+        z-index: 1050;
         padding: 0.25rem 0.75rem;
-        font-size: 1.25rem;
+        font-size: 1.5rem;
         background: transparent;
         border: none;
         color: white !important;
+        cursor: pointer;
     }
 
     .sidebar-toggle:hover {
@@ -1131,6 +1139,44 @@ main {
         height: 80px !important;
     }
 
+    /* ── Full-bleed cards & containers ──
+       Strip horizontal gutters so cards, tables, and matrices can use
+       the full viewport width on smaller screens. */
+    main > .container,
+    main > .container-fluid,
+    main > .container-sm,
+    main > .container-md,
+    main > .container-lg,
+    main > .container-xl,
+    main > .container-xxl {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    main .row > [class*="col"] {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+
+    main .card {
+        border-left: none !important;
+        border-right: none !important;
+        border-radius: 0 !important;
+    }
+
+    main .card.p-3,
+    main .card.p-4 {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    main .custom-card {
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+    }
+
+    /* Floating UI adjustments */
     .timeline-modal {
         width: calc(100% - 32px);
         right: 16px;
@@ -1151,6 +1197,7 @@ main {
         height: 38px;
     }
 
+    /* Card internal padding on tablet */
     .custom-card .card-header {
         padding: 0.85rem 1rem;
     }
@@ -1159,6 +1206,7 @@ main {
         padding: 1rem;
     }
 
+    /* Documents stack vertically */
     .document-item {
         flex-direction: column;
         align-items: flex-start;
@@ -1175,12 +1223,14 @@ main {
     }
 }
 
+/* ── Desktop: hide the mobile toggle ── */
 @media (min-width: 992px) {
     .sidebar-toggle {
         display: none;
     }
 }
 
+/* ── Small tablets (≤ 768px) ── */
 @media (max-width: 768px) {
     .view-container {
         padding: 1rem;
@@ -1190,6 +1240,7 @@ main {
     }
 }
 
+/* ── Phones (≤ 576px) ── */
 @media (max-width: 576px) {
     .view-container {
         padding: 0.75rem;
@@ -1215,36 +1266,5 @@ main {
     }
     .detail-value {
         text-align: left;
-    }
-}
-
-/* ===== MOBILE FRIENDLY STYLES ===== */
-
-/* Ensure topbar stays above sidebar on all devices */
-#topbar {
-    z-index: 1040 !important; /* Higher than sidebar (1030) */
-}
-
-/* Mobile fixes for sidebar and topbar */
-@media (max-width: 991.98px) {
-    #topbar {
-        left: 0 !important;
-        width: 100% !important;
-        z-index: 1040 !important;
-    }
-    .sidebar-toggle {
-        z-index: 1050;
-        position: fixed;
-        left: 1rem;
-        top: 0.75rem;
-        background: transparent;
-        border: none;
-        color: white;
-        font-size: 1.5rem;
-        cursor: pointer;
-    }
-    main {
-        margin-top: 70px !important;
-        padding: 1rem;
     }
 }

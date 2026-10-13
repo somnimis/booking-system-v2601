@@ -138,6 +138,14 @@
                 </a>
             </div>
 
+            <div id="calendar-nav-item" style="display: none;">
+                <a class="nav-link {{ Request::is('admin/calendar') ? 'active' : '' }}"
+                    href="{{ url('/admin/calendar') }}">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Calendar</span>
+                </a>
+            </div>
+
             <!-- Administration Section -->
             <div id="administration-section-skeleton">
                 <div class="px-3 py-2 mt-2">
@@ -611,6 +619,7 @@
             // Show all nav items by default
             const navItemIds = [
                 'dashboard-nav-item',
+                'calendar-nav-item',
                 'pending-nav-item',
                 'equipment-tracker-nav-item',
                 'administrators-nav-item',

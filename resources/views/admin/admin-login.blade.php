@@ -12,9 +12,9 @@
         href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fraunces:wght@600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-        /* Your existing CSS remains the same */
         :root {
             --navy: #041a4b;
             --navy-mid: #0b2d72;
@@ -46,11 +46,35 @@
             box-sizing: border-box;
         }
 
+        .btn-outline-secondary {
+            width: 100%;
+            padding: 0.875rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 1rem;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.5px;
+            color: #6c757d !important;
+            border-color: #dee2e6 !important;
+            background-color: #fff !important;
+            text-decoration: none;
+            display: inline-block;
+            line-height: normal;
+            box-sizing: border-box;
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: #f8f9fa !important;
+            border-color: #ced4da !important;
+            color: #495057 !important;
+        }
+
         .profile-img,
         .login-container,
         .login-container input,
         .login-button,
-        .home-button,
         .error-box {
             border-radius: var(--radius-md) !important;
         }
@@ -213,28 +237,6 @@
             cursor: not-allowed;
         }
 
-        .home-button {
-            width: 100%;
-            padding: 0.875rem;
-            background: var(--white);
-            color: var(--navy);
-            border: 1px solid var(--border);
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            text-decoration: none;
-            display: inline-block;
-            font-family: 'DM Sans', sans-serif;
-            letter-spacing: 0.5px;
-        }
-
-        .home-button:hover {
-            background: var(--navy-light);
-            border-color: var(--navy);
-            box-shadow: var(--shadow-sm);
-        }
-
         .error-box {
             color: #991b1b;
             background-color: var(--danger-bg);
@@ -305,8 +307,7 @@
                 padding: 0.75rem 0.875rem;
             }
 
-            .login-button,
-            .home-button {
+            .login-button {
                 padding: 0.75rem;
             }
         }
@@ -372,16 +373,14 @@
             </div>
 
             <button type="submit" id="loginBtn" class="login-button">Login</button>
-            <a href="{{ url('/home') }}" class="home-button">Return to Homepage</a>
+            <a href="{{ url('/home') }}" class="btn btn-outline-secondary text-decoration-none">Return to Homepage</a>
         </form>
     </div>
 
     <script>
-        // Check if already logged in
         (function checkExistingSession() {
             const token = localStorage.getItem('adminToken');
             if (token) {
-                // Verify token is still valid
                 fetch('/api/admin/profile', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -390,10 +389,8 @@
                 })
                     .then(response => {
                         if (response.ok) {
-                            // Already logged in, redirect to dashboard
                             window.location.href = '/admin/dashboard';
                         } else {
-                            // Token invalid, clear it
                             localStorage.removeItem('adminToken');
                             sessionStorage.removeItem('adminToken');
                         }
@@ -418,7 +415,6 @@
             loginBtn.innerHTML = '<span class="spinner-border"></span> Authenticating...';
 
             try {
-                // No need for CSRF cookie - just login directly
                 const response = await fetch('/api/admin/login', {
                     method: 'POST',
                     headers: {
@@ -434,13 +430,11 @@
                     throw new Error(data.message || 'Invalid email or password.');
                 }
 
-                // After successful login
                 localStorage.setItem('adminToken', data.token);
                 sessionStorage.setItem('adminToken', data.token);
 
-                // Redirect with token in URL - the custom middleware will handle it
                 window.location.href = `/admin/dashboard?token=${data.token}`;
-                
+
             } catch (error) {
                 errorBox.textContent = error.message;
                 errorBox.style.display = 'block';
@@ -451,7 +445,6 @@
             }
         });
 
-        // Allow Enter key to submit form
         document.getElementById('loginForm').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -459,7 +452,6 @@
             }
         });
 
-        // Clear error when user starts typing
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
 

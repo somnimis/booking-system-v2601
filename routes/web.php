@@ -331,19 +331,12 @@ Route::get('/admin/asset-tracking', function (Request $request) {
 
 /*
 |--------------------------------------------------------------------------
-| Calendar & Feedback
+| Calendar & Feedback | DEPRECATED, IGNORE 
 |--------------------------------------------------------------------------
 */
 
-// Calendar
+// Admin Calendar — facility × time availability matrix
 Route::get('/admin/calendar', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.calendar');
-    });
-});
-
-// Calendar v2
-Route::get('/admin/calendarv2', function (Request $request) {
     return requireAdminAuth($request, function () use ($request) {
         return view('admin.admin-calendar');
     });
