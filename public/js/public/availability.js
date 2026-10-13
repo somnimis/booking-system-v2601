@@ -209,7 +209,8 @@ class AvailabilityMatrix {
         if (eventAtSlot) {
             result = {
                 status: "event",
-                text: "📅 Event",
+                text: '<i class="bi bi-calendar-event-fill"></i> Event',
+                color: "#6f42c1",
                 event: eventAtSlot,
                 tooltip: eventAtSlot.event_name,
                 bookable: false,
@@ -234,7 +235,8 @@ class AvailabilityMatrix {
             if (isApproved) {
                 result = {
                     status: "booked",
-                    text: "🔴 Booked",
+                    text: '<i class="bi bi-x-circle-fill"></i> Booked',
+                    color: "#ef4444",
                     event: requisitionAtSlot,
                     tooltip: requisitionAtSlot.title,
                     bookable: false,
@@ -242,7 +244,8 @@ class AvailabilityMatrix {
             } else if (isPending) {
                 result = {
                     status: "pending",
-                    text: "🟡 Pending",
+                    text: '<i class="bi bi-clock-fill"></i> Pending',
+                    color: "#f5bc40",
                     event: requisitionAtSlot,
                     tooltip: `${requisitionAtSlot.title} (Pending)`,
                     bookable: false,
@@ -261,12 +264,12 @@ class AvailabilityMatrix {
     getDefaultAvailableResult() {
         return {
             status: "available",
-            text: "✅ Available",
+            text: '<i class="bi bi-check-circle-fill"></i> Available',
+            color: "#22c55e",
             event: null,
             bookable: true,
         };
     }
-
     getFacilitiesToShow() {
         if (this.currentView === "venues") {
             let venues = [...this.venuesList];
@@ -292,6 +295,7 @@ class AvailabilityMatrix {
     }
 
     renderMatrix() {
+        this.removeHoverCard();
         if (!this.elements.container) return;
         
         const timeSlots = this.getTimeSlots();
@@ -343,6 +347,7 @@ class AvailabilityMatrix {
                 this.elements.container.innerHTML = html;
                 this.updateDateDisplay();
                 this.attachRowClickHandlers();
+                this.attachHoverEvents();
             }
         });
     }
@@ -470,6 +475,197 @@ class AvailabilityMatrix {
             card.removeEventListener("click", this.handleNonBookableClick);
             card.addEventListener("click", this.handleNonBookableClick.bind(this));
         });
+    }
+
+        /**
+     * Wire hover events on non-available status cards. Uses a small delay
+     * before showing the popover so fast scanning of a dense matrix doesn't
+     * flash cards constantly. Popover anchors to the cell (doesn't follow
+     * the mouse) since matrix cells are small and tightly packed.
+     */
+    attachHoverEvents() {
+        if (!this.elements.container) return;
+
+        const cards = this.elements.container.querySelectorAll(
+            ".status-card.booked, .status-card.pending, .status-card.event"
+        );
+
+        cards.forEach((card) => {
+            card.removeEventListener("mouseenter", this.handleCardMouseEnter);
+            card.removeEventListener("mouseleave", this.handleCardMouseLeave);
+
+            card.addEventListener("mouseenter", this.handleCardMouseEnter);
+            card.addEventListener("mouseleave", this.handleCardMouseLeave);
+        });
+    }
+
+    handleCardMouseEnter = (e) => {
+        const card = e.currentTarget;
+        // Small delay so accidental passes don't flash the popover.
+        this.hoverTimer = setTimeout(() => {
+            this.showHoverCard(card);
+        }, 150);
+    }
+
+    handleCardMouseLeave = () => {
+        if (this.hoverTimer) {
+            clearTimeout(this.hoverTimer);
+            this.hoverTimer = null;
+        }
+        this.removeHoverCard();
+    }
+
+    /**
+     * Render a floating info card anchored above the hovered cell.
+     * Content varies by status type (booked / pending / event).
+     * Uses inline styles for portability — no dependency on availability-matrix.css.
+     */
+    showHoverCard(card) {
+        this.removeHoverCard();
+
+        const status = card.dataset.status;
+        const eventId = card.dataset.eventId;
+        const eventType = card.dataset.eventType;
+        if (!eventId) return;
+
+        // Resolve the underlying event/requisition object.
+        let eventData = null;
+        if (eventType === "calendar_event") {
+            eventData = this.calendarEvents?.find((e) => e.event_id == eventId);
+        } else {
+            eventData = this.requisitions?.find((r) => r.request_id == eventId);
+        }
+        if (!eventData) return;
+
+        // Match the accent color used by the cell.
+        const colorByStatus = {
+            booked: "#ef4444",
+            pending: "#f5bc40",
+            event: "#6f42c1",
+        };
+        const accent = colorByStatus[status] || "#6c757d";
+
+        const hoverCard = document.createElement("div");
+        hoverCard.className = "custom-hover-card";
+        hoverCard.style.cssText = `
+            position: fixed;
+            z-index: 9999999;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(4, 26, 75, 0.16);
+            padding: 0.85rem 1rem;
+            min-width: 240px;
+            max-width: 320px;
+            pointer-events: none;
+            border-left: 3px solid ${accent};
+            font-family: 'DM Sans', sans-serif;
+            transition: opacity 0.2s ease;
+            opacity: 0;
+        `;
+
+        // Build card content by status type (mirrors modal-version popover).
+        let cardHtml = "";
+        if (status === "booked" && eventData) {
+            cardHtml = `
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
+                    <i class="bi bi-calendar-check-fill" style="color:${accent};font-size:1rem;"></i>
+                    <span style="font-weight:700;color:#041a4b;font-size:0.85rem;">Booked Request</span>
+                    <span style="background:${accent}15;color:${accent};padding:0.15rem 0.5rem;border-radius:20px;font-size:0.65rem;font-weight:600;">${eventData.status || "Booked"}</span>
+                </div>
+                <div style="font-weight:600;color:#1e2d4a;font-size:0.9rem;margin-bottom:0.5rem;border-bottom:1px solid #e2e6f0;padding-bottom:0.4rem;">
+                    ${this.escapeHtml(eventData.title || "Untitled Booking")}
+                </div>
+                ${eventData.user ? `<div style="font-size:0.75rem;color:#6b7a99;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-person" style="width:16px;"></i><span>Requester: ${this.escapeHtml(eventData.user.full_name || eventData.user.name || "N/A")}</span></div>` : ""}
+                <div style="font-size:0.75rem;color:#6b7a99;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.5rem;">
+                    <i class="bi bi-calendar3" style="width:16px;"></i>
+                    <span>${eventData.all_day ? "All Day" : `${this.formatTimeDisplay(eventData.start_time)} - ${this.formatTimeDisplay(eventData.end_time)}`}</span>
+                </div>
+                ${eventData.facilities && eventData.facilities.length > 0 ? `<div style="font-size:0.75rem;color:#6b7a99;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-building" style="width:16px;"></i><span>${eventData.facilities.map((f) => this.escapeHtml(f.facility_name || f.name)).join(", ")}</span></div>` : ""}
+                ${eventData.request_id ? `<div style="font-size:0.7rem;color:#9aaac5;margin-top:0.5rem;padding-top:0.4rem;border-top:1px solid #e2e6f0;">Request #${eventData.request_id}</div>` : ""}
+            `;
+        } else if (status === "pending" && eventData) {
+            cardHtml = `
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
+                    <i class="bi bi-clock-history" style="color:${accent};font-size:1rem;"></i>
+                    <span style="font-weight:700;color:#041a4b;font-size:0.85rem;">Pending Approval</span>
+                    <span style="background:${accent}15;color:#b45309;padding:0.15rem 0.5rem;border-radius:20px;font-size:0.65rem;font-weight:600;">Awaiting Review</span>
+                </div>
+                <div style="font-weight:600;color:#1e2d4a;font-size:0.9rem;margin-bottom:0.5rem;border-bottom:1px solid #e2e6f0;padding-bottom:0.4rem;">
+                    ${this.escapeHtml(eventData.title || "Untitled Request")}
+                </div>
+                ${eventData.user ? `<div style="font-size:0.75rem;color:#6b7a99;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-person" style="width:16px;"></i><span>Requester: ${this.escapeHtml(eventData.user.full_name || eventData.user.name || "N/A")}</span></div>` : ""}
+                <div style="font-size:0.75rem;color:#6b7a99;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.5rem;">
+                    <i class="bi bi-calendar3" style="width:16px;"></i>
+                    <span>${eventData.all_day ? "All Day" : `${this.formatTimeDisplay(eventData.start_time)} - ${this.formatTimeDisplay(eventData.end_time)}`}</span>
+                </div>
+                <div style="font-size:0.7rem;color:#9aaac5;margin-top:0.5rem;padding-top:0.4rem;border-top:1px solid #e2e6f0;">
+                    <i class="bi bi-info-circle"></i> Subject to approval. Reservation is not guaranteed until approved.
+                </div>
+            `;
+        } else if (status === "event" && eventData) {
+            cardHtml = `
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
+                    <i class="bi bi-calendar-event-fill" style="color:${accent};font-size:1rem;"></i>
+                    <span style="font-weight:700;color:#041a4b;font-size:0.85rem;">System Event</span>
+                    <span style="background:${accent}15;color:${accent};padding:0.15rem 0.5rem;border-radius:20px;font-size:0.65rem;font-weight:600;">${this.escapeHtml(eventData.event_type || "Event")}</span>
+                </div>
+                <div style="font-weight:600;color:#1e2d4a;font-size:0.9rem;margin-bottom:0.5rem;border-bottom:1px solid #e2e6f0;padding-bottom:0.4rem;">
+                    ${this.escapeHtml(eventData.title || eventData.event_name || "Untitled Event")}
+                </div>
+                ${eventData.description ? `<div style="font-size:0.75rem;color:#6b7a99;margin-bottom:0.4rem;display:flex;align-items:flex-start;gap:0.5rem;"><i class="bi bi-file-text" style="width:16px;margin-top:2px;"></i><span>${this.escapeHtml(eventData.description.substring(0, 80))}${eventData.description.length > 80 ? "..." : ""}</span></div>` : ""}
+                <div style="font-size:0.75rem;color:#6b7a99;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.5rem;">
+                    <i class="bi bi-calendar3" style="width:16px;"></i>
+                    <span>${eventData.all_day ? "All Day" : `${this.formatTimeDisplay(eventData.start_time)} - ${this.formatTimeDisplay(eventData.end_time)}`}</span>
+                </div>
+            `;
+        } else {
+            return;
+        }
+
+        hoverCard.innerHTML = cardHtml;
+        document.body.appendChild(hoverCard);
+
+        // Anchor to the cell: centered above, clamped to viewport.
+        const rect = card.getBoundingClientRect();
+        const cardRect = hoverCard.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        let left = rect.left + rect.width / 2 - cardRect.width / 2;
+        let top = rect.top - cardRect.height - 10;
+
+        if (left < 10) left = 10;
+        if (left + cardRect.width > vw - 10) left = vw - cardRect.width - 10;
+        // If no room above, place below the cell.
+        if (top < 10) top = rect.bottom + 10;
+        if (top + cardRect.height > vh - 10) top = vh - cardRect.height - 10;
+
+        hoverCard.style.left = left + "px";
+        hoverCard.style.top = top + "px";
+
+        requestAnimationFrame(() => {
+            hoverCard.style.opacity = "1";
+        });
+
+        this.hoverCardEl = hoverCard;
+    }
+
+    removeHoverCard() {
+        if (this.hoverCardEl) {
+            this.hoverCardEl.remove();
+            this.hoverCardEl = null;
+        }
+    }
+
+    /**
+     * Minimal HTML escaper for interpolating user-supplied text into
+     * the popover markup.
+     */
+    escapeHtml(text) {
+        if (text === null || text === undefined) return "";
+        const div = document.createElement("div");
+        div.textContent = String(text);
+        return div.innerHTML;
     }
 
     handleNonBookableClick = (e) => {
@@ -615,7 +811,9 @@ class AvailabilityMatrix {
         if (!this.elements.datePicker) return;
         this.elements.datePicker.value = this.formatDate(this.currentDate);
         this.elements.datePicker.addEventListener("change", async (e) => {
-            const selectedDate = new Date(e.target.value);
+            // Parse picker's YYYY-MM-DD as local, not UTC.
+            const [y, m, d] = e.target.value.split("-").map(Number);
+            const selectedDate = new Date(y, m - 1, d);
             if (!isNaN(selectedDate.getTime())) {
                 this.currentDate = selectedDate;
                 await this.refresh();
@@ -668,7 +866,13 @@ class AvailabilityMatrix {
     }
 
     formatDate(date) {
-        return date.toISOString().split("T")[0];
+        // Local-timezone-safe YYYY-MM-DD. toISOString() would shift to UTC
+        // and cause a one-day offset for admins in UTC+8, desyncing the
+        // date picker from the displayed date.
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
     }
 
     formatTime(timeStr) {
@@ -677,6 +881,21 @@ class AvailabilityMatrix {
         const hour12 = hourNum % 12 || 12;
         const ampm = hourNum >= 12 ? "pm" : "am";
         return `${hour12}:${minute}${ampm}`;
+    }
+
+        /**
+     * Format "HH:MM" (24h) → "H:MM AM/PM".
+     * Kept for parity with the popover code ported from the modal version,
+     * which calls formatTimeDisplay() by name.
+     */
+    formatTimeDisplay(timeStr) {
+        if (!timeStr) return "";
+        const [hour, minute] = timeStr.split(":");
+        const hour12 = parseInt(hour, 10) % 12 || 12;
+        const ampm = parseInt(hour, 10) >= 12 ? "PM" : "AM";
+        return minute === "00"
+            ? `${hour12}:00 ${ampm}`
+            : `${hour12}:${minute} ${ampm}`;
     }
 
     truncate(str, maxLen) {

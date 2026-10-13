@@ -300,6 +300,23 @@ const RequestViewThin = (function () {
         const roleId = window.Admin?.role_id;
 
         const TERMINAL_STATUSES = [5, 6, 7];
+        const RESERVED_STATUS = 4;
+
+        // ---- Hard blockers (evaluated before any status logic) ----
+
+        // Role 4 (Inventory Manager) never sees action buttons.
+        if (roleId === 4) {
+            container.innerHTML =
+                '<span class="text-muted small fst-italic">No actions available for your role</span>';
+            return;
+        }
+
+        // Approving Officer (role 3) on Reserved sees a specific message.
+        if (statusId === RESERVED_STATUS && roleId === 3) {
+            container.innerHTML =
+                '<span class="text-muted small fst-italic">This form is already Reserved.</span>';
+            return;
+        }
 
         // Terminal statuses: no actions at all.
         if (TERMINAL_STATUSES.includes(statusId)) {
@@ -309,15 +326,26 @@ const RequestViewThin = (function () {
         }
 
         // ---- Build button HTML per role ----
-        let buttonsHtml = "";
 
+        let buttonsHtml = "";
         const isIssuingOrHeadAdmin = roleId === 1 || roleId === 5;
         const isApprover = roleId === 2 || roleId === 3;
 
-        if (isIssuingOrHeadAdmin) {
-            // Confirm Reservation + Close Reservation — always shown.
-            // Head Admin gets a warning in the modals; Issuing Officer doesn't.
+        if (statusId === RESERVED_STATUS) {
+            // Reserved: Close Reservation only, for roles 1, 2, 5.
+            if (roleId === 1 || roleId === 2 || roleId === 5) {
+                const isHeadAdmin = roleId === 1;
+                container.dataset.headAdmin = isHeadAdmin ? "1" : "0";
+                buttonsHtml = `
+                    <button class="btn btn-danger" id="closeReservationBtn">
+                        <i class="bi bi-x-circle"></i> Close Reservation
+                    </button>
+                `;
+            }
+        } else if (isIssuingOrHeadAdmin) {
+            // Roles 1 & 5: Confirm + Close Reservation, always.
             const isHeadAdmin = roleId === 1;
+            container.dataset.headAdmin = isHeadAdmin ? "1" : "0";
 
             buttonsHtml = `
                 <div class="d-flex flex-column gap-2">
@@ -329,12 +357,8 @@ const RequestViewThin = (function () {
                     </button>
                 </div>
             `;
-            
-            // Head-admin warning banners (injected into modal bodies below).
-            container.dataset.headAdmin = isHeadAdmin ? "1" : "0";
         } else if (isApprover && statusId === 1) {
-            // Approve + Reject — only on Pending Approval.
-            // Role 2 (Final Approving) reject also closes the form.
+            // Roles 2 & 3: Approve + Reject, only on Pending Approval.
             const isFinalApprover = roleId === 2;
             container.dataset.finalApprover = isFinalApprover ? "1" : "0";
 
@@ -351,7 +375,7 @@ const RequestViewThin = (function () {
 
         // Message shown when this admin has already acted on this request.
         const actedMsgHtml =
-            !canAct && isApprover
+            !canAct && isApprover && statusId === 1
                 ? `<span class="d-inline-flex flex-column align-items-center justify-content-center text-muted small pe-2"
                           style="min-height:42px;line-height:1.15;">
                        <i class="bi bi-check-circle-fill text-success mb-1"></i>
@@ -380,7 +404,8 @@ const RequestViewThin = (function () {
                 confirmClass: "btn-success",
                 confirmText: "Approve",
                 onConfirm: async () => {
-                    const remarks = document.getElementById("approveRemarks").value;
+                    const remarks =
+                        document.getElementById("approveRemarks").value;
                     await postAction("approve", { remarks: remarks || null });
                     showToast("Request approved", "success");
                     await refreshAfterAction();
@@ -398,7 +423,8 @@ const RequestViewThin = (function () {
                 confirmClass: "btn-danger",
                 confirmText: "Reject",
                 onConfirm: async () => {
-                    const remarks = document.getElementById("rejectRemarks").value;
+                    const remarks =
+                        document.getElementById("rejectRemarks").value;
 
                     // 1. Reject the request.
                     await postAction("reject", { remarks: remarks || null });
@@ -1267,7 +1293,8 @@ const RequestViewThin = (function () {
                 // Header + actions.
                 requestData.approval_info = freshData.data.approval_info;
                 requestData.status_tracking = freshData.data.status_tracking;
-                requestData.form_details.status = freshData.data.form_details.status;
+                requestData.form_details.status =
+                    freshData.data.form_details.status;
 
                 renderTimeline();
                 renderHeader(requestData);
