@@ -8,7 +8,7 @@ services:
       - "8000:80"
     environment:
       APP_ENV: production
-      APP_KEY: base64:REDACTED_APP_KEY=
+      APP_KEY: ${APP_KEY}
       APP_DEBUG: "false"
       APP_URL: https://booking-system-v2601.onrender.com
       DB_CONNECTION: mysql
