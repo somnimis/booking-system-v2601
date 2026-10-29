@@ -23,91 +23,91 @@ class AvailabilityController extends Controller
     }
 
     /**
- * Get facilities with hierarchical structure (parent-child relationships)
- */
-public function getFacilitiesHierarchy(Request $request)
-{
-    try {
-        $search = $request->input('search');
-        
-        // Get all active facilities
-        $query = Facility::select('facility_id', 'facility_name', 'capacity', 'base_fee', 'parent_facility_id')
-            ->where('status_id', 1);
-        
-        if ($search) {
-            $query->where('facility_name', 'like', "%{$search}%");
-        }
-        
-        $allFacilities = $query->orderBy('facility_name')->get();
-        
-        // Build hierarchical structure
-        $parents = [];
-        $children = [];
-        
-        foreach ($allFacilities as $facility) {
-            if ($facility->parent_facility_id === null) {
-                $parents[] = $facility;
-            } else {
-                if (!isset($children[$facility->parent_facility_id])) {
-                    $children[$facility->parent_facility_id] = [];
+     * Get facilities with hierarchical structure (parent-child relationships)
+     */
+    public function getFacilitiesHierarchy(Request $request)
+    {
+        try {
+            $search = $request->input('search');
+
+            // Get all active facilities
+            $query = Facility::select('facility_id', 'facility_name', 'capacity', 'base_fee', 'parent_facility_id')
+                ->where('status_id', 1);
+
+            if ($search) {
+                $query->where('facility_name', 'like', "%{$search}%");
+            }
+
+            $allFacilities = $query->orderBy('facility_name')->get();
+
+            // Build hierarchical structure
+            $parents = [];
+            $children = [];
+
+            foreach ($allFacilities as $facility) {
+                if ($facility->parent_facility_id === null) {
+                    $parents[] = $facility;
+                } else {
+                    if (!isset($children[$facility->parent_facility_id])) {
+                        $children[$facility->parent_facility_id] = [];
+                    }
+                    $children[$facility->parent_facility_id][] = $facility;
                 }
-                $children[$facility->parent_facility_id][] = $facility;
             }
-        }
-        
-        // Build response with hierarchy
-        $hierarchy = [];
-        foreach ($parents as $parent) {
-            $parentData = [
-                'facility_id' => $parent->facility_id,
-                'facility_name' => $parent->facility_name,
-                'capacity' => $parent->capacity,
-                'base_fee' => $parent->base_fee,
-                'is_parent' => true,
-                'children' => isset($children[$parent->facility_id]) 
-                    ? array_map(function($child) {
-                        return [
-                            'facility_id' => $child->facility_id,
-                            'facility_name' => $child->facility_name,
-                            'capacity' => $child->capacity,
-                            'base_fee' => $child->base_fee,
-                            'is_parent' => false,
-                            'parent_facility_id' => $child->parent_facility_id
-                        ];
-                    }, $children[$parent->facility_id])
-                    : []
-            ];
-            $hierarchy[] = $parentData;
-        }
-        
-        // Also include standalone facilities (children without parents - shouldn't happen but just in case)
-        $orphanedChildren = [];
-        foreach ($allFacilities as $facility) {
-            if ($facility->parent_facility_id !== null && !isset($children[$facility->parent_facility_id])) {
-                $orphanedChildren[] = [
-                    'facility_id' => $facility->facility_id,
-                    'facility_name' => $facility->facility_name,
-                    'capacity' => $facility->capacity,
-                    'base_fee' => $facility->base_fee,
-                    'is_parent' => false,
-                    'parent_facility_id' => $facility->parent_facility_id
+
+            // Build response with hierarchy
+            $hierarchy = [];
+            foreach ($parents as $parent) {
+                $parentData = [
+                    'facility_id' => $parent->facility_id,
+                    'facility_name' => $parent->facility_name,
+                    'capacity' => $parent->capacity,
+                    'base_fee' => $parent->base_fee,
+                    'is_parent' => true,
+                    'children' => isset($children[$parent->facility_id])
+                        ? array_map(function ($child) {
+                            return [
+                                'facility_id' => $child->facility_id,
+                                'facility_name' => $child->facility_name,
+                                'capacity' => $child->capacity,
+                                'base_fee' => $child->base_fee,
+                                'is_parent' => false,
+                                'parent_facility_id' => $child->parent_facility_id
+                            ];
+                        }, $children[$parent->facility_id])
+                        : []
                 ];
+                $hierarchy[] = $parentData;
             }
+
+            // Also include standalone facilities (children without parents - shouldn't happen but just in case)
+            $orphanedChildren = [];
+            foreach ($allFacilities as $facility) {
+                if ($facility->parent_facility_id !== null && !isset($children[$facility->parent_facility_id])) {
+                    $orphanedChildren[] = [
+                        'facility_id' => $facility->facility_id,
+                        'facility_name' => $facility->facility_name,
+                        'capacity' => $facility->capacity,
+                        'base_fee' => $facility->base_fee,
+                        'is_parent' => false,
+                        'parent_facility_id' => $facility->parent_facility_id
+                    ];
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'hierarchy' => $hierarchy,
+                    'orphaned' => $orphanedChildren,
+                    'total' => $allFacilities->count()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error loading facility hierarchy: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-        
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'hierarchy' => $hierarchy,
-                'orphaned' => $orphanedChildren,
-                'total' => $allFacilities->count()
-            ]
-        ]);
-    } catch (\Exception $e) {
-        \Log::error('Error loading facility hierarchy: ' . $e->getMessage());
-        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
-}
 
     /**
      * Get minimal facility list (lightweight, no relations)
@@ -117,17 +117,17 @@ public function getFacilitiesHierarchy(Request $request)
         try {
             $perPage = $request->input('per_page', 20);
             $search = $request->input('search');
-            
+
             $query = Facility::select('facility_id', 'facility_name', 'capacity', 'base_fee')
                 ->where('status_id', 1); // Only active facilities
-            
+
             if ($search) {
                 $query->where('facility_name', 'like', "%{$search}%");
             }
-            
+
             $facilities = $query->orderBy('facility_name')
                 ->paginate($perPage);
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $facilities->items(),
@@ -142,118 +142,127 @@ public function getFacilitiesHierarchy(Request $request)
         }
     }
 
-/**
- * Get events for a specific date range (optimized query)
- */
-public function getEventsForDate(Request $request)
-{
-    try {
-        $startDate = $request->input('start_date', Carbon::now()->format('Y-m-d'));
-        $endDate = $request->input('end_date', $startDate);
-        $facilityId = $request->input('facility_id');
-        
-        // Get active status IDs once
-        $activeStatusIds = FormStatus::whereIn('status_name', [
-            'Pending Approval', 'Scheduled', 'Ongoing'
-        ])->pluck('status_id');
-        
-        $response = [
-            'requisitions' => [],
-            'calendar_events' => []
-        ];
-        
-        // Fetch requisitions for the date range with equipment relationship
-        $requisitionQuery = RequisitionForm::with([
-            'formStatus', 
-            'requestedFacilities.facility',
-            'requestedEquipment.equipment'  // ← ADD THIS: load equipment with their details
-        ])->whereIn('status_id', $activeStatusIds)
-        ->where(function ($q) use ($startDate, $endDate) {
-            $q->where('start_date', '<=', $endDate)
-              ->where('end_date', '>=', $startDate);
-        });
-        
-        if ($facilityId) {
-            $requisitionQuery->whereHas('requestedFacilities', function ($q) use ($facilityId) {
-                $q->where('facility_id', $facilityId);
-            });
-        }
-        
-        $requisitions = $requisitionQuery->get();
-        
-        foreach ($requisitions as $req) {
-            $schedule = $this->scheduleFormatter->getBaseSchedule($req);
-            
-            // Get facilities with names (already have this)
-            $facilities = $req->requestedFacilities->map(fn($rf) => [
-                'facility_id' => $rf->facility_id,
-                'facility_name' => $rf->facility->facility_name ?? 'Unknown Facility'
-            ]);
-            
-            // ← ADD THIS: Get equipment with names
-            $equipment = $req->requestedEquipment->map(fn($re) => [
-                'requested_equipment_id' => $re->requested_equipment_id,
-                'equipment_id' => $re->equipment_id,
-                'equipment_name' => $re->equipment->equipment_name ?? 'Unknown Equipment',
-                'quantity' => $re->quantity,
-                'is_waived' => $re->is_waived
-            ]);
-            
-            $response['requisitions'][] = [
-                'request_id' => $req->request_id,
-                'title' => $req->event_title ?: "Booking #{$req->request_id}",
-                'status' => $req->formStatus->status_name,
-                'status_color' => $req->formStatus->color_code,
-                'start_date' => $req->start_date,
-                'end_date' => $req->end_date,
-                'start_time' => $req->start_time,
-                'end_time' => $req->end_time,
-                'all_day' => $req->all_day,
-                'facilities' => $facilities,
-                'equipment' => $equipment,  // ← ADD THIS: include equipment in response
-                'schedule_display' => $schedule['formatted_start_date'] . 
-                    ($req->all_day ? ' (All Day)' : ' ' . $schedule['formatted_start_time'])
+    /**
+     * Get events for a specific date range (optimized query)
+     */
+    public function getEventsForDate(Request $request)
+    {
+        try {
+            $startDate = $request->input('start_date', Carbon::now()->format('Y-m-d'));
+            $endDate = $request->input('end_date', $startDate);
+            $facilityId = $request->input('facility_id');
+
+            // Displayable statuses for the calendar.
+// Excludes terminal states (Completed, Rejected, Cancelled) per FormStatusSeeder.
+            $activeStatusIds = FormStatus::whereIn('status_name', [
+                'Pending Approval',
+                'Awaiting Payment',
+                'Verifying Payment',
+                'Reserved',
+            ])->pluck('status_id');
+
+            $response = [
+                'requisitions' => [],
+                'calendar_events' => []
             ];
+
+            // Fetch requisitions for the date range with equipment relationship
+            $requisitionQuery = RequisitionForm::with([
+                'formStatus',
+                'requestedFacilities.facility',
+                'requestedEquipment.equipment'  // ← ADD THIS: load equipment with their details
+            ])->whereIn('status_id', $activeStatusIds)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->where('start_date', '<=', $endDate)
+                        ->where('end_date', '>=', $startDate);
+                });
+
+            if ($facilityId) {
+                $requisitionQuery->whereHas('requestedFacilities', function ($q) use ($facilityId) {
+                    $q->where('facility_id', $facilityId);
+                });
+            }
+
+            $requisitions = $requisitionQuery->get();
+
+            foreach ($requisitions as $req) {
+                $schedule = $this->scheduleFormatter->getBaseSchedule($req);
+
+                // Get facilities with names (already have this)
+                $facilities = $req->requestedFacilities->map(fn($rf) => [
+                    'facility_id' => $rf->facility_id,
+                    'facility_name' => $rf->facility->facility_name ?? 'Unknown Facility'
+                ]);
+
+                // ← ADD THIS: Get equipment with names
+                $equipment = $req->requestedEquipment->map(fn($re) => [
+                    'requested_equipment_id' => $re->requested_equipment_id,
+                    'equipment_id' => $re->equipment_id,
+                    'equipment_name' => $re->equipment->equipment_name ?? 'Unknown Equipment',
+                    'quantity' => $re->quantity,
+                    'is_waived' => $re->is_waived
+                ]);
+
+                $response['requisitions'][] = [
+                    'request_id' => $req->request_id,
+                    'title' => $req->event_title ?: "Booking #{$req->request_id}",
+                    'status' => $req->formStatus->status_name,
+                    'status_color' => $req->formStatus->color_code,
+                    'start_date' => $req->start_date,
+                    'end_date' => $req->end_date,
+                    'start_time' => $req->start_time,
+                    'end_time' => $req->end_time,
+                    'all_day' => $req->all_day,
+                    'facilities' => $facilities,
+                    'equipment' => $equipment,  // ← ADD THIS: include equipment in response
+                    'schedule_display' => $schedule['formatted_start_date'] .
+                        ($req->all_day ? ' (All Day)' : ' ' . $schedule['formatted_start_time'])
+                ];
+            }
+
+            // Fetch calendar events. Eager-load venues so the frontend can filter
+// hall_bookings per facility row; school_event/holiday render globally.
+            $calendarEvents = CalendarEvent::with('venues:facility_id,facility_name')
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->where('start_date', '<=', $endDate)
+                        ->where('end_date', '>=', $startDate);
+                });
+
+            if ($facilityId) {
+                $calendarEvents->where('event_type', '!=', 'hall_booking');
+            }
+
+            $calendarEvents = $calendarEvents->get();
+
+            foreach ($calendarEvents as $event) {
+                $response['calendar_events'][] = [
+                    'event_id' => $event->event_id,
+                    'event_name' => $event->event_name,
+                    'event_type' => $event->event_type,
+                    'description' => $event->description,
+                    'start_date' => $event->start_date,
+                    'end_date' => $event->end_date,
+                    'start_time' => $event->start_time,
+                    'end_time' => $event->end_time,
+                    'all_day' => $event->all_day,
+                    'venues' => $event->venues->map(fn($v) => [
+                        'facility_id' => $v->facility_id,
+                        'facility_name' => $v->facility_name,
+                    ])->values(),
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $response,
+                'date_range' => ['start' => $startDate, 'end' => $endDate]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Availability events error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-        
-        // Fetch calendar events (unchanged)
-        $calendarEvents = CalendarEvent::where(function ($q) use ($startDate, $endDate) {
-            $q->where('start_date', '<=', $endDate)
-              ->where('end_date', '>=', $startDate);
-        });
-        
-        if ($facilityId) {
-            $calendarEvents->where('event_type', '!=', 'hall_booking');
-        }
-        
-        $calendarEvents = $calendarEvents->get();
-        
-        foreach ($calendarEvents as $event) {
-            $response['calendar_events'][] = [
-                'event_id' => $event->event_id,
-                'event_name' => $event->event_name,
-                'event_type' => $event->event_type,
-                'description' => $event->description,
-                'color' => $event->color,
-                'start_date' => $event->start_date,
-                'end_date' => $event->end_date,
-                'start_time' => $event->start_time,
-                'end_time' => $event->end_time,
-                'all_day' => $event->all_day
-            ];
-        }
-        
-        return response()->json([
-            'success' => true,
-            'data' => $response,
-            'date_range' => ['start' => $startDate, 'end' => $endDate]
-        ]);
-        
-    } catch (\Exception $e) {
-        \Log::error('Availability events error: ' . $e->getMessage());
-        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
-}
 
     /**
      * Get single facility's schedule for a date (lightweight)
@@ -262,11 +271,16 @@ public function getEventsForDate(Request $request)
     {
         try {
             $date = $request->input('date', Carbon::now()->format('Y-m-d'));
-            
+
+            // Displayable statuses for the calendar.
+// Excludes terminal states (Completed, Rejected, Cancelled) per FormStatusSeeder.
             $activeStatusIds = FormStatus::whereIn('status_name', [
-                'Pending Approval', 'Scheduled', 'Ongoing'
+                'Pending Approval',
+                'Awaiting Payment',
+                'Verifying Payment',
+                'Reserved',
             ])->pluck('status_id');
-            
+
             $requisitions = RequisitionForm::with('formStatus')
                 ->whereIn('status_id', $activeStatusIds)
                 ->whereHas('requestedFacilities', function ($q) use ($facilityId) {
@@ -275,9 +289,9 @@ public function getEventsForDate(Request $request)
                 ->where('start_date', '<=', $date)
                 ->where('end_date', '>=', $date)
                 ->get();
-            
+
             $timeSlots = [];
-            
+
             foreach ($requisitions as $req) {
                 if ($req->all_day) {
                     $timeSlots[] = [
@@ -298,12 +312,12 @@ public function getEventsForDate(Request $request)
                     ];
                 }
             }
-            
+
             // Check calendar events for this facility
             $calendarEvents = CalendarEvent::where('start_date', '<=', $date)
                 ->where('end_date', '>=', $date)
                 ->get();
-            
+
             foreach ($calendarEvents as $event) {
                 if ($event->all_day) {
                     $timeSlots[] = [
@@ -315,7 +329,7 @@ public function getEventsForDate(Request $request)
                     ];
                 }
             }
-            
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -324,7 +338,7 @@ public function getEventsForDate(Request $request)
                     'time_slots' => $timeSlots
                 ]
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

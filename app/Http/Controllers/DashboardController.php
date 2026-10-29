@@ -21,6 +21,10 @@ class DashboardController extends Controller
      * Get initial dashboard data (static content only - no paginated sections)
      * This ensures fastest initial load
      */
+    /**
+     * Get initial dashboard data (static content only - no paginated sections)
+     * This ensures fastest initial load
+     */
     public function getDashboardData(Request $request)
     {
         try {
@@ -45,9 +49,13 @@ class DashboardController extends Controller
             Log::error('Dashboard API error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to load dashboard data'
+                'message' => 'Failed to load dashboard data',
+                // Added for debugging in Postman:
+                'error_details' => $e->getMessage(),
+                'error_location' => 'File: ' . $e->getFile() . ' on line ' . $e->getLine()
             ], 500);
         }
     }
