@@ -159,7 +159,7 @@
                 <!-- Right-aligned group -->
                 <div class="right-actions">
                     <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="Search facility or event...">
+                        <input type="text" id="searchInput" placeholder="Search an event...">
                         <i class="bi bi-search"></i>
                     </div>
                     <button class="clear-filters-btn" id="clearFiltersBtn">

@@ -116,6 +116,10 @@ class Facility extends Model
     {
         return $this->hasMany(Facility::class, 'parent_facility_id', 'facility_id');
     }
+    public function children()
+    {
+        return $this->hasMany(Facility::class, 'parent_facility_id', 'facility_id');
+    }
     public function systemLogs()
     {
         return $this->hasMany(\App\Models\SystemLog::class, 'facility_id');

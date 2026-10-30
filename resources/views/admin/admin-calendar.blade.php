@@ -10,8 +10,36 @@ window.AvailabilityMode = 'admin'.
 @section('title', 'Calendar')
 
 @section('content')
+<style>
+    /* Admin-only: sidebar squeezes filter-row. Force single line
+       down to 1024px; below that, allow wrapping (mobile).
+       Long <option> text is capped so the pill can't blow out. */
+    @media (min-width: 1024px) {
+        .filter-row {
+            flex-wrap: nowrap;
+        }
+        .filter-label {
+            white-space: nowrap;
+        }
+        .filter-group {
+            max-width: 260px !important;
+            min-width: 0;
+            overflow: hidden;
+            flex-shrink: 1;
+        }
+        .facility-select {
+            max-width: 100% !important;
+            min-width: 0;
+            width: 100%;
+        }
+        .search-box {
+            flex: 1 1 160px;
+            max-width: 220px;
+        }
+    }
+</style>
     <link rel="stylesheet" href="{{ asset('css/shared/availability-matrix.css') }}">
-    
+
     <main id=main>
 
         <div class="container-fluid px-4">
@@ -74,7 +102,7 @@ window.AvailabilityMode = 'admin'.
 
                     <div class="right-actions">
                         <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="Search facility or event...">
+                            <input type="text" id="searchInput" placeholder="Search an event...">
                             <i class="bi bi-search"></i>
                         </div>
                         <button class="clear-filters-btn" id="clearFiltersBtn">

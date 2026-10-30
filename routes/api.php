@@ -113,6 +113,8 @@ Route::get('/availability/facilities', [AvailabilityController::class, 'getFacil
 Route::get('/availability/events', [AvailabilityController::class, 'getEventsForDate']);
 Route::get('/availability/facility/{facilityId}/schedule', [AvailabilityController::class, 'getFacilitySchedule']);
 Route::get('/availability/facilities/hierarchy', [AvailabilityController::class, 'getFacilitiesHierarchy']);
+Route::get('/availability/search', [AvailabilityController::class, 'searchAvailability']);
+Route::get('/availability/facilities/list', [AvailabilityController::class, 'getFacilitiesListFlat']);
 
 // ---------------- Lookup Tables (for testing) ---------------- //
 Route::get('/admin-role', [AdminController::class, 'adminRoles']);

@@ -16,6 +16,16 @@ class AvailabilityMatrix {
         this.searchQuery = "";
         this.currentView = "venues";
 
+        this.venuesPage = 1;
+        this.roomsPage = 1;
+        this.facilityMeta = {
+            current_page: 1,
+            last_page: 1,
+            total: 0,
+            per_page: 10,
+        };
+        this.allFacilities = [];
+
         // Derived data — rebuilt on every loadEventsForCurrentDate()
         this.requisitions = [];
         this.calendarEvents = [];
@@ -23,6 +33,7 @@ class AvailabilityMatrix {
 
         // Request coordination
         this.loading = false;
+        this.searchModeActive = false;
         this.abortController = null;
         this.searchDebounce = null;
 
@@ -32,7 +43,10 @@ class AvailabilityMatrix {
 
     async init() {
         this.cacheElements();
-        await this.loadFacilityHierarchy();
+        await Promise.all([
+            this.loadFacilityHierarchy(),
+            this.loadAllFacilitiesForDropdown(),
+        ]);
         this.renderFacilityFilter();
         await this.loadEventsForCurrentDate();
         this.renderMatrix();
@@ -52,11 +66,40 @@ class AvailabilityMatrix {
     }
 
     async loadFacilityHierarchy() {
+        const page =
+            this.currentView === "rooms" ? this.roomsPage : this.venuesPage;
         try {
-            const res = await fetch("/api/availability/facilities/hierarchy");
+            const params = new URLSearchParams({
+                view: this.currentView,
+                page,
+                per_page: 10,
+            });
+
+            if (this.currentView === "rooms") {
+                // If a specific building is selected (dropdown value = "parent_X")
+                if (this.selectedFacility.startsWith("parent_")) {
+                    params.set(
+                        "parent_id",
+                        this.selectedFacility.replace("parent_", ""),
+                    );
+                }
+                // If a specific room is selected (dropdown value = "123")
+                else if (this.selectedFacility !== "all") {
+                    params.set("facility_id", this.selectedFacility);
+                }
+            } else {
+                if (this.selectedFacility !== "all") {
+                    params.set("facility_id", this.selectedFacility);
+                }
+            }
+
+            const res = await fetch(
+                `/api/availability/facilities/hierarchy?${params}`,
+            );
             const json = await res.json();
             if (json.success) {
                 this.facilityHierarchy = json.data.hierarchy;
+                this.facilityMeta = json.data.meta;
                 this.preProcessFacilities();
             }
         } catch (err) {
@@ -64,23 +107,42 @@ class AvailabilityMatrix {
         }
     }
 
+    async loadAllFacilitiesForDropdown() {
+        // Full list — used only to populate the filter <select>.
+        try {
+            const res = await fetch(`/api/availability/facilities/list`);
+            const json = await res.json();
+            if (json.success) {
+                this.allFacilities = json.data;
+            }
+        } catch (err) {
+            console.error("Error loading facility list:", err);
+        }
+    }
+
     preProcessFacilities() {
+        // Flatten: each room becomes its own row in rooms view.
+        // For venues, each item is already a row.
         this.venuesList = this.facilityHierarchy.filter(
-            (p) => !p.children || p.children.length === 0
-        );
-        this.parentsWithChildren = this.facilityHierarchy.filter(
-            (p) => p.children && p.children.length > 0
+            (p) => !p.children || p.children.length === 0,
         );
 
-        this.facilityMap = new Map();
-        for (const v of this.venuesList) this.facilityMap.set(v.facility_id, v);
-        for (const p of this.parentsWithChildren) {
-            this.facilityMap.set(p.facility_id, p);
-            for (const c of p.children) {
-                this.facilityMap.set(c.facility_id, c);
-                c.parentId = p.facility_id;
+        // For rooms view: flatten buildings + children into a single row list.
+        this.roomsList = [];
+        for (const parent of this.facilityHierarchy) {
+            if (parent.children && parent.children.length > 0) {
+                for (const child of parent.children) {
+                    child.parentName = parent.facility_name;
+                    child.parentId = parent.facility_id;
+                    this.roomsList.push(child);
+                }
             }
         }
+
+        // Keep a lookup map (used only for the facility filter display if needed).
+        this.facilityMap = new Map();
+        for (const v of this.venuesList) this.facilityMap.set(v.facility_id, v);
+        for (const r of this.roomsList) this.facilityMap.set(r.facility_id, r);
     }
 
     /**
@@ -98,8 +160,14 @@ class AvailabilityMatrix {
         const dateKey = this.formatDate(this.currentDate);
 
         try {
-            const params = new URLSearchParams({ start_date: dateKey, end_date: dateKey });
-            if (this.selectedFacility !== "all" && this.currentView === "venues") {
+            const params = new URLSearchParams({
+                start_date: dateKey,
+                end_date: dateKey,
+            });
+            if (
+                this.selectedFacility !== "all" &&
+                this.currentView === "venues"
+            ) {
                 params.set("facility_id", this.selectedFacility);
             }
 
@@ -164,7 +232,7 @@ class AvailabilityMatrix {
             // hall_booking → only on its venue rows
             if (ev.event_type === "hall_booking") {
                 return (ev.venues || []).some(
-                    (v) => String(v.facility_id) === String(facilityId)
+                    (v) => String(v.facility_id) === String(facilityId),
                 );
             }
             // school_event / holiday → global
@@ -247,19 +315,105 @@ class AvailabilityMatrix {
 
     getFacilitiesToShow() {
         if (this.currentView === "venues") {
-            let venues = [...this.venuesList];
-            if (this.selectedFacility !== "all") {
-                venues = venues.filter((f) => f.facility_id == this.selectedFacility);
+            return this.venuesList;
+        } else {
+            return this.roomsList;
+        }
+    }
+
+    async runSearch(q) {
+        if (!this.elements.container) return;
+        this.elements.container.innerHTML = `
+        <div class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p style="margin-top:10px;">Searching…</p>
+        </div>`;
+        try {
+            const res = await fetch(
+                `/api/availability/search?q=${encodeURIComponent(q)}`,
+            );
+            const json = await res.json();
+            if (json.success) {
+                this.enterSearchMode(json.data || [], q);
+            } else {
+                this.showError("Search failed");
             }
-            return venues;
+        } catch (err) {
+            console.error("Search error:", err);
+            this.showError("Search failed");
         }
-        if (this.selectedFacility !== "all") {
-            const parent = this.facilityMap.get(parseInt(this.selectedFacility));
-            return parent && parent.children ? [...parent.children] : [];
+    }
+
+    enterSearchMode(results, q) {
+        if (!this.elements.container) return;
+        this.searchModeActive = true;
+
+        if (results.length === 0) {
+            this.elements.container.innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-search"></i>
+                <p>No results for "${this.escapeHtml(q)}"</p>
+            </div>`;
+            return;
         }
-        const all = [];
-        for (const p of this.parentsWithChildren) all.push(...p.children);
-        return all;
+
+        const items = results
+            .map((r) => {
+                const schedule =
+                    this.formatDateShort(r.start_date) +
+                    (r.start_date === r.end_date
+                        ? r.all_day
+                            ? " · All Day"
+                            : ` · ${this.formatTime(this.normalizeTime(r.start_time))} – ${this.formatTime(this.normalizeTime(r.end_time))}`
+                        : r.all_day
+                          ? ` — ${this.formatDateShort(r.end_date)} (All Day)`
+                          : ` ${this.formatTime(this.normalizeTime(r.start_time))} – ${this.formatDateShort(r.end_date)} ${this.formatTime(this.normalizeTime(r.end_time))}`);
+                const detail = r.event_details
+                    ? `<div class="search-result-snippet">${this.escapeHtml(r.event_details.substring(0, 140))}${r.event_details.length > 140 ? "…" : ""}</div>`
+                    : "";
+                const facilities =
+                    r.facilities && r.facilities.length
+                        ? `<div class="search-result-meta"><i class="bi bi-building"></i> ${this.escapeHtml(r.facilities.join(", "))}</div>`
+                        : "";
+                return `
+            <div class="search-result-item" data-type="${r.type}" data-id="${r.id}" data-date="${r.start_date}">
+                <div class="search-result-header">
+                    <span class="search-result-title">${this.escapeHtml(r.title)}</span>
+                <span class="search-result-chip" style="background:${r.status_color || "#6c757d"}22;color:${r.status_color || "#6c757d"};">
+                    ${this.escapeHtml(
+                        r.type === "calendar_event"
+                            ? this.eventTypeLabel(r.status)
+                            : r.status || ""
+                    )}
+                </span>
+                </div>
+                ${detail}
+                ${facilities}
+                <div class="search-result-meta"><i class="bi bi-calendar3"></i> ${this.escapeHtml(schedule)}</div>
+            </div>`;
+            })
+            .join("");
+
+        this.elements.container.innerHTML = `<div class="search-results">${items}</div>`;
+
+        this.elements.container
+            .querySelectorAll(".search-result-item")
+            .forEach((el) => {
+                el.addEventListener("click", async () => {
+                    const [y, m, d] = el.dataset.date.split("-").map(Number);
+                    this.currentDate = new Date(y, m - 1, d);
+                    this.elements.searchInput.value = "";
+                    this.exitSearchMode();
+                    await this.refresh();
+                });
+            });
+    }
+
+    async exitSearchMode() {
+        if (!this.searchModeActive) return;
+        this.searchModeActive = false;
+        // Restore matrix — refresh current date.
+        await this.refresh();
     }
 
     renderMatrix() {
@@ -268,13 +422,6 @@ class AvailabilityMatrix {
 
         const slots = this.getTimeSlots();
         let facilities = this.getFacilitiesToShow();
-
-        if (this.searchQuery) {
-            const q = this.searchQuery.toLowerCase();
-            facilities = facilities.filter((f) =>
-                f.facility_name.toLowerCase().includes(q)
-            );
-        }
 
         if (facilities.length === 0) {
             this.elements.container.innerHTML = `
@@ -306,39 +453,80 @@ class AvailabilityMatrix {
         this.updateDateDisplay();
         this.attachRowClickHandlers();
         this.attachHoverEvents();
+        this.renderPagination();
+    }
+
+    renderPagination() {
+        const wrapper = document.getElementById("matrixWrapper");
+        if (!wrapper) return;
+        wrapper.querySelector(".pagination-bar")?.remove();
+
+        if (this.facilityMeta.last_page <= 1) return;
+
+        const label =
+            this.currentView === "rooms"
+                ? `Building Group ${this.facilityMeta.current_page} of ${this.facilityMeta.last_page}`
+                : `Page ${this.facilityMeta.current_page} of ${this.facilityMeta.last_page}`;
+
+        const bar = document.createElement("div");
+        bar.className = "pagination-bar";
+        bar.innerHTML = `
+            <button class="page-btn" id="prevPageBtn" ${this.facilityMeta.current_page <= 1 ? "disabled" : ""}>‹ Prev</button>
+            <span class="page-indicator">${label}</span>
+            <button class="page-btn" id="nextPageBtn" ${this.facilityMeta.current_page >= this.facilityMeta.last_page ? "disabled" : ""}>Next ›</button>
+        `;
+        wrapper.appendChild(bar);
+
+        document
+            .getElementById("prevPageBtn")
+            ?.addEventListener("click", () => this.changePage(-1));
+        document
+            .getElementById("nextPageBtn")
+            ?.addEventListener("click", () => this.changePage(1));
+    }
+
+    async changePage(delta) {
+        if (this.currentView === "rooms") {
+            this.roomsPage = Math.max(1, this.roomsPage + delta);
+        } else {
+            this.venuesPage = Math.max(1, this.venuesPage + delta);
+        }
+        await this.loadFacilityHierarchy();
+        this.renderMatrix();
     }
 
     renderFacilityRow(facility, slots) {
-        const cells = slots.map((slot) => {
-            const s = this.getStatusForTimeSlot(facility.facility_id, slot);
-            const eventId = s.event?.request_id || s.event?.event_id || "";
-            const eventType = s.eventType || "";
-            const tooltip =
-                s.status !== "available"
-                    ? `data-tooltip="${this.escapeHtmlAttr(
-                          s.event?.title || s.event?.event_name || ""
-                      )}"`
-                    : "";
+        const cells = slots
+            .map((slot) => {
+                const s = this.getStatusForTimeSlot(facility.facility_id, slot);
+                const eventId = s.event?.request_id || s.event?.event_id || "";
+                const eventType = s.eventType || "";
 
-            return `
+                return `
                 <td>
                     <div class="status-card ${s.status}"
-                         data-status="${s.status}"
-                         data-facility="${facility.facility_id}"
-                         data-time="${slot}"
-                         data-event-id="${eventId}"
-                         data-event-type="${eventType}"
-                         data-bookable="${s.bookable}"
-                         ${tooltip}>
+                        data-status="${s.status}"
+                        data-facility="${facility.facility_id}"
+                        data-time="${slot}"
+                        data-event-id="${eventId}"
+                        data-event-type="${eventType}"
+                        data-bookable="${s.bookable}">
                         ${s.text}
                     </div>
                 </td>`;
-        }).join("");
+            })
+            .join("");
+
+        // Label: for rooms, prepend parent building name.
+        const label =
+            this.currentView === "rooms" && facility.parentName
+                ? `<small style="color:#6b7a99;">${this.escapeHtml(facility.parentName)}</small><br><strong>${this.truncate(facility.facility_name, 30)}</strong>`
+                : `<strong>${this.truncate(facility.facility_name, 30)}</strong>`;
 
         return `
             <tr data-facility-id="${facility.facility_id}">
                 <td class="facility-cell" data-tooltip="${this.escapeHtmlAttr(facility.facility_name)}">
-                    <strong>${this.truncate(facility.facility_name, 30)}</strong>
+                    ${label}
                     ${facility.capacity ? `<small>(${facility.capacity} pax)</small>` : ""}
                 </td>
                 ${cells}
@@ -348,24 +536,41 @@ class AvailabilityMatrix {
     renderFacilityFilter() {
         if (!this.elements.facilitySelect || !this.elements.filterLabel) return;
 
+        // Find all IDs that act as parents (containers).
+        const parentIds = new Set(
+            this.allFacilities
+                .filter((f) => f.parent_facility_id !== null)
+                .map((f) => f.parent_facility_id),
+        );
+
         if (this.currentView === "venues") {
             this.elements.filterLabel.textContent = "Venues";
             let html = '<option value="all">All Venues</option>';
-            for (const f of this.venuesList) {
-                html += `<option value="${f.facility_id}">${this.truncate(
-                    f.facility_name,
-                    45
-                )}${f.capacity ? ` (${f.capacity} pax)` : ""}</option>`;
+
+            // Only list top-level facilities that are NOT containers.
+            const bookableVenues = this.allFacilities.filter(
+                (f) =>
+                    f.parent_facility_id === null &&
+                    !parentIds.has(f.facility_id),
+            );
+
+            for (const f of bookableVenues) {
+                html += `<option value="${f.facility_id}">${this.truncate(f.facility_name, 45)}${f.capacity ? ` (${f.capacity} pax)` : ""}</option>`;
             }
             this.elements.facilitySelect.innerHTML = html;
         } else {
             this.elements.filterLabel.textContent = "Campus Rooms";
             let html = '<option value="all">All Rooms</option>';
-            for (const p of this.parentsWithChildren) {
-                html += `<option value="parent_${p.facility_id}">📁 ${this.truncate(
-                    p.facility_name,
-                    45
-                )}${p.capacity ? ` (${p.capacity} pax)` : ""}</option>`;
+
+            // Only list top-level facilities that ARE containers (buildings).
+            const buildings = this.allFacilities.filter(
+                (f) =>
+                    f.parent_facility_id === null &&
+                    parentIds.has(f.facility_id),
+            );
+
+            for (const p of buildings) {
+                html += `<option value="parent_${p.facility_id}">📁 ${this.truncate(p.facility_name, 45)}${p.capacity ? ` (${p.capacity} pax)` : ""}</option>`;
             }
             this.elements.facilitySelect.innerHTML = html;
         }
@@ -376,7 +581,7 @@ class AvailabilityMatrix {
         if (!this.elements.container) return;
         this.elements.container
             .querySelectorAll(
-                ".status-card.booked, .status-card.pending, .status-card.event"
+                ".status-card.booked, .status-card.pending, .status-card.event",
             )
             .forEach((card) => {
                 card.removeEventListener("click", this.handleCardClick);
@@ -392,8 +597,8 @@ class AvailabilityMatrix {
         if (!id) return;
 
         if (window.AvailabilityMode === "admin" && type === "requisition") {
-            // Admin: jump to requisition view
-            window.location.href = `/admin/requisitions/${id}`;
+            // Admin: jump to requisition view (singular "requisition" route).
+            window.location.href = `/admin/requisition/${id}`;
             return;
         }
         this.showEventDetails(id, type);
@@ -403,11 +608,17 @@ class AvailabilityMatrix {
         if (!this.elements.container) return;
         this.elements.container
             .querySelectorAll(
-                ".status-card.booked, .status-card.pending, .status-card.event"
+                ".status-card.booked, .status-card.pending, .status-card.event",
             )
             .forEach((card) => {
-                card.removeEventListener("mouseenter", this.handleCardMouseEnter);
-                card.removeEventListener("mouseleave", this.handleCardMouseLeave);
+                card.removeEventListener(
+                    "mouseenter",
+                    this.handleCardMouseEnter,
+                );
+                card.removeEventListener(
+                    "mouseleave",
+                    this.handleCardMouseLeave,
+                );
                 card.addEventListener("mouseenter", this.handleCardMouseEnter);
                 card.addEventListener("mouseleave", this.handleCardMouseLeave);
             });
@@ -439,56 +650,74 @@ class AvailabilityMatrix {
                 : this.requisitions.find((r) => r.request_id == id);
         if (!data) return;
 
-        const colors = { booked: "#ef4444", pending: "#f5bc40", event: "#6f42c1" };
+        const colors = {
+            booked: "#ef4444",
+            pending: "#f5bc40",
+            event: "#6f42c1",
+        };
         const accent = colors[status] || "#6c757d";
+
+        // Title varies by record type.
+        const title =
+            type === "requisition"
+                ? data.title || "Untitled"
+                : data.event_name || "Untitled";
+
+        // Status / type label
+const statusLabel =
+    type === "requisition"
+        ? data.status || ""
+        : this.eventTypeLabel(data.event_type);
+
+        // Optional subtext: event_details for requisitions, description for calendar events.
+        const subtext =
+            type === "calendar_event"
+                ? data.description || ""
+                : data.event_details || "";
+
+        // Schedule: collapse to single date when start_date == end_date
+        const startDate = this.formatDateShort(data.start_date);
+        const endDate = this.formatDateShort(data.end_date);
+        const sameDay = data.start_date === data.end_date;
+        let scheduleLine;
+        if (data.all_day) {
+            scheduleLine = sameDay
+                ? `${startDate} — All Day`
+                : `${startDate} — ${endDate} (All Day)`;
+        } else {
+            const sTime = this.formatTime(this.normalizeTime(data.start_time));
+            const eTime = this.formatTime(this.normalizeTime(data.end_time));
+            scheduleLine = sameDay
+                ? `${startDate} · ${sTime} – ${eTime}`
+                : `${startDate} ${sTime} – ${endDate} ${eTime}`;
+        }
 
         const el = document.createElement("div");
         el.className = "custom-hover-card";
         el.style.cssText = `
-            position:fixed;z-index:9999999;background:#fff;border-radius:12px;
-            box-shadow:0 12px 40px rgba(4,26,75,.16);padding:.85rem 1rem;
-            min-width:240px;max-width:320px;pointer-events:none;
-            border-left:3px solid ${accent};font-family:'DM Sans',sans-serif;
-            transition:opacity .15s ease;opacity:0;
-        `;
+        position:fixed;z-index:9999999;background:#fff;border-radius:12px;
+        box-shadow:0 12px 40px rgba(4,26,75,.16);padding:.85rem 1rem;
+        min-width:240px;max-width:320px;pointer-events:none;
+        border-left:3px solid ${accent};font-family:'DM Sans',sans-serif;
+        transition:opacity .15s ease;opacity:0;
+    `;
 
-        let html = "";
-        if (type === "requisition") {
-            const label = status === "booked" ? "Booked Request" : "Pending Approval";
-            html = `
-                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;">
-                    <i class="bi bi-calendar-check-fill" style="color:${accent};"></i>
-                    <span style="font-weight:700;color:#041a4b;font-size:.85rem;">${label}</span>
-                    <span style="background:${accent}22;color:${accent};padding:.15rem .5rem;border-radius:20px;font-size:.65rem;font-weight:600;">
-                        ${this.escapeHtml(data.status || "")}
-                    </span>
-                </div>
-                <div style="font-weight:600;color:#1e2d4a;font-size:.9rem;margin-bottom:.5rem;border-bottom:1px solid #e2e6f0;padding-bottom:.4rem;">
-                    ${this.escapeHtml(data.title || "Untitled")}
-                </div>
-                <div style="font-size:.75rem;color:#6b7a99;display:flex;align-items:center;gap:.5rem;">
-                    <i class="bi bi-calendar3" style="width:16px;"></i>
-                    <span>${this.formatRange(data)}</span>
-                </div>`;
-        } else {
-            html = `
-                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;">
-                    <i class="bi bi-calendar-event-fill" style="color:${accent};"></i>
-                    <span style="font-weight:700;color:#041a4b;font-size:.85rem;">System Event</span>
-                    <span style="background:${accent}22;color:${accent};padding:.15rem .5rem;border-radius:20px;font-size:.65rem;font-weight:600;">
-                        ${this.escapeHtml(data.event_type || "")}
-                    </span>
-                </div>
-                <div style="font-weight:600;color:#1e2d4a;font-size:.9rem;margin-bottom:.5rem;border-bottom:1px solid #e2e6f0;padding-bottom:.4rem;">
-                    ${this.escapeHtml(data.event_name || "Untitled")}
-                </div>
-                <div style="font-size:.75rem;color:#6b7a99;display:flex;align-items:center;gap:.5rem;">
-                    <i class="bi bi-calendar3" style="width:16px;"></i>
-                    <span>${this.formatRange(data)}</span>
-                </div>`;
-        }
+        el.innerHTML = `
+        <div style="font-weight:700;color:#041a4b;font-size:.9rem;margin-bottom:.5rem;">
+            ${this.escapeHtml(title)}
+        </div>
+        <div style="margin-bottom:.55rem;">
+            <span style="background:${accent}22;color:${accent};padding:.15rem .5rem;border-radius:20px;font-size:.65rem;font-weight:600;display:inline-block;">
+                ${this.escapeHtml(statusLabel)}
+            </span>
+        </div>
+        ${subtext ? `<div style="font-size:.75rem;color:#6b7a99;line-height:1.35;margin-bottom:.55rem;">${this.escapeHtml(subtext.substring(0, 120))}${subtext.length > 120 ? "…" : ""}</div>` : ""}
+        <div style="border-top:1px solid #e2e6f0;padding-top:.5rem;font-size:.75rem;color:#6b7a99;display:flex;align-items:center;gap:.5rem;">
+            <i class="bi bi-calendar3" style="width:16px;"></i>
+            <span>${this.escapeHtml(scheduleLine)}</span>
+        </div>
+    `;
 
-        el.innerHTML = html;
         document.body.appendChild(el);
 
         const rect = card.getBoundingClientRect();
@@ -527,20 +756,44 @@ class AvailabilityMatrix {
         if (existing) existing.remove();
 
         const title = data.title || data.event_name || "Details";
+        // Build a human-readable schedule that includes dates, mirroring the
+        // hover card's single-day / multi-day / all-day handling.
+        const startDateShort = this.formatDateShort(data.start_date);
+        const endDateShort = this.formatDateShort(data.end_date);
+        const sameDay = data.start_date === data.end_date;
+        let scheduleText;
+        if (data.all_day) {
+            scheduleText = sameDay
+                ? `${startDateShort} — All Day`
+                : `${startDateShort} — ${endDateShort} (All Day)`;
+        } else {
+            const sTime = this.formatTime(this.normalizeTime(data.start_time));
+            const eTime = this.formatTime(this.normalizeTime(data.end_time));
+            scheduleText = sameDay
+                ? `${startDateShort} · ${sTime} – ${eTime}`
+                : `${startDateShort} ${sTime} – ${endDateShort} ${eTime}`;
+        }
+
         const body =
             type === "calendar_event"
                 ? `
                     <div class="event-detail-row"><div class="event-detail-label">Description</div>
                         <div class="event-detail-value">${this.escapeHtml(data.description || "—")}</div></div>
                     <div class="event-detail-row"><div class="event-detail-label">Schedule</div>
-                        <div class="event-detail-value">${this.formatRange(data)}</div></div>
+                        <div class="event-detail-value">${this.escapeHtml(scheduleText)}</div></div>
                     <div class="event-detail-row"><div class="event-detail-label">Type</div>
-                        <div class="event-detail-value">${this.escapeHtml(data.event_type || "")}</div></div>`
+                        <div class="event-detail-value">${this.escapeHtml(this.eventTypeLabel(data.event_type))}</div></div>`
                 : `
+                    ${
+                        data.event_details
+                            ? `<div class="event-detail-row"><div class="event-detail-label">Event Details</div>
+                        <div class="event-detail-value">${this.escapeHtml(data.event_details)}</div></div>`
+                            : ""
+                    }
                     <div class="event-detail-row"><div class="event-detail-label">Status</div>
                         <div class="event-detail-value">${this.escapeHtml(data.status || "")}</div></div>
                     <div class="event-detail-row"><div class="event-detail-label">Schedule</div>
-                        <div class="event-detail-value">${this.formatRange(data)}</div></div>`;
+                        <div class="event-detail-value">${this.escapeHtml(scheduleText)}</div></div>`;
 
         document.body.insertAdjacentHTML(
             "beforeend",
@@ -557,7 +810,7 @@ class AvailabilityMatrix {
                         </div>
                     </div>
                 </div>
-            </div>`
+            </div>`,
         );
 
         const modalEl = document.getElementById("eventModal");
@@ -566,43 +819,54 @@ class AvailabilityMatrix {
     }
 
     attachEvents() {
-        document.getElementById("prevDayBtn")?.addEventListener("click", async () => {
-            this.currentDate.setDate(this.currentDate.getDate() - 1);
-            await this.refresh();
-        });
-        document.getElementById("nextDayBtn")?.addEventListener("click", async () => {
-            this.currentDate.setDate(this.currentDate.getDate() + 1);
-            await this.refresh();
-        });
-        document.getElementById("todayBtn")?.addEventListener("click", async () => {
-            this.currentDate = new Date();
-            await this.refresh();
-        });
+        document
+            .getElementById("prevDayBtn")
+            ?.addEventListener("click", async () => {
+                this.currentDate.setDate(this.currentDate.getDate() - 1);
+                await this.refresh();
+            });
+        document
+            .getElementById("nextDayBtn")
+            ?.addEventListener("click", async () => {
+                this.currentDate.setDate(this.currentDate.getDate() + 1);
+                await this.refresh();
+            });
+        document
+            .getElementById("todayBtn")
+            ?.addEventListener("click", async () => {
+                this.currentDate = new Date();
+                await this.refresh();
+            });
 
         this.setupDatePicker();
 
         document.querySelectorAll(".view-type-btn").forEach((btn) => {
-            btn.addEventListener("click", (e) => {
+            btn.addEventListener("click", async (e) => {
                 const view = e.currentTarget.dataset.view;
                 if (view === this.currentView) return;
-                document.querySelectorAll(".view-type-btn").forEach((b) =>
-                    b.classList.remove("active")
-                );
+                document
+                    .querySelectorAll(".view-type-btn")
+                    .forEach((b) => b.classList.remove("active"));
                 e.currentTarget.classList.add("active");
                 this.currentView = view;
+
+                // Reset the filter so we don't fetch a room ID as a venue, or vice-versa.
                 this.selectedFacility = "all";
-                this.searchQuery = "";
-                if (this.elements.searchInput) this.elements.searchInput.value = "";
+                if (this.elements.searchInput)
+                    this.elements.searchInput.value = "";
+
                 this.renderFacilityFilter();
-                this.refresh();
+                await this.loadFacilityHierarchy();
+                await this.loadEventsForCurrentDate();
+                this.renderMatrix();
             });
         });
 
         document.querySelectorAll(".time-range-btn").forEach((btn) => {
             btn.addEventListener("click", () => {
-                document.querySelectorAll(".time-range-btn").forEach((b) =>
-                    b.classList.remove("active")
-                );
+                document
+                    .querySelectorAll(".time-range-btn")
+                    .forEach((b) => b.classList.remove("active"));
                 btn.classList.add("active");
                 this.timeRange = btn.dataset.range;
                 this.renderMatrix();
@@ -611,29 +875,47 @@ class AvailabilityMatrix {
 
         this.elements.searchInput?.addEventListener("input", (e) => {
             if (this.searchDebounce) clearTimeout(this.searchDebounce);
-            this.searchDebounce = setTimeout(() => {
-                this.searchQuery = e.target.value;
-                this.renderMatrix();
+            const q = e.target.value.trim();
+            this.searchDebounce = setTimeout(async () => {
+                if (q === "") {
+                    this.exitSearchMode();
+                } else {
+                    await this.runSearch(q);
+                }
             }, 300);
         });
 
+        this.elements.searchInput?.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                this.elements.searchInput.value = "";
+                this.exitSearchMode();
+            }
+        });
+
         this.elements.clearBtn?.addEventListener("click", async () => {
+            this.exitSearchMode();
             this.searchQuery = "";
             this.selectedFacility = "all";
             if (this.elements.searchInput) this.elements.searchInput.value = "";
-            if (this.elements.facilitySelect) this.elements.facilitySelect.value = "all";
+            if (this.elements.facilitySelect)
+                this.elements.facilitySelect.value = "all";
             await this.refresh();
         });
 
-        this.elements.facilitySelect?.addEventListener("change", (e) => {
-            let v = e.target.value;
-            if (this.currentView === "rooms" && v !== "all") {
-                const m = v.match(/parent_(\d+)/);
-                this.selectedFacility = m ? m[1] : v;
+        this.elements.facilitySelect?.addEventListener("change", async (e) => {
+            // Keep the raw value. loadFacilityHierarchy will parse it.
+            this.selectedFacility = e.target.value;
+
+            // Reset page to 1 when changing facility filter
+            if (this.currentView === "rooms") {
+                this.roomsPage = 1;
             } else {
-                this.selectedFacility = v;
+                this.venuesPage = 1;
             }
-            this.refresh();
+
+            // Fetch new paginated data before refreshing the matrix
+            await this.loadFacilityHierarchy();
+            await this.refresh();
         });
     }
 
@@ -669,9 +951,7 @@ class AvailabilityMatrix {
                     </div>`;
             }
         } else {
-            this.elements.container
-                .querySelector(".loading-overlay")
-                ?.remove();
+            this.elements.container.querySelector(".loading-overlay")?.remove();
         }
     }
 
@@ -704,6 +984,27 @@ class AvailabilityMatrix {
         return `${y}-${m}-${d}`;
     }
 
+/**
+ * Format any date string (YYYY-MM-DD, ISO datetime, etc.) → "Oct 4, 2026".
+ * Robust to Carbon's date:Y-m-d cast occasionally serializing with a
+ * time suffix (e.g. "2026-02-02T00:00:00.000000Z"), which would otherwise
+ * parse to NaN and render "Invalid Date".
+ */
+formatDateShort(dateStr) {
+    if (!dateStr) return "";
+    // Grab only the YYYY-MM-DD prefix — safe for both "2026-02-02" and ISO.
+    const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return "";
+    const [, y, m, d] = match.map((v, i) => (i === 0 ? v : Number(v)));
+    const dt = new Date(y, m - 1, d);
+    if (isNaN(dt.getTime())) return "";
+    return dt.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    });
+}
+
     formatTime(t) {
         const [h, m] = t.split(":");
         const hn = parseInt(h, 10);
@@ -717,6 +1018,16 @@ class AvailabilityMatrix {
         const s = this.normalizeTime(item.start_time);
         const e = this.normalizeTime(item.end_time);
         return `${this.formatTime(s)} – ${this.formatTime(e)}`;
+    }
+    
+    eventTypeLabel(type) {
+        if (!type) return "Event";
+        const map = {
+            school_event: "Event",
+            holiday: "Holiday",
+            hall_booking: "Booking",
+        };
+        return map[type] || "Event";
     }
 
     truncate(str, len) {
