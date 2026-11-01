@@ -220,64 +220,80 @@ class AvailabilityMatrix {
 
     /**
      * Determine status for a facility row at a time slot.
-     * Overlap: interval [slotStart, slotEnd) intersects [eventStart, eventEnd).
+     * Returns the primary status for the cell UI, plus a `matches` array
+     * of ALL overlapping items (sorted by priority) for the hover/modal lists.
      */
     getStatusForTimeSlot(facilityId, timeSlot) {
         const slotStart = this.timeSlotToMinutes(timeSlot);
         const slotEnd = slotStart + 30;
+        const matches = [];
 
-        // Calendar events (checked first — system-wide overrides)
-        const calEvent = this.calendarEvents.find((ev) => {
-            if (!this.timeOverlaps(slotStart, slotEnd, ev)) return false;
-            // hall_booking → only on its venue rows
+        // 1. Check calendar events
+        this.calendarEvents.forEach((ev) => {
+            if (!this.timeOverlaps(slotStart, slotEnd, ev)) return;
+
             if (ev.event_type === "hall_booking") {
-                return (ev.venues || []).some(
-                    (v) => String(v.facility_id) === String(facilityId),
-                );
+                if (
+                    !(ev.venues || []).some(
+                        (v) => String(v.facility_id) === String(facilityId),
+                    )
+                )
+                    return;
             }
-            // school_event / holiday → global
-            return true;
-        });
 
-        if (calEvent) {
-            return {
+            matches.push({
+                type: "calendar_event",
                 status: "event",
                 text: '<i class="bi bi-calendar-event-fill"></i> Event',
-                event: calEvent,
-                eventType: "calendar_event",
-                bookable: false,
-            };
-        }
+                data: ev,
+                priority: 1,
+            });
+        });
 
-        // Requisitions for this facility
+        // 2. Check requisitions
         const reqs = this.requisitionsByFacility.get(String(facilityId)) || [];
-        const req = reqs.find((r) => this.timeOverlaps(slotStart, slotEnd, r));
+        reqs.forEach((req) => {
+            if (!this.timeOverlaps(slotStart, slotEnd, req)) return;
 
-        if (req) {
-            // Per FormStatusSeeder: Reserved = booked; everything else = pending.
-            if (req.status === "Reserved") {
-                return {
-                    status: "booked",
-                    text: '<i class="bi bi-x-circle-fill"></i> Booked',
-                    event: req,
-                    eventType: "requisition",
-                    bookable: false,
-                };
-            }
+            const isBooked = req.status === "Reserved";
+            matches.push({
+                type: "requisition",
+                status: isBooked ? "booked" : "pending",
+                text: isBooked
+                    ? '<i class="bi bi-x-circle-fill"></i> Booked'
+                    : '<i class="bi bi-clock-fill"></i> Pending',
+                data: req,
+                priority: isBooked ? 2 : 3,
+            });
+        });
+
+        if (matches.length === 0) {
             return {
-                status: "pending",
-                text: '<i class="bi bi-clock-fill"></i> Pending',
-                event: req,
-                eventType: "requisition",
-                bookable: false,
+                status: "available",
+                text: '<i class="bi bi-check-circle-fill"></i> Available',
+                matches: [],
+                bookable: true,
             };
         }
 
+        // Sort: priority first, then earliest start time
+        matches.sort((a, b) => {
+            if (a.priority !== b.priority) return a.priority - b.priority;
+            const aStart = this.timeSlotToMinutes(
+                this.normalizeTime(a.data.start_time),
+            );
+            const bStart = this.timeSlotToMinutes(
+                this.normalizeTime(b.data.start_time),
+            );
+            return aStart - bStart;
+        });
+
+        const primary = matches[0];
         return {
-            status: "available",
-            text: '<i class="bi bi-check-circle-fill"></i> Available',
-            event: null,
-            bookable: true,
+            status: primary.status,
+            text: primary.text,
+            matches: matches,
+            bookable: false,
         };
     }
 
@@ -383,7 +399,7 @@ class AvailabilityMatrix {
                     ${this.escapeHtml(
                         r.type === "calendar_event"
                             ? this.eventTypeLabel(r.status)
-                            : r.status || ""
+                            : r.status || "",
                     )}
                 </span>
                 </div>
@@ -499,25 +515,40 @@ class AvailabilityMatrix {
         const cells = slots
             .map((slot) => {
                 const s = this.getStatusForTimeSlot(facility.facility_id, slot);
-                const eventId = s.event?.request_id || s.event?.event_id || "";
-                const eventType = s.eventType || "";
+
+                // If multiple matches, show the top one and a +N badge
+                const extraCount =
+                    s.matches.length > 1 ? s.matches.length - 1 : 0;
+                const badgeHtml =
+                    extraCount > 0
+                        ? `<span class="extra-badge" style="position:absolute;top:2px;right:2px;background:#041a4b;color:#fff;font-size:0.6rem;font-weight:700;padding:1px 4px;border-radius:4px;line-height:1;">+${extraCount}</span>`
+                        : "";
+
+                const primaryId =
+                    s.matches.length > 0
+                        ? s.matches[0].data.request_id ||
+                          s.matches[0].data.event_id
+                        : "";
+                const primaryType =
+                    s.matches.length > 0 ? s.matches[0].type : "";
 
                 return `
                 <td>
                     <div class="status-card ${s.status}"
+                        style="position:relative;"
                         data-status="${s.status}"
                         data-facility="${facility.facility_id}"
                         data-time="${slot}"
-                        data-event-id="${eventId}"
-                        data-event-type="${eventType}"
+                        data-event-id="${primaryId}"
+                        data-event-type="${primaryType}"
                         data-bookable="${s.bookable}">
                         ${s.text}
+                        ${badgeHtml}
                     </div>
                 </td>`;
             })
             .join("");
 
-        // Label: for rooms, prepend parent building name.
         const label =
             this.currentView === "rooms" && facility.parentName
                 ? `<small style="color:#6b7a99;">${this.escapeHtml(facility.parentName)}</small><br><strong>${this.truncate(facility.facility_name, 30)}</strong>`
@@ -592,16 +623,26 @@ class AvailabilityMatrix {
     handleCardClick = (e) => {
         e.stopPropagation();
         const card = e.currentTarget;
-        const id = card.dataset.eventId;
-        const type = card.dataset.eventType;
-        if (!id) return;
+        const facilityId = card.dataset.facility;
+        const time = card.dataset.time;
+        if (!facilityId || !time) return;
 
-        if (window.AvailabilityMode === "admin" && type === "requisition") {
-            // Admin: jump to requisition view (singular "requisition" route).
-            window.location.href = `/admin/requisition/${id}`;
+        // Get the fresh array of overlapping events for this specific cell
+        const s = this.getStatusForTimeSlot(facilityId, time);
+        if (!s.matches.length) return;
+
+        if (
+            window.AvailabilityMode === "admin" &&
+            s.matches.length === 1 &&
+            s.matches[0].type === "requisition"
+        ) {
+            // Admin: jump directly if it's a single requisition
+            window.location.href = `/admin/requisition/${s.matches[0].data.request_id}`;
             return;
         }
-        this.showEventDetails(id, type);
+
+        // Otherwise open the modal list
+        this.showEventDetails(s.matches);
     };
 
     attachHoverEvents() {
@@ -639,84 +680,60 @@ class AvailabilityMatrix {
 
     showHoverCard(card) {
         this.removeHoverCard();
-        const id = card.dataset.eventId;
-        const type = card.dataset.eventType;
-        const status = card.dataset.status;
-        if (!id) return;
+        const facilityId = card.dataset.facility;
+        const time = card.dataset.time;
+        if (!facilityId || !time) return;
 
-        const data =
-            type === "calendar_event"
-                ? this.calendarEvents.find((e) => e.event_id == id)
-                : this.requisitions.find((r) => r.request_id == id);
-        if (!data) return;
+        const s = this.getStatusForTimeSlot(facilityId, time);
+        if (!s.matches.length) return;
 
         const colors = {
             booked: "#ef4444",
             pending: "#f5bc40",
             event: "#6f42c1",
         };
-        const accent = colors[status] || "#6c757d";
+        const accent = colors[s.status] || "#6c757d";
 
-        // Title varies by record type.
-        const title =
-            type === "requisition"
-                ? data.title || "Untitled"
-                : data.event_name || "Untitled";
+        const listHtml = s.matches
+            .map((m) => {
+                const d = m.data;
+                const title =
+                    m.type === "requisition"
+                        ? d.title || "Untitled"
+                        : d.event_name || "Untitled";
+                const label =
+                    m.type === "requisition"
+                        ? d.status || ""
+                        : this.eventTypeLabel(d.event_type);
 
-        // Status / type label
-const statusLabel =
-    type === "requisition"
-        ? data.status || ""
-        : this.eventTypeLabel(data.event_type);
-
-        // Optional subtext: event_details for requisitions, description for calendar events.
-        const subtext =
-            type === "calendar_event"
-                ? data.description || ""
-                : data.event_details || "";
-
-        // Schedule: collapse to single date when start_date == end_date
-        const startDate = this.formatDateShort(data.start_date);
-        const endDate = this.formatDateShort(data.end_date);
-        const sameDay = data.start_date === data.end_date;
-        let scheduleLine;
-        if (data.all_day) {
-            scheduleLine = sameDay
-                ? `${startDate} — All Day`
-                : `${startDate} — ${endDate} (All Day)`;
-        } else {
-            const sTime = this.formatTime(this.normalizeTime(data.start_time));
-            const eTime = this.formatTime(this.normalizeTime(data.end_time));
-            scheduleLine = sameDay
-                ? `${startDate} · ${sTime} – ${eTime}`
-                : `${startDate} ${sTime} – ${endDate} ${eTime}`;
-        }
+                return `
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.4rem 0;border-bottom:1px solid #f0f2f5;">
+                    <div style="font-weight:600;color:#1e2d4a;font-size:0.8rem;max-width:70%;word-break:break-word;">${this.escapeHtml(title)}</div>
+                    <span style="background:${colors[m.status]}15;color:${colors[m.status]};padding:0.1rem 0.4rem;border-radius:12px;font-size:0.6rem;font-weight:600;white-space:nowrap;">${this.escapeHtml(label)}</span>
+                </div>
+            `;
+            })
+            .join("");
 
         const el = document.createElement("div");
         el.className = "custom-hover-card";
         el.style.cssText = `
-        position:fixed;z-index:9999999;background:#fff;border-radius:12px;
-        box-shadow:0 12px 40px rgba(4,26,75,.16);padding:.85rem 1rem;
-        min-width:240px;max-width:320px;pointer-events:none;
-        border-left:3px solid ${accent};font-family:'DM Sans',sans-serif;
-        transition:opacity .15s ease;opacity:0;
-    `;
+            position:fixed;z-index:9999999;background:#fff;border-radius:12px;
+            box-shadow:0 12px 40px rgba(4,26,75,.16);padding:.85rem 1rem;
+            min-width:240px;max-width:320px;pointer-events:none;
+            border-left:3px solid ${accent};font-family:'DM Sans',sans-serif;
+            transition:opacity .15s ease;opacity:0;
+        `;
 
         el.innerHTML = `
-        <div style="font-weight:700;color:#041a4b;font-size:.9rem;margin-bottom:.5rem;">
-            ${this.escapeHtml(title)}
-        </div>
-        <div style="margin-bottom:.55rem;">
-            <span style="background:${accent}22;color:${accent};padding:.15rem .5rem;border-radius:20px;font-size:.65rem;font-weight:600;display:inline-block;">
-                ${this.escapeHtml(statusLabel)}
-            </span>
-        </div>
-        ${subtext ? `<div style="font-size:.75rem;color:#6b7a99;line-height:1.35;margin-bottom:.55rem;">${this.escapeHtml(subtext.substring(0, 120))}${subtext.length > 120 ? "…" : ""}</div>` : ""}
-        <div style="border-top:1px solid #e2e6f0;padding-top:.5rem;font-size:.75rem;color:#6b7a99;display:flex;align-items:center;gap:.5rem;">
-            <i class="bi bi-calendar3" style="width:16px;"></i>
-            <span>${this.escapeHtml(scheduleLine)}</span>
-        </div>
-    `;
+            <div style="font-weight:700;color:#041a4b;font-size:.9rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;">
+                <span>${this.formatTime(time)}</span>
+                <span style="font-size:.7rem;color:#6b7a99;font-weight:400;">${s.matches.length} Event${s.matches.length > 1 ? "s" : ""}</span>
+            </div>
+            <div style="max-height:180px;overflow-y:auto;padding-right:4px;">
+                ${listHtml}
+            </div>
+        `;
 
         document.body.appendChild(el);
 
@@ -745,55 +762,80 @@ const statusLabel =
         }
     }
 
-    async showEventDetails(id, type) {
-        const data =
-            type === "calendar_event"
-                ? this.calendarEvents.find((e) => e.event_id == id)
-                : this.requisitions.find((r) => r.request_id == id);
-        if (!data) return;
+    async showEventDetails(matches) {
+        if (!matches || !matches.length) return;
 
         const existing = document.getElementById("eventModal");
         if (existing) existing.remove();
 
-        const title = data.title || data.event_name || "Details";
-        // Build a human-readable schedule that includes dates, mirroring the
-        // hover card's single-day / multi-day / all-day handling.
-        const startDateShort = this.formatDateShort(data.start_date);
-        const endDateShort = this.formatDateShort(data.end_date);
-        const sameDay = data.start_date === data.end_date;
-        let scheduleText;
-        if (data.all_day) {
-            scheduleText = sameDay
-                ? `${startDateShort} — All Day`
-                : `${startDateShort} — ${endDateShort} (All Day)`;
-        } else {
-            const sTime = this.formatTime(this.normalizeTime(data.start_time));
-            const eTime = this.formatTime(this.normalizeTime(data.end_time));
-            scheduleText = sameDay
-                ? `${startDateShort} · ${sTime} – ${eTime}`
-                : `${startDateShort} ${sTime} – ${endDateShort} ${eTime}`;
-        }
+        const colors = {
+            booked: "#ef4444",
+            pending: "#f5bc40",
+            event: "#6f42c1",
+        };
 
-        const body =
-            type === "calendar_event"
-                ? `
-                    <div class="event-detail-row"><div class="event-detail-label">Description</div>
-                        <div class="event-detail-value">${this.escapeHtml(data.description || "—")}</div></div>
-                    <div class="event-detail-row"><div class="event-detail-label">Schedule</div>
-                        <div class="event-detail-value">${this.escapeHtml(scheduleText)}</div></div>
-                    <div class="event-detail-row"><div class="event-detail-label">Type</div>
-                        <div class="event-detail-value">${this.escapeHtml(this.eventTypeLabel(data.event_type))}</div></div>`
-                : `
-                    ${
-                        data.event_details
-                            ? `<div class="event-detail-row"><div class="event-detail-label">Event Details</div>
-                        <div class="event-detail-value">${this.escapeHtml(data.event_details)}</div></div>`
-                            : ""
-                    }
-                    <div class="event-detail-row"><div class="event-detail-label">Status</div>
-                        <div class="event-detail-value">${this.escapeHtml(data.status || "")}</div></div>
-                    <div class="event-detail-row"><div class="event-detail-label">Schedule</div>
-                        <div class="event-detail-value">${this.escapeHtml(scheduleText)}</div></div>`;
+        const listHtml = matches
+            .map((m, index) => {
+                const d = m.data;
+                const title =
+                    m.type === "requisition"
+                        ? d.title || "Untitled"
+                        : d.event_name || "Untitled";
+                const label =
+                    m.type === "requisition"
+                        ? d.status || ""
+                        : this.eventTypeLabel(d.event_type);
+                const accent = colors[m.status] || "#6c757d";
+
+                // Build detail body
+                const startDateShort = this.formatDateShort(d.start_date);
+                const endDateShort = this.formatDateShort(d.end_date);
+                const sameDay = d.start_date === d.end_date;
+                let scheduleText;
+                if (d.all_day) {
+                    scheduleText = sameDay
+                        ? `${startDateShort} - All Day`
+                        : `${startDateShort} - ${endDateShort} (All Day)`;
+                } else {
+                    const sTime = this.formatTime(
+                        this.normalizeTime(d.start_time),
+                    );
+                    const eTime = this.formatTime(
+                        this.normalizeTime(d.end_time),
+                    );
+                    scheduleText = sameDay
+                        ? `${startDateShort} · ${sTime} - ${eTime}`
+                        : `${startDateShort} ${sTime} - ${endDateShort} ${eTime}`;
+                }
+
+                const body =
+                    m.type === "calendar_event"
+                        ? `
+                    ${d.description ? `<div style="font-size:0.8rem;color:#6b7a99;margin-bottom:0.75rem;">${this.escapeHtml(d.description)}</div>` : ""}
+                    <div style="font-size:0.8rem;color:#1e2d4a;display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                        <i class="bi bi-calendar3" style="color:#9aaac5;"></i> ${this.escapeHtml(scheduleText)}
+                    </div>
+                `
+                        : `
+                    ${d.event_details ? `<div style="font-size:0.8rem;color:#6b7a99;margin-bottom:0.75rem;">${this.escapeHtml(d.event_details)}</div>` : ""}
+                    <div style="font-size:0.8rem;color:#1e2d4a;display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                        <i class="bi bi-calendar3" style="color:#9aaac5;"></i> ${this.escapeHtml(scheduleText)}
+                    </div>
+                `;
+
+                return `
+                <div class="modal-event-item" style="border:1px solid #e2e6f0;border-radius:8px;margin-bottom:0.75rem;overflow:hidden;">
+                    <div class="modal-event-header" style="padding:0.75rem;background:#f8f9fc;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-left:3px solid ${accent};" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+                        <div style="font-weight:600;color:#041a4b;font-size:0.9rem;">${this.escapeHtml(title)}</div>
+                        <span style="background:${accent}15;color:${accent};padding:0.15rem 0.5rem;border-radius:12px;font-size:0.65rem;font-weight:600;">${this.escapeHtml(label)}</span>
+                    </div>
+                    <div class="modal-event-body" style="padding:0.75rem;display:${matches.length === 1 ? "block" : "none"};">
+                        ${body}
+                    </div>
+                </div>
+            `;
+            })
+            .join("");
 
         document.body.insertAdjacentHTML(
             "beforeend",
@@ -801,10 +843,12 @@ const statusLabel =
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">${this.escapeHtml(title)}</h5>
+                            <h5 class="modal-title">Events at this time</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
-                        <div class="modal-body">${body}</div>
+                        <div class="modal-body" style="max-height:60vh;overflow-y:auto;">
+                            ${listHtml}
+                        </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
@@ -984,26 +1028,26 @@ const statusLabel =
         return `${y}-${m}-${d}`;
     }
 
-/**
- * Format any date string (YYYY-MM-DD, ISO datetime, etc.) → "Oct 4, 2026".
- * Robust to Carbon's date:Y-m-d cast occasionally serializing with a
- * time suffix (e.g. "2026-02-02T00:00:00.000000Z"), which would otherwise
- * parse to NaN and render "Invalid Date".
- */
-formatDateShort(dateStr) {
-    if (!dateStr) return "";
-    // Grab only the YYYY-MM-DD prefix — safe for both "2026-02-02" and ISO.
-    const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (!match) return "";
-    const [, y, m, d] = match.map((v, i) => (i === 0 ? v : Number(v)));
-    const dt = new Date(y, m - 1, d);
-    if (isNaN(dt.getTime())) return "";
-    return dt.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-    });
-}
+    /**
+     * Format any date string (YYYY-MM-DD, ISO datetime, etc.) → "Oct 4, 2026".
+     * Robust to Carbon's date:Y-m-d cast occasionally serializing with a
+     * time suffix (e.g. "2026-02-02T00:00:00.000000Z"), which would otherwise
+     * parse to NaN and render "Invalid Date".
+     */
+    formatDateShort(dateStr) {
+        if (!dateStr) return "";
+        // Grab only the YYYY-MM-DD prefix — safe for both "2026-02-02" and ISO.
+        const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!match) return "";
+        const [, y, m, d] = match.map((v, i) => (i === 0 ? v : Number(v)));
+        const dt = new Date(y, m - 1, d);
+        if (isNaN(dt.getTime())) return "";
+        return dt.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        });
+    }
 
     formatTime(t) {
         const [h, m] = t.split(":");
@@ -1019,7 +1063,7 @@ formatDateShort(dateStr) {
         const e = this.normalizeTime(item.end_time);
         return `${this.formatTime(s)} – ${this.formatTime(e)}`;
     }
-    
+
     eventTypeLabel(type) {
         if (!type) return "Event";
         const map = {
