@@ -178,6 +178,7 @@ Route::prefix('requester')->middleware(['web'])->group(function () {
 
 // ---------------- User Actions (public) ---------------- //
 Route::post('/feedback', [FeedbackController::class, 'store'])->middleware(['web']);
+Route::get('/requester/search', [UserRequisitionController::class, 'searchForms'])->middleware('web');
 Route::post('/requester/requisition/{requestId}/cancel', [UserRequisitionController::class, 'cancelRequestPublic'])->middleware(['web']);
 Route::post('/requester/requisition/{requestId}/upload-receipt', [UserRequisitionController::class, 'uploadPaymentReceipt'])->middleware(['web']);
 

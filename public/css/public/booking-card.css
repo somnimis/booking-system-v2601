@@ -1,0 +1,378 @@
+/* Notion-inspired monochrome styling for the Your Bookings page.
+   Soft white → gray palette. No heavy shadows; borders + whitespace carry structure. */
+
+/* ---------- Page surface ---------- */
+.page-surface {
+    min-height: calc(100vh - 80px);
+    background: #ffffff;
+    padding: 4rem 1.25rem 6rem;
+}
+
+.page-container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+    border: 1px solid #ebebe9;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #1f1f1f;
+    margin-bottom: 0.35rem;
+}
+
+.page-subtitle {
+    color: #787774;
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+}
+
+/* ---------- Search row ---------- */
+.search-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.75rem;
+}
+
+.search-input {
+    flex: 1;
+    height: 2.75rem;
+    padding: 0 0.9rem;
+    font-size: 0.9rem;
+    color: #1f1f1f;
+    background: #ffffff;
+    border: 1px solid #e6e6e4;
+    border-radius: 8px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.search-input::placeholder { color: #b3b3af; }
+
+.search-input:hover  { background: #fcfcfb; }
+.search-input:focus  {
+    outline: none;
+    border-color: #c7c7c3;
+    background: #ffffff;
+}
+
+.btn-primary-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 2.75rem;
+    padding: 0 1.15rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #ffffff;
+    background: #2b2b2b;
+    border: 1px solid #2b2b2b;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-primary-action:hover {
+    background: #1f1f1f;
+    border-color: #1f1f1f;
+}
+
+/* ---------- Filter bar ---------- */
+.filter-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.75rem;
+}
+
+.filter-btn {
+    height: 2.25rem;
+    padding: 0 0.8rem;
+    font-size: 0.8rem;
+    color: #4d4d4a;
+    background: #ffffff;
+    border: 1px solid #e6e6e4;
+    border-radius: 6px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.filter-btn:hover { background: #fbfbfa; border-color: #e6e6e4; }
+
+.filter-row .dropdown-menu {
+    border: 1px solid #e6e6e4;
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    padding: 0.35rem;
+    min-width: 180px;
+}
+
+.filter-row .dropdown-item {
+    font-size: 0.85rem;
+    color: #1f1f1f;
+    border-radius: 5px;
+    padding: 0.4rem 0.65rem;
+}
+
+.filter-row .dropdown-item:hover { background: #fbfbfa; }
+
+/* ---------- Card ---------- */
+.booking-card {
+    background: #ffffff;
+    border: 1px solid #ebebe9;
+    border-radius: 10px;
+    padding: 1.15rem 1.25rem;
+    margin-bottom: 0.85rem;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.booking-card:hover {
+    background: #fefefe;
+    border-color: #e6e6e4;
+}
+
+/* header */
+.booking-card .request-id {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #787774;
+    letter-spacing: 0.01em;
+}
+
+.booking-card .status-badge-responsive {
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+}
+
+/* body typography */
+.booking-card h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f1f1f;
+    letter-spacing: -0.005em;
+}
+
+.booking-card p {
+    font-size: 0.875rem;
+    color: #4d4d4a;
+}
+
+.booking-card strong {
+    color: #1f1f1f;
+    font-weight: 500;
+}
+
+.booking-card ul {
+    margin: 0 0 0.5rem 1.1rem;
+    padding: 0;
+}
+
+.booking-card ul li {
+    font-size: 0.85rem;
+    color: #4d4d4a;
+    margin-bottom: 0.15rem;
+}
+
+.booking-card .no-items {
+    font-size: 0.85rem;
+    color: #b3b3af;
+    font-style: normal;
+}
+
+.booking-card .closure-details {
+    font-size: 0.85rem;
+    color: #4d4d4a;
+}
+
+.booking-card hr {
+    border-color: #ebebe9;
+    opacity: 1;
+}
+
+/* footer buttons */
+.booking-card .card-responsive-footer {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid #ebebe9;
+    background: transparent;
+}
+
+.booking-card .btn-success,
+.booking-card .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    height: 2.2rem;
+    padding: 0 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.booking-card .btn-success {
+    background: #ffffff;
+    color: #1f1f1f;
+    border-color: #e6e6e4;
+}
+
+.booking-card .btn-success:hover { background: #fbfbfa; }
+
+.booking-card .btn-danger {
+    background: #ffffff;
+    color: #b3261e;
+    border-color: #f1d9d7;
+}
+
+.booking-card .btn-danger:hover {
+    background: #fdf6f5;
+    border-color: #e6b6b2;
+}
+
+/* ---------- Empty / loading states ---------- */
+.empty-state,
+.loading-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: #787774;
+}
+
+.empty-state i {
+    font-size: 1.5rem;
+    color: #d4d4d0;
+    margin-bottom: 0.9rem;
+    display: block;
+}
+
+/* ---------- Modals (light pass) ---------- */
+.modal-content {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.08);
+}
+
+.modal-header.bg-primary,
+.modal-header.bg-primary .btn-close {
+    border: none;
+}
+
+.modal-header.bg-primary {
+    background: #2b2b2b !important;
+    color: #ffffff;
+    border-bottom: 1px solid #1f1f1f;
+}
+
+.modal-header .modal-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.modal-footer {
+    border-top: 1px solid #ebebe9;
+    background: #fafaf9;
+}
+
+.modal-footer .btn-secondary {
+    height: 2.25rem;
+    padding: 0 0.9rem;
+    font-size: 0.82rem;
+    color: #4d4d4a;
+    background: #ffffff;
+    border: 1px solid #e6e6e4;
+    border-radius: 6px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.modal-footer .btn-secondary:hover {
+    background: #fbfbfa;
+    border-color: #e6e6e4;
+    color: #4d4d4a;
+}
+
+.modal-body { color: #4d4d4a; font-size: 0.9rem; }
+
+/* upload area */
+.upload-area {
+    border: 1.5px dashed #dcdcd8;
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    background: #fafaf9;
+}
+
+.upload-area:hover {
+    background: #fbfbfa;
+    border-color: #d9d9d6;
+}
+
+.upload-area i {
+    font-size: 1.6rem;
+    color: #b3b3af;
+    margin-bottom: 0.6rem;
+    display: block;
+}
+
+.upload-area p { margin: 0; font-size: 0.85rem; color: #787774; }
+
+/* responsive */
+@media (max-width: 576px) {
+    .page-surface { padding: 2.5rem 1rem 4rem; }
+    .page-title { font-size: 1.4rem; }
+    .search-row { flex-direction: column; }
+    .btn-primary-action { width: 100%; justify-content: center; }
+}
+
+.booking-card .total-fee {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #ebebe9;
+    font-size: 0.9rem;
+}
+
+.booking-card .total-fee strong {
+    color: #1f1f1f;
+    font-weight: 600;
+}
+
+.booking-card .total-fee .fee-amount {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1f1f1f;
+    letter-spacing: -0.01em;
+}
+
+/* Solid green style for the Official Receipt button */
+.booking-card .btn-receipt {
+    display: inline-flex;
+    align-items: center;
+    height: 2.2rem;
+    padding: 0 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-radius: 7px;
+    color: #ffffff;
+    background: #15803d; /* Tailwind green-700 */
+    border: 1px solid #15803d;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.booking-card .btn-receipt:hover {
+    background: #166534; /* Tailwind green-800 */
+    border-color: #166534;
+    color: #ffffff;
+}
+

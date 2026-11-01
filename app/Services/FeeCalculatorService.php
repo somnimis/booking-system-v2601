@@ -48,7 +48,8 @@ class FeeCalculatorService
 
             return [
                 'name'          => $facility->facility->facility_name,
-                'unit_price'    => $unitPrice,
+                'unit_price'    => $unitPrice,           // Added
+                'duration_hours'=> $duration['hours'],   // Added
                 'fee'           => $fee,
                 'rate_type'     => $facility->facility->rate_type,
                 'is_waived'     => (bool) $facility->is_waived,
@@ -74,7 +75,8 @@ class FeeCalculatorService
             return [
                 'name'          => $equipment->equipment->equipment_name,
                 'quantity'      => $equipment->quantity,
-                'unit_price'    => $unitPrice,
+                'unit_price'    => $unitPrice,           // Added
+                'duration_hours'=> $duration['hours'],   // Added
                 'fee'           => $fee,
                 'rate_type'     => $equipment->equipment->rate_type,
                 'is_waived'     => (bool) $equipment->is_waived,

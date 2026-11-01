@@ -46,11 +46,15 @@ class RequisitionForm extends Model
         'event_title',
         'event_details',
         'access_code',
-        'event_documents_url',
+        'event_documents_url',  
         'event_documents_public_id',
         'proof_of_payment_url',
-        'proof_of_payment_public_id'
+        'proof_of_payment_public_id',
+        'upload_token',          
+        'official_receipt_num',  
+        'control_num',         
     ];
+
     protected $casts = [
         'start_date' => 'string',
         'end_date' => 'string',

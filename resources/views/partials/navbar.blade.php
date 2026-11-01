@@ -437,18 +437,10 @@
             </ul>
 
             <div class="d-flex align-items-center ms-lg-3">
-                <span class="me-2 how-to-book d-flex align-items-center" data-bs-toggle="tooltip"
-                    data-bs-placement="bottom" data-bs-html="true" data-bs-custom-class="custom-tooltip" title="
-            <ol class='mb-0 ps-3'>
-                <li class='mb-2'>Browse the catalog and add venues or equipment to your booking cart.</li>
-                <li class='mb-2'>Go to the reservation form via <strong>Book Now</strong> or your cart.</li>
-                <li class='mb-2'>Fill in the required booking details and check item availability for your selected timeslot.</li>
-                <li class='mb-0'>Read the reservation policies before submitting your request.</li>
-            </ol>
-        ">
+                <a href="{{ route('user-guide') }}" class="me-2 how-to-book d-flex align-items-center text-decoration-none" style="color: inherit;">
                     How to book?
                     <i class="bi bi-question-circle ms-1" style="font-size: 0.85rem;"></i>
-                </span>
+                </a>
             </div>
 
             @if(Route::currentRouteName() === 'reservation.form' || Request::is('reservation-form'))
@@ -460,11 +452,3 @@
     </div>
     </div>
 </nav>
-
-<script>
-    // Initialize Bootstrap tooltips with body container
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (el) {
-        return new bootstrap.Tooltip(el, { container: 'body' });
-    });
-</script>

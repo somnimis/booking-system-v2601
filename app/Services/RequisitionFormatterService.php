@@ -203,6 +203,7 @@ class RequisitionFormatterService
             'organization_name' => $form->organization_name,
             'contact_number' => $form->contact_number,
             'access_code' => $form->access_code,
+            'official_receipt_num' => $form->official_receipt_num,
             'num_participants' => $form->num_participants,
             'start_date' => $form->start_date,
             'end_date' => $form->end_date,
@@ -375,6 +376,7 @@ class RequisitionFormatterService
                 'id' => $form->closedBy->admin_id,
                 'name' => $form->closedBy->first_name . ' ' . $form->closedBy->last_name,
             ] : null,
+            'closure_reason' => $form->closure_reason,
             'returned_at' => $form->returned_at,
         ];
     }

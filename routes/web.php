@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\AdminActionsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RequisitionFormController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\UserRequisitionController;
 use App\Http\Controllers\AdminApprovalController;
 use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Http\Request;
@@ -55,7 +57,7 @@ Route::middleware('web')->group(function () {
     })->middleware('web');
 
     // User Pages
-    Route::view('/home', 'public.index');
+    Route::view('/home', 'public.index')->name('home');
     Route::view('/events-calendar', 'public.events-calendar');
     Route::view('/reservation-form', 'public.reservation-form');
     Route::view('/user-feedback', 'public.user-feedback');
@@ -63,11 +65,22 @@ Route::middleware('web')->group(function () {
     Route::view('/user-payment', 'public.user-payment');
     Route::view('/policies', 'public.policies');
     Route::view('/inquiries', 'public.inquiries');
+    Route::view('/user-guide', 'public.user-guide')->name('user-guide');
 
     // Official Receipt
-    Route::view('/official-receipt', 'public.official-receipt')->name('official-receipt.test');
-    Route::get('/official-receipt/{requestId}', [AdminApprovalController::class, 'generateOfficialReceipt'])
+    Route::get('/official-receipt/{requestId}', [AdminActionsController::class, 'generateOfficialReceipt'])
         ->name('official-receipt.generate');
+    Route::view('/official-receipt', 'public.official-receipt')
+        ->name('official-receipt');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Control Number Verification
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/verify', [UserRequisitionController::class, 'showVerifyPage'])->name('verify.page');
+    Route::post('/verify', [UserRequisitionController::class, 'verifyPermit'])->name('verify.submit');
 
     /*
     |--------------------------------------------------------------------------
@@ -95,264 +108,264 @@ Route::middleware('web')->group(function () {
         Route::post('/clear-session', [RequisitionFormController::class, 'clearSession']);
     });
 
-/*
-|--------------------------------------------------------------------------
-| Protected Admin Routes (Simple token-based auth)
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | Protected Admin Routes (Simple token-based auth)
+    |--------------------------------------------------------------------------
+    */
 
-// Helper function to authenticate from token
-function authenticateFromRequest($request)
-{
-    $token = null;
+    // Helper function to authenticate from token
+    function authenticateFromRequest($request)
+    {
+        $token = null;
 
-    // Check URL query parameter first (for initial redirect after login)
-    if ($token = $request->query('token')) {
-        // Token found in URL
-    }
-    // Check cookie
-    elseif ($token = $request->cookie('admin_token')) {
-        // Token found in cookie
-    }
-    // Check session
-    elseif ($token = $request->session()->get('admin_token')) {
-        // Token found in session
-    }
-    // Check Authorization header (for API calls within page)
-    elseif ($token = $request->bearerToken()) {
-        // Token found in header
-    }
+        // Check URL query parameter first (for initial redirect after login)
+        if ($token = $request->query('token')) {
+            // Token found in URL
+        }
+        // Check cookie
+        elseif ($token = $request->cookie('admin_token')) {
+            // Token found in cookie
+        }
+        // Check session
+        elseif ($token = $request->session()->get('admin_token')) {
+            // Token found in session
+        }
+        // Check Authorization header (for API calls within page)
+        elseif ($token = $request->bearerToken()) {
+            // Token found in header
+        }
 
-    if ($token) {
-        $accessToken = PersonalAccessToken::findToken($token);
-        if ($accessToken && $accessToken->tokenable_type === 'App\Models\Admin') {
-            auth('sanctum')->setUser($accessToken->tokenable);
+        if ($token) {
+            $accessToken = PersonalAccessToken::findToken($token);
+            if ($accessToken && $accessToken->tokenable_type === 'App\Models\Admin') {
+                auth('sanctum')->setUser($accessToken->tokenable);
 
-            // Store token in cookie for future requests if it came from URL
-            if ($request->query('token')) {
-                cookie()->queue('admin_token', $token, 60 * 24 * 30);
-                $request->session()->put('admin_token', $token);
+                // Store token in cookie for future requests if it came from URL
+                if ($request->query('token')) {
+                    cookie()->queue('admin_token', $token, 60 * 24 * 30);
+                    $request->session()->put('admin_token', $token);
+                }
+
+                return true;
             }
-
-            return true;
         }
+
+        return false;
     }
 
-    return false;
-}
-
-// Create a middleware-like function for admin routes
-function requireAdminAuth($request, $callback)
-{
-    if (!authenticateFromRequest($request)) {
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+    // Create a middleware-like function for admin routes
+    function requireAdminAuth($request, $callback)
+    {
+        if (!authenticateFromRequest($request)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+            return redirect('/admin/login');
         }
-        return redirect('/admin/login');
+        return $callback();
     }
-    return $callback();
-}
 
-/*
-|--------------------------------------------------------------------------
-| Admin Dashboard & Core Pages
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Dashboard & Core Pages
+    |--------------------------------------------------------------------------
+    */
 
-// Dashboard
-Route::get('/admin/dashboard', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.dashboard');
+    // Dashboard
+    Route::get('/admin/dashboard', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.dashboard');
+        });
     });
-});
 
-// Signatory Dashboard
-Route::get('/admin/signatory/dashboard', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.signatory-dashboard');
+    // Signatory Dashboard
+    Route::get('/admin/signatory/dashboard', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.signatory-dashboard');
+        });
     });
-});
 
-// Admin Profile
-Route::get('/admin/profile/{adminId}', function (Request $request, $adminId) {
-    return requireAdminAuth($request, function () use ($request, $adminId) {
-        return view('admin.admin-profile', ['adminId' => $adminId]);
+    // Admin Profile
+    Route::get('/admin/profile/{adminId}', function (Request $request, $adminId) {
+        return requireAdminAuth($request, function () use ($request, $adminId) {
+            return view('admin.admin-profile', ['adminId' => $adminId]);
+        });
     });
-});
 
-/*
-|--------------------------------------------------------------------------
-| Admin Management Pages
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Management Pages
+    |--------------------------------------------------------------------------
+    */
 
-// Admin Roles & Management
-Route::get('/admin/admin-roles', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.admin-roles');
+    // Admin Roles & Management
+    Route::get('/admin/admin-roles', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.admin-roles');
+        });
     });
-});
 
-// Departments
-Route::get('/admin/departments', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.departments');
+    // Departments
+    Route::get('/admin/departments', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.departments');
+        });
     });
-});
 
-// Services
-Route::get('/admin/services', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.services');
+    // Services
+    Route::get('/admin/services', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.services');
+        });
     });
-});
 
-// Purposes
-Route::get('/admin/purposes', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.purposes');
+    // Purposes
+    Route::get('/admin/purposes', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.purposes');
+        });
     });
-});
 
-/*
-|--------------------------------------------------------------------------
-| Requisition & Request Management
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | Requisition & Request Management
+    |--------------------------------------------------------------------------
+    */
 
-// Create Reservation
-Route::get('/admin/reservations/create', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.create-reservation');
+    // Create Reservation
+    Route::get('/admin/reservations/create', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.create-reservation');
+        });
     });
-});
-// ALL Requests List (For System Administrators - debugging/oversight)
-Route::get('/admin/pending-requests', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.pending-requests');
+    // ALL Requests List (For System Administrators - debugging/oversight)
+    Route::get('/admin/pending-requests', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.pending-requests');
+        });
     });
-});
 
-// Actionable Requests 
-Route::get('/admin/actionable-requests', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.actionable-requests');
+    // Actionable Requests 
+    Route::get('/admin/actionable-requests', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.actionable-requests');
+        });
     });
-});
 
 
-// Requisition View
-Route::get('/admin/requisition/{requestId}', function (Request $request, $requestId) {
-    return requireAdminAuth($request, function () use ($request, $requestId) {
-        return view('admin.request-view', ['requestId' => $requestId]);
+    // Requisition View
+    Route::get('/admin/requisition/{requestId}', function (Request $request, $requestId) {
+        return requireAdminAuth($request, function () use ($request, $requestId) {
+            return view('admin.request-view', ['requestId' => $requestId]);
+        });
     });
-});
 
-// Financials Edit
-Route::get('/admin/requisition/{requestId}/financials', function (Request $request, $requestId) {
-    return requireAdminAuth($request, function () use ($request, $requestId) {
-        return view('admin.financials-edit', ['requestId' => $requestId]);
+    // Financials Edit
+    Route::get('/admin/requisition/{requestId}/financials', function (Request $request, $requestId) {
+        return requireAdminAuth($request, function () use ($request, $requestId) {
+            return view('admin.financials-edit', ['requestId' => $requestId]);
+        });
     });
-});
 
-// Form Review
-Route::get('/admin/form-review/{requestId}', function (Request $request, $requestId) {
-    return requireAdminAuth($request, function () use ($request, $requestId) {
-        return view('admin.form-review', ['requestId' => $requestId]);
+    // Form Review
+    Route::get('/admin/form-review/{requestId}', function (Request $request, $requestId) {
+        return requireAdminAuth($request, function () use ($request, $requestId) {
+            return view('admin.form-review', ['requestId' => $requestId]);
+        });
     });
-});
 
-// Archives
-Route::get('/admin/archives', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.archives');
+    // Archives
+    Route::get('/admin/archives', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.archives');
+        });
+    })->name('admin.archives');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Facility Management
+    |--------------------------------------------------------------------------
+    */
+
+    // Add Facility
+    Route::get('/admin/add-facility', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.add-facility');
+        });
     });
-})->name('admin.archives');
 
-/*
-|--------------------------------------------------------------------------
-| Facility Management
-|--------------------------------------------------------------------------
-*/
-
-// Add Facility
-Route::get('/admin/add-facility', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.add-facility');
+    // Manage Facilities
+    Route::get('/admin/manage-facilities', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.manage-facilities');
+        });
     });
-});
 
-// Manage Facilities
-Route::get('/admin/manage-facilities', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.manage-facilities');
+    // Edit Facility
+    Route::get('/admin/edit-facility', [FacilityController::class, 'edit'])->name('admin.edit-facility');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Equipment Management
+    |--------------------------------------------------------------------------
+    */
+
+    // Add Equipment
+    Route::get('/admin/add-equipment', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.add-equipment');
+        });
     });
-});
 
-// Edit Facility
-Route::get('/admin/edit-facility', [FacilityController::class, 'edit'])->name('admin.edit-facility');
-
-/*
-|--------------------------------------------------------------------------
-| Equipment Management
-|--------------------------------------------------------------------------
-*/
-
-// Add Equipment
-Route::get('/admin/add-equipment', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.add-equipment');
+    // Manage Equipment
+    Route::get('/admin/manage-equipment', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.manage-equipment');
+        });
     });
-});
 
-// Manage Equipment
-Route::get('/admin/manage-equipment', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.manage-equipment');
+    // Edit Equipment
+    Route::get('/admin/edit-equipment', [EquipmentController::class, 'edit'])->name('admin.edit-equipment');
+
+    // Scan Equipment (Equipment Tracker)
+    Route::get('/admin/scan-equipment', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.scan-equipment');
+        });
     });
-});
 
-// Edit Equipment
-Route::get('/admin/edit-equipment', [EquipmentController::class, 'edit'])->name('admin.edit-equipment');
-
-// Scan Equipment (Equipment Tracker)
-Route::get('/admin/scan-equipment', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.scan-equipment');
+    // Asset Tracking
+    Route::get('/admin/asset-tracking', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.asset-tracking');
+        });
     });
-});
 
-// Asset Tracking
-Route::get('/admin/asset-tracking', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.asset-tracking');
+    /*
+    |--------------------------------------------------------------------------
+    | Calendar & Feedback | DEPRECATED, IGNORE 
+    |--------------------------------------------------------------------------
+    */
+
+    // Admin Calendar — facility × time availability matrix
+    Route::get('/admin/calendar', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.admin-calendar');
+        });
     });
-});
 
-/*
-|--------------------------------------------------------------------------
-| Calendar & Feedback | DEPRECATED, IGNORE 
-|--------------------------------------------------------------------------
-*/
-
-// Admin Calendar — facility × time availability matrix
-Route::get('/admin/calendar', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.admin-calendar');
+    // User Feedback
+    Route::get('/admin/user-feedback', function (Request $request) {
+        return requireAdminAuth($request, function () use ($request) {
+            return view('admin.user-feedback');
+        });
     });
-});
 
-// User Feedback
-Route::get('/admin/user-feedback', function (Request $request) {
-    return requireAdminAuth($request, function () use ($request) {
-        return view('admin.user-feedback');
-    });
-});
+    // Feedback Data API
+    Route::get('/admin/feedback-data', [FeedbackController::class, 'getFeedbackData'])->name('admin.feedback.data');
 
-// Feedback Data API
-Route::get('/admin/feedback-data', [FeedbackController::class, 'getFeedbackData'])->name('admin.feedback.data');
-
-// Feedback Stats API
-Route::get('/admin/feedback-stats', [FeedbackController::class, 'getFeedbackStats'])->name('admin.feedback.stats');
+    // Feedback Stats API
+    Route::get('/admin/feedback-stats', [FeedbackController::class, 'getFeedbackStats'])->name('admin.feedback.stats');
 
 });

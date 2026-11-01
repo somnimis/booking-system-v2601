@@ -1,0 +1,436 @@
+/* Styles for official-receipt.blade.php */
+
+body {
+    background-color: #f3f4f6;
+    font-family:
+        "Inter",
+        system-ui,
+        -apple-system,
+        sans-serif;
+    padding: 2rem 1rem;
+    color: #1f2937;
+    overflow-x: hidden;
+}
+
+.resources-header {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* Bootstrap button overrides */
+
+.btn-primary {
+    background-color: #003d6e !important; 
+    border-color: none;
+    color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: #005ba5 !important;
+    border-color: none;
+    color: #fff !important;
+}
+
+.btn-outline-secondary {
+    color: #6c757d !important;
+    border-color: #dee2e6 !important;
+    background-color: #fff !important;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #f8f9fa !important;
+    border-color: #ced4da !important;
+    color: #495057 !important;
+}
+
+/* --- PERMIT CONTAINER (The Hero) --- */
+.permit-wrapper {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    background-color: #fff;
+    background-image:
+        linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.95) 0%,
+            rgba(255, 255, 255, 0.75) 50%,
+            rgba(255, 255, 255, 0.3) 100%
+        ),
+        url("../../assets/cpu-pic1.jpg"); 
+    background-size: cover;
+    background-position: center;
+    border: none;
+    padding: 3rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s ease-in-out;
+}
+
+.permit-wrapper::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 15px;
+    background: #234370;
+}
+
+.permit-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.permit-header img {
+    width: 80px;
+    margin-bottom: 1rem;
+}
+
+.permit-header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0;
+    color: #111827;
+}
+
+.permit-header p {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+}
+
+.approval-banner {
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto 1.5rem auto;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.approval-banner .banner-text {
+    display: inline-block;
+    max-width: 85%;
+}
+
+.btn-close-banner {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    background: transparent;
+    border: none;
+    color: #065f46;
+    font-size: 1.2rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 5px;
+    opacity: 0.6;
+}
+
+.btn-close-banner:hover {
+    opacity: 1;
+}
+
+.permit-to {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.permit-to span {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6b7280;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.permit-to h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.detail-item strong {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.detail-item div {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #111827;
+}
+
+.signatures-section {
+    margin-top: 3rem;
+    /* Changed from transparent to a solid white card so it doesn't blend into the bg */
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.signatures-title {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 1.5rem;
+}
+
+.signature-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.signature-box {
+    text-align: center;
+    min-width: 180px;
+    flex: 1;
+    max-width: 220px;
+    margin-top: 1rem;
+}
+
+.sig-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+}
+
+.sig-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #4b5563; /* Darkened for readability */
+    margin: 0;
+}
+
+.sig-date {
+    font-size: 0.7rem;
+    color: #6b7280; /* Darkened from #9ca3af */
+    margin-top: 4px;
+}
+
+/* --- RECEIPT ACCORDION --- */
+.receipt-wrapper {
+    max-width: 100%;
+}
+
+.accordion-button {
+    font-weight: 600;
+    color: #4b5563;
+    background: #fff;
+    border-radius: 8px !important;
+    border: 1px solid #e5e7eb;
+    font-size: 0.85rem;
+    padding: 0.75rem;
+}
+
+.accordion-button:not(.collapsed) {
+    background: #f3f4f6;
+    color: #111827;
+    box-shadow: none;
+}
+
+.accordion-item {
+    border: none;
+    margin-bottom: 1rem;
+}
+
+.receipt-details {
+    padding: 1rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+}
+
+/* --- MASTER-DETAIL LAYOUT --- */
+.permit-layout-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.permit-layout {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.permit-sidebar {
+    flex: 0 0 280px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 1rem;
+}
+
+.sidebar-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+}
+
+.permit-list-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 40vh;
+    /* Scrollable list */
+    margin-bottom: 1rem;
+    padding-right: 0.25rem;
+}
+
+.permit-list-item {
+    border: none;
+    border-radius: 6px !important;
+    margin-bottom: 0.25rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    color: #4b5563;
+    transition: background 0.15s;
+    width: 100%;
+    text-align: left;
+}
+
+.permit-list-item:hover {
+    background: #f9fafb;
+}
+
+.permit-list-item.active {
+    background: #f3f4f6;
+    color: #111827;
+    font-weight: 600;
+}
+
+.item-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.item-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    background: #e5e7eb;
+    color: #6b7280;
+    margin-bottom: 0.2rem;
+}
+
+.permit-list-item.active .item-badge {
+    background: #bfdbfe;
+    color: #1e3a8a;
+}
+
+.sidebar-download-btn {
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: #6b7280;
+    padding: 0.5rem;
+    border-radius: 4px;
+    z-index: 10;
+}
+
+/* Show icon on hover OR when the tab is currently active/selected */
+.permit-list-item:hover .sidebar-download-btn,
+.permit-list-item.active .sidebar-download-btn {
+    opacity: 1;
+}
+
+.sidebar-download-btn:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.permit-content {
+    flex: 1;
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .permit-layout {
+        flex-direction: column;
+    }
+
+    .permit-sidebar {
+        flex: 1 1 100%;
+        width: 100%;
+        position: static;
+    }
+
+    .permit-wrapper {
+        max-width: 100%;
+    }
+}
+
+.btn-download-all {
+    background-color: #003366;
+    border-color: #003366;
+}
+
+.btn-rate-service {
+    font-size: 0.85rem;
+}
+
+.receipt-title {
+    font-size: 1rem;
+}
+
+.receipt-badge {
+    font-size: 0.7rem;
+}
+
+.receipt-text {
+    font-size: 0.85rem;
+}

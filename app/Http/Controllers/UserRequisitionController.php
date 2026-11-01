@@ -8,23 +8,29 @@ use App\Models\RequisitionForm;
 use App\Models\CompletedTransaction;
 use App\Services\RequisitionFormatterService;
 use App\Services\NotificationService;
+use App\Services\UserBookingService;
 use App\Models\RequisitionApproval;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 
 class UserRequisitionController extends Controller
 {
     protected $formatter;
     protected $notificationService;
+    protected $bookings;
 
     public function __construct(
         RequisitionFormatterService $formatter,
         NotificationService $notificationService,
+        UserBookingService $bookings
     ) {
         $this->formatter = $formatter;
         $this->notificationService = $notificationService;
+        $this->bookings = $bookings;
     }
 
     public function getFormByAccessCode($accessCode)
@@ -45,6 +51,13 @@ class UserRequisitionController extends Controller
                 'details' => $e->getMessage(),
             ], 404);
         }
+    }
+
+    /** Search requisitions by access code or email; returns pre-rendered card HTML. */
+    public function searchForms(Request $request)
+    {
+        $request->validate(['q' => 'required|string|max:255']);
+        return response()->json($this->bookings->search($request->input('q')));
     }
 
     public function cancelRequestPublic($requestId)
@@ -104,86 +117,75 @@ class UserRequisitionController extends Controller
         }
     }
 
+    /**
+     * Handle payment receipt upload (server-side storage on 'public' disk).
+     * Validates form is in Awaiting Payment, stores file, advances to Verifying Payment,
+     * and notifies stage-3 approvers.
+     */
     public function uploadPaymentReceipt(Request $request, $requestId)
     {
+        $request->validate([
+            'receipt' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120', // 5MB
+        ]);
+
+        $form = RequisitionForm::findOrFail($requestId);
+
+        $awaiting = FormStatus::where('status_name', 'Awaiting Payment')->first();
+        if (!$awaiting || $form->status_id !== $awaiting->status_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This request is not awaiting payment.',
+            ], 422);
+        }
+
         try {
-            \Log::info('Payment receipt upload attempt', [
-                'request_id' => $requestId,
-                'has_receipt_url' => !empty($request->receipt_url),
-                'has_public_id' => !empty($request->public_id)
-            ]);
+            // Store on public disk: storage/app/public/receipts/{request_id}_{uuid}.{ext}
+            $path = $request->file('receipt')->store('receipts', 'public');
 
-            $validatedData = $request->validate([
-                'receipt_url' => 'required|url',
-                'public_id' => 'required|string'
-            ]);
+            DB::transaction(function () use ($form, $path) {
+                $form->proof_of_payment_url = '/storage/' . $path;
+                $form->proof_of_payment_public_id = $path; // local path acts as identifier
+                $form->status_id = FormStatus::where('status_name', 'Verifying Payment')->value('status_id');
+                $form->save();
+            });
 
-            $form = RequisitionForm::findOrFail($requestId);
-
-            // Check if form is in correct status for payment
-            if ($form->status_id !== FormStatus::where('status_name', 'Awaiting Payment')->first()->status_id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This request is not awaiting payment.'
-                ], 422);
-            }
-
-            // Update the form with receipt details and advance status to
-            // Verifying Payment so stage-3 admins know to issue the receipt.
-            $form->proof_of_payment_url = $validatedData['receipt_url'];
-            $form->proof_of_payment_public_id = $validatedData['public_id'];
-
-            $verifyingStatus = FormStatus::where('status_name', 'Verifying Payment')->first();
-            if (!$verifyingStatus) {
-                throw new \Exception('Verifying Payment status not found');
-            }
-            $form->status_id = $verifyingStatus->status_id;
-            $form->save();
-
-            // Notify stage-3 approvers (pending only — defensive against
-            // partial state if any already acted).
-            $stage3Ids = RequisitionApproval::where('request_id', $requestId)
+            $stage3 = RequisitionApproval::where('request_id', $requestId)
                 ->where('stage', 3)
                 ->where('status', 'Pending')
                 ->pluck('admin_id');
 
-            if ($stage3Ids->isNotEmpty()) {
-                $this->notificationService->notifyStage3Ready($form, $stage3Ids);
+            if ($stage3->isNotEmpty()) {
+                $this->notificationService->notifyStage3Ready($form, $stage3);
             }
 
-            \Log::info('Payment receipt uploaded; status advanced to Verifying Payment', [
-                'request_id' => $requestId,
-                'receipt_url' => $validatedData['receipt_url'],
-                'stage3_notified' => $stage3Ids->count(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Receipt uploaded successfully'
-            ]);
-            
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Receipt upload validation failed', [
-                'request_id' => $requestId,
-                'errors' => $e->errors()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
+            return response()->json(['success' => true, 'message' => 'Receipt uploaded successfully.']);
         } catch (\Exception $e) {
-            \Log::error('Failed to upload payment receipt', [
-                'request_id' => $requestId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to upload receipt: ' . $e->getMessage()
-            ], 500);
+            \Log::error('Receipt upload failed', ['request_id' => $requestId, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Upload failed. Please try again.'], 500);
         }
     }
+
+    public function showVerifyPage()
+    {
+        return view('public.verify');
+    }
+
+    public function verifyPermit(Request $request)
+    {
+        $request->validate(['control_num' => 'required|string']);
+        $form = RequisitionForm::with('formStatus')
+            ->where('control_num', trim($request->control_num))
+            ->first();
+
+        if (!$form) {
+            return back()->with('error', 'No matching permit found. This document may be forged.');
+        }
+
+        if (in_array($form->formStatus->status_name, ['Cancelled', 'Rejected'])) {
+            return back()->with('error', 'WARNING: This permit has been ' . $form->formStatus->status_name . ' in the system.');
+        }
+
+        return back()->with('success', 'Valid Permit Found!')->with('permit', $form);
+    }
+
 }

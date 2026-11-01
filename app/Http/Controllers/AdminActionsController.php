@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /* AdminActionsController — Summary Documentation
 
@@ -878,6 +879,9 @@ class AdminActionsController extends Controller
             }
             if (!empty($validatedData['event_details'])) {
                 $form->event_details = $validatedData['event_details'];
+            }
+            if (empty($form->control_num)) {
+                $form->control_num = 'CPU-' . date('Y') . '-' . strtoupper(Str::random(4));
             }
 
             $form->save();
