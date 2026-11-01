@@ -10,9 +10,6 @@
            REFINED INSTITUTIONAL THEME - POLICIES & GUIDELINES
            Matching catalog.css design system
            ============================================ */
-
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fraunces:wght@600;700&display=swap');
-
         :root {
             --navy: #041a4b;
             --navy-mid: #0b2d72;
@@ -168,11 +165,6 @@ body::before {
             height: 100%;
             overflow: hidden;
             box-shadow: var(--shadow-sm);
-        }
-
-        .policy-card:hover {
-            box-shadow: var(--shadow-md);
-            border-color: var(--navy-light);
         }
 
         .policy-header {
@@ -341,11 +333,27 @@ body::before {
 
         /* Category Section Header */
         .category-header {
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             margin-bottom: 1.75rem;
             position: relative;
+            text-align: center;
         }
 
+        /* The line spanning across the background */
+        .category-header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: var(--border);
+            z-index: 1;
+        }
+
+        /* The Chip/Badge */
         .category-header h5 {
             display: inline-block;
             background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
@@ -357,17 +365,7 @@ body::before {
             letter-spacing: 0.5px;
             margin: 0;
             position: relative;
-            z-index: 1;
-        }
-
-        /* Footer */
-        footer {
-            margin-top: 1rem;
-            text-align: center;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
-            font-size: 0.75rem;
-            color: var(--text-muted);
+            z-index: 2;
         }
 
         /* Responsive */
@@ -524,7 +522,6 @@ body::before {
         <!-- Category: University Students, Organizations & Staff -->
         <div class="category-section">
             <div class="category-header">
-                <hr class="w-100 position-absolute" style="border-top: 1px solid var(--border); margin: 0;">
                 <h5>University Students, Organizations & Staff</h5>
             </div>
             <div class="row g-4">
@@ -668,7 +665,6 @@ body::before {
         <!-- Category: Alumni -->
         <div class="category-section">
             <div class="category-header">
-                <hr class="w-100 position-absolute" style="border-top: 1px solid var(--border); margin: 0;">
                 <h5>Alumni</h5>
             </div>
             <div class="row g-4">
@@ -759,7 +755,6 @@ body::before {
         <!-- Category: External -->
         <div class="category-section">
             <div class="category-header">
-                <hr class="w-100 position-absolute" style="border-top: 1px solid var(--border); margin: 0;">
                 <h5>External Users</h5>
             </div>
             <div class="row g-4">
@@ -792,9 +787,5 @@ body::before {
                 </div>
             </div>
         </div>
-
-        <footer>
-            <p class="mb-0">&copy; {{ date('Y') }} Central Philippine University. All rights reserved.</p>
-        </footer>
     </main>
 @endsection

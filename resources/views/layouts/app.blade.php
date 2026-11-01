@@ -19,7 +19,10 @@
   @stack('styles')
 
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
     :root {
+
       /* Primary Color Scheme */
       --cpu-primary: #003366;
       /* Main CPU blue */
@@ -47,6 +50,12 @@
       /* Navbar bottom border */
       --cpu-shadow: rgba(0, 0, 0, 0.1);
       /* Shadow color */
+
+      --app-bg: #f4f6f8;
+    }
+
+    body {
+      background-color: var(--app-bg);
     }
 
     /* Custom pagination colors using CPU theme */
@@ -102,10 +111,26 @@
       border-radius: 10px;
     }
 
-    /* Hide top-header bar on events calendar page */
+    /* Hide top-header bar and footer on events calendar page */
     body.events-calendar-page .top-header-bar,
-    footer.footer-container {
+    body.events-calendar-page footer.footer-container {
       display: none !important;
+    }
+
+    /* Sticky footer layout */
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Forces main to take up all available space, pushing footer down */
+    main {
+      flex: 1 0 auto;
+    }
+
+    footer.footer-container {
+      flex-shrink: 0;
     }
   </style>
 

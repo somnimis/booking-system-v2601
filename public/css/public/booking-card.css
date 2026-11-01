@@ -2,9 +2,24 @@
    Soft white → gray palette. No heavy shadows; borders + whitespace carry structure. */
 
 /* ---------- Page surface ---------- */
+
+/* Preserve Font Awesome icon fonts */
+.fa,
+.fas,
+.far,
+.fab,
+.fa-solid,
+.fa-regular,
+.fa-brands {
+    font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+}
+
+* {
+    font-family: "DM Sans", sans-serif !important;
+}
+
 .page-surface {
     min-height: calc(100vh - 80px);
-    background: #ffffff;
     padding: 4rem 1.25rem 6rem;
 }
 
@@ -47,13 +62,16 @@
     background: #ffffff;
     border: 1px solid #e6e6e4;
     border-radius: 8px;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease;
 }
 
-.search-input::placeholder { color: #b3b3af; }
+.search-input::placeholder {
+    color: #b3b3af;
+}
 
-.search-input:hover  { background: #fcfcfb; }
-.search-input:focus  {
+.search-input:focus {
     outline: none;
     border-color: #c7c7c3;
     background: #ffffff;
@@ -68,17 +86,19 @@
     font-size: 0.875rem;
     font-weight: 500;
     color: #ffffff;
-    background: #2b2b2b;
-    border: 1px solid #2b2b2b;
+    background: #003366;
+    border: 1px solid #003366;
     border-radius: 8px;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
     white-space: nowrap;
 }
 
 .btn-primary-action:hover {
-    background: #1f1f1f;
-    border-color: #1f1f1f;
+    background: #00458a;
+    border-color: #00458a;
 }
 
 /* ---------- Filter bar ---------- */
@@ -96,10 +116,15 @@
     background: #ffffff;
     border: 1px solid #e6e6e4;
     border-radius: 6px;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
 }
 
-.filter-btn:hover { background: #fbfbfa; border-color: #e6e6e4; }
+.filter-btn:hover {
+    background: #fbfbfa;
+    border-color: #e6e6e4;
+}
 
 .filter-row .dropdown-menu {
     border: 1px solid #e6e6e4;
@@ -116,7 +141,9 @@
     padding: 0.4rem 0.65rem;
 }
 
-.filter-row .dropdown-item:hover { background: #fbfbfa; }
+.filter-row .dropdown-item:hover {
+    background: #fbfbfa;
+}
 
 /* ---------- Card ---------- */
 .booking-card {
@@ -125,7 +152,9 @@
     border-radius: 10px;
     padding: 1.15rem 1.25rem;
     margin-bottom: 0.85rem;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .booking-card:hover {
@@ -215,7 +244,10 @@
     font-weight: 500;
     border-radius: 7px;
     border: 1px solid transparent;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .booking-card .btn-success {
@@ -224,7 +256,9 @@
     border-color: #e6e6e4;
 }
 
-.booking-card .btn-success:hover { background: #fbfbfa; }
+.booking-card .btn-success:hover {
+    background: #fbfbfa;
+}
 
 .booking-card .btn-danger {
     background: #ffffff;
@@ -289,7 +323,9 @@
     background: #ffffff;
     border: 1px solid #e6e6e4;
     border-radius: 6px;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .modal-footer .btn-secondary:hover {
@@ -298,7 +334,10 @@
     color: #4d4d4a;
 }
 
-.modal-body { color: #4d4d4a; font-size: 0.9rem; }
+.modal-body {
+    color: #4d4d4a;
+    font-size: 0.9rem;
+}
 
 /* upload area */
 .upload-area {
@@ -307,7 +346,9 @@
     padding: 2rem;
     text-align: center;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
     background: #fafaf9;
 }
 
@@ -323,14 +364,27 @@
     display: block;
 }
 
-.upload-area p { margin: 0; font-size: 0.85rem; color: #787774; }
+.upload-area p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #787774;
+}
 
 /* responsive */
 @media (max-width: 576px) {
-    .page-surface { padding: 2.5rem 1rem 4rem; }
-    .page-title { font-size: 1.4rem; }
-    .search-row { flex-direction: column; }
-    .btn-primary-action { width: 100%; justify-content: center; }
+    .page-surface {
+        padding: 2.5rem 1rem 4rem;
+    }
+    .page-title {
+        font-size: 1.4rem;
+    }
+    .search-row {
+        flex-direction: column;
+    }
+    .btn-primary-action {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 .booking-card .total-fee {
@@ -367,7 +421,9 @@
     color: #ffffff;
     background: #15803d; /* Tailwind green-700 */
     border: 1px solid #15803d;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .booking-card .btn-receipt:hover {
@@ -375,4 +431,3 @@
     border-color: #166534;
     color: #ffffff;
 }
-

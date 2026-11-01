@@ -437,7 +437,7 @@
             </ul>
 
             <div class="d-flex align-items-center ms-lg-3">
-                <a href="{{ route('user-guide') }}" class="me-2 how-to-book d-flex align-items-center text-decoration-none" style="color: inherit;">
+                <a href="{{ route('user-guide') }}" class="me-2 how-to-book d-flex align-items-center text-decoration-none">
                     How to book?
                     <i class="bi bi-question-circle ms-1" style="font-size: 0.85rem;"></i>
                 </a>

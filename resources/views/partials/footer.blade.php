@@ -1,65 +1,91 @@
 <footer class="footer-container">
     <style>
-        /* Original Desktop Footer Styles - Keep exactly as was */
-        .footer-container {
-            /* No background color added - keeps original */
-            padding: 0; /* Original padding */
+
+        /* Apply font specifically to footer elements */
+        footer.footer-container, 
+        footer.footer-container * {
+            font-family: 'DM Sans', sans-serif !important;
+        }
+
+        /* Base Desktop Styling */
+        footer.footer-container {
+            padding: 20px 0;
             width: 100%;
+            background-color: var(--cpu-primary);
+            color: var(--cpu-white);
         }
 
-        .footer-container p {
-            margin: 0;
-            /* Original text color preserved */
+        .footer-copyright {
+            color: var(--cpu-white);
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            /* Space between copyright and links */
         }
 
-        /* MOBILE RESPONSIVE STYLES ONLY */
+        .footer-link {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--cpu-secondary);
+            /* Gold accent on hover */
+        }
+
+        /* Mobile Styles */
         @media (max-width: 768px) {
-            .footer-container {
-                padding: 15px 0; /* Add padding for mobile */
-                background-color: #f8f9fa; /* Light background for visibility on mobile */
+            footer.footer-container {
+                padding: 15px 0;
+                background-color: #f8f9fa;
                 border-top: 1px solid #dee2e6;
             }
 
-            .footer-container .container {
+            footer.footer-container .container {
                 padding-left: 20px;
                 padding-right: 20px;
             }
 
-            .footer-container p {
+            .footer-copyright {
+                color: #6c757d !important;
+                font-size: 0.85rem;
+            }
+
+            .footer-link {
+                color: #6c757d;
                 font-size: 0.8rem;
-                line-height: 1.5;
-                color: #6c757d; /* Visible color for mobile */
+                display: inline-block;
+                margin-bottom: 5px;
             }
         }
 
-        /* Extra small devices */
+        /* Extra Small Devices */
         @media (max-width: 480px) {
-            .footer-container {
+            footer.footer-container {
                 padding: 12px 0;
             }
 
-            .footer-container p {
-                font-size: 0.75rem;
-                padding: 0 10px;
+            .footer-link {
+                margin-right: 10px !important;
+                /* Tighter spacing on small phones */
             }
         }
-
-        /* Ensure footer is visible at bottom - Add this for structure */
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        main {
-            flex: 1 0 auto;
-        }
-
-        .footer-container {
-            flex-shrink: 0;
-        }
     </style>
-    <div class="container text-center">
-        <p class="mb-0">&copy; 2025 Central Philippine University | All Rights Reserved</p>
+    <div class="container">
+        <div class="row gy-3 text-center">
+
+            <!-- Top: Copyright (Centered) -->
+            <div class="col-12">
+                <p class="mb-0 footer-copyright">&copy; 2025 Central Philippine University
+            </div>
+
+            <!-- Bottom: Quick Links (Centered) -->
+            <div class="col-12">
+                <a href="{{ url('/privacy-policy') }}" class="text-decoration-none me-3 footer-link">Privacy Policy</a>
+                <a href="{{ url('/terms-of-use') }}" class="text-decoration-none me-3 footer-link">Terms of Use</a>
+                <a href="{{ url('/contact-support') }}" class="text-decoration-none footer-link">Contact Support</a>
+            </div>
+
+        </div>
     </div>
 </footer>

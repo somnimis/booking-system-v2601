@@ -134,10 +134,5 @@ body {
     border-color: var(--cpu-primary);
 }
 
-.footer-container {
-    background-color: var(--cpu-primary);
-    color: var(--cpu-white);
-    padding: 1rem 0;
-}
 
 

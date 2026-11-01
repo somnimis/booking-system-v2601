@@ -66,6 +66,9 @@ Route::middleware('web')->group(function () {
     Route::view('/policies', 'public.policies');
     Route::view('/inquiries', 'public.inquiries');
     Route::view('/user-guide', 'public.user-guide')->name('user-guide');
+    Route::view('/privacy-policy', 'public.privacy-policy')->name('privacy-policy');
+    Route::view('/terms-of-use', 'public.terms-of-use')->name('terms-of-use');
+    Route::view('/contact-support', 'public.contact-support')->name('contact-support');
 
     // Official Receipt
     Route::get('/official-receipt/{requestId}', [AdminActionsController::class, 'generateOfficialReceipt'])
