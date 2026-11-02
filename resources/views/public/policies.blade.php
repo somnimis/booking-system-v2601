@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* ============================================
-           REFINED INSTITUTIONAL THEME - POLICIES & GUIDELINES
-           Matching catalog.css design system
-           ============================================ */
+               REFINED INSTITUTIONAL THEME - POLICIES & GUIDELINES
+               Matching catalog.css design system
+               ============================================ */
         :root {
             --navy: #041a4b;
             --navy-mid: #0b2d72;
@@ -58,28 +58,28 @@
             position: relative;
         }
 
-body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(4, 26, 75, 0.38) 0%, rgba(4, 26, 75, 0.75) 100%);
-    z-index: -1;
-}
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(4, 26, 75, 0.38) 0%, rgba(4, 26, 75, 0.75) 100%);
+            z-index: -1;
+        }
 
-.main-content-wrapper {
-    position: relative;
-    z-index: 1;
-    background: var(--white);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-lg);
-    padding: 2.5rem;
-    margin: 2rem auto;
-    max-width: 1300px;
-    width: calc(100% - 2rem);
-}
+        .main-content-wrapper {
+            position: relative;
+            z-index: 1;
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 2.5rem;
+            margin: 2rem auto;
+            max-width: 1300px;
+            width: calc(100% - 2rem);
+        }
 
         @media (max-width: 768px) {
             .main-content-wrapper {
@@ -395,7 +395,8 @@ body::before {
                 margin-bottom: 0.75rem;
             }
 
-            .policy-category, .policy-title {
+            .policy-category,
+            .policy-title {
                 text-align: center;
             }
 
@@ -423,25 +424,81 @@ body::before {
         }
 
         /* Utility Classes */
-        .text-primary { color: var(--navy) !important; }
-        .text-muted { color: var(--text-muted) !important; }
-        .mb-0 { margin-bottom: 0 !important; }
-        .mb-1 { margin-bottom: 0.25rem !important; }
-        .mb-2 { margin-bottom: 0.5rem !important; }
-        .mb-3 { margin-bottom: 1rem !important; }
-        .mb-4 { margin-bottom: 1.5rem !important; }
-        .mb-5 { margin-bottom: 2rem !important; }
-        .mt-0 { margin-top: 0 !important; }
-        .mt-1 { margin-top: 0.25rem !important; }
-        .mt-2 { margin-top: 0.5rem !important; }
-        .mt-3 { margin-top: 1rem !important; }
-        .mt-4 { margin-top: 1.5rem !important; }
-        .mt-5 { margin-top: 2rem !important; }
-        .me-1 { margin-right: 0.25rem !important; }
-        .me-2 { margin-right: 0.5rem !important; }
-        .me-3 { margin-right: 1rem !important; }
-        .border-bottom { border-bottom: 1px solid var(--border) !important; }
-        .pb-2 { padding-bottom: 0.5rem !important; }
+        .text-primary {
+            color: var(--navy) !important;
+        }
+
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        .mb-0 {
+            margin-bottom: 0 !important;
+        }
+
+        .mb-1 {
+            margin-bottom: 0.25rem !important;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem !important;
+        }
+
+        .mb-3 {
+            margin-bottom: 1rem !important;
+        }
+
+        .mb-4 {
+            margin-bottom: 1.5rem !important;
+        }
+
+        .mb-5 {
+            margin-bottom: 2rem !important;
+        }
+
+        .mt-0 {
+            margin-top: 0 !important;
+        }
+
+        .mt-1 {
+            margin-top: 0.25rem !important;
+        }
+
+        .mt-2 {
+            margin-top: 0.5rem !important;
+        }
+
+        .mt-3 {
+            margin-top: 1rem !important;
+        }
+
+        .mt-4 {
+            margin-top: 1.5rem !important;
+        }
+
+        .mt-5 {
+            margin-top: 2rem !important;
+        }
+
+        .me-1 {
+            margin-right: 0.25rem !important;
+        }
+
+        .me-2 {
+            margin-right: 0.5rem !important;
+        }
+
+        .me-3 {
+            margin-right: 1rem !important;
+        }
+
+        .border-bottom {
+            border-bottom: 1px solid var(--border) !important;
+        }
+
+        .pb-2 {
+            padding-bottom: 0.5rem !important;
+        }
     </style>
 
     <main class="main-content-wrapper">
@@ -471,7 +528,8 @@ body::before {
                     <div class="general-policy-item">
                         <div class="policy-number">3</div>
                         <div><strong>Approval Process:</strong> Bookings require approval from the responsible offices.
-                            Track progress and upload payment receipts in the <a href="{{ url('your-bookings') }}">Your Bookings</a> page using your reference code.
+                            Track progress and upload payment receipts in the <a href="{{ url('your-bookings') }}">Your
+                                Bookings</a> page using your reference code.
                         </div>
                     </div>
                     <div class="general-policy-item">
@@ -499,7 +557,8 @@ body::before {
                     <div class="general-policy-item">
                         <div class="policy-number">8</div>
                         <div><strong>Feedback:</strong> To better serve you, a feedback form is available <a
-                                href="{{ url('user-feedback') }}">here</a> for users to report or suggest improvements.</div>
+                                href="{{ url('user-feedback') }}">here</a> for users to report or suggest improvements.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -511,10 +570,17 @@ body::before {
                 <i class="fas fa-info-circle me-3 mt-1" style="font-size: 1.25rem; color: var(--warning);"></i>
                 <div>
                     <h5>Important Note</h5>
-                    <p><strong>All bookings are processed on a first-approved, first-served basis.</strong> Early submission does not guarantee approval — requests are confirmed only upon official approval from the designated offices. Please monitor your email for updates regarding your booking status. For detailed procedures, eligibility requirements, and real-time availability, call VPA's local landline 3266 or visit the office.</p>
+                    <p><strong>All bookings are processed on a first-approved, first-served basis.</strong> Early submission
+                        does not guarantee approval — requests are confirmed only upon official approval from the designated
+                        offices. Please monitor your email for updates regarding your booking status. For detailed
+                        procedures, eligibility requirements, and real-time availability, call VPA's local landline 3266 or
+                        visit the office.</p>
                 </div>
             </div>
         </div>
+    </main>
+
+    <main class="main-content-wrapper mt-4">
 
         <!-- Fee Guidelines Section -->
         <h2 class="section-title mt-4">Booking Fee Discounts & Waiver Eligibility</h2>
@@ -540,12 +606,14 @@ body::before {
                         <div class="policy-body">
                             <span class="discount-badge"><i class="fas fa-check-circle"></i>100% Free</span>
                             <div class="small text-muted mb-2 pb-2 border-bottom">
-                                <i class="fas fa-user-check me-1"></i> For official academic activities by faculty, departments, and recognized academic units
+                                <i class="fas fa-user-check me-1"></i> For official academic activities by faculty,
+                                departments, and recognized academic units
                             </div>
                             <div class="policy-details">
                                 <ul>
-                                    <li><i class="fas fa-circle"></i> Venues, PA equipment, staff overtime: <strong>Free</strong></li>
-                                    <li><i class="fas fa-circle"></i> LED screen: <strong>Paid</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Venues, PA equipment, staff overtime:
+                                        <strong>Free</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> LED screen: <strong>Paid</strong></li>
                                 </ul>
                             </div>
                         </div>
@@ -566,13 +634,14 @@ body::before {
                         <div class="policy-body">
                             <span class="discount-badge"><i class="fas fa-check-circle"></i>100% Free</span>
                             <div class="small text-muted mb-2 pb-2 border-bottom">
-                                <i class="fas fa-user-check me-1"></i> For official university-wide events organized by the Administration
+                                <i class="fas fa-user-check me-1"></i> For official university-wide events organized by the
+                                Administration
                             </div>
                             <div class="policy-details">
                                 <ul>
-                                    <li><i class="fas fa-circle"></i> All university programs: <strong>Free</strong></li>
-                                    <li><i class="fas fa-circle"></i> Includes board passers ceremonies</li>
-                                    <li><i class="fas fa-circle"></i> No venue or equipment fees</li>
+                                    <li><i class="fas fa-circle-dot"></i> All university programs: <strong>Free</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Includes board passers ceremonies</li>
+                                    <li><i class="fas fa-circle-dot"></i> No venue or equipment fees</li>
                                 </ul>
                             </div>
                         </div>
@@ -593,13 +662,15 @@ body::before {
                         <div class="policy-body">
                             <span class="discount-badge warning"><i class="fas fa-tag"></i>75% Discount</span>
                             <div class="small text-muted mb-2 pb-2 border-bottom">
-                                <i class="fas fa-user-check me-1"></i> For accredited student organizations (excluding UDAY activities)
+                                <i class="fas fa-user-check me-1"></i> For accredited student organizations (excluding UDAY
+                                activities)
                             </div>
                             <div class="policy-details">
                                 <ul>
-                                    <li><i class="fas fa-circle"></i> Venues & PA equipment: <strong>75% off</strong></li>
-                                    <li><i class="fas fa-circle"></i> LED screen: <strong>Paid</strong></li>
-                                    <li><i class="fas fa-circle"></i> Employee overtime: <strong>Paid by organizer</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Venues & PA equipment: <strong>75% off</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> LED screen: <strong>Paid</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Employee overtime: <strong>Paid by organizer</strong>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -620,13 +691,15 @@ body::before {
                         <div class="policy-body">
                             <span class="discount-badge warning"><i class="fas fa-tag"></i>75% Discount</span>
                             <div class="small text-muted mb-2 pb-2 border-bottom">
-                                <i class="fas fa-user-check me-1"></i> For student activities that don't charge participation fees
+                                <i class="fas fa-user-check me-1"></i> For student activities that don't charge
+                                participation fees
                             </div>
                             <div class="policy-details">
                                 <ul>
-                                    <li><i class="fas fa-circle"></i> Venues & PA equipment: <strong>75% off</strong></li>
-                                    <li><i class="fas fa-circle"></i> LED screen: <strong>Paid</strong></li>
-                                    <li><i class="fas fa-circle"></i> Employee overtime: <strong>Paid by organizer</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Venues & PA equipment: <strong>75% off</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> LED screen: <strong>Paid</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Employee overtime: <strong>Paid by organizer</strong>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -647,13 +720,15 @@ body::before {
                         <div class="policy-body">
                             <span class="discount-badge"><i class="fas fa-tag"></i>50% Discount</span>
                             <div class="small text-muted mb-2 pb-2 border-bottom">
-                                <i class="fas fa-user-check me-1"></i> For student activities that charge registration or entrance fees
+                                <i class="fas fa-user-check me-1"></i> For student activities that charge registration or
+                                entrance fees
                             </div>
                             <div class="policy-details">
                                 <ul>
-                                    <li><i class="fas fa-circle"></i> Venues & PA equipment: <strong>50% off</strong></li>
-                                    <li><i class="fas fa-circle"></i> LED screen: <strong>Paid</strong></li>
-                                    <li><i class="fas fa-circle"></i> Employee overtime: <strong>Paid by organizer</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Venues & PA equipment: <strong>50% off</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> LED screen: <strong>Paid</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Employee overtime: <strong>Paid by organizer</strong>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -682,13 +757,14 @@ body::before {
                         <div class="policy-body">
                             <span class="discount-badge"><i class="fas fa-check-circle"></i>100% Free</span>
                             <div class="small text-muted mb-2 pb-2 border-bottom">
-                                <i class="fas fa-user-check me-1"></i> For official class reunions organized by alumni batches
+                                <i class="fas fa-user-check me-1"></i> For official class reunions organized by alumni
+                                batches
                             </div>
                             <div class="policy-details">
                                 <ul>
-                                    <li><i class="fas fa-circle"></i> Venues, PA, staff: <strong>Free</strong></li>
-                                    <li><i class="fas fa-circle"></i> LED screen: <strong>Paid</strong></li>
-                                    <li><i class="fas fa-circle"></i> Special alumni rates apply</li>
+                                    <li><i class="fas fa-circle-dot"></i> Venues, PA, staff: <strong>Free</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> LED screen: <strong>Paid</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Special alumni rates apply</li>
                                 </ul>
                             </div>
                         </div>
@@ -709,13 +785,15 @@ body::before {
                         <div class="policy-body">
                             <span class="discount-badge warning"><i class="fas fa-tag"></i>30% Discount</span>
                             <div class="small text-muted mb-2 pb-2 border-bottom">
-                                <i class="fas fa-user-check me-1"></i> For events organized by alumni associations/groups (non-reunion)
+                                <i class="fas fa-user-check me-1"></i> For events organized by alumni associations/groups
+                                (non-reunion)
                             </div>
                             <div class="policy-details">
                                 <ul>
-                                    <li><i class="fas fa-circle"></i> Venues & PA equipment: <strong>30% off</strong></li>
-                                    <li><i class="fas fa-circle"></i> LED screen: <strong>Paid</strong></li>
-                                    <li><i class="fas fa-circle"></i> Employee overtime: <strong>Paid by organizer</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Venues & PA equipment: <strong>30% off</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> LED screen: <strong>Paid</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Employee overtime: <strong>Paid by organizer</strong>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -736,14 +814,16 @@ body::before {
                         <div class="policy-body">
                             <span class="discount-badge"><i class="fas fa-tag"></i>20% Discount</span>
                             <div class="small text-muted mb-2 pb-2 border-bottom">
-                                <i class="fas fa-user-check me-1"></i> For alumni hosting personal celebrations (weddings, birthdays, etc.)
+                                <i class="fas fa-user-check me-1"></i> For alumni hosting personal celebrations (weddings,
+                                birthdays, etc.)
                             </div>
                             <div class="policy-details">
                                 <ul>
-                                    <li><i class="fas fa-circle"></i> Venues & PA equipment: <strong>20% off</strong></li>
-                                    <li><i class="fas fa-circle"></i> LED screen: <strong>Paid</strong></li>
-                                    <li><i class="fas fa-circle"></i> Employee overtime: <strong>Paid by organizer</strong></li>
-                                    <li><i class="fas fa-circle"></i> Other required fees apply</li>
+                                    <li><i class="fas fa-circle-dot"></i> Venues & PA equipment: <strong>20% off</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> LED screen: <strong>Paid</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> Employee overtime: <strong>Paid by organizer</strong>
+                                    </li>
+                                    <li><i class="fas fa-circle-dot"></i> Other required fees apply</li>
                                 </ul>
                             </div>
                         </div>
@@ -772,14 +852,15 @@ body::before {
                         <div class="policy-body">
                             <span class="discount-badge danger"><i class="fas fa-times-circle"></i>No Discount</span>
                             <div class="small text-muted mb-2 pb-2 border-bottom">
-                                <i class="fas fa-user-check me-1"></i> For non-CPU affiliates, outside organizations, and commercial users
+                                <i class="fas fa-user-check me-1"></i> For non-CPU affiliates, outside organizations, and
+                                commercial users
                             </div>
                             <div class="policy-details">
                                 <ul>
-                                    <li><i class="fas fa-circle"></i> <strong>All necessary charges apply</strong></li>
-                                    <li><i class="fas fa-circle"></i> No university discounts</li>
-                                    <li><i class="fas fa-circle"></i> Standard rates apply</li>
-                                    <li><i class="fas fa-circle"></i> Employee overtime charged</li>
+                                    <li><i class="fas fa-circle-dot"></i> <strong>All necessary charges apply</strong></li>
+                                    <li><i class="fas fa-circle-dot"></i> No university discounts</li>
+                                    <li><i class="fas fa-circle-dot"></i> Standard rates apply</li>
+                                    <li><i class="fas fa-circle-dot"></i> Employee overtime charged</li>
                                 </ul>
                             </div>
                         </div>
