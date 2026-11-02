@@ -1,0 +1,10 @@
+# Laravel specific
+/vendor
+/node_modules
+/public
+/storage
+*.blade.php
+
+# Generated files
+package-lock.json
+composer.lock
