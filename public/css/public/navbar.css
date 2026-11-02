@@ -1,0 +1,406 @@
+/* ============================================================
+   NAVBAR STYLESHEET — CPU Booking
+   Scoped under #cpu-navbar-root so no other stylesheet can
+   override the navbar's identity (font, size, color).
+   Loaded LAST in <head>, after @stack('styles').
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fraunces:wght@600;700&display=swap');
+
+/* ---------- Root tokens & Sticky Fix ---------- */
+#cpu-navbar-root {
+    /* This makes the wrapper div invisible to layout, 
+       restoring the sticky behavior as if it wasn't there! */
+    display: contents !important;
+}
+
+/* We move the CSS variables to :root so they still work inside the navbar */
+:root {
+    --navy: #041a4b;
+    --navy-mid: #0b2d72;
+    --navy-light: #e8edf8;
+    --amber: #f5bc40;
+    --amber-dark: #d9a12a;
+    --white: #ffffff;
+    --surface: #f5f6fa;
+    --border: #e2e6f0;
+    --text-base: #1e2d4a;
+    --text-muted: #6b7a99;
+    --text-light: #9aaac5;
+    --shadow-sm: 0 1px 3px rgba(4, 26, 75, .06), 0 1px 2px rgba(4, 26, 75, .04);
+    --shadow-md: 0 4px 16px rgba(4, 26, 75, .10), 0 2px 6px rgba(4, 26, 75, .06);
+    --shadow-lg: 0 12px 40px rgba(4, 26, 75, .16), 0 4px 12px rgba(4, 26, 75, .08);
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- Font lockdown ----------
+   Every element inside the navbar inherits DM Sans by default.
+   Anything that needs a different font (Fraunces title) is
+   re-specified below with !important.                            */
+#cpu-navbar-root,
+#cpu-navbar-root * {
+    font-family: 'DM Sans', 'Segoe UI', Roboto, Arial, sans-serif !important;
+    box-sizing: border-box;
+}
+
+/* ============================================================
+   TOP HEADER BAR
+   ============================================================ */
+#cpu-navbar-root .top-header-bar {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+    color: var(--white);
+    padding: 12px 0;
+    position: relative;
+    z-index: 2001;
+}
+
+#cpu-navbar-root .top-header-bar .cpu-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#cpu-navbar-root .top-header-bar .cpu-brand img {
+    height: 55px;
+    width: auto;
+    transition: var(--transition);
+}
+
+#cpu-navbar-root .top-header-bar .cpu-brand .title {
+    font-family: 'Fraunces', serif !important;
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    color: var(--white) !important;
+    letter-spacing: -0.3px;
+}
+
+#cpu-navbar-root .top-header-bar .cpu-brand .subtitle {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.8rem !important;
+    font-weight: 400 !important;
+    line-height: 1.2 !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    letter-spacing: 0.2px;
+}
+
+#cpu-navbar-root .top-header-bar .admin-login {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.85rem !important;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+#cpu-navbar-root .top-header-bar .admin-login a {
+    color: var(--amber) !important;
+    text-decoration: none;
+    font-weight: 500 !important;
+    transition: var(--transition);
+}
+
+#cpu-navbar-root .top-header-bar .admin-login a:hover {
+    color: var(--amber-dark) !important;
+    text-decoration: underline;
+}
+
+/* ============================================================
+   MAIN NAVBAR
+   ============================================================ */
+#cpu-navbar-root .main-navbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+    box-shadow: var(--shadow-sm);
+}
+
+#cpu-navbar-root .main-navbar .navbar {
+    padding: 1rem 0;
+}
+
+/* ---------- Toggler ---------- */
+#cpu-navbar-root .main-navbar .navbar-toggler {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.75rem;
+    transition: var(--transition);
+}
+
+#cpu-navbar-root .main-navbar .navbar-toggler:hover {
+    background: var(--surface);
+    border-color: var(--navy);
+}
+
+#cpu-navbar-root .main-navbar .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%23041a4b' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+
+/* ---------- Nav links ---------- */
+#cpu-navbar-root .main-navbar .nav-link {
+    font-family: 'DM Sans', sans-serif !important;
+    color: var(--text-base) !important;
+    font-weight: 500 !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    padding: 1rem 1rem !important;
+    transition: var(--transition);
+    border-radius: var(--radius-sm);
+    margin: 0 2px;
+}
+
+#cpu-navbar-root .main-navbar .nav-link:hover {
+    color: var(--amber) !important;
+    background-color: transparent;
+}
+
+#cpu-navbar-root .main-navbar .nav-link.active {
+    color: var(--amber) !important;
+    background-color: transparent;
+    font-weight: 600 !important;
+    position: relative;
+}
+
+#cpu-navbar-root .main-navbar .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    background: var(--amber);
+    border-radius: 2px;
+}
+
+/* ---------- "How to book?" ---------- */
+#cpu-navbar-root .main-navbar .how-to-book {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: var(--transition);
+    white-space: nowrap;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+}
+
+#cpu-navbar-root .main-navbar .how-to-book:hover {
+    color: var(--navy);
+    background-color: var(--navy-light);
+}
+
+#cpu-navbar-root .main-navbar .how-to-book i {
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+
+#cpu-navbar-root .main-navbar .how-to-book:hover i {
+    color: var(--navy);
+}
+
+/* ---------- "Book Now" button ---------- */
+#cpu-navbar-root .main-navbar .btn-book-now {
+    background: linear-gradient(135deg, var(--amber) 0%, var(--amber-dark) 100%);
+    color: var(--navy) !important;
+    border: none;
+    font-family: 'DM Sans', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+    padding: 0.6rem 1.5rem;
+    border-radius: 60px;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+    letter-spacing: 0.3px;
+    text-decoration: none;
+}
+
+#cpu-navbar-root .main-navbar .btn-book-now:hover {
+    background: linear-gradient(135deg, var(--amber-dark) 0%, #c08e22 100%);
+    color: var(--navy) !important;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+#cpu-navbar-root .main-navbar .btn-book-now:active {
+    transform: translateY(0);
+}
+
+/* ============================================================
+   TOOLTIP (scoped — only tooltips triggered inside navbar)
+   ============================================================ */
+#cpu-navbar-root .tooltip {
+    z-index: 2500 !important;
+}
+
+#cpu-navbar-root .tooltip .tooltip-inner {
+    background: rgba(20, 20, 20, 0.75);
+    color: #fff;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.8rem !important;
+    padding: 0.75rem 1rem;
+    line-height: 1.4;
+    max-width: 320px;
+    text-align: left;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+#cpu-navbar-root .bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: rgba(20, 20, 20, 0.75);
+}
+
+#cpu-navbar-root .bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: rgba(20, 20, 20, 0.75);
+}
+
+#cpu-navbar-root .bs-tooltip-start .tooltip-arrow::before {
+    border-left-color: rgba(20, 20, 20, 0.75);
+}
+
+#cpu-navbar-root .bs-tooltip-end .tooltip-arrow::before {
+    border-right-color: rgba(20, 20, 20, 0.75);
+}
+
+#cpu-navbar-root .custom-tooltip .tooltip-inner ol {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+#cpu-navbar-root .custom-tooltip .tooltip-inner li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+#cpu-navbar-root .custom-tooltip .tooltip-inner li:last-child {
+    margin-bottom: 0;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+/* ---- ≤ 991px (mobile collapse) ---- */
+@media (max-width: 991px) {
+    #cpu-navbar-root .main-navbar .navbar-collapse {
+        background: var(--white);
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        margin-top: 0.75rem;
+        box-shadow: var(--shadow-md);
+    }
+}
+
+/* ---- ≤ 768px ---- */
+@media (max-width: 768px) {
+    /* Top header */
+    #cpu-navbar-root .top-header-bar {
+        padding: 10px 0;
+    }
+
+    #cpu-navbar-root .top-header-bar .container {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+
+    #cpu-navbar-root .top-header-bar .cpu-brand {
+        width: 100%;
+    }
+
+    #cpu-navbar-root .top-header-bar .cpu-brand img {
+        height: 45px;
+    }
+
+    #cpu-navbar-root .top-header-bar .cpu-brand .title {
+        font-size: 1.1rem !important;
+    }
+
+    #cpu-navbar-root .top-header-bar .cpu-brand .subtitle {
+        font-size: 0.7rem !important;
+    }
+
+    #cpu-navbar-root .top-header-bar .admin-login {
+        width: 100%;
+        text-align: left;
+        font-size: 0.8rem !important;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* Navbar */
+    #cpu-navbar-root .main-navbar {
+        padding: 0;
+    }
+
+    #cpu-navbar-root .main-navbar .navbar {
+        padding: 0.5rem 0;
+    }
+
+    #cpu-navbar-root .main-navbar .navbar-collapse {
+        padding: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    #cpu-navbar-root .main-navbar .nav-link {
+        padding: 0.75rem 0 !important;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    #cpu-navbar-root .main-navbar .nav-link.active::after {
+        display: none;
+    }
+
+    /* Right-side actions stack */
+    #cpu-navbar-root .main-navbar .d-flex.align-items-center.ms-lg-3 {
+        flex-direction: column;
+        width: 100%;
+        margin-left: 0 !important;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        gap: 10px;
+        border-top: 1px solid var(--border);
+    }
+
+    #cpu-navbar-root .main-navbar .how-to-book {
+        width: 100%;
+        text-align: center;
+        white-space: normal;
+    }
+
+    #cpu-navbar-root .main-navbar .btn-book-now {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* ---- ≤ 480px ---- */
+@media (max-width: 480px) {
+    #cpu-navbar-root .top-header-bar .cpu-brand img {
+        height: 38px;
+    }
+
+    #cpu-navbar-root .top-header-bar .cpu-brand .title {
+        font-size: 0.95rem !important;
+    }
+
+    #cpu-navbar-root .top-header-bar .cpu-brand .subtitle {
+        font-size: 0.65rem !important;
+    }
+
+    #cpu-navbar-root .tooltip .tooltip-inner {
+        max-width: 260px;
+        font-size: 0.7rem !important;
+        padding: 0.5rem 0.75rem;
+    }
+}
