@@ -1,3 +1,12 @@
+*:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fab)::before,
+*:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fab)::after {
+    font-family: 'DM Sans', sans-serif !important;
+}
+
+*:not(i):not(svg):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fab) {
+    font-family: 'DM Sans', sans-serif !important;
+}
+
 /* Target the input, its pseudo-elements, and its label sibling */
 .form-check .service-checkbox:disabled,
 input.service-checkbox:disabled,
@@ -319,10 +328,6 @@ input.service-checkbox:disabled::after {
         padding: 10px;
     }
 
-    .modal-title {
-        font-size: 1rem;
-    }
-
     .modal-body {
         padding: 15px;
     }
@@ -495,15 +500,9 @@ input.service-checkbox:disabled::after {
     justify-content: center;
 }
 
-/* Conflict Modal Styles */
-#conflictModal .modal-header {
-    background-color: var(--cpu-primary) !important;
-}
-
-#conflictModal .modal-title {
-    color: white !important;
-    font-weight: 600;
-}
+/* ============================================
+   Schedule Conflict Modal
+============================================ */
 
 #conflictModal .modal-body {
     max-height: 60vh;
@@ -511,6 +510,55 @@ input.service-checkbox:disabled::after {
     overflow-y: auto;
     /* scroll inside */
     overflow-x: hidden;
+}
+
+#conflictModal .modal-dialog {
+    max-width: 520px;
+}
+
+#conflictModal .modal-content {
+    border: none;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+#conflictModal .modal-header {
+    border: none !important;
+    background: #fff1f1 !important;
+    padding: 1rem 1.5rem;
+}
+
+#conflictModal .modal-title {
+    color: #a94444;
+    font-family: "Fraunces", serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+#conflictModal .modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.5rem;
+}
+
+#conflictModal .modal-footer {
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    padding: 1rem 1.5rem;
+}
+
+/* Conflict resource cards */
+#conflictModal .modal-body .border.rounded-3 {
+    border-color: var(--border) !important;
+    background: white;
+}
+
+/* Existing event conflict details */
+#conflictModal .modal-body .bg-light {
+    background: var(--surface) !important;
+    border: 1px solid var(--border);
 }
 
 .summary-item {
@@ -565,6 +613,7 @@ body {
     position: absolute;
     right: 1rem;
     top: 0.75rem;
+    margin: 0;
 }
 
 /* Add this to your existing CSS */
@@ -589,17 +638,6 @@ body {
 #confirmSubmitBtn.loading .btn-loading {
     display: inline-block;
 }
-
-.modal-header {
-    border-bottom: none !important;
-}
-
-/* Center header visually with modal body */
-.modal-title {
-    margin: 0 auto;
-    font-weight: 600;
-}
-
 /* Add spacing and highlight for each term number */
 .terms-content ol li {
     margin-bottom: 1rem;
@@ -697,6 +735,20 @@ body {
 
 .summary-item .item-price {
     font-weight: bold;
+}
+
+/* Long-text summary fields: stack label above value so wrapped text
+   stays readable instead of squeezing inline. */
+.summary-item.summary-stack {
+    display: block;
+}
+.summary-item.summary-stack strong {
+    display: block;
+    margin-bottom: 2px;
+}
+.summary-item.summary-stack span {
+    display: block;
+    word-break: break-word;
 }
 
 .calendar-header {
@@ -998,28 +1050,28 @@ body {
 }
 
 .btn-outline-secondary {
-    background-color: #ffdc95;
-    color: #aa7400;
-    border-color: transparent;
-    box-shadow: none;
+    color: #6c757d !important;
+    border-color: #dee2e6 !important;
+    background-color: #fff !important;
 }
 
-.btn-outline-secondary:hover,
-.btn-outline-secondary:focus {
-    background-color: #f5c26a;
-    color: #7a5500;
-    border-color: transparent;
-    box-shadow: none;
+.btn-outline-secondary:hover {
+    background-color: #f8f9fa !important;
+    border-color: #ced4da !important;
+    color: #495057 !important;
 }
 
-.btn-outline-secondary:active,
-.btn-outline-secondary.active,
-.btn-outline-secondary:focus:not(:hover) {
-    background-color: #e0aa3d !important;
-    /* deeper gold/orange */
-    color: #5a3900 !important;
-    /* even darker text for contrast */
-    border-color: transparent !important;
-    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
-    /* subtle pressed effect */
+.calendar-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.calendar-link:hover {
+    background-color: #f1f3f5;
+    color: #003366 !important;
 }

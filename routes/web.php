@@ -8,6 +8,7 @@ use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\UserRequisitionController;
+use App\Http\Controllers\CheckAvailabilityController;
 use App\Http\Controllers\AdminApprovalController;
 use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Http\Request;
@@ -59,7 +60,7 @@ Route::middleware('web')->group(function () {
     // User Pages
     Route::view('/home', 'public.index')->name('home');
     Route::view('/events-calendar', 'public.events-calendar');
-    Route::view('/reservation-form', 'public.reservation-form');
+    Route::get('/reservation-form', \App\Livewire\ReservationForm::class)->name('reservation.form');
     Route::view('/user-feedback', 'public.user-feedback');
     Route::view('/your-bookings', 'public.your-bookings');
     Route::view('/user-payment', 'public.user-payment');
@@ -105,9 +106,9 @@ Route::middleware('web')->group(function () {
         Route::post('/remove-item', [RequisitionFormController::class, 'removeFromForm']);
         Route::get('/get-items', [RequisitionFormController::class, 'getItems']);
         Route::get('/calculate-fees', [RequisitionFormController::class, 'calculateFees']);
-        Route::post('/check-availability', [RequisitionFormController::class, 'checkAvailability']);
+        Route::post('/check-availability', [CheckAvailabilityController::class, 'checkAvailability']);
         Route::post('/temp-upload', [RequisitionFormController::class, 'tempUpload']);
-        Route::post('/submit', [RequisitionFormController::class, 'submitForm']);
+        Route::post('/submit', [RequisitionFormController::class, 'submitForm'])->name('requisition.submit');
         Route::post('/clear-session', [RequisitionFormController::class, 'clearSession']);
     });
 

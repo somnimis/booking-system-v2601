@@ -137,6 +137,7 @@ class RequisitionFormController extends Controller
             'start_time' => $request->all_day ? '00:00:00' : $request->start_time,
             'end_time' => $request->all_day ? '23:59:59' : $request->end_time,
             'all_day' => $request->all_day,
+            'cleanup_hours' => $request->cleanup_hours ?? 4
         ];
 
         // Sanitize inputs
@@ -191,7 +192,7 @@ class RequisitionFormController extends Controller
                     continue;
                 }
 
-                if (count($selectedItems) >= 10) {
+                if ($this->getBadgeCount($selectedItems) >= 10) {
                     $skippedItems[] = $id;
                     continue;
                 }
@@ -266,7 +267,7 @@ class RequisitionFormController extends Controller
                 'message' => $message,
                 'data' => [
                     'selected_items' => $selectedItems,
-                    'cart_count' => count($selectedItems),
+                    'cart_count' => $this->getBadgeCount($selectedItems),
                     'added_count' => count($addedItems),
                     'skipped_count' => count($skippedItems),
                 ],
@@ -324,7 +325,7 @@ class RequisitionFormController extends Controller
                         'message' => 'Equipment quantity updated.',
                         'data' => [
                             'selected_items' => $selectedItems,
-                            'cart_count' => count($selectedItems),
+                            'cart_count' => $this->getBadgeCount($selectedItems),
                         ],
                     ]);
                 }
@@ -334,7 +335,7 @@ class RequisitionFormController extends Controller
                 ], 422);
             }
 
-            if (count($selectedItems) >= 10) {
+            if ($this->getBadgeCount($selectedItems) >= 10) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Maximum item limit (10) reached.',
@@ -385,7 +386,7 @@ class RequisitionFormController extends Controller
                 'message' => ucfirst($type) . ' added successfully.',
                 'data' => [
                     'selected_items' => $selectedItems,
-                    'cart_count' => count($selectedItems),
+                    'cart_count' => $this->getBadgeCount($selectedItems),
                 ],
             ]);
         } catch (\Exception $e) {
@@ -435,7 +436,10 @@ class RequisitionFormController extends Controller
             return $this->jsonResponse(true, 'Fee breakdown calculated.', [
                 'breakdown' => $breakdown,
                 'total_fee' => $feeSummary['approved_fee'],
-                'duration' => $feeSummary['duration'],
+                'fees_html' => view('partials.fee-breakdown', [
+                    'breakdown' => $breakdown,
+                    'total' => $feeSummary['approved_fee']
+                ])->render(),
             ]);
         } catch (\Exception $e) {
             Log::error('Fee calculation error: ' . $e->getMessage());
@@ -610,7 +614,7 @@ class RequisitionFormController extends Controller
                 'message' => count($removedItems) . ' item(s) removed successfully.',
                 'data' => [
                     'selected_items' => $selectedItems,
-                    'cart_count' => count($selectedItems),
+                    'cart_count' => $this->getBadgeCount($selectedItems),
                     'removed_count' => count($removedItems),
                 ],
             ]);
@@ -707,17 +711,18 @@ class RequisitionFormController extends Controller
             'success' => true,
             'data' => [
                 'selected_items' => $formattedItems,
+                'facilities_html' => view('partials.cart-facilities', ['items' => $formattedItems])->render(),
+                'equipment_html' => view('partials.cart-equipment', ['items' => $formattedItems])->render(),
+                'cart_count' => $this->getBadgeCount($formattedItems)
             ],
         ]);
     }
 
-
     /**
-     * Check for booking schedule conflicts.
+     * Check for booking schedule conflicts (public form).
      *
-     * Supports three item types: facility, equipment, service.
-     * - facility / service: exclusive time-slot resources → conflict-list response
-     * - equipment: quantity-based → available-count response
+     * Thin controller: validate → normalize → CheckAvailabilityService::checkAll() → respond.
+     * Response shape is shared with the admin endpoint for consistency.
      */
     public function checkAvailability(Request $request)
     {
@@ -741,7 +746,6 @@ class RequisitionFormController extends Controller
         }
 
         $validator = Validator::make($request->all(), $rules);
-
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -751,109 +755,28 @@ class RequisitionFormController extends Controller
         }
 
         if (!$request->all_day && $request->start_date === $request->end_date) {
-            try {
-                $requestStart = Carbon::createFromFormat('Y-m-d H:i', $request->start_date . ' ' . $request->start_time);
-                $requestEnd = Carbon::createFromFormat('Y-m-d H:i', $request->end_date . ' ' . $request->end_time);
-
-                if ($requestStart >= $requestEnd) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'End time must be after start time for the same day.',
-                    ], 422);
-                }
-            } catch (\Exception $e) {
+            $start = Carbon::createFromFormat('Y-m-d H:i', $request->start_date . ' ' . $request->start_time);
+            $end = Carbon::createFromFormat('Y-m-d H:i', $request->end_date . ' ' . $request->end_time);
+            if ($start >= $end) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid date/time format.',
+                    'message' => 'End time must be after start time for the same day.',
                 ], 422);
             }
         }
 
-        $conflicts = false;
-        $conflictItems = [];
-
-        // Normalize times once so downstream service calls are consistent.
-        $startTime = $request->all_day ? '00:00:00' : $request->start_time;
-        $endTime = $request->all_day ? '23:59:59' : $request->end_time;
-
-        foreach ($request->items as $item) {
-            if ($item['type'] === 'facility') {
-                $facilityConflicts = $this->availabilityChecker->checkFacilityAvailability(
-                    $item['facility_id'],
-                    $request->start_date,
-                    $request->end_date,
-                    $startTime,
-                    $endTime,
-                    $request->all_day
-                );
-
-                if (!empty($facilityConflicts)) {
-                    $conflicts = true;
-                    $facility = Facility::find($item['facility_id']);
-
-                    $conflictItems[] = [
-                        'type' => 'facility',
-                        'id' => $item['facility_id'],
-                        'name' => $facility ? $facility->facility_name : 'Unknown Facility',
-                        'conflicts' => $facilityConflicts,
-                    ];
-                }
-            } elseif ($item['type'] === 'service') {
-                // Services are exclusive time-slot resources (like facilities).
-                // Any overlapping active booking on the same service = conflict.
-                $serviceConflicts = $this->availabilityChecker->checkServiceAvailability(
-                    $item['service_id'],
-                    $request->start_date,
-                    $request->end_date,
-                    $startTime,
-                    $endTime,
-                    $request->all_day
-                );
-
-                if (!empty($serviceConflicts)) {
-                    $conflicts = true;
-                    $service = ExtraService::find($item['service_id']);
-
-                    $conflictItems[] = [
-                        'type' => 'service',
-                        'id' => $item['service_id'],
-                        'name' => $service ? $service->service_name : 'Unknown Service',
-                        'conflicts' => $serviceConflicts,
-                    ];
-                }
-            } else {
-                $availableCount = $this->availabilityChecker->checkEquipmentAvailability(
-                    $item['equipment_id'],
-                    $request->start_date,
-                    $request->end_date,
-                    $request->all_day
-                );
-
-                $requestedQuantity = $item['quantity'] ?? 1;
-
-                if ($availableCount < $requestedQuantity) {
-                    $conflicts = true;
-                    $equipment = Equipment::find($item['equipment_id']);
-
-                    $conflictItems[] = [
-                        'type' => 'equipment',
-                        'id' => $item['equipment_id'],
-                        'name' => $equipment ? $equipment->equipment_name : 'Unknown Equipment',
-                        'available' => $availableCount,
-                        'requested' => $requestedQuantity,
-                        'message' => "Only {$availableCount} available, requested {$requestedQuantity}",
-                    ];
-                }
-            }
-        }
+        $result = $this->availabilityChecker->checkAll([
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'all_day' => (bool) $request->all_day,
+            'items' => $request->items,
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => $conflicts ? 'Time slot conflicts with existing booking(s).' : 'Time slot is available.',
-            'data' => [
-                'available' => !$conflicts,
-                'conflict_items' => $conflictItems,
-            ],
+            'data' => $result,
         ]);
     }
 
@@ -985,6 +908,9 @@ class RequisitionFormController extends Controller
         } catch (BookingConflictException $e) {
             DB::rollBack();
 
+            $conflicts = $e->getConflictItems();
+            $conflictHtml = $this->availabilityChecker->formatConflictsToHtml($conflicts);
+
             // 409 Conflict — the frontend uses this status + payload shape to
             // trigger showConflictModal() instead of a plain error toast.
             return response()->json([
@@ -992,7 +918,8 @@ class RequisitionFormController extends Controller
                 'message' => $e->getMessage(),
                 'data' => [
                     'available' => false,
-                    'conflict_items' => $e->getConflictItems(),
+                    'conflict_items' => $conflicts,
+                    'conflict_html' => $conflictHtml,
                 ],
             ], 409);
         } catch (\Exception $e) {
@@ -1034,6 +961,15 @@ class RequisitionFormController extends Controller
     // Private helper methods for form submission
     // ------------------------------------------------------------------------
 
+    /**
+     * Visual count for the cart badge only.
+     * Excludes services since the catalog only shows facilities and equipment.
+     */
+    private function getBadgeCount(array $items): int
+    {
+        return collect($items)->whereIn('type', ['facility', 'equipment'])->count();
+    }
+
     private function getValidatedSelectedItems(): array
     {
         $items = session('selected_items', []);
@@ -1068,7 +1004,6 @@ class RequisitionFormController extends Controller
     {
         $conflictItems = [];
 
-        // Normalize times once — keeps behavior consistent with createRequisition().
         $startTime = $request->all_day ? '00:00:00' : $request->start_time;
         $endTime = $request->all_day ? '23:59:59' : $request->end_time;
 
@@ -1110,25 +1045,9 @@ class RequisitionFormController extends Controller
                         'message' => "Only {$available} available, requested {$quantity}",
                     ];
                 }
-            } elseif ($item['type'] === 'service') {
-                $conflicts = $this->availabilityChecker->checkServiceAvailability(
-                    $item['service_id'],
-                    $request->start_date,
-                    $request->end_date,
-                    $startTime,
-                    $endTime,
-                    $request->all_day
-                );
-
-                if (!empty($conflicts)) {
-                    $conflictItems[] = [
-                        'type' => 'service',
-                        'id' => $item['service_id'],
-                        'name' => $item['name'] ?? 'Unknown Service',
-                        'conflicts' => $conflicts,
-                    ];
-                }
             }
+            // Services are soft-blocking (warnings only) and intentionally NOT
+            // enforced at submit time — see CheckAvailabilityService::checkAll().
         }
 
         if (!empty($conflictItems)) {
@@ -1169,6 +1088,7 @@ class RequisitionFormController extends Controller
             'start_time' => $request->all_day ? '00:00:00' : $request->start_time,
             'end_time' => $request->all_day ? '23:59:59' : $request->end_time,
             'all_day' => $request->all_day,
+            'cleanup_hours' => $request->cleanup_hours ?? 4,
             'status_id' => FormStatus::where('status_name', 'Pending Approval')->value('status_id'),
             // 'tentative_fee' is set in submitForm() after children are persisted.
             // 'upload_token'  is deprecated — no longer written.

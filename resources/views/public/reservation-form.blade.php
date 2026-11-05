@@ -402,11 +402,11 @@
                     <div class="row mb-4">
                       <div class="col-12">
                         <h6 class="border-bottom pb-2">Event Details</h6>
-                        <div class="summary-item">
+                        <div class="summary-item summary-stack">
                           <strong>Event Title:</strong>
                           <span id="summary-event-title"></span>
                         </div>
-                        <div class="summary-item">
+                        <div class="summary-item summary-stack">
                           <strong>Event Details:</strong>
                           <span id="summary-event-details"></span>
                         </div>
@@ -437,7 +437,7 @@
                           <strong>Furniture & Equipment:</strong>
                           <span id="summary-furniture"></span>
                         </div>
-                        <div class="summary-item">
+                        <div class="summary-item summary-stack">
                           <strong>Additional Requests:</strong>
                           <span id="summary-requests"></span>
                         </div>
@@ -493,8 +493,7 @@
         </div>
 
         <!-- Conflict Items Modal -->
-        <div class="modal fade" id="conflictModal" tabindex="-1" aria-labelledby="conflictModalLabel"
-          aria-hidden="true">
+        <div class="modal fade" id="conflictModal" tabindex="-1" aria-labelledby="conflictModalLabel" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
               <div class="modal-header bg-warning text-dark">
@@ -510,7 +509,7 @@
                 </p>
 
                 <div id="conflictItemsList" class="mb-3">
-                  <!-- Conflict items will be dynamically inserted here -->
+                  <!-- Server-rendered HTML injects here -->
                 </div>
               </div>
               <div class="modal-footer">

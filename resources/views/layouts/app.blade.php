@@ -15,8 +15,11 @@
 
   <link rel="stylesheet" href="{{ asset('css/public/global-styles.css') }}" />
   <link rel="stylesheet" href="{{ asset('css/public/responsive-styles.css') }}" />
+  
 
   @stack('styles')
+  <link rel="stylesheet" href="{{ asset('css/public/navbar.css') }}" />
+  @livewireStyles
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
@@ -86,10 +89,6 @@
       border-color: #dee2e6;
     }
 
-    * {
-      font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
-    }
-
     /* Make all scrollbars thin and subtle across browsers */
     * {
       scrollbar-width: thin;
@@ -122,6 +121,7 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
     }
 
     /* Forces main to take up all available space, pushing footer down */
@@ -142,6 +142,7 @@
 
   {{-- Page-specific content --}}
   <main>
+    {{ $slot ?? '' }}
     @yield('content')
   </main>
 
@@ -153,9 +154,11 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="{{ asset('js/public/bootstrap-init.js') }}"></script>
   <script src="{{ asset('js/public/responsive-helpers.js') }}"></script>
+  <script src="{{ asset('js/admin/toast.js') }}"></script>
 
 
   @yield('scripts')
+  @livewireScripts
 </body>
 
 </html>

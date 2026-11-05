@@ -14,9 +14,122 @@ use Carbon\Carbon;
 
 class CheckAvailabilityService
 {
-    private const GRACE_PERIOD_HOURS = 4;
     private const ACTIVE_STATUSES = ['Pending Approval', 'Awaiting Payment', 'Reserved'];
     private const EXCLUDED_STATUSES = ['Completed', 'Rejected', 'Cancelled'];
+
+    /**
+     * Single source of truth for availability checks (public + admin).
+     *
+     * Normalized input:
+     *   [
+     *     'start_date' => 'Y-m-d',
+     *     'end_date'   => 'Y-m-d',
+     *     'start_time' => 'H:i'|null,
+     *     'end_time'   => 'H:i'|null,
+     *     'all_day'    => bool,
+     *     'items'      => [
+     *       ['type' => 'facility',  'facility_id'  => int],
+     *       ['type' => 'equipment', 'equipment_id' => int, 'quantity' => int],
+     *       ['type' => 'service',   'service_id'   => int],
+     *     ],
+     *     'current_request_id' => int|null,
+     *   ]
+     *
+     * Returns:
+     *   [
+     *     'available'       => bool,          // false only when hard_conflicts exist
+     *     'hard_conflicts'  => array,         // facility conflicts + equipment shortages (block submit)
+     *     'soft_conflicts'  => array,         // service conflicts (warnings only)
+     *   ]
+     *
+     * Notes:
+     *  - Services are soft-blocking: surfaced as warnings, do not prevent submission.
+     *  - Grace period (+4h cleanup) applies to facilities only (via checkFacilityAvailability).
+     *  - Equipment is quantity-based; no grace period.
+     */
+    public function checkAll(array $payload): array
+    {
+        $startDate = $payload['start_date'];
+        $endDate = $payload['end_date'];
+        $allDay = (bool) ($payload['all_day'] ?? false);
+        $startTime = $allDay ? '00:00:00' : ($payload['start_time'] ?? null);
+        $endTime = $allDay ? '23:59:59' : ($payload['end_time'] ?? null);
+        $currentRequestId = $payload['current_request_id'] ?? null;
+
+        $hardConflicts = [];
+        $softConflicts = [];
+
+        foreach ($payload['items'] ?? [] as $item) {
+            $type = $item['type'] ?? null;
+
+            if ($type === 'facility') {
+                $conflicts = $this->checkFacilityAvailability(
+                    $item['facility_id'],
+                    $startDate,
+                    $endDate,
+                    $startTime,
+                    $endTime,
+                    $allDay,
+                    $currentRequestId
+                );
+
+                if (!empty($conflicts)) {
+                    $hardConflicts[] = [
+                        'type' => 'facility',
+                        'id' => $item['facility_id'],
+                        'name' => $conflicts[0]['name'] ?? 'Unknown Facility',
+                        'conflicts' => $conflicts,
+                    ];
+                }
+            } elseif ($type === 'equipment') {
+                $available = $this->checkEquipmentAvailability(
+                    $item['equipment_id'],
+                    $startDate,
+                    $endDate,
+                    $allDay,
+                    $currentRequestId
+                );
+
+                $requested = $item['quantity'] ?? 1;
+
+                if ($available < $requested) {
+                    $hardConflicts[] = [
+                        'type' => 'equipment',
+                        'id' => $item['equipment_id'],
+                        'name' => $item['name'] ?? 'Unknown Equipment',
+                        'available' => $available,
+                        'requested' => $requested,
+                        'message' => "Only {$available} available, requested {$requested}",
+                    ];
+                }
+            } elseif ($type === 'service') {
+                $conflicts = $this->checkServiceAvailability(
+                    $item['service_id'],
+                    $startDate,
+                    $endDate,
+                    $startTime,
+                    $endTime,
+                    $allDay,
+                    $currentRequestId
+                );
+
+                if (!empty($conflicts)) {
+                    $softConflicts[] = [
+                        'type' => 'service',
+                        'id' => $item['service_id'],
+                        'name' => $conflicts[0]['name'] ?? 'Unknown Service',
+                        'conflicts' => $conflicts,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'available' => empty($hardConflicts),
+            'hard_conflicts' => $hardConflicts,
+            'soft_conflicts' => $softConflicts,
+        ];
+    }
 
     /**
      * Check if a requisition form has any facilities
@@ -32,14 +145,6 @@ class CheckAvailabilityService
             return $exists;
         }
         return false;
-    }
-
-    /**
-     * Add grace period to a datetime
-     */
-    private function addGracePeriod($date, $time): Carbon
-    {
-        return Carbon::parse("$date $time")->addHours(self::GRACE_PERIOD_HOURS);
     }
 
     /**
@@ -76,102 +181,102 @@ class CheckAvailabilityService
     }
 
     /**
- * Check service availability from both requisition forms and calendar events.
- *
- * Services are exclusive time-slot resources (no quantity model), so any
- * overlapping active booking on the same service is a hard conflict.
- *
- * @return array List of conflict entries (empty if available).
- */
-public function checkServiceAvailability($serviceId, $startDate, $endDate, $startTime, $endTime, $allDay = false, $currentRequestId = null): array
-{
-    $conflicts = [];
+     * Check service availability from both requisition forms and calendar events.
+     *
+     * Services are exclusive time-slot resources (no quantity model), so any
+     * overlapping active booking on the same service is a hard conflict.
+     *
+     * @return array List of conflict entries (empty if available).
+     */
+    public function checkServiceAvailability($serviceId, $startDate, $endDate, $startTime, $endTime, $allDay = false, $currentRequestId = null): array
+    {
+        $conflicts = [];
 
-    // 1. Requisition forms (requested_services)
-    $requisitionQuery = RequestedService::where('service_id', $serviceId)
-        ->whereHas('requisitionForm', function ($q) use ($currentRequestId, $startDate, $endDate, $startTime, $endTime, $allDay) {
-            $q->whereIn('status_id', function ($sq) {
-                $sq->select('status_id')
-                    ->from('form_statuses')
-                    ->whereIn('status_name', self::ACTIVE_STATUSES);
-            });
+        // 1. Requisition forms (requested_services)
+        $requisitionQuery = RequestedService::where('service_id', $serviceId)
+            ->whereHas('requisitionForm', function ($q) use ($currentRequestId, $startDate, $endDate, $startTime, $endTime, $allDay) {
+                $q->whereIn('status_id', function ($sq) {
+                    $sq->select('status_id')
+                        ->from('form_statuses')
+                        ->whereIn('status_name', self::ACTIVE_STATUSES);
+                });
 
-            if ($currentRequestId) {
-                $q->where('request_id', '!=', $currentRequestId);
-            }
+                if ($currentRequestId) {
+                    $q->where('request_id', '!=', $currentRequestId);
+                }
 
-            $this->addDateOverlapCondition($q, $startDate, $endDate, $startTime, $endTime, $allDay, false);
-        })
-        ->with(['requisitionForm.formStatus', 'service']);
+                $this->addDateOverlapCondition($q, $startDate, $endDate, $startTime, $endTime, $allDay, false);
+            })
+            ->with(['requisitionForm.formStatus', 'service']);
 
-    foreach ($requisitionQuery->get() as $requested) {
-        $form = $requested->requisitionForm;
+        foreach ($requisitionQuery->get() as $requested) {
+            $form = $requested->requisitionForm;
 
-        $conflicts[] = [
-            'type' => 'service',
-            'id' => $requested->service_id,
-            'name' => $requested->service->service_name ?? 'Unknown Service',
-            'source' => 'requisition',
-            'status' => $form->formStatus->status_name ?? null,
-            'request_id' => $form->request_id,
-            'event_id' => null,
-            'schedule' => [
-                'start_date' => $form->start_date,
-                'end_date' => $form->end_date,
-                'start_time' => $form->start_time,
-                'end_time' => $form->end_time,
-                'all_day' => $form->all_day,
-            ],
-            'conflict_reason' => 'This service is already booked for an overlapping time slot',
-        ];
-    }
+            $conflicts[] = [
+                'type' => 'service',
+                'id' => $requested->service_id,
+                'name' => $requested->service->service_name ?? 'Unknown Service',
+                'source' => 'requisition',
+                'status' => $form->formStatus->status_name ?? null,
+                'request_id' => $form->request_id,
+                'event_id' => null,
+                'schedule' => [
+                    'start_date' => $form->start_date,
+                    'end_date' => $form->end_date,
+                    'start_time' => $form->start_time,
+                    'end_time' => $form->end_time,
+                    'all_day' => $form->all_day,
+                ],
+                'conflict_reason' => 'This service is already booked for an overlapping time slot',
+            ];
+        }
 
-    // 2. Calendar events (event_services)
-    // Mirrors checkCalendarFacilityConflicts() but without grace period logic,
-    // since services don't need cleanup buffers.
-    $calendarQuery = CalendarEvent::whereHas('services', function ($q) use ($serviceId) {
-        $q->where('event_services.service_id', $serviceId);
-    });
+        // 2. Calendar events (event_services)
+        // Mirrors checkCalendarFacilityConflicts() but without grace period logic,
+        // since services don't need cleanup buffers.
+        $calendarQuery = CalendarEvent::whereHas('services', function ($q) use ($serviceId) {
+            $q->where('event_services.service_id', $serviceId);
+        });
 
-    $calendarQuery->where(function ($dateQuery) use ($startDate, $endDate, $startTime, $endTime, $allDay) {
-        $dateQuery->whereDate('start_date', '<=', $endDate)
-            ->whereDate('end_date', '>=', $startDate);
+        $calendarQuery->where(function ($dateQuery) use ($startDate, $endDate, $startTime, $endTime, $allDay) {
+            $dateQuery->whereDate('start_date', '<=', $endDate)
+                ->whereDate('end_date', '>=', $startDate);
 
-        $dateQuery->where(function ($timeQuery) use ($startTime, $endTime) {
-            $timeQuery->where('all_day', true);
+            $dateQuery->where(function ($timeQuery) use ($startTime, $endTime) {
+                $timeQuery->where('all_day', true);
 
-            $timeQuery->orWhere(function ($specificTime) use ($startTime, $endTime) {
-                $specificTime->where('all_day', false)
-                    ->whereRaw('TIME(start_time) < ?', [$endTime])
-                    ->whereRaw('TIME(end_time) > ?', [$startTime]);
+                $timeQuery->orWhere(function ($specificTime) use ($startTime, $endTime) {
+                    $specificTime->where('all_day', false)
+                        ->whereRaw('TIME(start_time) < ?', [$endTime])
+                        ->whereRaw('TIME(end_time) > ?', [$startTime]);
+                });
             });
         });
-    });
 
-    foreach ($calendarQuery->get() as $event) {
-        $conflicts[] = [
-            'type' => 'service',
-            'id' => $serviceId,
-            'name' => $event->services->firstWhere('service_id', $serviceId)->service_name ?? 'Unknown Service',
-            'source' => 'calendar_event',
-            'status' => null,
-            'request_id' => null,
-            'event_id' => $event->event_id,
-            'conflict_reason' => $event->all_day
-                ? 'This service is reserved for an all-day school event'
-                : 'This service is reserved for a school event during this time',
-            'schedule' => [
-                'start_date' => $event->start_date,
-                'end_date' => $event->end_date,
-                'start_time' => $event->start_time,
-                'end_time' => $event->end_time,
-                'all_day' => $event->all_day,
-            ],
-        ];
+        foreach ($calendarQuery->get() as $event) {
+            $conflicts[] = [
+                'type' => 'service',
+                'id' => $serviceId,
+                'name' => $event->services->firstWhere('service_id', $serviceId)->service_name ?? 'Unknown Service',
+                'source' => 'calendar_event',
+                'status' => null,
+                'request_id' => null,
+                'event_id' => $event->event_id,
+                'conflict_reason' => $event->all_day
+                    ? 'This service is reserved for an all-day school event'
+                    : 'This service is reserved for a school event during this time',
+                'schedule' => [
+                    'start_date' => $event->start_date,
+                    'end_date' => $event->end_date,
+                    'start_time' => $event->start_time,
+                    'end_time' => $event->end_time,
+                    'all_day' => $event->all_day,
+                ],
+            ];
+        }
+
+        return $conflicts;
     }
-
-    return $conflicts;
-}
 
     /**
      * Check facility conflicts in requisition forms
@@ -182,9 +287,7 @@ public function checkServiceAvailability($serviceId, $startDate, $endDate, $star
             $q->where('facility_id', $facilityId);
         })
             ->whereIn('status_id', function ($q) {
-                $q->select('status_id')
-                    ->from('form_statuses')
-                    ->whereIn('status_name', self::ACTIVE_STATUSES);
+                $q->select('status_id')->from('form_statuses')->whereIn('status_name', self::ACTIVE_STATUSES);
             });
 
         if ($currentRequestId) {
@@ -195,25 +298,54 @@ public function checkServiceAvailability($serviceId, $startDate, $endDate, $star
 
         $results = $query->get();
 
-        // Debug log - remove after testing
+        // Filter out non-overlapping time slots and apply grace period logic
+        $filtered = $results->filter(function ($form) use ($startDate, $endDate, $startTime, $endTime, $allDay) {
+            // 1. All-day existing booking blocks everything on those dates
+            if ($form->all_day) {
+                return true;
+            }
+
+            // 2. Request is all-day, blocks all timed bookings on those dates
+            if ($allDay) {
+                return true;
+            }
+
+            // 3. Direct time overlap check
+            $reqStart = Carbon::parse("$startDate $startTime");
+            $reqEnd = Carbon::parse("$endDate $endTime");
+            $exStart = Carbon::parse("{$form->start_date} {$form->start_time}");
+            $exEnd = Carbon::parse("{$form->end_date} {$form->end_time}");
+
+            if ($reqStart < $exEnd && $reqEnd > $exStart) {
+                return true;
+            }
+
+            // 4. Grace period check (only for facilities)
+            // If request starts after existing ends, check if the gap is less
+            // than the existing form's cleanup_hours.
+            if ($reqStart >= $exEnd) {
+                $cleanupHours = $form->cleanup_hours ?? 4;
+                $graceEnd = $exEnd->copy()->addHours($cleanupHours);
+
+                if ($reqStart->lt($graceEnd)) {
+                    return true; // Blocked by grace period
+                }
+            }
+
+            return false;
+        });
+
         \Log::info('CheckAvailabilityService: Facility conflict check', [
             'facility_id' => $facilityId,
             'start_date' => $startDate,
             'end_date' => $endDate,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'all_day' => $allDay,
-            'current_request_id' => $currentRequestId,
-            'found_count' => $results->count(),
-            'sql' => $query->toSql(),
-            'bindings' => $query->getBindings()
+            'found_count' => $filtered->count(),
         ]);
 
-        return $results->map(function ($form) use ($startDate, $startTime) {
+        return $filtered->map(function ($form) use ($startDate, $startTime) {
             $hasFacilities = $this->hasFacilities($form);
             $needsGracePeriod = $hasFacilities;
 
-            // Determine if this is a block or warning
             $isBlocking = in_array($form->formStatus->status_name, ['Awaiting Payment', 'Reserved']);
             $isWarning = $form->formStatus->status_name === 'Pending Approval';
 
@@ -221,6 +353,7 @@ public function checkServiceAvailability($serviceId, $startDate, $endDate, $star
                 'type' => 'facility',
                 'id' => $form->requestedFacilities->first()->facility_id ?? null,
                 'name' => $form->requestedFacilities->first()->facility->facility_name ?? 'Unknown',
+                'event_title' => $form->event_title,
                 'source' => 'requisition',
                 'status' => $form->formStatus->status_name,
                 'request_id' => $form->request_id,
@@ -593,61 +726,29 @@ public function checkServiceAvailability($serviceId, $startDate, $endDate, $star
                 : date('M j, Y', strtotime($item->end_date)) . ' ' . date('g:i A', strtotime($item->end_time)),
         ];
     }
+
     /**
-     * Add date overlap condition to query - Rewritten to avoid SQL syntax issues
+     * Add date overlap condition to query.
+     *
+     * Note: Because MySQL time math with bindings is brittle, we pull
+     * date-overlapping candidates here and let the caller filter time
+     * overlap (and grace period) accurately with Carbon.
      */
     private function addDateOverlapCondition($query, $startDate, $endDate, $startTime, $endTime, $allDay, $applyGracePeriod = false)
     {
-        if ($allDay) {
-            $query->whereDate('start_date', '<=', $endDate)
-                ->whereDate('end_date', '>=', $startDate);
+        // Base overlap: dates must intersect
+        $query->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate);
+
+        // If it's an all-day request OR the query is for equipment (null times),
+        // date overlap is sufficient.
+        if ($allDay || is_null($startTime) || is_null($endTime)) {
             return;
         }
 
-        // For equipment checks, startTime and endTime might be null
-        if (is_null($startTime) || is_null($endTime)) {
-            $query->whereDate('start_date', '<=', $endDate)
-                ->whereDate('end_date', '>=', $startDate);
-            return;
-        }
-
-        $query->where(function ($q) use ($query, $startDate, $endDate, $startTime, $endTime, $applyGracePeriod) {
-            // FIRST: Date range must overlap
-            $q->whereDate('start_date', '<=', $endDate)
-                ->whereDate('end_date', '>=', $startDate);
-
-            if ($applyGracePeriod) {
-                // SECOND: Time overlap condition with proper parameter binding
-                $q->where(function ($timeQ) use ($startTime, $endTime, $startDate) {
-                    // Direct time overlap
-                    $timeQ->where(function ($direct) use ($startTime, $endTime) {
-                        $direct->whereRaw('TIME(start_time) < ?', [$endTime])
-                            ->whereRaw('TIME(end_time) > ?', [$startTime]);
-                    });
-
-                    // Grace period overlap (existing booking ends on same day, within 4 hours)
-                    $timeQ->orWhere(function ($grace) use ($startTime, $startDate) {
-                        $grace->whereDate('end_date', '=', $startDate)
-                            ->whereRaw('TIME(?) < TIME(end_time)', [$startTime])
-                            ->whereRaw('TIME(?) >= TIME(end_time)', [$startTime])
-                            ->whereRaw('HOUR(TIMEDIFF(?, TIME(end_time))) < 4', [$startTime]);
-                    });
-                });
-            } else {
-                // Direct time overlap only
-                $q->where(function ($timeQ) use ($startTime, $endTime) {
-                    $timeQ->whereRaw('TIME(start_time) < ?', [$endTime])
-                        ->whereRaw('TIME(end_time) > ?', [$startTime]);
-                });
-            }
-
-            // Also include all-day events as conflicts
-            $q->orWhere(function ($allDayQ) use ($startDate, $endDate) {
-                $allDayQ->where('all_day', true)
-                    ->whereDate('start_date', '<=', $endDate)
-                    ->whereDate('end_date', '>=', $startDate);
-            });
-        });
+        // For timed requests, we need to evaluate time overlap in PHP later.
+        // We can still fetch all date-overlapping records (the dataset is small
+        // enough per-facility that filtering post-query is performant).
     }
 
     /**
@@ -682,11 +783,12 @@ public function checkServiceAvailability($serviceId, $startDate, $endDate, $star
     {
         if ($needsGracePeriod && !$existingItem->all_day) {
             $existingEnd = Carbon::parse($existingItem->end_date . ' ' . $existingItem->end_time);
-            $graceEnd = $existingEnd->copy()->addHours(self::GRACE_PERIOD_HOURS);
+            $cleanupHours = $existingItem->cleanup_hours ?? 4;
+            $graceEnd = $existingEnd->copy()->addHours($cleanupHours);
             $newStart = Carbon::parse("$newStartDate $newStartTime");
 
             if ($newStart->lt($graceEnd)) {
-                return "Venue requires 4-hour cleanup before next booking. Available after " . $graceEnd->format('g:i A');
+                return "Venue requires {$cleanupHours}-hour cleanup before next booking. Available after " . $graceEnd->format('g:i A');
             }
         }
 
@@ -718,5 +820,15 @@ public function checkServiceAvailability($serviceId, $startDate, $endDate, $star
         }
 
         return 'medium';
+    }
+    /**
+     * Compile conflicts into a Blade-rendered HTML string.
+     * Strictly server-side formatting to keep the frontend dumb.
+     */
+    public function formatConflictsToHtml(array $conflictItems): string
+    {
+        return view('partials.conflict-content', [
+            'conflictItems' => $conflictItems
+        ])->render();
     }
 }

@@ -31,6 +31,7 @@ class RequisitionForm extends Model
         'start_time',
         'end_time',
         'all_day',
+        'cleanup_hours',
         'is_late',
         'late_penalty_fee',
         'returned_at',
