@@ -383,6 +383,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{requestId}/waive', [AdminActionsController::class, 'waiveItems']);
         Route::post('/{requestId}/late-penalty', [AdminActionsController::class, 'addLatePenalty']);
         Route::post('/{requestId}/remove-late-penalty', [AdminActionsController::class, 'removeLatePenalty']);
+        Route::put('/{requestId}/official-receipt', [AdminActionsController::class, 'updateOfficialReceipt']);
 
         // ---- 2.6 Comments & Activity ----
         Route::post('/{requestId}/comment', [AdminActionsController::class, 'addComment']);

@@ -47,13 +47,13 @@ class RequisitionForm extends Model
         'event_title',
         'event_details',
         'access_code',
-        'event_documents_url',  
+        'event_documents_url',
         'event_documents_public_id',
         'proof_of_payment_url',
         'proof_of_payment_public_id',
-        'upload_token',          
-        'official_receipt_num',  
-        'control_num',         
+        'upload_token',
+        'official_receipt_num',
+        'control_num',
     ];
 
     protected $casts = [
@@ -73,7 +73,7 @@ class RequisitionForm extends Model
         'approved_fee' => 'decimal:2',
     ];
 
-      /**
+    /**
      * Scope to filter requisitions visible to an admin based on managed departments
      */
     public function scopeVisibleToAdmin(Builder $query, array $departmentIds): Builder
@@ -106,7 +106,7 @@ class RequisitionForm extends Model
     {
         $today = now()->format('Y-m-d');
         return $query->whereDate('start_date', '<=', $today)
-                     ->whereDate('end_date', '>=', $today);
+            ->whereDate('end_date', '>=', $today);
     }
 
     /**
@@ -145,6 +145,10 @@ class RequisitionForm extends Model
     {
         return $this->hasMany(RequestedEquipment::class, 'request_id');
     }
+    public function requestedServices()
+    {
+        return $this->hasMany(RequestedService::class, 'request_id', 'request_id');
+    }
     public function requisitionApprovals()
     {
         return $this->hasMany(RequisitionApproval::class, 'request_id');
@@ -174,15 +178,6 @@ class RequisitionForm extends Model
             'request_id',          // ← Foreign key on pivot table to requisition_forms
             'service_id'           // ← Foreign key on pivot table to extra_services
         )->withTimestamps();       // ← Add this if your pivot table has timestamps
-    }
-
-    public function requestedServices()
-    {
-        return $this->hasMany(
-            RequestedService::class,
-            'request_id',
-            'request_id'
-        );
     }
 
 }

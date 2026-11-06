@@ -14,16 +14,16 @@ class RequestedService extends Model
     protected $fillable = [
         'request_id',
         'service_id',
-        'fee_snapshot', 
+        'fee_snapshot',
         'is_waived',
         'waived_by',
         'waived_at',
     ];
 
     protected $casts = [
-        'is_waived'    => 'boolean',
+        'is_waived' => 'boolean',
         'fee_snapshot' => 'decimal:2',
-        'waived_at'    => 'datetime',
+        'waived_at' => 'datetime',
     ];
 
     public function requisitionForm(): BelongsTo
@@ -34,5 +34,10 @@ class RequestedService extends Model
     public function service(): BelongsTo
     {
         return $this->belongsTo(ExtraService::class, 'service_id', 'service_id');
+    }
+    
+    public function waivedBy(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'waived_by', 'admin_id');
     }
 }

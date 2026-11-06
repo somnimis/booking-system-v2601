@@ -441,6 +441,7 @@ main {
     border-bottom: 1px solid var(--border);
     padding: 1rem 1.25rem;
     font-weight: 600;
+    background-color: #fff  !important;
 }
 
 .custom-card {

@@ -54,8 +54,11 @@ class RequestViewController extends Controller
                 'finalizedBy',
                 'closedBy',
                 'requestedFacilities.facility',
+                'requestedFacilities.waivedBy',
                 'requestedEquipment.equipment',
+                'requestedEquipment.waivedBy',
                 'requestedServices.service',
+                'requestedServices.waivedBy',
                 'requisitionApprovals' => function ($query) {
                     $query->with(['admin', 'actedBy'])
                         ->orderBy('date_updated', 'desc')
@@ -112,7 +115,10 @@ class RequestViewController extends Controller
                         ],
                         'official_receipt_num' => $form->official_receipt_num,
                     ],
-                    'schedule' => $scheduleFormatted,
+                    'schedule' => array_merge($scheduleFormatted, [
+                        'all_day' => (bool) $form->all_day,
+                        'cleanup_hours' => (int) ($form->cleanup_hours ?? 0),
+                    ]),
                     'duration_hours' => $durationHours,
                     'duration' => [
                         'hours' => $durationHours,
@@ -192,6 +198,7 @@ class RequestViewController extends Controller
                     'approval_history' => $this->formatApprovalHistory($form->requisitionApprovals),
                     'comments' => $this->formatComments($form->requisitionComments),
                     'requisition_fees' => $this->formatRequisitionFees($form->requisitionFees),
+                    'waivers' => $this->formatWaivers($form),
                     'status_tracking' => [
                         'is_late' => $form->is_late,
                         'late_penalty_fee' => $form->late_penalty_fee,
@@ -246,9 +253,9 @@ class RequestViewController extends Controller
      */
     private function currentAdminCanAct($form, $adminId): bool
     {
-        if (!$adminId)
-            return false;
+        if (!$adminId) return false;
 
+        // Check if there is a pending approval for this admin
         return $form->requisitionApprovals
             ->where('admin_id', $adminId)
             ->where('status', 'Pending')
@@ -312,8 +319,13 @@ class RequestViewController extends Controller
                 'name' => $item->facility->facility_name,
                 'rate_type' => $rateType,
                 'fee' => $unit,
+                'unit_price' => $unit,
                 'subtotal' => $isPerHour ? $unit * $durationHours : $unit,
+                'duration_text' => $isPerHour ? $durationHours . 'h' : null,
                 'is_waived' => (bool) $item->is_waived,
+                'waived_by_name' => $item->is_waived && $item->waivedBy
+                    ? $item->waivedBy->first_name . ' ' . $item->waivedBy->last_name
+                    : null,
             ];
         })->values();
     }
@@ -342,8 +354,13 @@ class RequestViewController extends Controller
                 'quantity' => $qty,
                 'rate_type' => $rateType,
                 'fee' => $unit,
+                'unit_price' => $unit,
                 'subtotal' => $subtotal,
+                'duration_text' => $isPerHour ? $durationHours . 'h' : null,
                 'is_waived' => (bool) $item->is_waived,
+                'waived_by_name' => $item->is_waived && $item->waivedBy
+                    ? $item->waivedBy->first_name . ' ' . $item->waivedBy->last_name
+                    : null,
             ];
         })->values();
     }
@@ -363,8 +380,13 @@ class RequestViewController extends Controller
                 'name' => $item->service->service_name,
                 'rate_type' => 'Flat',
                 'fee' => $unit,
+                'unit_price' => $unit,
                 'subtotal' => $unit,
+                'duration_text' => null,
                 'is_waived' => (bool) $item->is_waived,
+                'waived_by_name' => $item->is_waived && $item->waivedBy
+                    ? $item->waivedBy->first_name . ' ' . $item->waivedBy->last_name
+                    : null,
             ];
         })->values();
     }
@@ -486,6 +508,55 @@ class RequestViewController extends Controller
                 'formatted_date' => Carbon::parse($fee->created_at)->diffForHumans(),
             ];
         })->values();
+    }
+
+    /**
+     * Format waived items for the activity timeline.
+     */
+    private function formatWaivers($form)
+    {
+        $waivers = collect();
+
+        // Facilities
+        $form->requestedFacilities->where('is_waived', true)->each(function ($item) use ($waivers) {
+            if ($item->waivedBy) {
+                $waivers->push([
+                    'type' => 'waiver',
+                    'timestamp' => $item->updated_at ? $item->updated_at->toIso8601String() : now()->toIso8601String(),
+                    'admin_name' => $item->waivedBy->first_name . ' ' . $item->waivedBy->last_name,
+                    'item_name' => $item->facility->facility_name,
+                    'item_type' => 'Facility'
+                ]);
+            }
+        });
+
+        // Equipment
+        $form->requestedEquipment->where('is_waived', true)->each(function ($item) use ($waivers) {
+            if ($item->waivedBy) {
+                $waivers->push([
+                    'type' => 'waiver',
+                    'timestamp' => $item->updated_at ? $item->updated_at->toIso8601String() : now()->toIso8601String(),
+                    'admin_name' => $item->waivedBy->first_name . ' ' . $item->waivedBy->last_name,
+                    'item_name' => $item->equipment->equipment_name,
+                    'item_type' => 'Equipment'
+                ]);
+            }
+        });
+
+        // Services
+        $form->requestedServices->where('is_waived', true)->each(function ($item) use ($waivers) {
+            if ($item->waivedBy) {
+                $waivers->push([
+                    'type' => 'waiver',
+                    'timestamp' => $item->waived_at ? $item->waived_at->toIso8601String() : ($item->updated_at ? $item->updated_at->toIso8601String() : now()->toIso8601String()),
+                    'admin_name' => $item->waivedBy->first_name . ' ' . $item->waivedBy->last_name,
+                    'item_name' => $item->service->service_name,
+                    'item_type' => 'Service'
+                ]);
+            }
+        });
+
+        return $waivers->sortByDesc('timestamp')->values()->toArray();
     }
 
 }

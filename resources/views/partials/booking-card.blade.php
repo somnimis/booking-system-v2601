@@ -5,20 +5,19 @@ $data shape = RequisitionFormatterService::formatPublicForm() merged with
 RequisitionFormatterService::getStatusTracking().
 --}}
 @php
-    $status  = $data['form_status'];
-    $fee     = (float) ($data['fees']['approved_fee'] ?? $data['fees']['tentative_fee'] ?? 0);
-    $track   = $data['status_tracking'] ?? [];
+    $status = $data['form_status'];
+    $fee = (float) ($data['fees']['approved_fee'] ?? ($data['fees']['tentative_fee'] ?? 0));
+    $track = $data['status_tracking'] ?? [];
     $statusName = $status->status_name;
 
     $canUpload = $statusName === 'Awaiting Payment';
     $canCancel = in_array($statusName, ['Pending Approval', 'Scheduled', 'Awaiting Payment']);
-    
-    // Show receipt if it exists and status is Completed or Reserved
-    $hasReceipt = !empty($data['official_receipt_num']) 
-                  && in_array($statusName, ['Completed', 'Reserved']);
 
-    $hasClosure = !empty($track['is_closed'])
-        && (!empty($track['closed_at']) || !empty($track['closure_reason'] ?? null));
+    // Show receipt if it exists and status is Completed or Reserved
+    $hasReceipt = !empty($data['official_receipt_num']) && in_array($statusName, ['Completed', 'Reserved']);
+
+    $hasClosure =
+        !empty($track['is_closed']) && (!empty($track['closed_at']) || !empty($track['closure_reason'] ?? null));
 @endphp
 
 <div class="card-responsive booking-card" data-status="{{ $statusSlug }}">
@@ -38,11 +37,11 @@ RequisitionFormatterService::getStatusTracking().
                 <h6 class="fw-bold mb-2">
                     {{ $data['event_title'] ?: 'Booking #' . $data['request_id'] }}
                 </h6>
-                @if(!empty($data['event_details']))
+                @if (!empty($data['event_details']))
                     <p class="mb-2 text-muted small">{{ $data['event_details'] }}</p>
                 @endif
 
-                @if(!empty($data['organization_name']))
+                @if (!empty($data['organization_name']))
                     <p class="mb-1"><strong>Organization:</strong> {{ $data['organization_name'] }}</p>
                 @endif
 
@@ -57,11 +56,11 @@ RequisitionFormatterService::getStatusTracking().
                 {{-- Facilities --}}
                 <p class="mb-1"><strong>Facilities:</strong></p>
                 @php $facilities = $data['requested_facilities'] ?? []; @endphp
-                @if(count($facilities) === 0)
+                @if (count($facilities) === 0)
                     <p class="no-items">None</p>
                 @else
                     <ul class="mb-2">
-                        @foreach($facilities as $f)
+                        @foreach ($facilities as $f)
                             <li>{{ $f['facility_name'] }}</li>
                         @endforeach
                     </ul>
@@ -70,11 +69,11 @@ RequisitionFormatterService::getStatusTracking().
                 {{-- Equipment --}}
                 <p class="mb-1"><strong>Equipment:</strong></p>
                 @php $equipment = $data['requested_equipment'] ?? []; @endphp
-                @if(count($equipment) === 0)
+                @if (count($equipment) === 0)
                     <p class="no-items">None</p>
                 @else
                     <ul class="mb-2">
-                        @foreach($equipment as $e)
+                        @foreach ($equipment as $e)
                             <li>{{ $e['equipment_name'] }} (×{{ $e['quantity'] }})</li>
                         @endforeach
                     </ul>
@@ -83,11 +82,11 @@ RequisitionFormatterService::getStatusTracking().
                 {{-- Services --}}
                 <p class="mb-1"><strong>Services:</strong></p>
                 @php $services = $data['fees']['breakdown']['services'] ?? []; @endphp
-                @if(count($services) === 0)
+                @if (count($services) === 0)
                     <p class="no-items">None</p>
                 @else
                     <ul class="mb-0">
-                        @foreach($services as $s)
+                        @foreach ($services as $s)
                             <li>{{ $s['name'] }}</li>
                         @endforeach
                     </ul>
@@ -96,17 +95,30 @@ RequisitionFormatterService::getStatusTracking().
                     <strong>Total Fee</strong>
                     <span class="fee-amount">₱{{ number_format($fee, 2) }}</span>
                 </div>
+
+                {{-- Approved Fee Indicator --}}
+                @php
+                    $approvedFee = (float) ($data['fees']['approved_fee'] ?? 0);
+                    $isFinalized = $data['status_tracking']['is_finalized'] ?? false;
+                @endphp
+
+                @if ($isFinalized)
+                    <div class="total-fee mt-2" style="border-top: none; padding-top: 0;">
+                        <strong style="color: #15803d;">Approved Fee</strong>
+                        <span class="fee-amount" style="color: #15803d;">₱{{ number_format($approvedFee, 2) }}</span>
+                    </div>
+                @endif
             </div>
         </div>
 
         {{-- Closure details: only when actually closed --}}
-        @if($hasClosure)
+        @if ($hasClosure)
             <hr class="my-3">
             <div class="closure-details">
                 <p class="mb-1"><strong>Closed:</strong>
                     {{ $track['closed_at'] ? \Carbon\Carbon::parse($track['closed_at'])->format('F j, Y g:i A') : '—' }}
                 </p>
-                @if(!empty($track['closure_reason']))
+                @if (!empty($track['closure_reason']))
                     <p class="mb-0"><strong>Reason:</strong> {{ $track['closure_reason'] }}</p>
                 @endif
             </div>
@@ -114,21 +126,19 @@ RequisitionFormatterService::getStatusTracking().
     </div>
 
     <div class="card-responsive-footer">
-        @if($hasReceipt)
-            <a href="{{ route('official-receipt.generate', $data['request_id']) }}" 
-               target="_blank" 
-               class="btn-receipt" 
-               style="text-decoration: none;">
+        @if ($hasReceipt)
+            <a href="{{ route('official-receipt.generate', $data['request_id']) }}" target="_blank" class="btn-receipt"
+                style="text-decoration: none;">
                 Official Receipt
             </a>
         @endif
 
-        @if($canUpload)
+        @if ($canUpload)
             <button class="btn-success" onclick="showUploadModal({{ $data['request_id'] }})">
                 Upload Receipt
             </button>
         @endif
-        @if($canCancel)
+        @if ($canCancel)
             <button class="btn-danger" onclick="showCancelModal({{ $data['request_id'] }})">
                 Cancel Request
             </button>

@@ -148,6 +148,10 @@ html body main#main {
     width: 100%;
 }
 
+.card {
+    --bs-card-cap-bg: #fff !important;
+}
+
 .card:not(.this-class-does-not-exist) {
     border: none !important;
     border-color: transparent !important;

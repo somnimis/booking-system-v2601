@@ -135,6 +135,13 @@ class AdminActionsController extends Controller
     public function addFee(Request $request, $requestId)
     {
         try {
+
+            $form = RequisitionForm::findOrFail($requestId);
+            if ($form->is_finalized) {
+                return response()->json(['error' => 'Cannot add fee. The form is already finalized and fees are locked.'], 403);
+            }
+
+
             $validatedData = $request->validate([
                 'label' => 'required|string|max:50',
                 'fee_amount' => 'required|numeric|min:0.01',
@@ -176,6 +183,12 @@ class AdminActionsController extends Controller
     public function removeFee($requestId, $feeId)
     {
         try {
+
+            $form = RequisitionForm::findOrFail($requestId);
+            if ($form->is_finalized) {
+                return response()->json(['error' => 'Cannot remove fee. The form is already finalized and fees are locked.'], 403);
+            }
+
             $fee = RequisitionFee::where('request_id', $requestId)
                 ->where('fee_id', $feeId)
                 ->firstOrFail();
@@ -205,6 +218,12 @@ class AdminActionsController extends Controller
     public function addDiscount(Request $request, $requestId)
     {
         try {
+
+            $form = RequisitionForm::findOrFail($requestId);
+            if ($form->is_finalized) {
+                return response()->json(['error' => 'Cannot add discount. The form is already finalized and fees are locked.'], 403);
+            }
+
             $validatedData = $request->validate([
                 'label' => 'required|string|max:50',
                 'discount_amount' => 'required|numeric|min:0.01',
@@ -249,11 +268,17 @@ class AdminActionsController extends Controller
     public function addLatePenalty(Request $request, $requestId)
     {
         try {
+
+
             $validatedData = $request->validate([
                 'penalty_amount' => 'required|numeric|min:0'
             ]);
 
             $form = RequisitionForm::findOrFail($requestId);
+
+            if ($form->is_finalized) {
+                return response()->json(['error' => 'Cannot add penalty. The form is already finalized.'], 403);
+            }
 
             // Check if the requisition is marked as late by the system
             if (!$form->is_late) {
@@ -290,6 +315,10 @@ class AdminActionsController extends Controller
         try {
             $form = RequisitionForm::findOrFail($requestId);
 
+            if ($form->is_finalized) {
+                return response()->json(['error' => 'Cannot remove penalty. The form is already finalized.'], 403);
+            }
+
             // Only reset the penalty fee, leave is_late status as determined by the system
             $form->late_penalty_fee = 0;
             $form->save();
@@ -317,12 +346,11 @@ class AdminActionsController extends Controller
     public function waiveItems(Request $request, $requestId)
     {
         try {
-            \Log::debug('Waive items request received', [
-                'request_id' => $requestId,
-                'waive_all' => $request->waive_all,
-                'waived_facilities' => $request->waived_facilities,
-                'waived_equipment' => $request->waived_equipment
-            ]);
+
+            $form = RequisitionForm::findOrFail($requestId);
+            if ($form->is_finalized) {
+                return response()->json(['error' => 'Cannot waive items. The form is already finalized and fees are locked.'], 403);
+            }
 
             // First, let's log all equipment for this request to see what should be valid
             $validEquipmentIds = RequestedEquipment::where('request_id', $requestId)
@@ -333,12 +361,9 @@ class AdminActionsController extends Controller
                 ->pluck('requested_facility_id')
                 ->toArray();
 
-            \Log::debug('Valid IDs for this request', [
-                'valid_equipment_ids' => $validEquipmentIds,
-                'valid_facility_ids' => $validFacilityIds,
-                'requested_equipment' => $request->waived_equipment,
-                'requested_facilities' => $request->waived_facilities
-            ]);
+            $validServiceIds = \App\Models\RequestedService::where('request_id', $requestId)
+                ->pluck('requested_service_id')
+                ->toArray();
 
             // Custom validation to check if items belong to this request
             $validator = Validator::make($request->all(), [
@@ -357,6 +382,14 @@ class AdminActionsController extends Controller
                     function ($attribute, $value, $fail) use ($requestId, $validEquipmentIds) {
                         if (!in_array($value, $validEquipmentIds)) {
                             $fail("The selected equipment (ID: $value) is invalid for this request. Valid equipment: " . implode(', ', $validEquipmentIds));
+                        }
+                    }
+                ],
+                'waived_services' => 'sometimes|array',
+                'waived_services.*' => [
+                    function ($attribute, $value, $fail) use ($validServiceIds) {
+                        if (!in_array($value, $validServiceIds)) {
+                            $fail("The selected service (ID: $value) is invalid for this request.");
                         }
                     }
                 ]
@@ -384,7 +417,7 @@ class AdminActionsController extends Controller
             DB::beginTransaction();
 
             if (isset($validatedData['waive_all']) && $validatedData['waive_all']) {
-                // Waive all facilities and equipment with waived_by
+                // Waive all items
                 RequestedFacility::where('request_id', $requestId)
                     ->update([
                         'is_waived' => true,
@@ -396,19 +429,24 @@ class AdminActionsController extends Controller
                         'is_waived' => true,
                         'waived_by' => $validatedData['admin_id']
                     ]);
+
+                \App\Models\RequestedService::where('request_id', $requestId)
+                    ->update([
+                        'is_waived' => true,
+                        'waived_by' => $validatedData['admin_id'],
+                        'waived_at' => now()
+                    ]);
             } else {
-                // Only update waivers for specific items
-                // Update facilities based on the provided list
+                // --- Facilities ---
                 if (isset($validatedData['waived_facilities'])) {
-                    // Waive the specified facilities with waived_by
+                    // Waive specified
                     RequestedFacility::where('request_id', $requestId)
                         ->whereIn('requested_facility_id', $validatedData['waived_facilities'])
                         ->update([
                             'is_waived' => true,
                             'waived_by' => $validatedData['admin_id']
                         ]);
-
-                    // Unwaive facilities not in the list (set waived_by to null)
+                    // Unwaive the rest
                     RequestedFacility::where('request_id', $requestId)
                         ->whereNotIn('requested_facility_id', $validatedData['waived_facilities'])
                         ->update([
@@ -416,7 +454,7 @@ class AdminActionsController extends Controller
                             'waived_by' => null
                         ]);
                 } else {
-                    // If no facilities specified, unwaive all facilities (set waived_by to null)
+                    // Unwaive all if none specified
                     RequestedFacility::where('request_id', $requestId)
                         ->update([
                             'is_waived' => false,
@@ -424,17 +462,16 @@ class AdminActionsController extends Controller
                         ]);
                 }
 
-                // Update equipment based on the provided list
+                // --- Equipment ---
                 if (isset($validatedData['waived_equipment'])) {
-                    // Waive the specified equipment with waived_by
+                    // Waive specified
                     RequestedEquipment::where('request_id', $requestId)
                         ->whereIn('requested_equipment_id', $validatedData['waived_equipment'])
                         ->update([
                             'is_waived' => true,
                             'waived_by' => $validatedData['admin_id']
                         ]);
-
-                    // Unwaive equipment not in the list (set waived_by to null)
+                    // Unwaive the rest
                     RequestedEquipment::where('request_id', $requestId)
                         ->whereNotIn('requested_equipment_id', $validatedData['waived_equipment'])
                         ->update([
@@ -442,11 +479,39 @@ class AdminActionsController extends Controller
                             'waived_by' => null
                         ]);
                 } else {
-                    // If no equipment specified, unwaive all equipment (set waived_by to null)
+                    // Unwaive all if none specified
                     RequestedEquipment::where('request_id', $requestId)
                         ->update([
                             'is_waived' => false,
                             'waived_by' => null
+                        ]);
+                }
+
+                // --- Services ---
+                if (isset($validatedData['waived_services'])) {
+                    // Waive specified
+                    \App\Models\RequestedService::where('request_id', $requestId)
+                        ->whereIn('requested_service_id', $validatedData['waived_services'])
+                        ->update([
+                            'is_waived' => true,
+                            'waived_by' => $validatedData['admin_id'],
+                            'waived_at' => now()
+                        ]);
+                    // Unwaive the rest
+                    \App\Models\RequestedService::where('request_id', $requestId)
+                        ->whereNotIn('requested_service_id', $validatedData['waived_services'])
+                        ->update([
+                            'is_waived' => false,
+                            'waived_by' => null,
+                            'waived_at' => null
+                        ]);
+                } else {
+                    // Unwaive all if none specified
+                    \App\Models\RequestedService::where('request_id', $requestId)
+                        ->update([
+                            'is_waived' => false,
+                            'waived_by' => null,
+                            'waived_at' => null
                         ]);
                 }
             }
@@ -830,6 +895,36 @@ class AdminActionsController extends Controller
     }
 
     /**
+     * Inline update for the Official Receipt Number.
+     * Used by Stage 3 secretaries before the VP confirms the reservation.
+     */
+    public function updateOfficialReceipt(Request $request, $requestId)
+    {
+        try {
+            $validated = $request->validate([
+                'official_receipt_num' => 'required|string|max:50|unique:requisition_forms,official_receipt_num,' . $requestId . ',request_id',
+            ]);
+
+            $form = RequisitionForm::findOrFail($requestId);
+
+            // Only allow updating if verifying payment or not yet finalized
+            if ($form->is_finalized && $form->status_id != FormStatus::where('status_name', 'Verifying Payment')->first()->status_id) {
+                return response()->json(['error' => 'Cannot edit receipt at this stage.'], 422);
+            }
+
+            $form->official_receipt_num = $validated['official_receipt_num'];
+            $form->save();
+
+            return response()->json([
+                'message' => 'Official Receipt updated successfully',
+                'official_receipt_num' => $form->official_receipt_num
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to update receipt', 'details' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Finalize a reservation: sets status to Reserved after stage-3 approval
      * and captures the official receipt number. Renamed from markAsScheduled
      * (which targeted the now-deprecated 'Scheduled' status).
@@ -840,11 +935,9 @@ class AdminActionsController extends Controller
             \Log::debug('Finalize reservation request received', [
                 'request_id' => $requestId,
                 'admin_id' => auth()->id(),
-                'official_receipt_num' => $request->official_receipt_num,
             ]);
 
             $validatedData = $request->validate([
-                'official_receipt_num' => 'required|string|max:50|unique:requisition_forms,official_receipt_num',
                 'event_title' => 'sometimes|string|max:50|nullable',
                 'event_details' => 'sometimes|string|max:100|nullable',
             ]);
@@ -857,10 +950,15 @@ class AdminActionsController extends Controller
             $form = RequisitionForm::with([
                 'requestedFacilities.facility',
                 'requestedEquipment.equipment',
+                'requestedServices.service', 
                 'requisitionFees',
                 'purpose',
                 'formStatus',
             ])->findOrFail($requestId);
+
+            if (!$form->official_receipt_num) {
+                return response()->json(['error' => 'Validation failed', 'details' => ['official_receipt_num' => ['Please enter the Official Receipt Number before confirming.']]], 422);
+            }
 
             if ($form->is_closed) {
                 return response()->json(['error' => 'Form is already closed'], 422);
@@ -871,7 +969,6 @@ class AdminActionsController extends Controller
                 throw new \Exception('Reserved status not found');
             }
 
-            $form->official_receipt_num = $validatedData['official_receipt_num'];
             $form->status_id = $reservedStatus->status_id;
 
             if (!empty($validatedData['event_title'])) {

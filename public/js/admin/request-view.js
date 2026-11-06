@@ -95,18 +95,20 @@ const RequestViewThin = (function () {
      * @param {string} time - Time string (HH:MM)
      * @returns {string}
      */
-    const formatDateTime = (date, time) => {
-        if (!date) return "N/A";
-        const dt = new Date(`${date}T${time || "00:00"}`);
-        return dt.toLocaleDateString("en-US", {
+const formatDateTime = (date, time) => {
+    if (!date) return "N/A";
+    const dt = new Date(`${date}T${time || "00:00"}`);
+    return dt
+        .toLocaleDateString("en-US", {
             year: "numeric",
             month: "short",
             day: "numeric",
             hour: "numeric",
             minute: "2-digit",
             hour12: true,
-        });
-    };
+        })
+        .replace(/\b(AM|PM)\b/g, (m) => m.toLowerCase());
+};
 
     /**
      * Format an ISO timestamp as an absolute date + time string,
@@ -163,11 +165,11 @@ const RequestViewThin = (function () {
      * @returns {Promise<Object>} Parsed JSON response
      * @throws {Error} If the response is not OK
      */
-    const postAction = async (endpoint, data = {}) => {
+    const postAction = async (endpoint, data = {}, method = "POST") => {
         const response = await fetch(
             `/api/admin/requisition/${requestId}/${endpoint}`,
             {
-                method: "POST",
+                method: method, // Changed from POST to dynamic method
                 headers: {
                     Authorization: `Bearer ${adminToken}`,
                     "Content-Type": "application/json",
@@ -358,21 +360,22 @@ const RequestViewThin = (function () {
                 </div>
             `;
         } else if (isApprover && statusId === 1) {
-            // Roles 2 & 3: Approve + Reject, only on Pending Approval.
-            const isFinalApprover = roleId === 2;
-            container.dataset.finalApprover = isFinalApprover ? "1" : "0";
+            // Only show buttons if the admin HAS NOT acted yet (canAct is true)
+            if (canAct) {
+                const isFinalApprover = roleId === 2;
+                container.dataset.finalApprover = isFinalApprover ? "1" : "0";
 
-            buttonsHtml = `
-                <button class="btn btn-outline-secondary" id="rejectBtn">
-                    <i class="bi bi-x-lg"></i> Reject
-                </button>
-                <div class="vr mx-1 align-self-stretch"></div>
-                <button class="btn btn-success fw-bold" id="approveBtn">
-                    <i class="bi bi-check-lg"></i> Approve Request
-                </button>
-            `;
+                buttonsHtml = `
+                    <button class="btn btn-outline-secondary" id="rejectBtn">
+                        <i class="bi bi-x-lg"></i> Reject
+                    </button>
+                    <div class="vr mx-1 align-self-stretch"></div>
+                    <button class="btn btn-success fw-bold" id="approveBtn">
+                        <i class="bi bi-check-lg"></i> Approve Request
+                    </button>
+                `;
+            }
         }
-
         // Message shown when this admin has already acted on this request.
         const actedMsgHtml =
             !canAct && isApprover && statusId === 1
@@ -395,23 +398,34 @@ const RequestViewThin = (function () {
         // ---- Event bindings ----
 
         // Approve (roles 2 & 3)
-        document.getElementById("approveBtn")?.addEventListener("click", () =>
+        // Approve (roles 2 & 3)
+        document.getElementById("approveBtn")?.addEventListener("click", () => {
+            const isFinalApprover = roleId === 2;
+            const isIssuingOfficer = roleId === 5;
+
+            let contextText = "Are you sure you want to approve this request?";
+            
+            if (isFinalApprover) {
+            contextText = `Approving this request will <strong>finalize all fee changes</strong> and notify the requester of the final amount. Do you want to proceed?`;
+            } else if (isIssuingOfficer) {
+                contextText = `This will confirm the reservation and email the requester their Use Permit. Do you want to proceed?`;
+            }
+
             showActionModal({
                 title: "Confirm Approval",
-                body: `<p>Are you sure you want to approve this request?</p>
+                body: `<p class="mb-3">${contextText}</p>
                        <label class="form-label">Remarks (Optional)</label>
                        <textarea class="form-control" id="approveRemarks" rows="3"></textarea>`,
                 confirmClass: "btn-success",
                 confirmText: "Approve",
                 onConfirm: async () => {
-                    const remarks =
-                        document.getElementById("approveRemarks").value;
+                    const remarks = document.getElementById("approveRemarks").value;
                     await postAction("approve", { remarks: remarks || null });
                     showToast("Request approved", "success");
                     await refreshAfterAction();
                 },
-            }),
-        );
+            });
+        });
 
         // Reject (roles 2 & 3). Role 2 also closes the form with the same remark.
         document.getElementById("rejectBtn")?.addEventListener("click", () =>
@@ -448,38 +462,73 @@ const RequestViewThin = (function () {
             .getElementById("confirmReservationBtn")
             ?.addEventListener("click", () => {
                 const isHeadAdmin = container.dataset.headAdmin === "1";
-                const warningHtml = isHeadAdmin
-                    ? `<div class="alert alert-warning small mb-3">
-                           <i class="bi bi-exclamation-triangle me-1"></i>
-                           You are about to confirm this reservation as Head Administrator.
-                       </div>`
-                    : "";
+                const hasOr = !!data.documents.official_receipt.number;
+
+                // If OR is missing AND it's not a head admin, block them.
+                if (!hasOr && !isHeadAdmin) {
+                    const isAwaitingPayment = data.form_details.status.name === 'Awaiting Payment';
+                    if (isAwaitingPayment) {
+                        showToast("The requester hasn't uploaded their payment yet. Please wait until the form moves to 'Verifying Payment'.", "error");
+                    } else {
+                        showToast("Please enter the Official Receipt Number in the Attachments section before confirming.", "error");
+                    }
+                    return;
+                }
+
+                // Build the modal body
+                let modalBody = "";
+                if (isHeadAdmin) {
+                    modalBody += `<div class="alert alert-warning small mb-3">
+                        <i class="bi bi-exclamation-triangle me-1"></i> You are about to confirm this reservation as Head Administrator.
+                    </div>`;
+                }
+
+                modalBody += `<p class="mb-3">Are you sure you want to confirm this reservation?</p>`;
+
+                // If OR is missing, provide the input field for the Admin override
+                if (!hasOr) {
+                    modalBody += `
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Official Receipt Number *</label>
+                            <input type="text" class="form-control" id="overrideOfficialReceipt" placeholder="Enter OR Number" required>
+                            <div class="form-text text-danger small mt-1">The Official Receipt is required to generate the permit.</div>
+                        </div>
+                    `;
+                } else {
+                    modalBody += `
+                        <div class="alert alert-success small mb-0">
+                            <i class="bi bi-receipt me-1"></i> Official Receipt: <strong>${escapeHtml(data.documents.official_receipt.number)}</strong>
+                        </div>
+                    `;
+                }
 
                 showActionModal({
                     title: "Confirm Reservation",
-                    body: `${warningHtml}
-                           <p class="small text-muted">Enter the official receipt number to confirm this reservation.</p>
-                           <label class="form-label">Official Receipt Number *</label>
-                           <input type="text" class="form-control" id="officialReceiptNum" required>`,
+                    body: modalBody,
                     confirmClass: "btn-primary",
                     confirmText: "Confirm Reservation",
                     onConfirm: async () => {
-                        const receiptNum = document
-                            .getElementById("officialReceiptNum")
-                            .value.trim();
-                        if (!receiptNum)
-                            throw new Error("Please enter receipt number");
+                        let finalOr = data.documents.official_receipt.number;
 
-                        // If this admin still has a pending approval row
-                        // (e.g., stage-3 officer who hasn't approved), record
-                        // approval before finalizing the reservation.
+                        // If the Admin typed it into the modal, validate and save it
+                        if (!hasOr) {
+                            finalOr = document.getElementById("overrideOfficialReceipt").value.trim();
+                            if (!finalOr) throw new Error("Please enter the Official Receipt Number.");
+                            
+                            // Save to DB via inline endpoint
+                            await postAction("official-receipt", { official_receipt_num: finalOr }, "PUT");
+                            
+                            // Update local data so the next steps don't fail
+                            data.documents.official_receipt.number = finalOr; 
+                        }
+
+                        // If this admin still has a pending approval row, record it
                         if (canAct) {
                             await postAction("approve", { remarks: null });
                         }
 
-                        await postAction("finalize-reservation", {
-                            official_receipt_num: receiptNum,
-                        });
+                        // Call finalize
+                        await postAction("finalize-reservation", {});
 
                         showToast("Reservation confirmed", "success");
                         await refreshAfterAction();
@@ -525,73 +574,23 @@ const RequestViewThin = (function () {
     };
 
     /**
-     * Render one requested item (facility/equipment/service) as a line in
-     * Booking Details.
-     *
-     * Rules:
-     *   - Flat rate        → name [×qty]                          ₱X/event
-     *   - Per Hour         → name [×qty] (N hrs)                  ₱X/hr
-     *                                                              ₱subtotal
-     *
-     * All values come straight from the API. No client-side math.
-     */
-    const renderLineItem = (item) => {
-        const isPerHour = item.rate_type === "Per Hour";
-        const suffix = isPerHour ? "/hr" : "/event";
-
-        // Left side: name + optional qty + optional duration hint
-        const qtyText =
-            item.quantity && item.quantity > 1
-                ? ` &times;${item.quantity}`
-                : "";
-        const durText = isPerHour
-            ? ` (${escapeHtml(item.duration_text || "")})`
-            : "";
-        // Prefer duration text from item if provided; fall back to data.duration.text via closure is
-        // not available here, so we rely on the caller to have set it. Currently we don't pass it
-        // per item, so we omit the parenthetical when unknown.
-        const left = `${escapeHtml(item.name)}${qtyText}`;
-
-        const waivedClass = item.is_waived
-            ? "text-muted text-decoration-line-through"
-            : "";
-
-        return `
-        <div class="d-flex justify-content-between small">
-            <span>${left}</span>
-            <span class="${waivedClass}">
-                ${formatMoney(item.fee)}${suffix}
-            </span>
-        </div>
-        ${
-            isPerHour && !item.is_waived
-                ? `<div class="d-flex justify-content-end small">
-                       <span class="text-muted">${formatMoney(item.subtotal)}</span>
-                   </div>`
-                : ""
-        }
-    `;
-    };
-
-    /**
      * Render the request details panel — letter header, letter body (requester,
      * purpose, participants, additional requests), event details (schedule,
      * facilities, equipment, total fee), and attachment links.
      * @param {Object} data - Full request payload
      */
-    const renderDetails = (data) => {
-        const user = data.user_details;
-        const form = data.form_details;
-        const schedule = data.schedule;
-        const cal = form.calendar_info || {};
+const renderDetails = (data) => {
+    const user = data.user_details;
+    const form = data.form_details;
+    const cal = form.calendar_info || {};
 
-        document.getElementById("letterHeader").innerHTML = `
+    document.getElementById("letterHeader").innerHTML = `
         <div>
             <div class="letter-title">${escapeHtml(cal.title || "Untitled Request")}</div>
         </div>
     `;
 
-        document.getElementById("letterBody").innerHTML = `
+    document.getElementById("letterBody").innerHTML = `
         ${
             cal.description || form.purpose
                 ? `<div class="letter-section">
@@ -616,159 +615,103 @@ const RequestViewThin = (function () {
         ${
             form.additional_requests
                 ? `<div class="letter-section">
-            <div class="letter-section-label">Additional Requests</div>
-            <div class="letter-meta">${escapeHtml(form.additional_requests)}</div>
-        </div>`
+                    <div class="letter-section-label">Additional Requests</div>
+                    <div class="letter-meta">${escapeHtml(form.additional_requests)}</div>
+                </div>`
                 : ""
         }
 
         <div class="letter-section">
-            <!-- 1. Main Parent Layout Row -->
-            <div class="row g-4 align-items-start">
-                
-                <!-- 2. Left Column Content (8 out of 12 columns wide) -->
-                <div class="col-md-8">
-                    <div class="letter-section-label">Purpose &amp; Participants</div>
-                    
-                    <!-- Purpose Text -->
-                    <div class="mb-1.5">
-                        <div class="d-flex align-items-start gap-1.5 text-dark" style="font-size: 0.95rem;">
-                            <i class="fa-solid fa-calendar-days text-secondary" style="width: 14px; margin-right: 10px; margin-top: 4px;"></i>
-                            <div class="letter-meta">
-                            <span style="white-space: pre-wrap;">${escapeHtml(form.purpose || "N/A")}</span>
-                            </div>
-                        </div>
+            <div class="letter-section-label">Purpose &amp; Participants</div>
+            <div class="mb-1.5">
+                <div class="d-flex align-items-start gap-1.5 text-dark" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-calendar-days text-secondary" style="width: 14px; margin-right: 10px; margin-top: 4px;"></i>
+                    <div class="letter-meta">
+                        <span style="white-space: pre-wrap;">${escapeHtml(form.purpose || "N/A")}</span>
                     </div>
-
-                    <!-- Nested Logistics Matrix Row (Stacks on mobile, 2x2 on tablets/desktops) -->
-                    <div class="row g-2 mt-0 text-dark" style="letter-spacing: -0.1px; max-width: 450px;">
-                        
-                        <!-- Top Left: Participants -->
-                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
-                            <i class="fa-solid fa-user text-secondary" style="width: 16px; margin-right: 10px;"></i> 
-                            <span>Participants: ${form.num_participants || 0}</span>
-                        </div>
-                        
-                        <!-- Top Right: Tables -->
-                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
-                            <i class="fa-solid fa-table-columns text-secondary" style="width: 16px; margin-right: 10px;"></i> 
-                            <span>Tables: ${form.num_tables || 0}</span>
-                        </div>
-                        
-                        <!-- Bottom Left: Chairs -->
-                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
-                            <!-- Removed font-size: 0.9rem custom string icon scale rule -->
-                            <i class="fa-solid fa-chair text-secondary" style="width: 16px; margin-right: 10px;"></i> 
-                            <span>Chairs: ${form.num_chairs || 0}</span>
-                        </div>
-                        
-                        <!-- Bottom Right: Microphones -->
-                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
-                            <i class="fa-solid fa-microphone-lines text-secondary" style="width: 16px; margin-right: 10px;"></i> 
-                            <span>Microphones: ${form.num_microphones || 0}</span>
-                        </div>
-                        
-                    </div> <!-- Closes Inner Matrix Row -->
-
-                                    
-                </div> <!-- Closes Main Left Column (col-md-8) cleanly! -->
-
-                <!-- 3. Right Column Content (4 out of 12 columns wide) -->
-                <div class="col-md-4">
-                    <div class="letter-section-label">Attachments</div>
-                    <!-- Dynamic elements load right into here -->
-                    <div id="attachmentsContainer"></div>
-                </div> <!-- Closes Main Right Column (col-md-4) -->
-
-            </div> <!-- Closes Main Parent Layout Row -->
-        </div> <!-- Closes Main Letter Section Block -->
-
-        `;
-
-        const facilities = data.requested_items.facilities || [];
-        const equipment = data.requested_items.equipment || [];
-        const services = data.requested_items.services || [];
-
-        document.getElementById("eventDetails").innerHTML = `
-        <div class="mb-3">
-            <div class="fw-bold letter-section-label">Start</div>
-            <div>${formatDateTime(schedule.start_date, schedule.start_time)}</div>
-        </div>
-        <div class="mb-3">
-            <div class="fw-bold letter-section-label">End</div>
-            <div>${formatDateTime(schedule.end_date, schedule.end_time)}</div>
-        </div>
-        <div class="mb-3">
-            <div class="fw-bold letter-section-label">Duration</div>
-            <div>${escapeHtml(data.duration?.text || `${data.duration_hours} hours`)}</div>
-        </div>
-        ${
-            facilities.length
-                ? `<div class="mb-3">
-                    <div class="fw-bold letter-section-label">Facilities</div>
-                    ${facilities.map(renderLineItem).join("")}
-                </div>`
-                : ""
-        }
-        ${
-            equipment.length
-                ? `<div class="mb-3">
-                    <div class="fw-bold letter-section-label">Equipment</div>
-                    ${equipment.map(renderLineItem).join("")}
-                </div>`
-                : ""
-        }
-        ${
-            services.length
-                ? `<div class="mb-3">
-                    <div class="fw-bold letter-section-label">Services</div>
-                    ${services.map(renderLineItem).join("")}
-                </div>`
-                : ""
-        }
-        <div class="pt-3 border-top"> <!-- Increased padding-top to lower content from top border -->
-            <!-- Align-items-baseline ensures the label matches the vertical alignment of its value -->
-            <div class="d-flex justify-content-between align-items-baseline">
-                <span class="fw-bold letter-section-label">Tentative Fee</span>
-                <span class="fw-semibold">${formatMoney(data.fees.tentative_fee)}</span>
-            </div>
-            ${
-                data.fees.adjustments_total !== 0
-                    ? `<div class="d-flex justify-content-between align-items-baseline small mt-1">
-                           <span class="text-muted">Fee Adjustments</span>
-                           <span class="${data.fees.adjustments_total > 0 ? "text-success" : "text-danger"}">
-                               ${data.fees.adjustments_total > 0 ? "+" : "-"}${formatMoney(Math.abs(data.fees.adjustments_total))}
-                           </span>
-                       </div>`
-                    : ""
-            }
-            <div class="border-top mt-3 mb-3"></div> <!-- Increased bottom margin from mb-2 to mb-3 -->
-            <div class="d-flex justify-content-between align-items-center">
-                <!-- lh-sm reduces line-height to bring the Approved Fee label and value closer together -->
-                <div class="lh-sm">
-                    <div class="fw-bold letter-section-label">Approved Fee</div>
-                    <div class="fs-4 fw-bold text-primary">${formatMoney(data.fees.approved_fee)}</div>
                 </div>
-                ${
-                    data.approval_info.is_finalized
-                        ? `<span data-bs-toggle="tooltip" data-bs-placement="top"
-                                 title="Fees are locked once the form is finalized"
-                                 style="cursor:not-allowed;">
-                               <button class="btn btn-sm btn-outline-secondary" disabled style="pointer-events:none;">
-                                   <i class="bi bi-lock me-1"></i> Fees Locked
-                               </button>
-                           </span>`
-                        : `<a href="/admin/requisition/${requestId}/financials"
-                              class="btn btn-sm btn-outline-secondary">
-                               <i class="bi bi-pencil me-1"></i> Edit Fees
-                           </a>`
-                }
+            </div>
+            <div class="row g-2 mt-0 text-dark" style="letter-spacing: -0.1px; max-width: 450px;">
+                <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                    <i class="fa-solid fa-user text-secondary" style="width: 16px; margin-right: 10px;"></i>
+                    <span>Participants: ${form.num_participants || 0}</span>
+                </div>
+                <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                    <i class="fa-solid fa-table-columns text-secondary" style="width: 16px; margin-right: 10px;"></i>
+                    <span>Tables: ${form.num_tables || 0}</span>
+                </div>
+                <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                    <i class="fa-solid fa-chair text-secondary" style="width: 16px; margin-right: 10px;"></i>
+                    <span>Chairs: ${form.num_chairs || 0}</span>
+                </div>
+                <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                    <i class="fa-solid fa-microphone-lines text-secondary" style="width: 16px; margin-right: 10px;"></i>
+                    <span>Microphones: ${form.num_microphones || 0}</span>
+                </div>
             </div>
         </div>
-        `;
+    `;
+};
 
-        const docs = data.documents;
-        document.getElementById("attachmentsContainer").innerHTML = `
+    /**
+ * Booking Details card — schedule-only summary.
+ * Start / End / Duration / All Day / Cleanup.
+ */
+const renderBookingDetails = (data) => {
+    const schedule = data.schedule;
+    const container = document.getElementById("bookingDetails");
+    if (!container) return;
+
+    const startText = formatDateTime(schedule.start_date, schedule.start_time);
+    const endText = formatDateTime(schedule.end_date, schedule.end_time);
+
+    container.innerHTML = `
+        <div class="mb-3">
+            <div class="fw-bold letter-section-label">Start Schedule</div>
+            <div>${escapeHtml(startText)}</div>
+        </div>
+        <div class="mb-3">
+            <div class="fw-bold letter-section-label">End Schedule</div>
+            <div>${escapeHtml(endText)}</div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-4">
+                <div class="fw-bold letter-section-label">Duration</div>
+                <div>${escapeHtml(data.duration?.text || `${data.duration_hours} hours`)}</div>
+            </div>
+            <div class="col-12 col-sm-4">
+                <div class="fw-bold letter-section-label">All Day</div>
+                <div>${schedule.all_day ? "Yes" : "No"}</div>
+            </div>
+            <div class="col-12 col-sm-4">
+                <div class="fw-bold letter-section-label">Cleanup</div>
+                <div>${schedule.cleanup_hours || 0} hour(s)</div>
+            </div>
+        </div>
+        <div class="pt-3 border-top mt-auto">
+            <div class="fw-bold letter-section-label mb-2">Attachments</div>
+            <div id="attachmentsContainer"></div>
+        </div>
+    `;
+};
+
+/**
+ * Attachments card — formal letter, proof of payment, official receipt.
+ */
+const renderAttachments = (data) => {
+    const docs = data.documents;
+    const container = document.getElementById("attachmentsContainer");
+    if (!container) return;
+
+    const statusName = data.form_details.status.name;
+    const roleId = window.Admin?.role_id;
+    
+    // Allow editing IF (Status is Verifying Payment) OR (Admin Override).
+    // Notice we removed the !is_finalized check, because Stage 2 finalizes the fee BEFORE Stage 3 enters the OR.
+    const isEditableStage = (statusName === 'Verifying Payment') || roleId === 1;
+
+    container.innerHTML = `
         <div class="d-flex flex-column gap-2">
             <a href="${docs.formal_letter.url || "#"}" target="_blank"
                class="btn btn-sm ${docs.formal_letter.url ? "btn-outline-secondary" : "btn-outline-secondary disabled"}">
@@ -778,18 +721,271 @@ const RequestViewThin = (function () {
                class="btn btn-sm ${docs.proof_of_payment.url ? "btn-outline-secondary" : "btn-outline-secondary disabled"}">
                 <i class="bi bi-receipt me-1"></i> Proof of Payment
             </a>
-            ${
-                docs.official_receipt.number
-                    ? `<a href="/official-receipt/${requestId}" target="_blank" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-receipt-cutoff me-1"></i> Official Receipt
-                       </a>`
-                    : `<button class="btn btn-sm btn-outline-secondary disabled">
-                        <i class="bi bi-receipt-cutoff me-1"></i> No Receipt
-                       </button>`
-            }
+            
+            ${isEditableStage ? `
+                <div class="mt-2">
+                    <label class="form-label small fw-bold text-muted mb-1">Official Receipt No.</label>
+                    <div class="d-flex gap-2">
+                        <input type="text" class="form-control form-control-sm" id="inlineOfficialReceipt"
+                            value="${docs.official_receipt.number || ''}" placeholder="Enter OR Number">
+                        <button class="btn btn-sm btn-primary" type="button" id="saveReceiptBtn">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            ` : (docs.official_receipt.number ? `
+                <a href="/official-receipt/${requestId}" target="_blank" class="btn btn-sm btn-primary mt-1">
+                    <i class="bi bi-receipt-cutoff me-1"></i> View Receipt
+                </a>
+            ` : `
+                <span class="text-muted small mt-1 d-inline-block">
+                    <i class="bi bi-receipt-cutoff me-1"></i> No Receipt Uploaded
+                </span>
+            `)}
         </div>
-        `;
+    `;
+
+    // Bind the save button if it exists
+    document.getElementById('saveReceiptBtn')?.addEventListener('click', async function() {
+        const val = document.getElementById('inlineOfficialReceipt').value.trim();
+        if (!val) return showToast("Receipt number cannot be empty.", "error");
+
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        try {
+            const res = await fetch(`/api/admin/requisition/${requestId}/official-receipt`, {
+                method: 'PUT',
+                headers: { 
+                    Authorization: `Bearer ${localStorage.getItem("adminToken")}`, 
+                    "Content-Type": "application/json", 
+                    Accept: "application/json" 
+                },
+                body: JSON.stringify({ official_receipt_num: val })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.details?.official_receipt_num?.[0] || err.error || "Failed to save");
+            }
+
+            showToast("Official Receipt saved", "success");
+            
+            // Refresh the data and re-render
+            const fresh = await fetchData();
+            requestData = fresh.data;
+            renderActionButtons(requestData);
+            renderAttachments(requestData);
+
+        } catch (error) {
+            showToast(error.message, "error");
+            this.disabled = false;
+            this.innerHTML = '<i class="bi bi-save"></i>';
+        }
+    });
+};
+
+/**
+ * Event Resources Breakdown — mirrors resources/partials table design.
+ * Renders facilities, equipment, and services in one table with a total footer.
+ */
+/**
+ * Renders the unified resources table (Base items + Misc Fees) with waiving logic.
+ */
+/**
+ * Renders the unified resources table (Base items + Misc Fees) with waiving logic.
+ */
+const renderResourcesBreakdown = (data) => {
+    const container = document.getElementById("resourcesBreakdown");
+    if (!container) return;
+
+    const facilities = data.requested_items.facilities || [];
+    const equipment = data.requested_items.equipment || [];
+    const services = data.requested_items.services || [];
+    const miscFees = data.requisition_fees || [];
+
+    const editBtn = document.getElementById("editFeesBtn");
+    const addFeeBtn = document.getElementById("addFeeBtn");
+    const waiveAllWrapper = document.getElementById("waiveAllSwitch")?.closest('.form-check');
+
+    if (data.approval_info?.is_finalized) {
+        if (editBtn) editBtn.style.display = 'none';
+        if (addFeeBtn) addFeeBtn.style.display = 'none';
+        if (waiveAllWrapper) waiveAllWrapper.style.display = 'none';
+    } else {
+        // Ensure they show if the form somehow gets unfinalized (e.g. debugging)
+        if (editBtn) editBtn.style.display = '';
+        if (addFeeBtn) addFeeBtn.style.display = '';
+        if (waiveAllWrapper) waiveAllWrapper.style.display = '';
+    }
+
+    // Renders base items with a waive checkbox
+    const baseRow = (item, type, idField) => {
+        const adminName = item.waived_by_name || (window.Admin ? `${window.Admin.first_name} ${window.Admin.last_name}` : 'Admin');
+        const strikeClass = item.is_waived ? 'text-decoration-line-through' : '';
+        
+        // Check finalization state
+        const isFinalized = data.approval_info?.is_finalized;
+        const disabledAttr = isFinalized ? 'disabled' : '';
+        const disabledClass = isFinalized ? 'disabled' : '';
+
+        return `
+        <tr class="small fee-item ${item.is_waived ? 'waived' : ''}" style="border-color: #e9ecef;">
+            <td class="text-center">
+                <input class="form-check-input waiver-checkbox ${disabledClass}" type="checkbox" 
+                       data-type="${type}" data-id="${item[idField]}" data-admin-name="${escapeHtml(adminName)}" ${item.is_waived ? 'checked' : ''} ${disabledAttr}>
+            </td>
+            <td>
+                <div class="d-inline-block">${escapeHtml(item.name)}${item.quantity && item.quantity > 1 ? ` <span class="text-muted">x${item.quantity}</span>` : ""}</div>
+                <br>
+                <div class="waived-by-text text-danger ${item.is_waived ? 'd-inline-block' : 'd-none'}" style="font-size: 0.7rem;">
+                    Waived by ${escapeHtml(adminName)}
+                </div>
+            </td>
+            <td class="text-center text-muted">${type.charAt(0).toUpperCase() + type.slice(1)}</td>
+            <td class="text-center text-muted">${escapeHtml(item.rate_type)}</td>
+            <td class="text-center text-muted">${item.duration_text || "-"}</td>
+            <td class="text-end text-muted ${strikeClass}">${formatMoney(item.unit_price)}</td>
+            <td class="text-end fw-semibold ${strikeClass}">${formatMoney(item.subtotal)}</td>
+        </tr>
+    `;
     };
+
+    // Renders misc fees with a delete button instead of a checkbox
+    const miscRow = (fee) => {
+        const isDiscount = fee.type === 'discount';
+        const isPercentage = isDiscount && fee.discount_type === 'Percentage';
+        
+        // Check finalization state
+        const isFinalized = data.approval_info?.is_finalized;
+
+        // Calculate the subtotal to show the correct deduction amount
+        const baseSubtotal = facilities.reduce((sum, f) => sum + (!f.is_waived ? f.subtotal : 0), 0) +
+                             equipment.reduce((sum, e) => sum + (!e.is_waived ? e.subtotal : 0), 0) +
+                             services.reduce((sum, s) => sum + (!s.is_waived ? s.subtotal : 0), 0);
+        
+        let unitPriceText = '';
+        let totalValueText = '';
+
+        if (isDiscount) {
+            if (isPercentage) {
+                unitPriceText = `-${fee.discount_amount}%`;
+                const calculatedDiscount = (fee.discount_amount / 100) * baseSubtotal;
+                totalValueText = `-${formatMoney(calculatedDiscount)}`;
+            } else {
+                unitPriceText = formatMoney(fee.discount_amount);
+                totalValueText = `-${formatMoney(fee.discount_amount)}`;
+            }
+        } else {
+            unitPriceText = formatMoney(fee.fee_amount);
+            totalValueText = formatMoney(fee.fee_amount);
+        }
+
+        const addedBy = fee.added_by ? `<br><span class="text-muted" style="font-size:0.7rem;">Added by ${escapeHtml(fee.added_by.name)}</span>` : '';
+        
+        return `
+        <tr class="small fee-item" style="border-color: #e9ecef; background-color: #fafafa;">
+            <td class="text-center">
+                ${!isFinalized ? `
+                    <button class="btn btn-sm btn-link text-danger p-0 delete-fee-btn" 
+                            data-fee-id="${fee.fee_id}" title="Delete">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                ` : `
+                    <i class="bi bi-lock-fill text-muted" title="Fees are locked"></i>
+                `}
+            </td>
+            <td>${escapeHtml(fee.label)}${addedBy}</td>
+            <td class="text-center text-muted">${isDiscount ? 'Discount' : 'Fee'}</td>
+            <td class="text-center text-muted">Flat</td>
+            <td class="text-center text-muted">-</td>
+            <td class="text-end text-muted">${unitPriceText}</td>
+            <td class="text-end fw-semibold ${isDiscount ? 'text-danger' : ''}">${totalValueText}</td>
+        </tr>`;
+    };
+    
+    const rowsHtml = [
+        ...facilities.map((f) => baseRow(f, "facility", "requested_facility_id")),
+        ...equipment.map((e) => baseRow(e, "equipment", "requested_equipment_id")),
+        ...services.map((s) => baseRow(s, "service", "requested_service_id")),
+        ...miscFees.map(miscRow),
+    ].join("");
+    
+    container.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0" style="border-color: #e9ecef;">
+                <thead class="bg-light">
+                    <tr class="text-muted small">
+                        <th class="text-center" style="width: 5%;">Action</th>
+                        <th style="width: 25%;">Resource</th>
+                        <th class="text-center" style="width: 12%;">Type</th>
+                        <th class="text-center" style="width: 12%;">Rate</th>
+                        <th class="text-center" style="width: 12%;">Duration</th>
+                        <th class="text-end" style="width: 12%;">Base Fee</th>
+                        <th class="text-end" style="width: 12%;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml || '<tr><td colspan="7" class="text-center text-muted py-4">No resources requested</td></tr>'}
+                </tbody>
+                <tfoot class="bg-light">
+                    <tr style="border-color: #dee2e6; border-bottom: none;">
+                        <td colspan="6" class="fw-bold pt-3 pb-3 fs-6">Total Amount</td>
+                        <td class="text-end fw-bold text-primary pt-3 pb-3 fs-5" id="tableTotalFee">${formatMoney(data.fees.approved_fee)}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+
+    // Bind standard waive events
+    attachWaiverHandlers();
+    updateWaiveAllToggle();
+
+    // Bind delete events for misc fees
+    document.querySelectorAll('.delete-fee-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            if (!confirm('Are you sure you want to delete this fee/discount?')) return;
+            
+            const feeId = this.dataset.feeId;
+            const token = localStorage.getItem("adminToken");
+            const originalHtml = this.innerHTML;
+            
+            // Show loading state
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            this.disabled = true;
+
+            try {
+                const res = await fetch(`/api/admin/requisition/${requestId}/fee/${feeId}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+                });
+                
+                if (!res.ok) throw new Error("Failed to delete fee");
+                
+                const result = await res.json();
+                showToast("Fee deleted successfully", "success");
+                
+                // Update total immediately
+                document.getElementById('tableTotalFee').textContent = formatMoney(result.updated_approved_fee);
+                
+                // Remove the row from the DOM without full re-render
+                this.closest('tr').remove();
+                
+                // Refresh timeline
+                const fresh = await fetchData();
+                requestData.requisition_fees = fresh.data.requisition_fees;
+                renderTimeline();
+
+            } catch (error) {
+                showToast(error.message, "error");
+                // Revert button
+                this.innerHTML = originalHtml;
+                this.disabled = false;
+            }
+        });
+    });
+};
 
     /**
      * Render the activity timeline (comments, fees, approvals/rejections),
@@ -820,6 +1016,17 @@ const RequestViewThin = (function () {
                     type: "fee",
                     timestamp: new Date(f.created_at),
                     data: f,
+                });
+            });
+        }
+
+        // Waivers
+        if (timelineFilter === "all" || timelineFilter === "waiver") {
+            (requestData.waivers || []).forEach((w) => {
+                items.push({
+                    type: "waiver",
+                    timestamp: new Date(w.timestamp),
+                    data: w,
                 });
             });
         }
@@ -862,23 +1069,47 @@ const RequestViewThin = (function () {
                 `;
                 }
 
-                if (item.type === "fee") {
-                    const f = item.data;
-                    const isDiscount = f.discount_amount > 0;
+if (item.type === "fee") {
+    const f = item.data;
+    const isDiscount = f.discount_amount > 0;
+    const amount = isDiscount ? f.discount_amount : f.fee_amount;
+
+    return `
+        <div class="timeline-item fee">
+            <div class="d-flex justify-content-between align-items-center">
+                <strong class="small">${escapeHtml(f.added_by?.name || "Admin")}</strong>
+                <small class="text-muted">${formatTimeAgo(f.created_at)}</small>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center bg-white p-2 rounded mt-1">
+                <div class="small">
+                    <span class="text-muted">${isDiscount ? "Discount applied" : "Additional fee"}</span>
+                    <div class="fw-semibold text-dark">${escapeHtml(f.label)}</div>
+                </div>
+
+                <span class="badge rounded-pill ${isDiscount ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success"}">
+                    ${isDiscount ? "−" : "+"}${formatMoney(amount)}
+                </span>
+            </div>
+        </div>
+    `;
+}
+
+                if (item.type === "waiver") {
+                    const w = item.data;
                     return `
-                    <div class="timeline-item fee">
+                    <div class="timeline-item waiver">
                         <div class="d-flex justify-content-between">
-                            <strong class="small">${escapeHtml(f.added_by?.name || "Admin")}</strong>
-                            <small class="text-muted">${formatTimeAgo(f.created_at)}</small>
+                            <strong class="small">${escapeHtml(w.admin_name)}</strong>
+                            <small class="text-muted">${formatTimeAgo(w.timestamp)}</small>
                         </div>
                         <div class="small bg-white p-2 rounded mt-1">
-                            ${isDiscount ? "Added discount" : "Added fee"}: <strong>${escapeHtml(f.label)}</strong>
-                            - ${isDiscount ? "-" : ""}${formatMoney(isDiscount ? f.discount_amount : f.fee_amount)}
+                            <i class="bi bi-tag-fill text-primary me-1"></i> Waived <strong>${escapeHtml(w.item_name)}</strong> 
+                            <span class="text-muted">&middot; ${w.item_type}</span>
                         </div>
                     </div>
                 `;
                 }
-
                 const a = item.data;
                 const admin = a.acted_by || a.required_admin;
                 return `
@@ -967,6 +1198,7 @@ const RequestViewThin = (function () {
      */
     const refreshAfterAction = async () => {
         const fresh = await fetchData();
+        requestData = fresh.data;
 
         // Patch only the fields that can change on approve/reject.
         requestData.approval_history = fresh.data.approval_history;
@@ -977,6 +1209,7 @@ const RequestViewThin = (function () {
         // Re-render affected sections only.
         renderHeader(requestData);
         renderActionButtons(requestData);
+        renderAttachments(requestData);
         renderTimeline();
 
         // Tracker card uses its own endpoint — refresh it too.
@@ -1117,11 +1350,13 @@ const RequestViewThin = (function () {
                   : "Pending";
 
             const overlayIcon = isApproved
-                ? `<i class="bi bi-check-circle-fill text-success position-absolute"
-        style="bottom:-2px;right:-2px;font-size:14px;"></i>`
+                ? `<div class="position-absolute bg-white rounded-circle d-flex align-items-center justify-content-center" style="bottom:-2px; right:-2px; width:16px; height:16px;">
+                       <i class="bi bi-check-circle-fill text-success" style="font-size:14px;"></i>
+                   </div>`
                 : isRejected
-                  ? `<i class="bi bi-x-circle-fill text-danger position-absolute"
-          style="bottom:-2px;right:-2px;font-size:14px;"></i>`
+                  ? `<div class="position-absolute bg-white rounded-circle d-flex align-items-center justify-content-center" style="bottom:-2px; right:-2px; width:16px; height:16px;">
+                         <i class="bi bi-x-circle-fill text-danger" style="font-size:14px;"></i>
+                     </div>`
                   : "";
 
             return `
@@ -1236,11 +1471,21 @@ const RequestViewThin = (function () {
         const fresh = confirmBtn.cloneNode(true);
         confirmBtn.replaceWith(fresh);
         fresh.addEventListener("click", async () => {
+            const originalHtml = fresh.innerHTML;
+            const originalClasses = fresh.className;
+            
+            fresh.disabled = true;
+            fresh.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...`;
+
             try {
                 await config.onConfirm();
                 modal.hide();
             } catch (err) {
                 showToast(err.message, "error");
+                // Revert button on error so they can try again
+                fresh.disabled = false;
+                fresh.innerHTML = originalHtml;
+                fresh.className = originalClasses;
             }
         });
 
@@ -1274,6 +1519,84 @@ const RequestViewThin = (function () {
      * comment input/send button, and the back-to-top scroll button.
      */
     const setupEventListeners = () => {
+
+        // Add Fee Button
+document.getElementById("addFeeBtn")?.addEventListener("click", () => {
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("feeModal"));
+    modal.show();
+});
+
+// Fee Type Toggle
+document.getElementById('feeType')?.addEventListener('change', function () {
+    document.getElementById('discountTypeSection').style.display = this.value === 'discount' ? 'block' : 'none';
+    if (this.value === 'vat') {
+        document.getElementById('feeLabel').value = 'Less VAT';
+        document.getElementById('feeValue').value = '12';
+        document.getElementById('discountType').value = 'Percentage';
+    }
+});
+
+// Save Fee Button
+document.getElementById('saveFeeBtn')?.addEventListener('click', async function () {
+        // Safety catch
+    if (requestData.approval_info?.is_finalized) {
+        showToast("Fees are locked because the form is finalized.", "error");
+        return;
+    }
+    const type = document.getElementById('feeType').value;
+    const value = parseFloat(document.getElementById('feeValue').value);
+    const label = document.getElementById('feeLabel').value;
+    const discountType = document.getElementById('discountType').value; // 'Fixed' or 'Percentage'
+    const accountNum = document.getElementById('accountNum').value.trim();
+
+    if (!type || !value || !label) {
+        showToast("Please fill all required fields.", "error");
+        return;
+    }
+
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Adding...';
+
+    const token = localStorage.getItem("adminToken");
+    let endpoint = type === 'additional' ? 'fee' : 'discount';
+    
+    // Ensure discount type is correctly set when the type is 'discount'
+    let body = type === 'additional' 
+        ? { label, fee_amount: value, account_num: accountNum || null }
+        : { label, discount_amount: value, discount_type: discountType, account_num: accountNum || null };
+
+    try {
+        const res = await fetch(`/api/admin/requisition/${requestId}/${endpoint}`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(body)
+        });
+        
+        if (!res.ok) throw new Error("Failed to add fee");
+
+        showToast('Fee added successfully', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('feeModal')).hide();
+        document.getElementById('feeForm').reset();
+        document.getElementById('discountTypeSection').style.display = 'none';
+        
+        // Re-fetch just the data we need to repaint the table
+        const fresh = await fetchData();
+        requestData.requisition_fees = fresh.data.requisition_fees;
+        requestData.fees = fresh.data.fees;
+
+        renderTimeline();
+        
+        // Re-render the table
+        renderResourcesBreakdown(requestData);
+
+    } catch (error) {
+        showToast(error.message, "error");
+    } finally {
+        this.disabled = false;
+        this.innerHTML = 'Add';
+    }
+});
+
         // Timeline
         document
             .getElementById("timelineFilter")
@@ -1336,6 +1659,167 @@ const RequestViewThin = (function () {
     };
 
     /**
+ * Binds change events to the newly rendered waiver checkboxes.
+ */
+const attachWaiverHandlers = () => {
+    document.querySelectorAll('.waiver-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            handleWaiverChange(this);
+        });
+    });
+};
+
+/**
+ * Fires the waive API immediately on checkbox change.
+ */
+const handleWaiverChange = async (checkbox) => {
+        // Safety catch
+    if (requestData.approval_info?.is_finalized) {
+        showToast("Fees are locked because the form is finalized.", "error");
+        return;
+    }
+    const isChecked = checkbox.checked;
+    const type = checkbox.dataset.type; 
+    const id = parseInt(checkbox.dataset.id);
+    const adminName = checkbox.dataset.adminName;
+    const row = checkbox.closest('tr');
+    const waivedText = row.querySelector('.waived-by-text');
+    const unitPriceCell = row.cells[5]; 
+    const totalCell = row.cells[6];
+    
+    const token = localStorage.getItem("adminToken");
+    const adminId = localStorage.getItem("adminId");
+
+    // Optimistic UI update
+        if (isChecked) {
+            row.classList.add('waived');
+            waivedText.innerHTML = `Waived by ${escapeHtml(adminName)}`;
+            waivedText.classList.remove('d-none');
+            waivedText.classList.add('d-inline-block');
+            
+            unitPriceCell.classList.add('text-decoration-line-through');
+            totalCell.classList.add('text-decoration-line-through');
+        } else {
+            row.classList.remove('waived');
+            waivedText.classList.add('d-none');
+            waivedText.classList.remove('d-inline-block');
+            
+            unitPriceCell.classList.remove('text-decoration-line-through');
+            totalCell.classList.remove('text-decoration-line-through');
+        }
+    updateWaiveAllToggle();
+
+    // Gather all currently checked boxes of each type
+    const getChecked = (t) => Array.from(document.querySelectorAll(`.waiver-checkbox[data-type="${t}"]:checked`)).map(cb => parseInt(cb.dataset.id));
+
+    const payload = {
+        admin_id: adminId,
+        waived_facilities: getChecked('facility'),
+        waived_equipment: getChecked('equipment'),
+        waived_services: getChecked('service')
+    };
+
+    try {
+        const res = await fetch(`/api/admin/requisition/${requestId}/waive`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error("Failed to update waivers");
+        
+        const result = await res.json();
+        document.getElementById('tableTotalFee').textContent = formatMoney(result.updated_approved_fee);
+        
+        const fresh = await fetchData();
+        requestData.waivers = fresh.data.waivers;
+        requestData.requested_items = fresh.data.requested_items;
+        renderTimeline();
+
+        showToast("Waiver updated", "success");
+    } catch (err) {
+        // Revert on failure
+        checkbox.checked = !isChecked;
+        if (!isChecked) {
+            row.classList.add('waived');
+            waivedText.innerHTML = `Waived by ${escapeHtml(adminName)}`;
+            waivedText.style.display = 'block';
+        } else {
+            row.classList.remove('waived');
+            waivedText.style.display = 'none';
+        }
+        showToast(err.message, "error");
+    }
+};
+
+/**
+ * Toggles all checkboxes based on the Waive All switch.
+ */
+const updateWaiveAllToggle = () => {
+    const checkboxes = document.querySelectorAll('.waiver-checkbox');
+    const waiveAllSwitch = document.getElementById('waiveAllSwitch');
+    if (checkboxes.length > 0 && waiveAllSwitch) {
+        waiveAllSwitch.checked = Array.from(checkboxes).every(cb => cb.checked);
+    }
+};
+
+document.getElementById('waiveAllSwitch')?.addEventListener('change', async function() {
+    const isChecked = this.checked;
+    
+    document.querySelectorAll('.waiver-checkbox').forEach(cb => {
+        cb.checked = isChecked;
+        const row = cb.closest('tr');
+        const waivedText = row.querySelector('.waived-by-text');
+        const adminName = cb.dataset.adminName;
+
+        // Target the price columns to toggle their strike-through classes
+        const unitPriceCell = row.cells[5]; 
+        const totalCell = row.cells[6];
+
+        if (isChecked) {
+            row.classList.add('waived');
+            waivedText.innerHTML = `Waived by ${escapeHtml(adminName)}`;
+            waivedText.classList.remove('d-none');
+            waivedText.classList.add('d-inline-block');
+            
+            unitPriceCell.classList.add('text-decoration-line-through');
+            totalCell.classList.add('text-decoration-line-through');
+        } else {
+            row.classList.remove('waived');
+            waivedText.classList.add('d-none');
+            waivedText.classList.remove('d-inline-block');
+            
+            unitPriceCell.classList.remove('text-decoration-line-through');
+            totalCell.classList.remove('text-decoration-line-through');
+        }
+    });
+
+    const token = localStorage.getItem("adminToken");
+    const adminId = localStorage.getItem("adminId");
+
+    try {
+        const res = await fetch(`/api/admin/requisition/${requestId}/waive`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ admin_id: adminId, waive_all: isChecked })
+        });
+        if (!res.ok) throw new Error("Failed to toggle all waivers");
+        
+        const result = await res.json();
+        document.getElementById('tableTotalFee').textContent = formatMoney(result.updated_approved_fee);
+        
+        const fresh = await fetchData();
+        requestData.waivers = fresh.data.waivers;
+        requestData.requested_items = fresh.data.requested_items;
+        renderTimeline();
+
+        showToast(isChecked ? "All items waived" : "All waivers removed", "success");
+    } catch (err) {
+        showToast(err.message, "error");
+        renderResourcesBreakdown(requestData);
+    }
+});
+
+    /**
      * ========================================================================
      * INIT — Module Entry Point
      * ========================================================================
@@ -1377,6 +1861,9 @@ const RequestViewThin = (function () {
             renderHeader(requestData);
             renderActionButtons(requestData);
             renderDetails(requestData);
+            renderBookingDetails(requestData);
+            renderAttachments(requestData);
+            renderResourcesBreakdown(requestData);
             renderTimeline();
 
             // Fetch approval tracker (separate endpoint, non-blocking)

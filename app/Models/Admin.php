@@ -108,6 +108,14 @@ class Admin extends Authenticatable
         return $this->hasMany(RequestedFacility::class, 'waived_by', 'admin_id');
     }
 
+    /**
+     * Services that this admin has waived
+     */
+    public function waivedServices()
+    {
+        return $this->hasMany(RequestedService::class, 'waived_by', 'admin_id');
+    }
+
 
     // ----- Requisition Management ----- //
 

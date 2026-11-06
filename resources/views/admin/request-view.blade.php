@@ -1,8 +1,20 @@
 @extends('layouts.admin')
 @section('title', 'Review Request')
 @section('content')
-    <link rel="stylesheet" href="https://cloudflare.com">
     <style>
+        /* Prevent the "Waived by" text from being struck through */
+        .waived-by-text {
+            text-decoration: none !important;
+        }
+
+        .table-bordered> :not(caption)>*>*:first-child {
+            border-left: 0;
+        }
+
+        .table-bordered> :not(caption)>*>*:last-child {
+            border-right: 0;
+        }
+
         /* Request Tabs */
         .request-tabs {
             border-bottom: 1px solid #dee2e6;
@@ -229,6 +241,12 @@
         }
 
         /* Letter Reader */
+
+        h6 {
+            font-family: "Fraunces", Georgia, serif;
+            color: var(--navy);
+        }
+
         .letter-title {
             font-size: 1.25rem;
             font-family: "Fraunces", Georgia, serif;
@@ -304,7 +322,8 @@
                         </div>
 
                         <!-- Right: actions (flex-shrink-0 keeps buttons from being squeezed) -->
-                        <div class="d-flex align-items-center gap-2 flex-wrap pe-3 flex-shrink-0" id="actionButtonsTop"></div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap pe-3 flex-shrink-0" id="actionButtonsTop">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -353,21 +372,49 @@
                 <div class="tab-content">
                     <!-- Details Tab -->
                     <div id="detailsPane" class="tab-pane active">
-                        <div class="row g-3">
+                        {{-- Row 1: Letter body (left) | Booking Details (right) --}}
+                        <div class="row g-3 mb-3">
                             <div class="col-lg-8">
                                 <div class="card">
-                                    <div class="card-body bg-light" id="letterHeader"></div>
+                                    <div class="card-body border-bottom" id="letterHeader"></div>
                                     <div class="card-body" id="letterBody">
                                         <div id="detailsContainer" class="d-none"></div>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-lg-4 d-flex flex-column gap-3">
-                                <div class="card">
-                                    <x-card-header title="Booking Details" icon="calendar" />
-                                    <div class="card-body" id="eventDetails"></div>
+                                {{-- Added flex-grow-1 so this card fills the column height --}}
+                                <div class="card h-100 d-flex flex-column flex-grow-1">
+                                    <div class="card-header d-flex align-items-center justify-content-between gap-2">
+                                        <h6 class="mb-0 fw-semibold"><i class="bi bi-calendar"></i> Booking Details</h6>
+                                    </div>
+                                    {{-- Added flex-grow-1 so the body fills the card --}}
+                                    <div class="card-body d-flex flex-column flex-grow-1" id="bookingDetails"></div>
                                 </div>
                             </div>
+                        </div>
+
+                        {{-- Row 2: Event Resources Breakdown (full width) --}}
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center justify-content-between gap-2 flex-wrap"
+                                style="border-bottom: none;">
+                                <h6 class="mb-0 fw-semibold">Event Resources Breakdown & Management</h6>
+
+                                <div class="d-flex align-items-center gap-3 ms-auto">
+                                    {{-- Waive All Switch --}}
+                                    <div class="form-check form-switch m-0">
+                                        <input class="form-check-input" type="checkbox" id="waiveAllSwitch">
+                                        <label class="form-check-label small fw-semibold text-muted" for="waiveAllSwitch"
+                                            style="cursor: pointer;">Waive All</label>
+                                    </div>
+
+                                    {{-- Add Fee Button --}}
+                                    <button class="btn btn-sm btn-outline-secondary" id="addFeeBtn">
+                                        <i class="bi bi-plus-lg"></i> Add Fee/Discount
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0" id="resourcesBreakdown"></div>
                         </div>
                     </div>
 
@@ -376,20 +423,22 @@
                         <div class="row g-3">
                             <div class="col-lg-7">
                                 <div class="card h-100">
-                                    <x-card-header title="Activity Timeline">
-                                        <x-slot:actions>
+                                    <div class="card-header d-flex align-items-center justify-content-between gap-2">
+                                        <h6 class="mb-0 fw-semibold"> Activity Timeline</h6>
+                                        <div class="d-flex align-items-center gap-2">
                                             <select id="timelineFilter" class="form-select form-select-sm"
                                                 style="width: auto;">
                                                 <option value="all">All</option>
                                                 <option value="comment">Comments</option>
                                                 <option value="fee">Fees</option>
+                                                <option value="waiver">Waivers</option>
                                                 <option value="approval">Approvals</option>
                                             </select>
                                             <button class="btn btn-sm btn-outline-secondary" id="refreshTimeline">
                                                 <i class="bi bi-arrow-clockwise"></i>
                                             </button>
-                                        </x-slot:actions>
-                                    </x-card-header>
+                                        </div>
+                                    </div>
                                     <div class="card-body d-flex flex-column" style="min-height: 400px;">
                                         <div id="timelineContent" class="flex-grow-1 overflow-auto"
                                             style="max-height: 350px;">
@@ -412,11 +461,13 @@
                             </div>
                             <div class="col-lg-5">
                                 <div class="card h-100">
-                                    <x-card-header title="Approval Status">
-                                        <x-slot:actions>
-                                            <span id="approvalCountBadge" class="ms-auto text-muted small fw-normal"></span>
-                                        </x-slot:actions>
-                                    </x-card-header>
+                                    <div class="card-header d-flex align-items-center justify-content-between gap-2">
+                                        <h6 class="mb-0 fw-semibold"> Approval Status</h6>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span id="approvalCountBadge"
+                                                class="ms-auto text-muted small fw-normal"></span>
+                                        </div>
+                                    </div>
 
                                     <div class="card-body overflow-auto p-2" id="approvalsContainer"
                                         style="max-height: 550px;">
@@ -444,6 +495,60 @@
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="button" class="btn" id="actionModalConfirm">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Fee Modal -->
+            <div class="modal fade" id="feeModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add Fee or Discount</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="feeForm">
+                                <div class="mb-3">
+                                    <label for="feeType" class="form-label">Fee Type</label>
+                                    <select id="feeType" class="form-select" required>
+                                        <option value="">Select type...</option>
+                                        <option value="additional">Additional Fee</option>
+                                        <option value="discount">Discount</option>
+                                        <option value="vat">Less VAT (12%)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="discountTypeSection" style="display: none;">
+                                    <label for="discountType" class="form-label">Discount Type</label>
+                                    <select id="discountType" class="form-select">
+                                        <option value="Fixed">Fixed Amount</option>
+                                        <option value="Percentage">Percentage</option>
+                                    </select>
+                                </div>
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label for="feeLabel" class="form-label">Label</label>
+                                        <input type="text" id="feeLabel" class="form-control"
+                                            placeholder="e.g. Sound System" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="accountNum" class="form-label">Account Number (Opt)</label>
+                                        <input type="text" id="accountNum" class="form-control"
+                                            placeholder="Account #">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="feeValue" class="form-label">Amount</label>
+                                    <input type="number" id="feeValue" class="form-control" step="0.01"
+                                        min="0.01" placeholder="0.00" required>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" id="saveFeeBtn" class="btn btn-primary">Add</button>
                         </div>
                     </div>
                 </div>
