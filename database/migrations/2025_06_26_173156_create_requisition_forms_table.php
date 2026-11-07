@@ -47,6 +47,7 @@ return new class extends Migration {
             $table->time('start_time');
             $table->time('end_time');
             $table->boolean('all_day')->default(false);
+            $table->unsignedTinyInteger('cleanup_hours')->default(4);
 
             // late returns 
             $table->decimal('late_penalty_fee', 10, 2)->default(0);

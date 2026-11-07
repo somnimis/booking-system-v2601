@@ -36,8 +36,8 @@ class AdminSeeder extends Seeder
             
             // ------- Issuing Officer ------- //
             [
-                'first_name' => 'Dany',
-                'last_name' => 'Molina',
+                'first_name' => 'Vice President',
+                'last_name' => 'of Administration',
                 'middle_name' => null,
                 'title' => 'Vice President of Administration',
                 'signature_url' => null,
@@ -53,8 +53,8 @@ class AdminSeeder extends Seeder
 
             // ------- Final Approval Officer ------- //
             [
-                'first_name' => 'Earnest',
-                'last_name' => 'Dagohoy',
+                'first_name' => 'President of',
+                'last_name' => 'Administration',
                 'middle_name' => null,
                 'title' => 'President of Administration',
                 'signature_url' => null,
@@ -71,8 +71,8 @@ class AdminSeeder extends Seeder
 
             // ------- Approving Officers ------- //
             [
-                'first_name' => 'Rey',
-                'last_name' => 'Quimba',
+                'first_name' => 'BUM',
+                'last_name' => 'Services',
                 'middle_name' => null,
                 'title' => 'Head of Buildings and Maintenance Services',
                 'signature_url' => null,
@@ -86,8 +86,8 @@ class AdminSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'first_name' => 'Ivan',
-                'last_name' => 'Cachopero',
+                'first_name' => 'Electrical Maintenance',
+                'last_name' => 'Services',
                 'middle_name' => null,
                 'title' => 'Head of Electrical Maintenance Services',
                 'signature_url' => null,
@@ -101,8 +101,8 @@ class AdminSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'first_name' => 'Jonathan',
-                'last_name' => 'Tumalay',
+                'first_name' => 'CTSSO',
+                'last_name' => 'Services',
                 'middle_name' => null,
                 'title' => 'Head of CTSSO',
                 'signature_url' => null,
@@ -116,8 +116,8 @@ class AdminSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'first_name' => 'Donald',
-                'last_name' => 'Lebrilla',
+                'first_name' => 'EMC',
+                'last_name' => 'Coordinator',
                 'middle_name' => null,
                 'title' => 'Educational Media Center Coordinator',
                 'signature_url' => null,
@@ -131,8 +131,8 @@ class AdminSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'first_name' => 'James',
-                'last_name' => 'Estinoco',
+                'first_name' => 'GUM',
+                'last_name' => 'Services',
                 'middle_name' => null,
                 'title' => 'Head of Grounds and Upkeep Maintence Services',
                 'signature_url' => null,
@@ -146,8 +146,8 @@ class AdminSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'first_name' => 'Lennon',
-                'last_name' => 'Pajar',
+                'first_name' => 'UCSC',
+                'last_name' => 'Services',
                 'middle_name' => null,
                 'title' => 'Head of University Computer Service Center',
                 'signature_url' => null,
