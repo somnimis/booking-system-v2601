@@ -52,5 +52,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('requisition_approvals');
+        DB::statement('DROP TYPE IF EXISTS requisition_approvals_status');
     }
 };

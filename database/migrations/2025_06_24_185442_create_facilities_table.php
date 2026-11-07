@@ -74,5 +74,6 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('facilities');
+        DB::statement('DROP TYPE IF EXISTS facilities_rate_type');
     }
 };

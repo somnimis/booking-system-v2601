@@ -97,5 +97,10 @@ return new class extends Migration {
             $table->index(['start_date', 'end_date']);
         });
     }
+    public function down(): void
+    {
+        Schema::dropIfExists('requisition_forms');
+        DB::statement('DROP TYPE IF EXISTS requisition_forms_user_type');
+    }
 };
 
