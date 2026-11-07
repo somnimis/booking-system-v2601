@@ -119,55 +119,59 @@ Route::middleware('web')->group(function () {
     */
 
     // Helper function to authenticate from token
-    function authenticateFromRequest($request)
-    {
-        $token = null;
+    if (!function_exists('authenticateFromRequest')) {
+        function authenticateFromRequest($request)
+        {
+            $token = null;
 
-        // Check URL query parameter first (for initial redirect after login)
-        if ($token = $request->query('token')) {
-            // Token found in URL
-        }
-        // Check cookie
-        elseif ($token = $request->cookie('admin_token')) {
-            // Token found in cookie
-        }
-        // Check session
-        elseif ($token = $request->session()->get('admin_token')) {
-            // Token found in session
-        }
-        // Check Authorization header (for API calls within page)
-        elseif ($token = $request->bearerToken()) {
-            // Token found in header
-        }
-
-        if ($token) {
-            $accessToken = PersonalAccessToken::findToken($token);
-            if ($accessToken && $accessToken->tokenable_type === 'App\Models\Admin') {
-                auth('sanctum')->setUser($accessToken->tokenable);
-
-                // Store token in cookie for future requests if it came from URL
-                if ($request->query('token')) {
-                    cookie()->queue('admin_token', $token, 60 * 24 * 30);
-                    $request->session()->put('admin_token', $token);
-                }
-
-                return true;
+            // Check URL query parameter first (for initial redirect after login)
+            if ($token = $request->query('token')) {
+                // Token found in URL
             }
-        }
+            // Check cookie
+            elseif ($token = $request->cookie('admin_token')) {
+                // Token found in cookie
+            }
+            // Check session
+            elseif ($token = $request->session()->get('admin_token')) {
+                // Token found in session
+            }
+            // Check Authorization header (for API calls within page)
+            elseif ($token = $request->bearerToken()) {
+                // Token found in header
+            }
 
-        return false;
+            if ($token) {
+                $accessToken = PersonalAccessToken::findToken($token);
+                if ($accessToken && $accessToken->tokenable_type === 'App\Models\Admin') {
+                    auth('sanctum')->setUser($accessToken->tokenable);
+
+                    // Store token in cookie for future requests if it came from URL
+                    if ($request->query('token')) {
+                        cookie()->queue('admin_token', $token, 60 * 24 * 30);
+                        $request->session()->put('admin_token', $token);
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     // Create a middleware-like function for admin routes
-    function requireAdminAuth($request, $callback)
-    {
-        if (!authenticateFromRequest($request)) {
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['message' => 'Unauthorized'], 401);
+    if (!function_exists('requireAdminAuth')) {
+        function requireAdminAuth($request, $callback)
+        {
+            if (!authenticateFromRequest($request)) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['message' => 'Unauthorized'], 401);
+                }
+                return redirect('/admin/login');
             }
-            return redirect('/admin/login');
+            return $callback();
         }
-        return $callback();
     }
 
     /*
