@@ -8,7 +8,7 @@ WORKDIR /var/www/html
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
-    libxml-dev \
+    libxml2-dev \
     zip \
     unzip \
     git \
