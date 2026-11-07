@@ -63,5 +63,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('signatures');
+        DB::statement('DROP TYPE IF EXISTS signatures_device_type');
+        DB::statement('DROP TYPE IF EXISTS signatures_status');
     }
 };

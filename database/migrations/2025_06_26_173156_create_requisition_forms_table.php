@@ -47,6 +47,7 @@ return new class extends Migration {
             $table->time('start_time');
             $table->time('end_time');
             $table->boolean('all_day')->default(false);
+            $table->unsignedTinyInteger('cleanup_hours')->default(4);
 
             // late returns 
             $table->decimal('late_penalty_fee', 10, 2)->default(0);
@@ -96,6 +97,11 @@ return new class extends Migration {
             // 5. Composite index for date ranges (start_date + end_date together)
             $table->index(['start_date', 'end_date']);
         });
+    }
+    public function down(): void
+    {
+        Schema::dropIfExists('requisition_forms');
+        DB::statement('DROP TYPE IF EXISTS requisition_forms_user_type');
     }
 };
 

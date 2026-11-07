@@ -32,5 +32,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('facility_images');
+        DB::statement('DROP TYPE IF EXISTS facility_images_image_type');
     }
 };
