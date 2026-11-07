@@ -14,21 +14,23 @@ class RequestedService extends Model
     protected $fillable = [
         'request_id',
         'service_id',
+        'fee_snapshot', 
+        'is_waived',
+        'waived_by',
+        'waived_at',
     ];
 
-    // Relationship: belongs to a requisition form
-    /**
-     * Get the requisition form that this requested service belongs to
-     */
+    protected $casts = [
+        'is_waived'    => 'boolean',
+        'fee_snapshot' => 'decimal:2',
+        'waived_at'    => 'datetime',
+    ];
+
     public function requisitionForm(): BelongsTo
     {
         return $this->belongsTo(RequisitionForm::class, 'request_id', 'request_id');
     }
-    
-    /**
-     * Get the extra service that was requested
-     * This is the relationship you're missing!
-     */
+
     public function service(): BelongsTo
     {
         return $this->belongsTo(ExtraService::class, 'service_id', 'service_id');

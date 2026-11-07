@@ -547,7 +547,7 @@ showHoverCard(event, element, statusData) {
                 <span>${eventData.all_day ? 'All Day' : `${this.formatTimeDisplay(eventData.start_time)} - ${this.formatTimeDisplay(eventData.end_time)}`}</span>
             </div>
             <div style="font-size: 0.7rem; color: #9aaac5; margin-top: 0.5rem; padding-top: 0.4rem; border-top: 1px solid #e2e6f0;">
-                <i class="bi bi-info-circle"></i> Subject to approval
+                <i class="bi bi-info-circle"></i> Subject to approval. Reservation is not guaranteed until approved. This timeslot may still become available.
             </div>
         `;
     }

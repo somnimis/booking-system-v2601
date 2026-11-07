@@ -9,30 +9,44 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-public function up(): void
-{
-    Schema::create('requested_services', function (Blueprint $table) {
-        $table->id('requested_service_id');
+    public function up(): void
+    {
+        Schema::create('requested_services', function (Blueprint $table) {
+            $table->id('requested_service_id');
 
-        $table->unsignedBigInteger('request_id');
-        $table->unsignedBigInteger('service_id');
+            $table->unsignedBigInteger('request_id')->index();
+            $table->unsignedBigInteger('service_id')->index();
 
-        $table->foreign('request_id')
-              ->references('request_id')
-              ->on('requisition_forms')
-              ->cascadeOnDelete();
+            // NEW -- Snapshot price. based on 'service_fee' from extra_services (pk: service_id) table
+            $table->decimal('fee_snapshot', 8, 2)->nullable();
 
-        $table->foreign('service_id')
-              ->references('service_id')
-              ->on('extra_services')
-              ->cascadeOnDelete();
+            // Waiver columns
+            $table->boolean('is_waived')->default(false);
+            $table->unsignedBigInteger('waived_by')->nullable();
+            $table->dateTime('waived_at')->nullable();
 
-        $table->timestamps();
+            // Foreign Key Constraints
+            $table->foreign('request_id')
+                  ->references('request_id')
+                  ->on('requisition_forms')
+                  ->cascadeOnDelete();
 
-        $table->unique(['request_id', 'service_id']);
-    });
-}
+            $table->foreign('service_id')
+                  ->references('service_id')
+                  ->on('extra_services')
+                  ->cascadeOnDelete();
 
+            $table->foreign('waived_by')
+                  ->references('admin_id')
+                  ->on('admins')
+                  ->nullOnDelete();
+
+            $table->timestamps();
+
+            // Prevent duplicate service requests per requisition form
+            $table->unique(['request_id', 'service_id']);
+        });
+    }
 
     /**
      * Reverse the migrations.

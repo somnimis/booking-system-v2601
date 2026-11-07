@@ -1,13 +1,14 @@
 <?php
 
-use App\Http\Controllers\EquipmentItemController;
-use App\Http\Controllers\RequiredApprovalsController;
-use App\Http\Controllers\UserRequisitionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-
+use App\Http\Controllers\EquipmentItemController;
+use App\Http\Controllers\RequestViewController;
+use App\Http\Controllers\RequiredApprovalsController;
+use App\Http\Controllers\UserRequisitionController;
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminApprovalController;
 use App\Http\Controllers\AdminActionsController;
 use App\Http\Controllers\RequisitionFormController;
@@ -18,10 +19,13 @@ use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\ScannerController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AdminFacilityController;
+use App\Http\Controllers\ManageFacilitiesController;
+use App\Http\Controllers\ManageEquipmentController;
 use App\Http\Controllers\Dropdowns\FacilityCategoryController;
 use App\Http\Controllers\Dropdowns\FacilitySubcategoryController;
 use App\Http\Controllers\Dropdowns\EquipmentCategoryController;
 use App\Http\Controllers\Dropdowns\DepartmentController;
+use App\Http\Controllers\DepartmentRoleController;
 use App\Http\Controllers\Dropdowns\AvailabilityStatusController;
 use App\Http\Controllers\FormStatusController;
 use App\Http\Controllers\Dropdowns\ConditionController;
@@ -31,6 +35,9 @@ use App\Http\Controllers\ExtraServicesController;
 use App\Http\Controllers\ReservationListingsController;
 use App\Http\Controllers\EquipmentTransactionController;
 use App\Http\Controllers\AvailabilityController;
+use App\Http\Controllers\CreateReservationController;
+use App\Http\Controllers\CheckAvailabilityController;
+use App\Http\Controllers\ManageAdminsController;
 use Illuminate\Support\Facades\Log;
 
 // ==================== PUBLIC ROUTES ==================== //
@@ -63,7 +70,10 @@ Route::post('/login', function (Request $request) {
 });
 
 Route::get('/admins/departments', [AdminController::class, 'getAdminDepartments']);
+
+// ---------------- Dropdown Selections ---------------- //    
 Route::get('/facilities/dropdown', [FacilityController::class, 'getFacilitiesForDropdown']);
+Route::get('/equipment/dropdown', [EquipmentController::class, 'getEquipmentForDropdown']);
 
 
 // ---------------- Booking Listings ---------------- //    
@@ -75,7 +85,6 @@ Route::get('/equipment-details/{id}', [EquipmentController::class, 'getEquipment
 
 // Public catalog endpoints
 Route::prefix('facilities')->group(function () {
-    // === PUT SPECIFIC ROUTES BEFORE PARAMETERIZED ROUTES ===
     Route::get('/parent-buildings-for-rooms', [FacilityCategoryController::class, 'getParentBuildingsForRooms']);
     Route::get('/buildings', [FacilityCategoryController::class, 'getBuildings']);
     Route::get('/venue-count', [FacilityCategoryController::class, 'getVenuesCount']);
@@ -99,15 +108,16 @@ Route::post('/calendar-events', [CalendarEventsController::class, 'store']);
 Route::delete('/calendar-events/{id}', [CalendarEventsController::class, 'destroy']);
 Route::get('/calendar-events/types', [CalendarEventsController::class, 'getEventTypes']);
 
-// ==================== OPTIMIZED AVAILABILITY ENDPOINTS ==================== //
+// ==================== AVAILABILITY ENDPOINTS ==================== //
 Route::get('/availability/facilities', [AvailabilityController::class, 'getFacilitiesList']);
 Route::get('/availability/events', [AvailabilityController::class, 'getEventsForDate']);
 Route::get('/availability/facility/{facilityId}/schedule', [AvailabilityController::class, 'getFacilitySchedule']);
 Route::get('/availability/facilities/hierarchy', [AvailabilityController::class, 'getFacilitiesHierarchy']);
+Route::get('/availability/search', [AvailabilityController::class, 'searchAvailability']);
+Route::get('/availability/facilities/list', [AvailabilityController::class, 'getFacilitiesListFlat']);
 
-// ---------------- Lookup Tables ---------------- //
+// ---------------- Lookup Tables (for testing) ---------------- //
 Route::get('/admin-role', [AdminController::class, 'adminRoles']);
-Route::get('/departments', [DepartmentController::class, 'index']);
 Route::get('/availability-statuses', [AvailabilityStatusController::class, 'index']);
 Route::get('/form-statuses', [FormStatusController::class, 'index']);
 Route::get('/conditions', [ConditionController::class, 'index']);
@@ -118,18 +128,39 @@ Route::get('/equipment-items', [EquipmentItemController::class, 'index']);
 Route::get('/facility-categories', [FacilityCategoryController::class, 'index']);
 Route::get('/facility-categories/index', [FacilityCategoryController::class, 'indexWithSubcategories']);
 Route::get('/facility-subcategories/{category}', [FacilitySubcategoryController::class, 'index']);
-Route::get('/requisition-purposes', [RequisitionPurposeController::class, 'index']);
-// ---------------- Extra Services ---------------- //
+
+// ---------------- Departments  - CRUD ---------------- //
+Route::get('/departments/dropdown', [DepartmentController::class, 'getDropdown']);
+Route::get('/departments', [DepartmentController::class, 'index']);
+Route::get('/departments/{id}', [DepartmentController::class, 'show']);
+Route::post('/departments', [DepartmentController::class, 'store']);
+Route::put('/departments/{id}', [DepartmentController::class, 'update']);
+Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
+Route::get('/department-roles', [DepartmentRoleController::class, 'index']);
+
+// ---------------- Requisition Purposes - CRUD ---------------- //
+Route::get('/purposes', [RequisitionPurposeController::class, 'index']);
+Route::get('/purposes/dropdown', [RequisitionPurposeController::class, 'dropdown']);
+Route::get('/purposes/{id}', [RequisitionPurposeController::class, 'show']);
+Route::post('/purposes', [RequisitionPurposeController::class, 'store']);
+Route::put('/purposes/{id}', [RequisitionPurposeController::class, 'update']);
+Route::delete('/purposes/{id}', [RequisitionPurposeController::class, 'destroy']);
+
+// ---------------- Extra Services - CRUD ---------------- //
 Route::get('/extra-services', [ExtraServicesController::class, 'index']);
+Route::get('/services/dropdown', [ExtraServicesController::class, 'getDropdown']);
 Route::post('/extra-services', [ExtraServicesController::class, 'store']);
 Route::put('/extra-services/{service_id}', [ExtraServicesController::class, 'update']);
-Route::post('/extra-services/assign', [ExtraServicesController::class, 'assignService'])
-    ->middleware('auth:sanctum');
-Route::get('/admin-services/{adminId?}', [ExtraServicesController::class, 'getAdminServices']);
-Route::delete('/admin-services/{adminServiceId}', [ExtraServicesController::class, 'unassignService']);
+Route::delete('/extra-services/{service_id}', [ExtraServicesController::class, 'destroy']);
+
 // ---------------- Requisition Forms (public) ---------------- //
 Route::prefix('requisition')->middleware(['web'])->group(function () {
     Route::post('/save-request-info', [RequisitionFormController::class, 'saveRequestInfo']);
+    Route::get('/facilities/with-selected', [FacilityController::class, 'getFacilitiesWithSelected']);
+    Route::get('/equipment/with-selected', [EquipmentController::class, 'getEquipmentWithSelected']);
+    Route::get('/services/with-selected', [ExtraServicesController::class, 'getServicesWithSelected']);
+    Route::post('/batch-add-items', [RequisitionFormController::class, 'batchAddToForm']);
+    Route::post('/batch-remove-items', [RequisitionFormController::class, 'batchRemoveFromForm']);
     Route::post('/add-item', [RequisitionFormController::class, 'addToForm']);
     Route::post('/remove-item', [RequisitionFormController::class, 'removeFromForm']);
     Route::get('/get-items', [RequisitionFormController::class, 'getItems']);
@@ -143,11 +174,11 @@ Route::prefix('requisition')->middleware(['web'])->group(function () {
 // ---------------- Requester Routes (public) ---------------- //
 Route::prefix('requester')->middleware(['web'])->group(function () {
     Route::get('/form/{accessCode}', [UserRequisitionController::class, 'getFormByAccessCode']);
-    Route::get('/{requestId}/receipt', [AdminApprovalController::class, 'getOfficialReceipt']);
 });
 
 // ---------------- User Actions (public) ---------------- //
 Route::post('/feedback', [FeedbackController::class, 'store'])->middleware(['web']);
+Route::get('/requester/search', [UserRequisitionController::class, 'searchForms'])->middleware('web');
 Route::post('/requester/requisition/{requestId}/cancel', [UserRequisitionController::class, 'cancelRequestPublic'])->middleware(['web']);
 Route::post('/requester/requisition/{requestId}/upload-receipt', [UserRequisitionController::class, 'uploadPaymentReceipt'])->middleware(['web']);
 
@@ -160,9 +191,6 @@ Route::prefix('admin')->group(function () {
 
 // Admin equipment tracking routes
 Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
-    // Existing routes...
-
-    // New routes for equipment tracking
     Route::get('/equipment/to-release', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'getToRelease']);
     Route::get('/equipment/to-return', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'getToReturn']);
     Route::get('/equipment/available-items/{equipmentId}', [App\Http\Controllers\Api\Admin\EquipmentRequestController::class, 'getAvailableItems']);
@@ -174,8 +202,7 @@ Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
 Route::post('/admin/equipment/mass-assign-departments', [EquipmentController::class, 'massAssignDepartments']);
 
 // Facility mass department assignment
-Route::post('/admin/facilities/mass-assign-departments', [FacilityController::class, 'massAssignDepartments']);
-
+Route::post('/admin/facilities/mass-assign-department', [FacilityController::class, 'massAssignDepartment']);
 
 // ---------------- Scanner Routes ---------------- //
 Route::prefix('scanner')->group(function () {
@@ -210,7 +237,26 @@ Route::post('/admin/generate-barcode', function (Request $request) {
 
 Route::middleware('auth:sanctum')->group(function () {
 
+    // ---------------- Admin Dashboard ---------------- //
+    Route::get('/admin/dashboard-data', [DashboardController::class, 'getDashboardData'])->middleware('auth:sanctum');
+    // Dashboard lazy-loading endpoints
+    Route::get('/admin/dashboard-data', [DashboardController::class, 'getDashboardData'])->middleware('auth:sanctum');
+    Route::get('/admin/today-events', [DashboardController::class, 'getTodayEventsPaginated'])->middleware('auth:sanctum');
+    Route::get('/admin/activity-timeline', [DashboardController::class, 'getActivityTimelinePaginated'])->middleware('auth:sanctum');
+
     // ---------------- Admin Management ---------------- //
+
+    // Admin listing endpoints
+    Route::get('/manage/admins', [ManageAdminsController::class, 'index']);
+    Route::get('/manage/admins/{id}', [ManageAdminsController::class, 'show']);
+    // Department relationships
+    Route::get('/manage/departments/admins', [ManageAdminsController::class, 'getAdminsByDepartment']);
+    Route::get('/manage/departments', [ManageAdminsController::class, 'getDepartmentsWithAdmins']);
+    // Purpose relationships
+    Route::get('/manage/purposes', [ManageAdminsController::class, 'getPurposesWithRoutes']);
+    // Combined static data endpoint
+    Route::get('/manage/static-data', [ManageAdminsController::class, 'getStaticData']);
+    // Admin CRUD endpoints
     Route::get('/admins', [AdminController::class, 'getAllAdmins']);
     Route::get('/admins/{admin}/edit', [AdminController::class, 'getAdminForEdit']);
     Route::get('/admins/{admin}', [AdminController::class, 'getAdminInfo']);
@@ -220,6 +266,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/update/{admin}', [AdminController::class, 'update']);
     Route::post('/admin/update-photo', [AdminController::class, 'updatePhoto']);
     Route::post('/admin/update-photo-records', [AdminController::class, 'updatePhotoRecords']);
+    Route::post('/admin/delete-local-image', [AdminController::class, 'deleteLocalImage']);
     Route::post('/admin/delete-cloudinary-image', [AdminController::class, 'deleteCloudinaryImage']);
 
     // ---------------- Admin Profile & Notifications ---------------- //
@@ -235,6 +282,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/notifications/requisition/{requisitionId}/mark-as-read', [NotificationController::class, 'markRequisitionAsRead']);
 
     // ---------------- Equipment Management ---------------- //
+    Route::get('admin/manage-equipment', [ManageEquipmentController::class, 'index']);
     Route::post('admin/equipment', [EquipmentController::class, 'store']);
     Route::put('admin/equipment/{equipmentId}', [EquipmentController::class, 'update']);
     Route::delete('/admin/equipment/{equipmentId}', [EquipmentController::class, 'destroy']);
@@ -253,6 +301,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('admin/equipment/{equipmentId}/items/{itemId}', [EquipmentController::class, 'deleteItem']);
 
     // ---------------- Facility Management ---------------- //
+    Route::get('admin/manage-facilities', [ManageFacilitiesController::class, 'index']);
     Route::post('admin/add-facility', [FacilityController::class, 'store']);
     Route::put('admin/facilities/{facilityId}', [FacilityController::class, 'update']);
     Route::delete('/admin/facilities/{facilityId}', [FacilityController::class, 'destroy']);
@@ -274,69 +323,96 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [AdminFacilityController::class, 'destroy']);
     });
 
-    Route::middleware(['auth:sanctum'])->group(function () {
-        Route::get('/requisitions/{requestId}/approval-status', [RequiredApprovalsController::class, 'getApprovalStatus']);
-        Route::get('/requisitions/{requestId}/approval-progress', [RequiredApprovalsController::class, 'getApprovalProgress']);
-        Route::get('/requisitions/{requestId}/can-approve', [RequiredApprovalsController::class, 'canAdminApprove']);
+    // ====================================================================
+    // 1. REQUISITION LISTS & SEARCH
+    // ====================================================================
+    Route::prefix('admin/requisitions')->group(function () {
+        Route::get('/search', function (Request $request) {
+            $query = $request->get('q');
+            if (empty($query))
+                return response()->json(['results' => []]);
+
+            $results = DB::table('requisition_forms')
+                ->where('event_title', 'LIKE', "%{$query}%")
+                ->select('request_id', 'event_title', 'first_name', 'last_name')
+                ->limit(10)
+                ->get();
+
+            return response()->json(['results' => $results]);
+        });
+
+        Route::get('/active', [ReservationListingsController::class, 'getAvailableForTransaction']);
+        Route::get('/pending', [ReservationListingsController::class, 'paginatedPendingRequests']);
+        Route::get('/ongoing', [ReservationListingsController::class, 'paginatedOngoingRequests']);
+        Route::get('/completed', [ReservationListingsController::class, 'completedRequests']);
+        Route::get('/archives', [ReservationListingsController::class, 'getArchivedRequisitions']);
+        Route::get('/pending-count', [ReservationListingsController::class, 'getPendingCount']);
+        Route::get('/actionable', [ReservationListingsController::class, 'paginatedActionableRequests']);
     });
 
-    // ---------------- Requisition Management ---------------- //
-
-    Route::get('/admin/requisition/{requestId}/view-data', [ReservationListingsController::class, 'getRequestViewData']);
-    Route::get('/admin/requisition-forms', [ReservationListingsController::class, 'pendingRequests']); // not used
-    Route::get('/admin/active-requests', [ReservationListingsController::class, 'getAvailableForTransaction']);
-    Route::get('/admin/pending-requests', [ReservationListingsController::class, 'paginatedPendingRequests']);
-    Route::get('/admin/ongoing-requests', [ReservationListingsController::class, 'paginatedOngoingRequests']);
-    Route::get('/admin/pending-requests-count', [ReservationListingsController::class, 'getPendingCount']);
-    Route::get('/admin/requisition-forms/{requestId}', [ReservationListingsController::class, 'getRequisitionFormById']); // single form
-    Route::put('admin/requisition-forms/{requestId}/calendar-info', [CalendarEventsController::class, 'updateCalendarInfo']);
-    Route::get('/admin/completed-requests', [ReservationListingsController::class, 'completedRequests']);
-    Route::get('/admin/archives', [ReservationListingsController::class, 'getArchivedRequisitions']);
-    Route::post('/admin/requisition/{requestId}/mark-scheduled', [AdminActionsController::class, 'markAsScheduled']); // UPDATED
-    Route::get('/admin/requisition/{requestId}/approval-history', [ReservationListingsController::class, 'getApprovalHistory']);
-    Route::get('/admin/requisition/{requestId}/equipment-status', [AdminApprovalController::class, 'getEquipmentStatus']);
-
-    // Form Management
+    // ====================================================================
+    // 2. SINGLE REQUISITION (VIEW, DATA, STATUS)
+    // ====================================================================
     Route::prefix('admin/requisition')->group(function () {
 
-        // Make manual reservation
-        Route::post('create', [AdminActionsController::class, 'createReservation']);
-        // Fees & Payments
+        // ---- 2.1 View & Data ----
+        Route::get('/{requestId}/view-data', [RequestViewController::class, 'getRequestViewData']);
+        Route::get('/{requestId}/form', [ReservationListingsController::class, 'getRequisitionFormById']);
+        Route::get('/{requestId}/equipment-status', [AdminApprovalController::class, 'getEquipmentStatus']);
+        Route::get('/{requestId}/approval-history', [ReservationListingsController::class, 'getApprovalHistory']);
+
+        // ---- 2.2 Approval Status & History ----
+        Route::get('/{requestId}/approval-status', [RequiredApprovalsController::class, 'getApprovalStatus']);
+        Route::get('/{requestId}/approval-progress', [RequiredApprovalsController::class, 'getApprovalProgress']);
+        Route::get('/{requestId}/can-approve', [RequiredApprovalsController::class, 'canAdminApprove']);
+
+        // ---- 2.3 Actions (Approve/Reject) - SIGNATORIES ----
+        Route::post('/{requestId}/{action}', [AdminActionsController::class, 'actionRequest'])
+            ->where('action', 'approve|reject');
+
+        // ---- 2.4 Status Management - SYSTEM ADMINISTRATOR (override) ----
+        Route::post('/{requestId}/update-status', [AdminActionsController::class, 'updateStatus']); // manual overrides 
+        Route::post('/{requestId}/finalize-reservation', [AdminActionsController::class, 'finalizeReservation']);
+        Route::post('/{requestId}/close', [AdminActionsController::class, 'closeForm']);
+        Route::post('/{requestId}/cancel', [AdminActionsController::class, 'cancelForm']);
+
+        // ---- 2.5 Fees & Payments ----
         Route::post('/{requestId}/fee', [AdminActionsController::class, 'addFee']);
+        Route::delete('/{requestId}/fee/{feeId}', [AdminActionsController::class, 'removeFee']);
         Route::post('/{requestId}/discount', [AdminActionsController::class, 'addDiscount']);
+        Route::post('/{requestId}/waive', [AdminActionsController::class, 'waiveItems']);
         Route::post('/{requestId}/late-penalty', [AdminActionsController::class, 'addLatePenalty']);
         Route::post('/{requestId}/remove-late-penalty', [AdminActionsController::class, 'removeLatePenalty']);
-        Route::delete('/{requestId}/fee/{feeId}', [AdminActionsController::class, 'removeFee']);
-        Route::get('/{requestId}/fees', [ReservationListingsController::class, 'getRequisitionFees']); // UPDATED
-        Route::post('/{requestId}/waive', [AdminActionsController::class, 'waiveItems']);
 
-        // Status Management
-        Route::post('/{requestId}/update-status', [AdminActionsController::class, 'updateStatus']); // UPDATED
-        Route::post('/{requestId}/approve', [AdminApprovalController::class, 'approveRequest']);
-        Route::post('/{requestId}/reject', [AdminActionsController::class, 'rejectRequest']);
-        Route::post('{requestId}/cancel', [AdminActionsController::class, 'cancelForm']);
-        Route::post('/{requestId}/finalize', [AdminActionsController::class, 'finalizeForm']);
-        Route::post('/{requestId}/close', [AdminActionsController::class, 'closeForm']);
-        Route::post('/{requestId}/mark-returned', [AdminActionsController::class, 'markReturned']);
-
-        // Automatic status update routes
-        Route::post('/admin/auto-mark-ongoing', [AdminApprovalController::class, 'autoMarkOngoingForms']);
-        Route::post('/admin/auto-mark-late', [AdminApprovalController::class, 'autoMarkLateForms']);
-        Route::post('/admin/auto-update-all', [AdminApprovalController::class, 'autoUpdateAllStatuses']);
-
-        // Comments
+        // ---- 2.6 Comments & Activity ----
         Route::post('/{requestId}/comment', [AdminActionsController::class, 'addComment']);
         Route::get('/{requestId}/comments', [AdminActionsController::class, 'getComments']);
 
-        // Receipt
-        Route::get('/{requestId}/receipt', [AdminApprovalController::class, 'getOfficialReceipt']);
+        // ---- 2.7 Calendar ----
+        Route::put('/{requestId}/calendar-info', [CalendarEventsController::class, 'updateCalendarInfo']);
     });
 
-    // ---------------- Cloudinary Management ---------------- //
-    Route::post('/admin/cloudinary/delete', function (Request $request) {
-        // ... (unchanged)
+    // ====================================================================
+    // 3. FORM CREATION (Create Reservation)
+    // ====================================================================
+    Route::prefix('admin/requisition')->group(function () {
+        Route::post('/create', [CreateReservationController::class, 'createReservation']);
+        Route::post('/check-availability', [CheckAvailabilityController::class, 'checkAvailability']);
+        Route::get('/form-init-data', [CreateReservationController::class, 'getFormInitData']);
+        Route::get('/facilities', [CreateReservationController::class, 'getFacilities']);
+        Route::get('/equipment', [CreateReservationController::class, 'getEquipment']);
+    });
+
+    // ====================================================================
+    // 4. AUTOMATED STATUS UPDATES (Cron/Scheduled Jobs) ----- STILL NOT IMPLEMENTED
+    // ====================================================================
+    Route::prefix('admin/requisition/auto')->group(function () {
+        Route::post('/mark-ongoing', [AdminApprovalController::class, 'autoMarkOngoingForms']);
+        Route::post('/mark-late', [AdminApprovalController::class, 'autoMarkLateForms']);
+        Route::post('/update-all', [AdminApprovalController::class, 'autoUpdateAllStatuses']);
     });
 
     // ---------------- Logout ---------------- //
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
+
 });

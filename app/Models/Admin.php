@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-
+use Illuminate\Support\Facades\Storage;
 
 class Admin extends Authenticatable
 {
@@ -13,6 +13,17 @@ class Admin extends Authenticatable
 
     protected $table = 'admins';
     protected $primaryKey = 'admin_id';
+
+    /**
+     * Global admin role IDs (mirrors admin_roles.role_id).
+     *
+     * NOTE: SYSTEM_ADMIN is intentionally excluded from APPROVER_ROLE_IDS.
+     * It is an observational / override-only role and must never be part of
+     * the automatic approval chain, even if a fat-fingered assignment tries
+     * to place them into a department or a role with an approver title.
+     */
+    public const ROLE_SYSTEM_ADMIN = 1;
+    public const APPROVER_ROLE_IDS = [2, 3, 5]; // Final Approver, Approving Officer, Issuing Officer
 
     protected $fillable = [
         'photo_url',
@@ -54,6 +65,23 @@ class Admin extends Authenticatable
     public function role()
     {
         return $this->belongsTo(LookupTables\AdminRole::class, 'role_id', 'role_id');
+    }
+
+    // Accessors for local file paths
+    public function getPhotoUrlAttribute($value)
+    {
+        if ($value && !filter_var($value, FILTER_VALIDATE_URL)) {
+            return asset('storage/' . $value);
+        }
+        return $value ?: asset('storage/defaults/admin-photo.png');
+    }
+
+    public function getWallpaperUrlAttribute($value)
+    {
+        if ($value && !filter_var($value, FILTER_VALIDATE_URL)) {
+            return asset('storage/' . $value);
+        }
+        return $value ?: asset('storage/defaults/wallpaper.png');
     }
 
 
@@ -155,27 +183,37 @@ class Admin extends Authenticatable
     {
         return $this->hasMany(RequisitionComment::class, 'admin_id', 'admin_id');
     }
-    public function adminServices()
-    {
-        return $this->hasMany(AdminService::class, 'admin_id', 'admin_id');
-    }
 
-    public function departments(): BelongsToMany
+    public function departments()
     {
-        return $this->belongsToMany(Department::class, 'admin_departments', 'admin_id', 'department_id')
-            ->withPivot('is_primary')  // Only include is_primary, not timestamps
+        return $this->belongsToMany(
+            Department::class,
+            'admin_departments',
+            'admin_id',
+            'department_id'
+        )->withPivot('role_id', 'is_primary')
             ->withTimestamps();
     }
 
-
-    /**
-     * The services that belong to the admin.
-     */
-    public function services()
+    public function getDepartmentRole($departmentId)
     {
-        return $this->belongsToMany(ExtraService::class, 'admin_services', 'admin_id', 'service_id')
-            ->withPivot([]); // No timestamps or extra pivot fields
+        $dept = $this->departments()->where('department_id', $departmentId)->first();
+        if ($dept && $dept->pivot->role_id) {
+            return DepartmentRole::find($dept->pivot->role_id)->role_name ?? null;
+        }
+        return null;
     }
+
+    public function isDepartmentHead($departmentId)
+    {
+        $headRole = DepartmentRole::where('role_name', 'Department Head')->first();
+        if (!$headRole)
+            return false;
+
+        $dept = $this->departments()->where('department_id', $departmentId)->first();
+        return $dept && $dept->pivot->role_id === $headRole->role_id;
+    }
+
     public function facilities()
     {
         return $this->belongsToMany(

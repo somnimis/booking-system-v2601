@@ -528,18 +528,18 @@
                 toast.style.borderRadius = '0.3rem';
 
                 toast.innerHTML = `
-                        <div class="d-flex align-items-center px-3 py-1"> 
-                            <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                            <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                        </div>
-                        <div class="loading-bar" style="
-                            height: 3px;
-                            background: rgba(255,255,255,0.7);
-                            width: 100%;
-                            transition: width ${duration}ms linear;
-                        "></div>
-                    `;
+                                <div class="d-flex align-items-center px-3 py-1"> 
+                                    <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+                                    <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
+                                    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                                </div>
+                                <div class="loading-bar" style="
+                                    height: 3px;
+                                    background: rgba(255,255,255,0.7);
+                                    width: 100%;
+                                    transition: width ${duration}ms linear;
+                                "></div>
+                            `;
 
                 document.body.appendChild(toast);
 
@@ -1023,7 +1023,18 @@
                         return;
                     }
 
-                    // 1. First create the facility record
+                    // Get the selected department value
+                    const departmentSelect = document.getElementById('department');
+                    const selectedDepartment = departmentSelect ? departmentSelect.value : null;
+
+                    if (!selectedDepartment) {
+                        showToast('Please select a department', 'error');
+                        return;
+                    }
+
+                    // Create departments array
+                    const departmentsArray = [parseInt(selectedDepartment)];
+
                     const formData = {
                         facility_name: facilityName,
                         facility_code: buildingCode || null,
@@ -1035,10 +1046,9 @@
                         base_fee: parseFloat(document.getElementById('rentalFee').value),
                         rate_type: document.getElementById('rateType').value,
                         total_levels: document.getElementById('totalLevels').value ? parseInt(document.getElementById('totalLevels').value) : null,
-                        department_id: document.getElementById('department').value,
+                        departments: departmentsArray,  // Send as array
                         status_id: document.getElementById('availabilityStatus').value,
                         created_by: adminId,
-                        // Add default values for description and location_note
                         description: document.getElementById('description').value.trim() || 'No description provided',
                         location_note: document.getElementById('locationNote').value.trim() || 'No location details provided'
                     };

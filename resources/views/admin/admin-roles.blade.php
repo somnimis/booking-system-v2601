@@ -3,1839 +3,1266 @@
 @section('title', 'Manage Administrators')
 
 @section('content')
-  <style>
-    .title-col,
-    td.title-col {
-      white-space: normal !important;
-    }
+    <style>
+        /* Skeleton loading styles for stats */
+        .skeleton-wrapper {
+            display: block;
+        }
 
-    #confirmDeleteBtn {
-      min-width: 120px;
-    }
+        .skeleton-line {
+            background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 4px;
+        }
 
-    /* Spinner for delete button */
-    .spinner-border-sm {
-      width: 1rem;
-      height: 1rem;
-    }
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
 
-    /* Shared card-like styling for both sections */
-    .form-section,
-    .table-section {
-      background-color: #fff;
-    }
+            100% {
+                background-position: -200% 0;
+            }
+        }
 
-    .table-section .table-responsive {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
+        /* Table header background white */
+        #adminListContainer th,
+        .table thead th {
+            background-color: var(--white) !important;
+        }
 
-    .table-section table {
-      table-layout: auto;
-      min-width: 100%;
-      font-size: 0.875rem;
-    }
+        /* Dropdown menu styling */
+        .dropdown-menu {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            padding: 0.5rem;
+            min-width: 200px;
+        }
 
+        .dropdown-item {
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
 
-    .table-section table th,
-    .table-section table td {
-      vertical-align: middle;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+        .dropdown-item i {
+            width: 20px;
+            color: var(--navy);
+        }
 
-    .table-section table th {
-      background-color: #eff0f1ff;
-    }
+        .dropdown-item:hover {
+            background: var(--navy-light);
+            color: var(--navy);
+        }
 
-    /* Column width adjustments */
-    .table-section table th:nth-child(1),
-    /* Admin ID */
-    .table-section table td:nth-child(1) {
-      width: 80px;
-      min-width: 80px;
-      max-width: 80px;
-    }
+        .dropdown-item:hover i {
+            color: var(--navy);
+        }
 
-    .table-section table th:nth-child(2),
-    /* School ID */
-    .table-section table td:nth-child(2) {
-      width: 110px;
-      min-width: 110px;
-      max-width: 110px;
-    }
+        .dropdown-divider {
+            margin: 0.25rem 0;
+            border-color: var(--border);
+        }
 
-    .table-section table th:nth-child(3),
-    /* Full Name */
-    .table-section table td:nth-child(3) {
-      width: 110px;
-      min-width: 110px;
-      white-space: normal;
-      /* Allow name wrapping */
-      word-wrap: break-word;
-    }
+        /* Drag to scroll styling */
+        .drag-scroll {
+            cursor: grab;
+            user-select: none;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+        }
 
-    .table-section table th:nth-child(4),
-    /* Title */
-    .table-section table td:nth-child(4) {
-      width: 110px;
-      min-width: 110px;
-      white-space: normal;
-      word-wrap: break-word;
-    }
+        .drag-scroll:active {
+            cursor: grabbing;
+        }
 
-    .table-section table th:nth-child(5),
-    /* Email */
-    .table-section table td:nth-child(5) {
-      width: 200px;
-      min-width: 200px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+        .drag-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
 
-    .table-section table th:nth-child(6),
-    /* Phone Number */
-    .table-section table td:nth-child(6) {
-      width: 120px;
-      min-width: 120px;
-      max-width: 120px;
-    }
+        .drag-scroll::-webkit-scrollbar-track {
+            background: var(--surface);
+            border-radius: 3px;
+        }
 
-    .table-section table th:nth-child(7),
-    /* Role */
-    .table-section table td:nth-child(7) {
-      width: 120px;
-      min-width: 120px;
-      white-space: normal;
-      /* Allow role name wrapping */
-    }
+        .drag-scroll::-webkit-scrollbar-thumb {
+            background: var(--navy);
+            border-radius: 3px;
+        }
 
-    /* Department column */
-    .table-section table th:nth-child(8) {
-      width: auto;
-      min-width: 150px;
-      white-space: nowrap;
-      /* Prevent header from breaking */
-      overflow: visible;
-    }
+        .drag-scroll::-webkit-scrollbar-thumb:hover {
+            background: var(--navy-mid);
+        }
 
-    .table-section table td:nth-child(8) {
-      width: auto;
-      min-width: 150px;
-      white-space: normal;
-      /* Allow department badges to wrap */
-      word-wrap: break-word;
-    }
+        /* Action buttons - fixed width */
+        .action-btn {
+            width: 100px;
+            text-align: center;
+            padding: 0.25rem 0.5rem !important;
+        }
 
-    /* Services column - NEW */
-    .table-section table th:nth-child(9) {
-      width: auto;
-      min-width: 150px;
-      white-space: nowrap;
-      overflow: visible;
-    }
+        /* Add vertical gap on mobile/small screens */
+        @media (max-width: 768px) {
+            .action-buttons-container {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
 
-    .table-section table td:nth-child(9) {
-      width: auto;
-      min-width: 150px;
-      white-space: normal;
-      word-wrap: break-word;
-    }
+            .action-btn {
+                width: 100%;
+                margin-right: 0 !important;
+            }
+        }
 
-    /* Actions column */
-    .table-section table th:nth-child(10) {
-      width: 120px;
-      min-width: 120px;
-      max-width: 120px;
-      white-space: nowrap;
-      overflow: visible;
-    }
+        .title-col,
+        td.title-col {
+            white-space: normal !important;
+        }
 
-    .table-section table td:nth-child(10) {
-      width: 120px;
-      min-width: 120px;
-      max-width: 120px;
-      white-space: nowrap;
-      overflow: visible;
-    }
+        #confirmDeleteBtn {
+            min-width: 120px;
+        }
 
-    /* Ensure action buttons container doesn't wrap */
-    .table-section table td:nth-child(10) .btn {
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
 
-    /* Badge styles */
-    .badge-department {
-      background-color: #fef3c7 !important;
-      /* pastel yellow */
-      color: #92400e !important;
-      /* darker yellow/brown for text */
-      padding: 0.35rem 0.65rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      margin-bottom: 2px;
-      display: inline-block;
-      border: 1px solid #fde68a;
-    }
+        /* Admin table column widths */
+        .table-section table th:nth-child(1) {
+            width: 80px;
+        }
 
-    .badge-service {
-      background-color: #d1fae5 !important;
-      /* pastel teal */
-      color: #065f46 !important;
-      /* darker teal for text */
-      padding: 0.35rem 0.65rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-      border-radius: 0.375rem;
-      margin-bottom: 2px;
-      display: inline-block;
-      border: 1px solid #a7f3d0;
-    }
+        .table-section table td:nth-child(1) {
+            width: 80px;
+        }
 
-    /* Container for badges to stack vertically */
-    .badge-container {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
+        .table-section table th:nth-child(2) {
+            width: 110px;
+        }
 
-    /* Department button styles */
-    .department-btn {
-      background-color: #6c757d !important;
-      /* solid gray */
-      color: #fff !important;
-      border-color: #6c757d !important;
-      transition: background-color 0.2s ease;
-    }
+        .table-section table td:nth-child(2) {
+            width: 110px;
+        }
 
-    /* Darker gray on hover if NOT selected */
-    .department-btn:hover:not(.selected) {
-      background-color: #5a6268 !important;
-      /* darker gray */
-      border-color: #5a6268 !important;
-    }
+        .table-section table th:nth-child(3) {
+            width: 150px;
+            white-space: normal;
+        }
 
-    .department-btn.selected {
-      background-color: var(--btn-primary) !important;
-      /* custom blue */
-      color: #fff !important;
-      border-color: var(--btn-primary) !important;
-    }
+        .table-section table td:nth-child(3) {
+            width: 150px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
 
-    /* Optional: keep same blue on hover when selected */
-    .department-btn.selected:hover {
-      background-color: var(--btn-primary-hover) !important;
-      /* slightly darker blue */
-      border-color: var(--btn-primary-hover) !important;
-    }
+        .table-section table th:nth-child(4) {
+            width: 100px;
+        }
 
-    /* Department buttons styling */
-    #department-buttons-container button,
-    #add-department-buttons-container button {
-      display: inline-flex !important;
-      width: auto !important;
-    }
-  </style>
+        .table-section table td:nth-child(4) {
+            width: 100px;
+        }
 
-  <main id="main">
-    <div class="container-fluid px-4">
+        .table-section table th:nth-child(5) {
+            width: 200px;
+        }
 
-      <!-- Existing Admins Card -->
-      <section class="card border-0 shadow-sm mb-3">
+        .table-section table td:nth-child(5) {
+            width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-        <div class="card-header bg-white py-2 d-flex align-items-center justify-content-between">
-          <span class="mb-0 fw-bold">Existing Admins</span>
+        .table-section table th:nth-child(6) {
+            width: 120px;
+        }
 
-          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAdminModal">
-            <i class="bi bi-plus-circle me-2"></i>Add New
-          </button>
-        </div>
+        .table-section table td:nth-child(6) {
+            width: 120px;
+        }
 
-        <div class="card-body p-4">
+        .table-section table th:nth-child(7) {
+            width: 120px;
+        }
 
-          <!-- Loading indicator -->
-          <div id="adminLoading" class="text-center my-4">
-            <p class="mb-2">Loading admins...</p>
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
+        .table-section table td:nth-child(7) {
+            width: 120px;
+        }
+
+        .table-section table th:nth-child(8) {
+            width: 120px;
+        }
+
+        .table-section table td:nth-child(8) {
+            width: 120px;
+        }
+
+        /* Loading spinner */
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+
+        /* Pagination - Navy theme */
+        .pagination-container {
+            margin-top: 1rem;
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .page-link {
+            cursor: pointer;
+            color: var(--navy);
+            background-color: var(--white);
+            border: 1px solid var(--border);
+        }
+
+        .page-link:hover {
+            background-color: var(--navy-light);
+            color: var(--navy);
+            border-color: var(--navy);
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--navy);
+            border-color: var(--navy);
+            color: var(--white);
+        }
+
+        .page-item.disabled .page-link {
+            color: var(--text-muted);
+            background-color: var(--surface);
+            border-color: var(--border);
+        }
+
+        /* Action buttons */
+        .btn-outline-primary {
+            color: var(--navy);
+            border-color: var(--navy);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--navy);
+            border-color: var(--navy);
+            color: var(--white);
+        }
+
+        .btn-outline-danger {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .btn-outline-danger:hover {
+            background-color: var(--danger);
+            border-color: var(--danger);
+            color: var(--white);
+        }
+
+        /* Header with Add button */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-header h5 {
+            font-family: 'Fraunces', Georgia, serif;
+            color: var(--navy);
+            margin: 0;
+        }
+    </style>
+
+    <main id="main">
+        <div class="container-fluid px-4">
+
+            <!-- Page Header with Add Button -->
+            <div class="page-header d-flex align-items-center justify-content-between flex-wrap"
+                style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
+                <div style="flex: 1; min-width: 0; padding-right: 1rem;">
+                    <h5 class="mb-1" style="font-family: 'Fraunces', Georgia, serif; color: var(--navy);">
+                        <i class="bi bi-people me-2"></i>Administrators
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Manage system administrators who oversee reservations, facility and equipment management, and
+                        department operations.
+                    </p>
+                </div>
+                <div style="flex-shrink: 0;">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAdminModal">
+                        <i class="bi bi-plus-circle me-2"></i>Add New Admin
+                    </button>
+                </div>
             </div>
-          </div>
 
-          <div class="table-responsive" id="adminTableWrapper" style="display: none;">
-            <table class="table table-hover align-middle mb-0 text-nowrap">
-              <thead>
-                <tr>
-                  <th>Admin ID</th>
-                  <th>School ID</th>
-                  <th>Full Name</th>
-                  <th class="title-col">Title</th>
-                  <th>Email</th>
-                  <th>Phone Number</th>
-                  <th>Role</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-
-              <tbody id="adminListBody">
-                <!-- Dynamic content -->
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-
-      </section>
-
-      <!-- Managing Resources Card -->
-      <section class="card border-0 shadow-sm mb-4">
-
-        <div class="card-header bg-white fw-bold py-3 d-flex align-items-center">
-          Managing Departments & Services
-        </div>
-
-        <div class="card-body p-4">
-
-          <!-- Loading indicator -->
-          <div id="resourcesLoading" class="text-center my-4" style="display: none;">
-            <p class="mb-2">Loading resources...</p>
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
+            <!-- Admin Table -->
+            <div class="section-card">
+                <div class="section-body">
+                    <div id="adminLoading" class="loading-container">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary mb-3" role="status"></div>
+                            <p class="text-muted">Loading administrators...</p>
+                        </div>
+                    </div>
+                    <div id="adminTableWrapper" style="display: none;">
+                        <div class="table-responsive drag-scroll" id="adminTableScroll">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="small">ID</th>
+                                        <th class="small">School ID</th>
+                                        <th class="small">Full Name</th>
+                                        <th class="small">Title</th>
+                                        <th class="small">Email</th>
+                                        <th class="small">Phone</th>
+                                        <th class="small">Role</th>
+                                        <th class="small">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminListBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination-container d-flex justify-content-between align-items-center">
+                            <div id="adminPaginationInfo" class="text-muted small"></div>
+                            <nav>
+                                <ul class="pagination mb-0" id="adminPagination"></ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-
-          <div id="resourcesGrid" class="row g-3">
-            <!-- Dynamic content will be loaded here -->
-          </div>
 
         </div>
+    </main>
 
-      </section>
-
-      <!-- Add Admin Modal -->
-      <div class="modal fade" id="addAdminModal" tabindex="-1" aria-hidden="true">
+    <!-- Add Admin Modal -->
+    <div class="modal fade" id="addAdminModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Add New Admin</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <div id="addModalLoading" class="text-center py-5" style="display: none;">
-                <div class="spinner-border text-primary mb-3" role="status">
-                  <span class="visually-hidden">Loading...</span>
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold">Add New Admin</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <p class="text-muted">Loading form data...</p>
-              </div>
-
-              <div id="addModalContent">
-                <form id="addAdminForm" novalidate>
-                  @csrf
-                  <div class="row g-3">
-                    <div class="col-md-4">
-                      <label for="first_name" class="form-label">First Name</label>
-                      <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First Name"
-                        required>
-                    </div>
-                    <div class="col-md-4">
-                      <label for="middle_name" class="form-label">Middle Name</label>
-                      <input type="text" class="form-control" id="middle_name" name="middle_name"
-                        placeholder="Middle Name">
-                    </div>
-                    <div class="col-md-4">
-                      <label for="last_name" class="form-label">Last Name</label>
-                      <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last Name"
-                        required>
-                    </div>
-
-                    <!-- Title Field -->
-                    <div class="col-md-6">
-                      <label for="title" class="form-label">Title</label>
-                      <input type="text" class="form-control" id="title" name="title"
-                        placeholder="e.g., Dr., Prof., Mr., Ms." maxlength="100">
-                    </div>
-
-                    <div class="col-md-6">
-                      <label for="school_id" class="form-label d-flex align-items-center">
-                        School ID
-                        <small class="text-muted ms-2">(Optional)</small>
-                      </label>
-                      <input type="text" class="form-control" id="school_id" name="school_id" placeholder="00-0000-00"
-                        pattern="\d{2}-\d{4}-\d{2}" maxlength="10" minlength="10">
-                    </div>
-                    <div class="col-md-6">
-                      <label for="email" class="form-label">Email</label>
-                      <input type="email" class="form-control" id="email" name="email" placeholder="samplemail@gmail.com"
-                        required minlength="6" maxlength="150" autocomplete="off">
-                    </div>
-
-                    <div class="col-md-6">
-                      <label for="contact_number" class="form-label">Phone Number</label>
-                      <input type="tel" class="form-control" id="contact_number" name="contact_number"
-                        placeholder="e.g. 09123456789" pattern="\d{11,20}" minlength="11" maxlength="20">
-                    </div>
-
-                    <div class="col-md-6">
-                      <label for="role_id" class="form-label">Role</label>
-                      <select class="form-select" id="role_id" name="role_id" required>
-                        <option value="">Select a role</option>
-                      </select>
-                    </div>
-
-                    <div class="col-12">
-                      <label for="password" class="form-label d-flex align-items-center">
-                        Temporary Password
-                        <small class="text-muted ms-2">(Admin will be prompted to change this upon first login.)</small>
-                      </label>
-                      <input type="password" class="form-control" id="password" name="password"
-                        placeholder="Temporary Password" required minlength="8" maxlength="12">
-                    </div>
-
-                    <!-- Departments Checklist Section -->
-                    <div class="col-12">
-                      <label class="form-label fw-bold">Departments</label>
-                      <div class="row">
-                        <div class="col-md-6">
-                          <div class="card border">
-                            <div class="card-header bg-light py-2">
-                              <h6 class="mb-0">Select Departments</h6>
+                <div class="modal-body">
+                    <form id="addAdminForm" novalidate>
+                        @csrf
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-control" name="first_name" required>
                             </div>
-                            <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                              <div id="add-departments-checklist" class="d-flex flex-column gap-2">
-                                <div class="text-muted">Loading departments...</div>
-                              </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Middle Name</label>
+                                <input type="text" class="form-control" name="middle_name">
                             </div>
-                          </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-control" name="last_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Title</label>
+                                <input type="text" class="form-control" name="title" maxlength="100">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">School ID <small class="text-muted">(Optional)</small></label>
+                                <input type="text" class="form-control" name="school_id" placeholder="00-0000-00">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" name="contact_number">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Admin Role</label>
+                                <select class="form-select" name="role_id" id="roleSelectAdd" required>
+                                    <option value="">Select role</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Temporary Password</label>
+                                <input type="password" class="form-control" name="password" required minlength="8">
+                            </div>
+                            <div class="col-12">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Department</label>
+                                        <select class="form-select" id="addDepartmentSelect" name="department_id">
+                                            <option value="">Select department</option>
+                                        </select>
+                                        <input type="hidden" name="department_ids" id="addSelectedDeptIds">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Department Role</label>
+                                        <select class="form-select" id="addDepartmentRoleSelect" name="department_role_id">
+                                            <option value="">Select role</option>
+                                        </select>
+                                        <input type="hidden" name="department_roles" id="addSelectedDeptRoles">
+                                    </div>
+                                    <div class="col-12">
+                                        <small class="text-muted d-block mt-1">
+                                            Select <strong>Department Head</strong> to make this admin approve
+                                            requisitions for the department's resources.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                          <div class="card border">
-                            <div class="card-header bg-light py-2">
-                              <h6 class="mb-0">Selected Departments</h6>
-                            </div>
-                            <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                              <div id="add-selected-departments-preview" class="d-flex flex-column gap-2">
-                                <div class="text-muted">No departments selected</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <input type="hidden" id="add-selected-departments" name="department_ids">
-                    </div>
-
-                    <!-- Services Checklist Section -->
-                    <div class="col-12">
-                      <label class="form-label fw-bold">Services</label>
-                      <div class="row">
-                        <div class="col-md-6">
-                          <div class="card border">
-                            <div class="card-header bg-light py-2">
-                              <h6 class="mb-0">Select Services</h6>
-                            </div>
-                            <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                              <div id="add-services-checklist" class="d-flex flex-column gap-2">
-                                <div class="text-muted">Loading services...</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="card border">
-                            <div class="card-header bg-light py-2">
-                              <h6 class="mb-0">Selected Services</h6>
-                            </div>
-                            <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                              <div id="add-selected-services-preview" class="d-flex flex-column gap-2">
-                                <div class="text-muted">No services selected</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <input type="hidden" id="add-selected-services" name="service_ids">
-                    </div>
-                  </div>
-                </form>
-              </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="addAdminForm" class="btn btn-primary">Add Admin</button>
+                </div>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" form="addAdminForm" class="btn btn-primary">Add Admin</button>
-            </div>
-          </div>
         </div>
-      </div>
     </div>
-  </main>
 
-  <!-- Edit Admin Modal -->
-  <div class="modal fade" id="editAdminModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Edit Admin</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div id="editModalLoading" class="text-center py-5" style="display: none;">
-            <div class="spinner-border text-primary mb-3" role="status">
-              <span class="visually-hidden">Loading...</span>
+    <!-- Edit Admin Modal -->
+    <div class="modal fade" id="editAdminModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold">Edit Admin</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editModalLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status"></div>
+                        <p class="text-muted">Loading admin data...</p>
+                    </div>
+                    <div id="editModalContent" style="display: none;">
+                        <form id="editAdminForm">
+                            @csrf
+                            <input type="hidden" id="edit_admin_id" name="admin_id">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="edit_first_name" name="first_name" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Middle Name</label>
+                                    <input type="text" class="form-control" id="edit_middle_name" name="middle_name">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="edit_last_name" name="last_name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="edit_title" name="title">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">School ID </label><small class="text-muted"> (Optional)</small>
+                                    <input type="text" class="form-control" id="edit_school_id" name="school_id">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="edit_email" name="email" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="edit_contact_number" name="contact_number">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Admin Role</label>
+                                    <select class="form-select" id="edit_role_id" name="role_id" required>
+                                        <option value="">Select role</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="edit_password" name="password"
+                                        placeholder="Leave blank to keep current">
+                                </div>
+                                <div class="col-12">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Department</label>
+                                            <select class="form-select" id="editDepartmentSelect" name="department_id">
+                                                <option value="">Select department</option>
+                                            </select>
+                                            <input type="hidden" id="editSelectedDeptIds" name="department_ids">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Department Role</label>
+                                            <select class="form-select" id="editDepartmentRoleSelect"
+                                                name="department_role_id">
+                                                <option value="">Select role</option>
+                                            </select>
+                                            <input type="hidden" id="editSelectedDeptRoles" name="department_roles">
+                                        </div>
+                                        <div class="col-12">
+                                            <small class="text-muted d-block mt-1">
+                                                Select <strong>Department Head</strong> to make this admin approve
+                                                requisitions for the department's resources.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveAdminChanges">Save Changes</button>
+                </div>
             </div>
-            <p class="text-muted">Loading admin data...</p>
-          </div>
-
-          <div id="editModalContent" style="display: none;">
-            <form id="editAdminForm">
-              @csrf
-              <input type="hidden" id="edit_admin_id" name="admin_id">
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label for="edit_first_name" class="form-label">First Name</label>
-                  <input type="text" class="form-control" id="edit_first_name" name="first_name" required>
-                </div>
-                <div class="col-md-4">
-                  <label for="edit_middle_name" class="form-label">Middle Name</label>
-                  <input type="text" class="form-control" id="edit_middle_name" name="middle_name">
-                </div>
-                <div class="col-md-4">
-                  <label for="edit_last_name" class="form-label">Last Name</label>
-                  <input type="text" class="form-control" id="edit_last_name" name="last_name" required>
-                </div>
-
-                <!-- Title Field in Edit Modal -->
-                <div class="col-md-6">
-                  <label for="edit_title" class="form-label">Title</label>
-                  <input type="text" class="form-control" id="edit_title" name="title"
-                    placeholder="e.g., Dr., Prof., Mr., Ms." maxlength="100">
-                </div>
-
-                <div class="col-md-6">
-                  <label for="edit_school_id" class="form-label d-flex align-items-center">
-                    School ID
-                    <small class="text-muted ms-2">(Optional)</small>
-                  </label>
-                  <input type="text" class="form-control" id="edit_school_id" name="school_id" placeholder="00-0000-00"
-                    pattern="\d{2}-\d{4}-\d{2}" maxlength="10" minlength="10">
-                </div>
-                <div class="col-md-6">
-                  <label for="edit_email" class="form-label">Email</label>
-                  <input type="email" class="form-control" id="edit_email" name="email" required>
-                </div>
-                <div class="col-md-6">
-                  <label for="edit_contact_number" class="form-label">Phone Number</label>
-                  <input type="tel" class="form-control" id="edit_contact_number" name="contact_number"
-                    placeholder="e.g. 09123456789" pattern="\d{11,}" minlength="11">
-                </div>
-                <div class="col-md-6">
-                  <label for="edit_role_id" class="form-label">Role</label>
-                  <select class="form-select" id="edit_role_id" name="role_id" required>
-                    <option value="">Loading roles...</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label for="edit_password" class="form-label">
-                    New Password
-                  </label>
-
-                  <input type="password" class="form-control" id="edit_password" name="password"
-                    placeholder="New Password">
-
-                  <small class="form-text text-muted">
-                    Leave blank to keep current password
-                  </small>
-                </div>
-
-                <!-- Departments Checklist Section -->
-                <div class="col-12">
-                  <label class="form-label fw-bold">Departments</label>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <div class="card border">
-                        <div class="card-header bg-light py-2">
-                          <h6 class="mb-0">Select Departments</h6>
-                        </div>
-                        <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                          <div id="edit-departments-checklist" class="d-flex flex-column gap-2">
-                            <div class="text-muted">Loading departments...</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="card border">
-                        <div class="card-header bg-light py-2">
-                          <h6 class="mb-0">Selected Departments</h6>
-                        </div>
-                        <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                          <div id="edit-selected-departments-preview" class="d-flex flex-column gap-2">
-                            <div class="text-muted">No departments selected</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <input type="hidden" id="edit-selected-departments" name="department_ids">
-                </div>
-
-                <!-- Services Checklist Section -->
-                <div class="col-12">
-                  <label class="form-label fw-bold">Services</label>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <div class="card border">
-                        <div class="card-header bg-light py-2">
-                          <h6 class="mb-0">Select Services</h6>
-                        </div>
-                        <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                          <div id="edit-services-checklist" class="d-flex flex-column gap-2">
-                            <div class="text-muted">Loading services...</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="card border">
-                        <div class="card-header bg-light py-2">
-                          <h6 class="mb-0">Selected Services</h6>
-                        </div>
-                        <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                          <div id="edit-selected-services-preview" class="d-flex flex-column gap-2">
-                            <div class="text-muted">No services selected</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <input type="hidden" id="edit-selected-services" name="service_ids">
-                </div>
-              </div>
-            </form>
-          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="saveAdminChanges">Save Changes</button>
-        </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Delete Confirmation Modal -->
-  <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Deletion</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold">Confirm Deletion</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="bi bi-exclamation-triangle-fill text-danger mb-3" style="font-size: 2rem;"></i>
+                    <p class="mb-1 fw-bold">Are you sure you want to delete this admin?</p>
+                    <p class="mb-3 text-muted">This action cannot be undone.</p>
+                    <div id="deleteAdminDetails" class="bg-light p-3 rounded"></div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete Admin</button>
+                </div>
+            </div>
         </div>
-        <div class="modal-body text-center">
-          <i class="bi bi-exclamation-triangle-fill text-danger mb-3" style="font-size: 2rem;"></i>
-          <p class="mb-1 fw-bold">Are you sure you want to delete this admin?</p>
-          <p class="mb-3 text-muted">This action cannot be undone. All associated data will be permanently removed.</p>
-
-          <div id="deleteAdminDetails" class="bg-light p-3 rounded">
-            <!-- Admin details will be populated here -->
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete Admin</button>
-        </div>
-      </div>
     </div>
-  </div>
+
 @endsection
 
 @section('scripts')
-  <script src="{{ asset('js/admin/toast.js') }}"></script>
-  <script>
+    <script src="{{ asset('js/admin/toast.js') }}"></script>
+    <script>
+        let currentAdminPage = 1;
+        const itemsPerPage = 10;
+        let adminsData = [];
+        let departmentsList = [];
+        let rolesList = [];
+        let departmentRolesList = [];
 
-    // School ID formatting function
-    function formatSchoolId(input) {
-      input.addEventListener('input', function (e) {
-        let digits = e.target.value.replace(/\D/g, '');
-        if (digits.length > 2 && digits.length <= 6) {
-          digits = digits.slice(0, 2) + '-' + digits.slice(2);
-        } else if (digits.length > 6) {
-          digits = digits.slice(0, 2) + '-' + digits.slice(2, 6) + '-' + digits.slice(6, 8);
-        }
-        e.target.value = digits;
-      });
-    }
+        document.addEventListener('DOMContentLoaded', function () {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
 
-    // Function to create add department checklist - NO pre-selection
-    function createAddDepartmentChecklist() {
-      const checklistContainer = document.getElementById('add-departments-checklist');
-      if (!checklistContainer) return;
-
-      if (!window.departmentsData || window.departmentsData.length === 0) {
-        checklistContainer.innerHTML = '<div class="text-muted">No departments available</div>';
-        return;
-      }
-
-      checklistContainer.innerHTML = '';
-
-      window.departmentsData.forEach(dept => {
-        const div = document.createElement('div');
-        div.className = 'form-check';
-        div.innerHTML = `
-                    <input class="form-check-input add-department-checkbox" type="checkbox" 
-                           value="${dept.department_id}" id="add_dept_${dept.department_id}">
-                    <label class="form-check-label" for="add_dept_${dept.department_id}">
-                      ${dept.department_name} (${dept.department_code})
-                    </label>
-                  `;
-
-        div.querySelector('.add-department-checkbox').addEventListener('change', updateAddDepartmentsPreview);
-        checklistContainer.appendChild(div);
-      });
-    }
-
-    // Function to create add service checklist - NO pre-selection
-    function createAddServiceChecklist() {
-      const checklistContainer = document.getElementById('add-services-checklist');
-      if (!checklistContainer) return;
-
-      if (!window.servicesData || window.servicesData.length === 0) {
-        checklistContainer.innerHTML = '<div class="text-muted">No services available</div>';
-        return;
-      }
-
-      checklistContainer.innerHTML = '';
-
-      window.servicesData.forEach(service => {
-        const serviceId = service.service_id || service.id;
-        const serviceName = service.service_name || service.name || 'Unknown';
-
-        const div = document.createElement('div');
-        div.className = 'form-check';
-        div.innerHTML = `
-                    <input class="form-check-input add-service-checkbox" type="checkbox" 
-                           value="${serviceId}" id="add_service_${serviceId}">
-                    <label class="form-check-label" for="add_service_${serviceId}">
-                      ${serviceName}
-                    </label>
-                  `;
-
-        div.querySelector('.add-service-checkbox').addEventListener('change', updateAddServicesPreview);
-        checklistContainer.appendChild(div);
-      });
-    }
-
-    // Function to update add departments preview
-    function updateAddDepartmentsPreview() {
-      const selectedCheckboxes = document.querySelectorAll('#add-departments-checklist .add-department-checkbox:checked');
-      const selectedDeptIds = Array.from(selectedCheckboxes).map(cb => cb.value);
-      document.getElementById('add-selected-departments').value = JSON.stringify(selectedDeptIds);
-
-      // Update preview
-      const previewContainer = document.getElementById('add-selected-departments-preview');
-      if (selectedDeptIds.length === 0) {
-        previewContainer.innerHTML = '<div class="text-muted">No departments selected</div>';
-        return;
-      }
-
-      let previewHtml = '';
-      selectedDeptIds.forEach(deptId => {
-        const dept = window.departmentsData.find(d => d.department_id.toString() === deptId.toString());
-        if (dept) {
-          previewHtml += `
-                      <div class="p-2 bg-light rounded mb-1">
-                        ${dept.department_name} (${dept.department_code})
-                      </div>
-                    `;
-        }
-      });
-      previewContainer.innerHTML = previewHtml;
-    }
-
-    // Function to update add services preview
-    function updateAddServicesPreview() {
-      const selectedCheckboxes = document.querySelectorAll('#add-services-checklist .add-service-checkbox:checked');
-      const selectedServiceIds = Array.from(selectedCheckboxes).map(cb => cb.value);
-      document.getElementById('add-selected-services').value = JSON.stringify(selectedServiceIds);
-
-      // Update preview
-      const previewContainer = document.getElementById('add-selected-services-preview');
-      if (selectedServiceIds.length === 0) {
-        previewContainer.innerHTML = '<div class="text-muted">No services selected</div>';
-        return;
-      }
-
-      let previewHtml = '';
-      selectedServiceIds.forEach(serviceId => {
-        const service = window.servicesData.find(s => (s.service_id || s.id).toString() === serviceId.toString());
-        if (service) {
-          const serviceName = service.service_name || service.name || 'Unknown';
-          previewHtml += `
-                      <div class="p-2 bg-light rounded mb-1">
-                        ${serviceName}
-                      </div>
-                    `;
-        }
-      });
-      previewContainer.innerHTML = previewHtml;
-    }
-
-    // Function to create department checklist - ensure proper checkbox state
-    function createDepartmentChecklist(selectedDeptIds = []) {
-      const checklistContainer = document.getElementById('edit-departments-checklist');
-      if (!checklistContainer) return;
-
-      if (!window.departmentsData || window.departmentsData.length === 0) {
-        checklistContainer.innerHTML = '<div class="text-muted">No departments available</div>';
-        return;
-      }
-
-      // Clear container first
-      checklistContainer.innerHTML = '';
-
-      window.departmentsData.forEach(dept => {
-        const deptIdStr = dept.department_id.toString();
-        // Make sure we're comparing strings
-        const isChecked = selectedDeptIds.some(id => id.toString() === deptIdStr);
-
-        const div = document.createElement('div');
-        div.className = 'form-check';
-        div.innerHTML = `
-                              <input class="form-check-input department-checkbox" type="checkbox" 
-                                     value="${dept.department_id}" id="dept_${dept.department_id}"
-                                     ${isChecked ? 'checked' : ''}>
-                              <label class="form-check-label" for="dept_${dept.department_id}">
-                                ${dept.department_name} (${dept.department_code})
-                              </label>
-                            `;
-
-        div.querySelector('.department-checkbox').addEventListener('change', updateSelectedDepartmentsPreview);
-        checklistContainer.appendChild(div);
-      });
-
-      console.log('Department checklist created with', selectedDeptIds.length, 'selected items');
-    }
-
-    // Function to update hidden input with selected departments - FIXED
-    function updateSelectedDepartments(containerType) {
-      let deptContainer, hiddenInput;
-
-      if (containerType === 'add-department-buttons-container') {
-        deptContainer = document.getElementById('add-department-buttons-container');
-        hiddenInput = document.getElementById('add-selected-departments');
-      } else {
-        deptContainer = document.getElementById('edit-department-buttons-container');
-        hiddenInput = document.getElementById('edit-selected-departments');
-      }
-
-      if (!deptContainer || !hiddenInput) return;
-
-      // Look for buttons with EITHER selected OR active class
-      const selectedButtons = deptContainer.querySelectorAll('.btn.selected, .btn.active');
-      const selectedDeptIds = Array.from(selectedButtons).map(btn => btn.dataset.deptId);
-      hiddenInput.value = JSON.stringify(selectedDeptIds);
-    }
-
-    // Function to auto-select all departments for specific roles - FIXED
-    function setupRoleAutoSelect(roleSelectId, deptContainerId) {
-      const roleSelect = document.getElementById(roleSelectId);
-      if (!roleSelect) return;
-
-      roleSelect.addEventListener('change', function () {
-        const selectedRoleId = parseInt(this.value);
-
-        // Role IDs that should auto-select all departments
-        const autoSelectRoleIds = [1, 2]; // Head Admin and Vice President
-
-        const deptContainer = document.getElementById(deptContainerId);
-        if (!deptContainer) return;
-
-        const allButtons = deptContainer.querySelectorAll('.department-btn');
-
-        if (autoSelectRoleIds.includes(selectedRoleId)) {
-          allButtons.forEach(button => {
-            button.classList.add('selected');
-            button.classList.add('active');
-          });
-        } else {
-          allButtons.forEach(button => {
-            button.classList.remove('selected');
-            button.classList.remove('active');
-          });
-        }
-        updateSelectedDepartments(deptContainerId);
-      });
-    }
-
-    // Function to manually select all departments
-    function selectAllDepartments(containerId) {
-      const deptContainer = document.getElementById(containerId);
-      if (!deptContainer) return;
-
-      const allButtons = deptContainer.querySelectorAll('.department-btn');
-      allButtons.forEach(button => {
-        button.classList.add('selected');
-        button.classList.add('active');
-      });
-      updateSelectedDepartments(containerId);
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-      const addAdminForm = document.getElementById('addAdminForm');
-      const roleSelect = document.getElementById('role_id');
-      const adminListBody = document.getElementById('adminListBody');
-      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-
-      // Apply School ID formatting
-      formatSchoolId(document.getElementById('school_id'));
-      formatSchoolId(document.getElementById('edit_school_id'));
-
-      // Function to load departments
-      async function loadDepartments() {
-        try {
-          const response = await fetch('/api/departments', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/json'
-            }
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to fetch departments');
-          }
-
-          window.departmentsData = await response.json();
-        } catch (error) {
-          console.error('Error loading departments:', error);
-          window.departmentsData = [];
-        }
-      }
-
-      // Function to load managing resources grid
-      async function loadManagingResources() {
-        const resourcesLoading = document.getElementById('resourcesLoading');
-        const resourcesGrid = document.getElementById('resourcesGrid');
-
-        resourcesLoading.style.display = 'block';
-        resourcesGrid.innerHTML = '';
-
-        try {
-          const response = await fetch('/api/admins', {
-            headers: {
-              'Accept': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          if (!response.ok) throw new Error('Failed to fetch admin resources');
-
-          const responseData = await response.json();
-          const admins = responseData.data || responseData;
-
-          resourcesLoading.style.display = 'none';
-
-          if (!admins || admins.length === 0) {
-            resourcesGrid.innerHTML = '<div class="col-12 text-center text-muted">No admin resources found</div>';
-            return;
-          }
-
-          admins.forEach(admin => {
-            const currentAdminId = localStorage.getItem('adminId');
-            if (currentAdminId && admin.admin_id == currentAdminId) return;
-
-            // Department badges
-            let departmentsHtml = '';
-            if (admin.departments?.length) {
-              admin.departments.forEach(dept => {
-                const deptName = dept.department_name || dept.name || 'Unknown';
-                const isPrimary = dept.pivot?.is_primary ? '<span class="ms-1 text-warning">★</span>' : '';
-                departmentsHtml += `<span class="badge-department d-inline-block me-1 mb-1">${deptName}${isPrimary}</span>`;
-              });
-            } else {
-              departmentsHtml = '<span class="text-muted">None</span>';
+            if (!token) {
+                console.error('No authentication token found');
+                if (typeof showToast === 'function') {
+                    showToast('Authentication error. Please login again.', 'error');
+                }
+                return;
             }
 
-            // Service badges
-            let servicesHtml = '';
-            if (admin.services?.length) {
-              admin.services.forEach(service => {
-                const serviceName = service.service_name || service.name || 'Unknown';
-                servicesHtml += `<span class="badge-service d-inline-block me-1 mb-1">${serviceName}</span>`;
-              });
-            } else {
-              servicesHtml = '<span class="text-muted">None</span>';
+            loadAdminsAndData();
+        });
+
+        async function loadAdminsAndData() {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+            const loadingEl = document.getElementById('adminLoading');
+            const tableWrapper = document.getElementById('adminTableWrapper');
+
+            if (loadingEl) loadingEl.style.display = 'flex';
+            if (tableWrapper) tableWrapper.style.display = 'none';
+
+            try {
+                const [adminsRes, rolesRes, deptsRes, deptRolesRes] = await Promise.all([
+                    fetch(`/api/manage/admins?page=${currentAdminPage}&per_page=${itemsPerPage}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch('/api/admin-role', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch('/api/departments/dropdown', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch('/api/department-roles', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                ]);
+
+                const adminsResult = await adminsRes.json();
+                const rolesResult = await rolesRes.json();
+                const deptsResult = await deptsRes.json();
+                const deptRolesResult = await deptRolesRes.json();
+
+                // Handle admins
+                if (adminsResult.success && adminsResult.data) {
+                    adminsData = adminsResult.data.data || [];
+                    window.adminPagination = {
+                        current_page: adminsResult.data.current_page || 1,
+                        last_page: adminsResult.data.last_page || 1,
+                        total: adminsResult.data.total || 0,
+                        per_page: adminsResult.data.per_page || itemsPerPage
+                    };
+                }
+
+                // Handle roles
+                if (rolesResult.success) {
+                    rolesList = rolesResult.data || [];
+                }
+
+                // Handle departments
+                departmentsList = Array.isArray(deptsResult) ? deptsResult : (deptsResult.data || []);
+
+                // Handle department roles
+                if (deptRolesResult.success) {
+                    departmentRolesList = deptRolesResult.data || [];
+                }
+
+                populateRoleDropdowns();
+                populateAddModalFormData();
+                populateDepartmentRoleDropdowns();
+                renderAdminList();
+
+                if (loadingEl) loadingEl.style.display = 'none';
+                if (tableWrapper) tableWrapper.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                if (loadingEl) {
+                    loadingEl.innerHTML = `
+                                                                                        <div class="alert alert-danger">
+                                                                                            <strong>Failed to load administrators</strong>
+                                                                                            <br>
+                                                                                            <small class="text-muted">${error.message || 'Unknown error'}</small>
+                                                                                            <br>
+                                                                                            <small class="text-muted">Check console for details</small>
+                                                                                        </div>
+                                                                                    `;
+                }
             }
-
-            const fullName = admin.full_name || `${admin.first_name} ${admin.middle_name ? admin.middle_name + ' ' : ''}${admin.last_name}`;
-
-            const card = document.createElement('div');
-            card.className = 'col-md-6 col-lg-4';
-            card.innerHTML = `
-                              <div class="card h-100 border">
-                                <div class="card-body">
-                                  <h6 class="card-title fw-bold mb-3">${fullName}</h6>
-                                  <div class="mb-2">
-                                    <small class="text-muted d-block mb-1">Departments:</small>
-                                    <div>${departmentsHtml}</div>
-                                  </div>
-                                  <div>
-                                    <small class="text-muted d-block mb-1">Services:</small>
-                                    <div>${servicesHtml}</div>
-                                  </div>
-                                </div>
-                              </div>
-                            `;
-            resourcesGrid.appendChild(card);
-          });
-        } catch (error) {
-          console.error('Error loading managing resources:', error);
-          resourcesLoading.style.display = 'none';
-          resourcesGrid.innerHTML = '<div class="col-12 text-center text-danger">Error loading resources</div>';
         }
-      }
 
-      // Function to render admin list - UPDATED to remove departments and services columns
-      async function loadAdminList() {
-        const loadingEl = document.getElementById('adminLoading');
-        const tableWrapper = document.getElementById('adminTableWrapper');
-
-        // Show spinner and hide table at start
-        loadingEl.style.display = 'block';
-        tableWrapper.style.display = 'none';
-
-        try {
-          const response = await fetch('/api/admins', {
-            headers: {
-              'Accept': 'application/json',
-              'Authorization': `Bearer ${token}`
+        function showErrorState() {
+            const loadingEl = document.getElementById('adminLoading');
+            if (loadingEl) {
+                loadingEl.innerHTML = '<div class="alert alert-danger">Failed to load administrators</div>';
             }
-          });
+        }
 
-          if (!response.ok) throw new Error('Failed to fetch admin list');
+        function populateRoleDropdowns() {
+            const addRoleSelect = document.getElementById('roleSelectAdd');
+            const editRoleSelect = document.getElementById('edit_role_id');
 
-          const responseData = await response.json();
+            const options = rolesList.map(role =>
+                `<option value="${role.role_id}">${role.role_title}</option>`
+            ).join('');
 
-          // Handle the new response structure with success/data wrapper
-          const admins = responseData.data || responseData;
+            if (addRoleSelect) {
+                addRoleSelect.innerHTML = '<option value="">Select role</option>' + options;
+            }
 
-          adminListBody.innerHTML = '';
+            if (editRoleSelect) {
+                editRoleSelect.innerHTML = '<option value="">Select role</option>' + options;
+            }
+        }
 
-          if (!admins || admins.length === 0) {
-            adminListBody.innerHTML =
-              '<tr><td colspan="8" class="text-center">No other admins found</td></tr>';
-          } else {
-            admins.forEach(admin => {
-              const currentAdminId = localStorage.getItem('adminId');
-              if (currentAdminId && admin.admin_id == currentAdminId) return;
+        function populateDepartmentDropdowns() {
+            const addDeptContainer = document.getElementById('addDeptChecklist');
+            if (addDeptContainer) {
+                addDeptContainer.innerHTML = '';
+                departmentsList.forEach(dept => {
+                    addDeptContainer.innerHTML += `
+                                                                                                                                                    <div class="form-check">
+                                                                                                                                                        <input class="form-check-input add-dept-cb" type="checkbox" value="${dept.department_id}" id="dept_${dept.department_id}">
+                                                                                                                                                        <label class="form-check-label" for="dept_${dept.department_id}">${dept.department_name} ${dept.department_code ? '(' + dept.department_code + ')' : ''}</label>
+                                                                                                                                                    </div>
+                                                                                                                                                `;
+                });
+                document.querySelectorAll('.add-dept-cb').forEach(cb => {
+                    cb.addEventListener('change', updateAddDeptPreview);
+                });
+            }
+        }
 
-              const row = document.createElement('tr');
-              row.innerHTML = `
-                                <td>${admin.admin_id}</td>
-                                <td>${admin.school_id || 'N/A'}</td>
-                                <td>${admin.full_name || `${admin.first_name} ${admin.middle_name ? admin.middle_name + ' ' : ''}${admin.last_name}`}</td>
-                                <td class="title-col">${admin.title || 'N/A'}</td>
-                                <td title="${admin.email}">${admin.email}</td>
-                                <td>${admin.contact_number || 'N/A'}</td>
-                                <td>${admin.role ? admin.role.role_title : 'N/A'}</td>
-                                <td>
-                                  <button class="btn btn-sm btn-info me-1" onclick="openEditModal(${admin.admin_id})" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                  </button>
-                                  <button class="btn btn-sm btn-danger" onclick="deleteAdmin(${admin.admin_id})" title="Delete">
-                                    <i class="bi bi-trash"></i>
-                                  </button>
-                                </td>
-                              `;
-              adminListBody.appendChild(row);
+        function populateDepartmentRoleDropdowns() {
+            // Department Roles -- Not to be confused with admin roles
+            const addRoleSelect = document.getElementById('addDeptRoleSelect');
+            const editRoleSelect = document.getElementById('editDeptRoleSelect');
+
+            const options = departmentRolesList.map(role =>
+                `<option value="${role.role_id}">${role.role_name}</option>`
+            ).join('');
+
+            if (addRoleSelect) {
+                addRoleSelect.innerHTML = '<option value="">Select role</option>' + options;
+            }
+
+            if (editRoleSelect) {
+                editRoleSelect.innerHTML = '<option value="">Select role</option>' + options;
+            }
+        }
+
+        function populateAddModalFormData() {
+            const deptSelect = document.getElementById('addDepartmentSelect');
+            if (deptSelect) {
+                deptSelect.innerHTML = '<option value="">Select department</option>';
+                departmentsList.forEach(dept => {
+                    deptSelect.innerHTML += `
+                                                                                                        <option value="${dept.department_id}">${dept.department_name} ${dept.department_code ? '(' + dept.department_code + ')' : ''}</option>
+                                                                                                    `;
+                });
+            }
+
+            // Populate department roles
+            const roleSelect = document.getElementById('addDepartmentRoleSelect');
+            if (roleSelect) {
+                roleSelect.innerHTML = '<option value="">Select role</option>';
+                departmentRolesList.forEach(role => {
+                    roleSelect.innerHTML += `
+                                                                                                        <option value="${role.role_id}">${role.role_name}</option>
+                                                                                                    `;
+                });
+            }
+        }
+
+
+        async function loadAdminsTab(page = 1) {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+            const loadingEl = document.getElementById('adminLoading');
+            const tableWrapper = document.getElementById('adminTableWrapper');
+
+            if (loadingEl) loadingEl.style.display = 'flex';
+            if (tableWrapper) tableWrapper.style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/manage/admins?page=${page}&per_page=${itemsPerPage}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+
+                if (result.data && result.data.data) {
+                    adminsData = result.data.data;
+                    window.adminPagination = {
+                        current_page: result.data.current_page,
+                        last_page: result.data.last_page,
+                        total: result.data.total,
+                        per_page: result.data.per_page
+                    };
+                } else {
+                    adminsData = result.data || [];
+                    window.adminPagination = {
+                        current_page: page,
+                        last_page: Math.ceil(adminsData.length / itemsPerPage),
+                        total: adminsData.length,
+                        per_page: itemsPerPage
+                    };
+                }
+
+                renderAdminList();
+                if (loadingEl) loadingEl.style.display = 'none';
+                if (tableWrapper) tableWrapper.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading admins:', error);
+                if (loadingEl) loadingEl.innerHTML = '<div class="alert alert-danger">Failed to load administrators</div>';
+            }
+        }
+
+        function formatAdminId(id) {
+            return String(id).padStart(4, '0');
+        }
+
+        function initDragToScroll() {
+            const scrollContainer = document.getElementById('adminTableScroll');
+            if (!scrollContainer) return;
+
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            scrollContainer.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                isDown = true;
+                scrollContainer.style.cursor = 'grabbing';
+                startX = e.pageX - scrollContainer.offsetLeft;
+                scrollLeft = scrollContainer.scrollLeft;
             });
-          }
 
-          // Show table & hide spinner when done
-          loadingEl.style.display = 'none';
-          tableWrapper.style.display = 'block';
-
-        } catch (error) {
-          console.error('Error loading admin list:', error);
-          adminListBody.innerHTML =
-            '<tr><td colspan="8" class="text-center">Error loading admin list</td></tr>';
-
-          // Hide spinner even on error
-          loadingEl.style.display = 'none';
-          tableWrapper.style.display = 'block';
-        }
-      }
-
-      // Delete admin function - UPDATED to match backend deleteAdmin method
-      let adminToDelete = null;
-
-      window.deleteAdmin = function (adminId) {
-        adminToDelete = adminId;
-
-        // Fetch admin details to show in confirmation modal
-        fetch(`/api/admins/${adminId}`, {
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        })
-          .then(response => {
-            if (!response.ok) throw new Error('Failed to fetch admin details');
-            return response.json();
-          })
-          .then(admin => {
-            // Populate admin details in modal
-            document.getElementById('deleteAdminDetails').innerHTML = `
-                        <div class="row">
-                          <div class="col-4 fw-bold">School ID:</div>
-                          <div class="col-8">${admin.school_id || 'N/A'}</div>
-                          <div class="col-4 fw-bold">Name:</div>
-                          <div class="col-8">${admin.first_name} ${admin.middle_name ? admin.middle_name + ' ' : ''}${admin.last_name}</div>
-                          <div class="col-4 fw-bold">Title:</div>
-                          <div class="col-8">${admin.title || 'N/A'}</div>
-                          <div class="col-4 fw-bold">Email:</div>
-                          <div class="col-8">${admin.email}</div>
-                          <div class="col-4 fw-bold">Role:</div>
-                          <div class="col-8">${admin.role ? admin.role.role_title : 'N/A'}</div>
-                        </div>
-                      `;
-
-            // Show the modal
-            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
-            deleteModal.show();
-          })
-          .catch(error => {
-            console.error('Error fetching admin details:', error);
-            // Fallback: show modal with basic info if details fetch fails
-            document.getElementById('deleteAdminDetails').innerHTML = `
-                        <div class="text-center">
-                          <p class="mb-0">Admin ID: ${adminId}</p>
-                          <p class="text-muted">Unable to load full details</p>
-                        </div>
-                      `;
-            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
-            deleteModal.show();
-          });
-      };
-
-      // Confirm delete button handler - WITH BETTER DEBUGGING
-      document.getElementById('confirmDeleteBtn').addEventListener('click', async function () {
-        if (!adminToDelete) return;
-
-        const deleteBtn = this;
-        const originalText = deleteBtn.innerHTML;
-
-        // Show loading state
-        deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
-        deleteBtn.disabled = true;
-
-        try {
-          console.log('Sending DELETE request for admin ID:', adminToDelete);
-
-          const response = await fetch(`/api/admins/${adminToDelete}`, {
-            method: 'DELETE',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          console.log('Response status:', response.status);
-          console.log('Response headers:', response.headers);
-
-          // Try to get the response text first
-          const responseText = await response.text();
-          console.log('Raw response text:', responseText);
-
-          let responseData;
-          try {
-            // Try to parse as JSON
-            responseData = JSON.parse(responseText);
-            console.log('Parsed response data:', responseData);
-          } catch (parseError) {
-            console.error('Failed to parse response as JSON:', parseError);
-            throw new Error(`Server returned non-JSON response: ${responseText.substring(0, 100)}`);
-          }
-
-          if (!response.ok) {
-            throw new Error(responseData.message || responseData.error || `HTTP error ${response.status}`);
-          }
-
-          // Success - close modal and refresh list
-          bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal')).hide();
-
-          // Show success message using the message from backend
-          showToast(responseData.message || 'Admin deleted successfully', 'success');
-
-          await Promise.all([
-            loadAdminList(),
-            loadManagingResources()
-          ]);
-
-        } catch (error) {
-          console.error('Detailed error:', error);
-
-          // Show error message
-          showToast(error.message, 'error');
-
-          // Reset button state
-          deleteBtn.innerHTML = originalText;
-          deleteBtn.disabled = false;
-        }
-      });
-
-      // Clear add modal data when hidden
-      document.getElementById('addAdminModal').addEventListener('hidden.bs.modal', function () {
-        // Clear form
-        document.getElementById('addAdminForm').reset();
-
-        // Clear checklists
-        document.getElementById('add-departments-checklist').innerHTML = '<div class="text-muted">Loading departments...</div>';
-        document.getElementById('add-services-checklist').innerHTML = '<div class="text-muted">Loading services...</div>';
-
-        // Clear previews
-        document.getElementById('add-selected-departments-preview').innerHTML = '<div class="text-muted">No departments selected</div>';
-        document.getElementById('add-selected-services-preview').innerHTML = '<div class="text-muted">No services selected</div>';
-
-        // Clear hidden inputs
-        document.getElementById('add-selected-departments').value = '[]';
-        document.getElementById('add-selected-services').value = '[]';
-      });
-
-
-      // Reset modal state when hidden
-      document.getElementById('deleteConfirmationModal').addEventListener('hidden.bs.modal', function () {
-        adminToDelete = null;
-        const deleteBtn = document.getElementById('confirmDeleteBtn');
-        deleteBtn.innerHTML = 'Delete Admin';
-        deleteBtn.disabled = false;
-      });
-
-      // Clear modal data when hidden
-      document.getElementById('editAdminModal').addEventListener('hidden.bs.modal', function () {
-        // Clear form fields
-        document.getElementById('editAdminForm').reset();
-
-        // Clear checklists
-        document.getElementById('edit-departments-checklist').innerHTML = '<div class="text-muted">Loading departments...</div>';
-        document.getElementById('edit-services-checklist').innerHTML = '<div class="text-muted">Loading services...</div>';
-
-        // Clear previews
-        document.getElementById('edit-selected-departments-preview').innerHTML = '<div class="text-muted">No departments selected</div>';
-        document.getElementById('edit-selected-services-preview').innerHTML = '<div class="text-muted">No services selected</div>';
-
-        // Clear hidden inputs
-        document.getElementById('edit-selected-departments').value = '[]';
-        document.getElementById('edit-selected-services').value = '[]';
-
-      });
-
-      // Fetch roles and populate dropdown - UPDATED for new API response structure
-      async function loadRoles() {
-        try {
-          const response = await fetch('/api/admin-role', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/json'
-            }
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const responseData = await response.json();
-
-          // Handle the new response structure with success/data wrapper
-          const roles = responseData.data || responseData;
-
-          // Populate add form role select
-          roleSelect.innerHTML = '<option value="">Select a role</option>';
-          if (roles && roles.length > 0) {
-            roles.forEach(role => {
-              const option = new Option(role.role_title, role.role_id);
-              roleSelect.add(option);
+            scrollContainer.addEventListener('mouseleave', () => {
+                isDown = false;
+                scrollContainer.style.cursor = 'grab';
             });
-          }
 
-          // Populate edit form role select
-          const editRoleSelect = document.getElementById('edit_role_id');
-          if (editRoleSelect) {
-            editRoleSelect.innerHTML = '<option value="">Select a role</option>';
-            roles.forEach(role => {
-              const option = new Option(role.role_title, role.role_id);
-              editRoleSelect.add(option);
+            scrollContainer.addEventListener('mouseup', () => {
+                isDown = false;
+                scrollContainer.style.cursor = 'grab';
             });
-          }
-        } catch (error) {
-          console.error('Error loading roles:', error);
-          roleSelect.innerHTML = '<option value="">Error loading roles</option>';
-        }
-      }
 
-      // Add admin form submission
-      addAdminForm.addEventListener('submit', async function (event) {
-        event.preventDefault();
+            scrollContainer.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - scrollContainer.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                scrollContainer.scrollLeft = scrollLeft - walk;
+            });
 
-        // Validate School ID format (optional)
-        const schoolId = document.getElementById('school_id').value.trim();
-        if (schoolId) {
-          const schoolIdPattern = /^\d{2}-\d{4}-\d{2}$/;
-          if (!schoolIdPattern.test(schoolId)) {
-            showToast('School ID must follow the format ##-####-##');
-            return;
-          }
-        }
+            scrollContainer.addEventListener('touchstart', (e) => {
+                isDown = true;
+                startX = e.touches[0].pageX - scrollContainer.offsetLeft;
+                scrollLeft = scrollContainer.scrollLeft;
+            });
 
-        // Validate email format
-        const email = document.getElementById('email').value.trim();
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailPattern.test(email)) {
-          showToast('Please enter a valid email address');
-          return;
-        }
+            scrollContainer.addEventListener('touchend', () => {
+                isDown = false;
+            });
 
-        // Get selected departments and services
-        const selectedDeptIds = JSON.parse(document.getElementById('add-selected-departments').value || '[]');
-        const selectedServiceIds = JSON.parse(document.getElementById('add-selected-services').value || '[]');
+            scrollContainer.addEventListener('touchmove', (e) => {
+                if (!isDown) return;
+                const x = e.touches[0].pageX - scrollContainer.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                scrollContainer.scrollLeft = scrollLeft - walk;
+            });
 
-        // Validate department selection for certain roles
-        const roleId = parseInt(document.getElementById('role_id').value);
-        const noDeptRequiredRoleIds = [1, 2]; // Head Admin and Vice President
-
-        if (selectedDeptIds.length === 0 && !noDeptRequiredRoleIds.includes(roleId)) {
-          showToast('Please select at least one department for this role');
-          return;
+            scrollContainer.style.cursor = 'grab';
         }
 
-        const formData = {
-          first_name: document.getElementById('first_name').value,
-          middle_name: document.getElementById('middle_name').value,
-          last_name: document.getElementById('last_name').value,
-          title: document.getElementById('title').value,
-          email: document.getElementById('email').value,
-          contact_number: document.getElementById('contact_number').value || null,
-          role_id: roleId,
-          school_id: schoolId || null,
-          password: document.getElementById('password').value,
-          department_ids: selectedDeptIds,
-          service_ids: selectedServiceIds,
-          photo_url: 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png',
-          photo_public_id: 'ksdmh4mmpxdtjogdgjmm',
-          wallpaper_url: null,
-          wallpaper_public_id: null,
-          signature_url: null,
-          signature_public_id: null
+        function renderAdminList() {
+            const tbody = document.getElementById('adminListBody');
+            if (!tbody) return;
+
+            if (!adminsData.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No administrators found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+
+            adminsData.forEach(admin => {
+                const row = `
+                                                                                                                                                <tr>
+                                                                                                                                                    <td>${String(admin.admin_id).padStart(4, '0')}</td>
+                                                                                                                                                    <td>${admin.school_id || 'N/A'}</td>
+                                                                                                                                                    <td>${admin.full_name}</td>
+                                                                                                                                                    <td>${admin.title || 'N/A'}</td>
+                                                                                                                                                    <td title="${admin.email}">${admin.email}</td>
+                                                                                                                                                    <td>${admin.contact_number || 'N/A'}</td>
+                                                                                                                                                    <td>${admin.role_title || 'N/A'}</td>
+                                                                                                                                                    <td>
+                                                                                                                                                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                                                                                                                                            <button class="btn btn-sm btn-primary action-btn" onclick="editAdmin(${admin.admin_id})" title="Edit" style="background-color: var(--navy); border-color: var(--navy);">
+                                                                                                                                                                <i class="bi bi-pencil"></i> Edit
+                                                                                                                                                            </button>
+                                                                                                                                                            <button class="btn btn-sm btn-danger action-btn" onclick="deleteAdmin(${admin.admin_id})" title="Delete" style="background-color: var(--danger); border-color: var(--danger);">
+                                                                                                                                                                <i class="bi bi-trash"></i> Delete
+                                                                                                                                                            </button>
+                                                                                                                                                        </div>
+                                                                                                                                                    </td>
+                                                                                                                                                </tr>
+                                                                                                                                            `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+
+            renderPagination();
+            setTimeout(() => initDragToScroll(), 100);
+        }
+
+        function renderPagination() {
+            const currentPage = window.adminPagination?.current_page || 1;
+            const totalPages = window.adminPagination?.last_page || 1;
+            const totalItems = window.adminPagination?.total || 0;
+            const start = ((currentPage - 1) * itemsPerPage) + 1;
+            const end = Math.min(currentPage * itemsPerPage, totalItems);
+
+            const paginationEl = document.getElementById('adminPagination');
+            if (paginationEl) {
+                paginationEl.innerHTML = '';
+
+                if (totalPages > 1) {
+                    paginationEl.innerHTML += `
+                                                                                                                                                    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                                                                                                                                                        <a class="page-link" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'tabindex="-1"' : ''}>&laquo; Prev</a>
+                                                                                                                                                    </li>
+                                                                                                                                                `;
+
+                    let startPage = Math.max(1, currentPage - 2);
+                    let endPage = Math.min(totalPages, startPage + 4);
+
+                    if (startPage > 1) {
+                        paginationEl.innerHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        paginationEl.innerHTML += `
+                                                                                                                                                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                                                                                                                                                            <a class="page-link" onclick="goToPage(${i})">${i}</a>
+                                                                                                                                                        </li>
+                                                                                                                                                    `;
+                    }
+
+                    if (endPage < totalPages) {
+                        paginationEl.innerHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                    }
+
+                    paginationEl.innerHTML += `
+                                                                                                                                                    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                                                                                                                                                        <a class="page-link" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'tabindex="-1"' : ''}>Next &raquo;</a>
+                                                                                                                                                    </li>
+                                                                                                                                                `;
+                }
+            }
+
+            const paginationInfo = document.getElementById('adminPaginationInfo');
+            if (paginationInfo && totalItems > 0) {
+                paginationInfo.textContent = `Showing ${start} to ${end} of ${totalItems} admins`;
+            }
+        }
+
+        window.goToPage = function (page) {
+            if (page < 1) return;
+            if (window.adminPagination && page > window.adminPagination.last_page) return;
+            currentAdminPage = page;
+            loadAdminsAndData();
         };
 
-        console.log('Sending form data:', formData);
+        window.editAdmin = async function (adminId) {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+            const modal = new bootstrap.Modal(document.getElementById('editAdminModal'));
+            const loadingDiv = document.getElementById('editModalLoading');
+            const contentDiv = document.getElementById('editModalContent');
 
-        // FIXED: Get the submit button from the modal footer
-        const submitBtn = document.querySelector('#addAdminModal .btn-primary[type="submit"]');
+            if (loadingDiv) loadingDiv.style.display = 'block';
+            if (contentDiv) contentDiv.style.display = 'none';
+            modal.show();
 
-        if (!submitBtn) {
-          console.error('Submit button not found');
-          return;
-        }
+            try {
+                const response = await fetch(`/api/manage/admins/${adminId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                const admin = result.data;
 
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
-        submitBtn.disabled = true;
+                // Populate basic fields
+                document.getElementById('edit_admin_id').value = admin.admin_id;
+                document.getElementById('edit_first_name').value = admin.first_name || '';
+                document.getElementById('edit_middle_name').value = admin.middle_name || '';
+                document.getElementById('edit_last_name').value = admin.last_name || '';
+                document.getElementById('edit_title').value = admin.title || '';
+                document.getElementById('edit_email').value = admin.email || '';
+                document.getElementById('edit_contact_number').value = admin.contact_number || '';
+                document.getElementById('edit_school_id').value = admin.school_id || '';
 
-        try {
-          const response = await fetch('/api/admins', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(formData)
-          });
+                const roleSelect = document.getElementById('edit_role_id');
+                if (roleSelect) {
+                    roleSelect.value = admin.role_id || '';
+                }
 
-          const responseData = await response.json();
+                // Populate department and role
+                const deptId = admin.departments && admin.departments.length > 0 ? admin.departments[0].department_id : null;
+                const roleId = admin.departments && admin.departments.length > 0 ? admin.departments[0].role_id : null;
+                populateEditDepartmentChecklist(deptId, roleId);
 
-          if (!response.ok) {
-            console.error('Backend error response:', responseData);
-            throw new Error(responseData.message || responseData.error || 'Failed to add admin');
-          }
+                if (loadingDiv) loadingDiv.style.display = 'none';
+                if (contentDiv) contentDiv.style.display = 'block';
 
-          showToast(responseData.message || 'Admin added successfully!', 'success');
-
-          // Close the modal
-          const addModal = bootstrap.Modal.getInstance(document.getElementById('addAdminModal'));
-          if (addModal) {
-            addModal.hide();
-          }
-
-          // Reset form
-          addAdminForm.reset();
-          document.getElementById('add-selected-departments').value = '[]';
-          document.getElementById('add-selected-services').value = '[]';
-
-          // Reset previews
-          document.getElementById('add-selected-departments-preview').innerHTML = '<div class="text-muted">No departments selected</div>';
-          document.getElementById('add-selected-services-preview').innerHTML = '<div class="text-muted">No services selected</div>';
-
-          // Uncheck all checkboxes
-          document.querySelectorAll('#add-departments-checklist .add-department-checkbox').forEach(cb => cb.checked = false);
-          document.querySelectorAll('#add-services-checklist .add-service-checkbox').forEach(cb => cb.checked = false);
-
-          // Refresh the admin list
-          await loadAdminList();
-
-        } catch (error) {
-          console.error('Error adding admin:', error);
-          showToast(error.message, 'error');
-        } finally {
-          submitBtn.innerHTML = originalText;
-          submitBtn.disabled = false;
-        }
-      });
-      // Function to load services for dropdowns
-      async function loadServices() {
-        try {
-          const response = await fetch('/api/extra-services', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/json'
+            } catch (error) {
+                console.error('Error loading admin:', error);
+                if (loadingDiv) loadingDiv.innerHTML = '<div class="alert alert-danger">Failed to load admin details</div>';
             }
-          });
+        };
+        window.deleteAdmin = function (adminId) {
+            const admin = adminsData.find(a => a.admin_id === adminId);
+            const detailsEl = document.getElementById('deleteAdminDetails');
+            if (detailsEl) {
+                detailsEl.innerHTML = `
+                                                                                                                                                <div class="row">
+                                                                                                                                                    <div class="col-4 fw-bold">Name:</div>
+                                                                                                                                                    <div class="col-8">${admin ? admin.full_name : 'Admin ID: ' + adminId}</div>
+                                                                                                                                                    <div class="col-4 fw-bold">Email:</div>
+                                                                                                                                                    <div class="col-8">${admin ? admin.email : 'N/A'}</div>
+                                                                                                                                                </div>
+                                                                                                                                            `;
+            }
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch services');
-          }
-
-          const responseData = await response.json();
-          window.servicesData = responseData.data || responseData;
-          return window.servicesData;
-        } catch (error) {
-          console.error('Error loading services:', error);
-          window.servicesData = [];
-          return [];
-        }
-      }
-
-      // Function to create department checklist - NO BADGES
-      function createDepartmentChecklist(selectedDeptIds = []) {
-        const checklistContainer = document.getElementById('edit-departments-checklist');
-        if (!checklistContainer) return;
-
-        if (!window.departmentsData || window.departmentsData.length === 0) {
-          checklistContainer.innerHTML = '<div class="text-muted">No departments available</div>';
-          return;
-        }
-
-        checklistContainer.innerHTML = '';
-
-        window.departmentsData.forEach(dept => {
-          const isChecked = selectedDeptIds.includes(dept.department_id.toString());
-
-          const div = document.createElement('div');
-          div.className = 'form-check';
-          div.innerHTML = `
-                                <input class="form-check-input department-checkbox" type="checkbox" 
-                                       value="${dept.department_id}" id="dept_${dept.department_id}"
-                                       ${isChecked ? 'checked' : ''}>
-                                <label class="form-check-label" for="dept_${dept.department_id}">
-                                  ${dept.department_name} (${dept.department_code})
-                                </label>
-                              `;
-
-          div.querySelector('.department-checkbox').addEventListener('change', updateSelectedDepartmentsPreview);
-          checklistContainer.appendChild(div);
-        });
-      }
-
-      // Function to create service checklist - ensure proper checkbox state
-      function createServiceChecklist(selectedServiceIds = []) {
-        const checklistContainer = document.getElementById('edit-services-checklist');
-        if (!checklistContainer) return;
-
-        if (!window.servicesData || window.servicesData.length === 0) {
-          checklistContainer.innerHTML = '<div class="text-muted">No services available</div>';
-          return;
-        }
-
-        // Clear container first
-        checklistContainer.innerHTML = '';
-
-        window.servicesData.forEach(service => {
-          const serviceId = service.service_id || service.id;
-          const serviceIdStr = serviceId.toString();
-          const serviceName = service.service_name || service.name || 'Unknown';
-          // Make sure we're comparing strings
-          const isChecked = selectedServiceIds.some(id => id.toString() === serviceIdStr);
-
-          const div = document.createElement('div');
-          div.className = 'form-check';
-          div.innerHTML = `
-                              <input class="form-check-input service-checkbox" type="checkbox" 
-                                     value="${serviceId}" id="service_${serviceId}"
-                                     ${isChecked ? 'checked' : ''}>
-                              <label class="form-check-label" for="service_${serviceId}">
-                                ${serviceName}
-                              </label>
-                            `;
-
-          div.querySelector('.service-checkbox').addEventListener('change', updateSelectedServicesPreview);
-          checklistContainer.appendChild(div);
-        });
-
-        console.log('Service checklist created with', selectedServiceIds.length, 'selected items');
-      }
-
-      // Function to update selected departments preview - NO BADGES
-      function updateSelectedDepartmentsPreview() {
-        const selectedCheckboxes = document.querySelectorAll('#edit-departments-checklist .department-checkbox:checked');
-        const selectedDeptIds = Array.from(selectedCheckboxes).map(cb => cb.value);
-        document.getElementById('edit-selected-departments').value = JSON.stringify(selectedDeptIds);
-
-        // Update preview
-        const previewContainer = document.getElementById('edit-selected-departments-preview');
-        if (selectedDeptIds.length === 0) {
-          previewContainer.innerHTML = '<div class="text-muted">No departments selected</div>';
-          return;
-        }
-
-        let previewHtml = '';
-        selectedDeptIds.forEach(deptId => {
-          const dept = window.departmentsData.find(d => d.department_id.toString() === deptId.toString());
-          if (dept) {
-            previewHtml += `
-                                  <div class="p-2 bg-light rounded mb-1">
-                                    ${dept.department_name} (${dept.department_code})
-                                  </div>
-                                `;
-          }
-        });
-        previewContainer.innerHTML = previewHtml;
-
-      }
-
-      // Function to update selected services preview - FIXED to ensure hidden input is updated
-      function updateSelectedServicesPreview() {
-        const selectedCheckboxes = document.querySelectorAll('#edit-services-checklist .service-checkbox:checked');
-        const selectedServiceIds = Array.from(selectedCheckboxes).map(cb => cb.value);
-
-        // Make sure we're storing as an array of strings/numbers
-        document.getElementById('edit-selected-services').value = JSON.stringify(selectedServiceIds);
-
-        console.log('Updated selected services:', selectedServiceIds); // Debug log
-
-        // Update preview
-        const previewContainer = document.getElementById('edit-selected-services-preview');
-        if (selectedServiceIds.length === 0) {
-          previewContainer.innerHTML = '<div class="text-muted">No services selected</div>';
-          return;
-        }
-
-        let previewHtml = '';
-        selectedServiceIds.forEach(serviceId => {
-          const service = window.servicesData.find(s => (s.service_id || s.id).toString() === serviceId.toString());
-          if (service) {
-            const serviceName = service.service_name || service.name || 'Unknown';
-            previewHtml += `
-                            <div class="p-2 bg-light rounded mb-1">
-                              ${serviceName}
-                            </div>
-                          `;
-          }
-        });
-        previewContainer.innerHTML = previewHtml;
-      }
-
-      // Updated Function to open edit modal with lazy loading - FIXED pre-selection
-      window.openEditModal = async function (adminId) {
-        const modalEl = document.getElementById('editAdminModal');
-        const editButton = event?.target?.closest('button') || document.querySelector(`button[onclick="openEditModal(${adminId})"]`);
-        const originalButtonHtml = editButton ? editButton.innerHTML : '';
-
-        // Show loading spinner on button
-        if (editButton) {
-          editButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
-          editButton.disabled = true;
-        }
-
-        // Show modal loading state
-        document.getElementById('editModalLoading').style.display = 'block';
-        document.getElementById('editModalContent').style.display = 'none';
-
-        // Show modal immediately with loading state
-        let modal = bootstrap.Modal.getInstance(modalEl);
-        if (!modal) {
-          modal = new bootstrap.Modal(modalEl);
-        }
-        modal.show();
-
-        try {
-          // Clear any cached data to ensure fresh load
-          window.departmentsData = null;
-          window.servicesData = null;
-          window.rolesData = null;
-
-          // Load all required data in parallel
-          const [adminResponse, rolesResponse, departmentsResponse, servicesResponse] = await Promise.all([
-            fetch(`/api/admins/${adminId}/edit`, {
-              headers: {
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${token}`
-              }
-            }),
-            fetch('/api/admin-role', {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-              }
-            }),
-            fetch('/api/departments', {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-              }
-            }),
-            fetch('/api/extra-services', {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-              }
-            })
-          ]);
-
-          if (!adminResponse.ok) throw new Error('Failed to fetch admin details');
-
-          const admin = await adminResponse.json();
-
-          // Handle roles response
-          const rolesData = await rolesResponse.json();
-          window.rolesData = rolesData.data || rolesData;
-
-          // Handle departments response
-          const deptsData = await departmentsResponse.json();
-          window.departmentsData = deptsData.data || deptsData;
-
-          // Handle services response
-          const servicesData = await servicesResponse.json();
-          window.servicesData = servicesData.data || servicesData;
-
-          // Log for debugging
-          console.log('Admin data:', admin);
-          console.log('Departments data:', window.departmentsData);
-          console.log('Services data:', window.servicesData);
-
-          // Populate role dropdown FIRST
-          const editRoleSelect = document.getElementById('edit_role_id');
-          editRoleSelect.innerHTML = '<option value="">Select a role</option>';
-
-          if (window.rolesData && window.rolesData.length > 0) {
-            window.rolesData.forEach(role => {
-              const option = new Option(role.role_title, role.role_id);
-              editRoleSelect.add(option);
-            });
-          }
-
-          // Populate form fields
-          document.getElementById('edit_admin_id').value = admin.admin_id;
-          document.getElementById('edit_first_name').value = admin.first_name || '';
-          document.getElementById('edit_middle_name').value = admin.middle_name || '';
-          document.getElementById('edit_last_name').value = admin.last_name || '';
-          document.getElementById('edit_title').value = admin.title || '';
-          document.getElementById('edit_email').value = admin.email || '';
-          document.getElementById('edit_contact_number').value = admin.contact_number || '';
-          document.getElementById('edit_school_id').value = admin.school_id || '';
-
-          // Set role value AFTER options are populated
-          let roleIdToSet = null;
-
-          if (admin.role_id) {
-            roleIdToSet = admin.role_id;
-          } else if (admin.role && admin.role.role_id) {
-            roleIdToSet = admin.role.role_id;
-          }
-
-          console.log('Setting role ID to:', roleIdToSet);
-
-          if (roleIdToSet) {
-            editRoleSelect.value = roleIdToSet;
-          }
-
-          // Get selected department IDs from the pivot data
-          let selectedDeptIds = [];
-          if (admin.departments && admin.departments.length > 0) {
-            selectedDeptIds = admin.departments.map(dept => dept.department_id.toString());
-          }
-
-          // Get selected service IDs from the explicit array in response
-          let selectedServiceIds = [];
-          if (admin.service_ids && admin.service_ids.length > 0) {
-            selectedServiceIds = admin.service_ids.map(id => id.toString());
-          } else if (admin.services && admin.services.length > 0) {
-            // Fallback to extracting from services if needed
-            selectedServiceIds = admin.services.map(service => {
-              const serviceId = service.service_id || service.id;
-              return serviceId.toString();
-            });
-          }
-
-          console.log('Selected departments to check:', selectedDeptIds);
-          console.log('Selected services to check:', selectedServiceIds);
-
-          // Clear and recreate checklists with pre-selected items
-          const deptChecklistContainer = document.getElementById('edit-departments-checklist');
-          deptChecklistContainer.innerHTML = ''; // Clear existing
-          createDepartmentChecklist(selectedDeptIds);
-
-          const serviceChecklistContainer = document.getElementById('edit-services-checklist');
-          serviceChecklistContainer.innerHTML = ''; // Clear existing
-          createServiceChecklist(selectedServiceIds);
-
-          // Initialize hidden inputs
-          document.getElementById('edit-selected-departments').value = JSON.stringify(selectedDeptIds);
-          document.getElementById('edit-selected-services').value = JSON.stringify(selectedServiceIds);
-
-          // Update previews
-          updateSelectedDepartmentsPreview();
-          updateSelectedServicesPreview();
-
-          // Hide loading, show content
-          document.getElementById('editModalLoading').style.display = 'none';
-          document.getElementById('editModalContent').style.display = 'block';
-
-        } catch (error) {
-          console.error('Error opening edit modal:', error);
-          showToast('Failed to load admin details: ' + error.message, 'error');
-
-          // Hide modal on error
-          modal.hide();
-        } finally {
-          // Restore button state
-          if (editButton) {
-            editButton.innerHTML = originalButtonHtml;
-            editButton.disabled = false;
-          }
-        }
-      };
-      // Save edited admin - UPDATED with services and proper data refresh
-      document.getElementById('saveAdminChanges').addEventListener('click', async function () {
-        const adminId = document.getElementById('edit_admin_id').value;
-
-        // Validate School ID format (optional)
-        const schoolId = document.getElementById('edit_school_id').value.trim();
-        if (schoolId) {
-          const schoolIdPattern = /^\d{2}-\d{4}-\d{2}$/;
-          if (!schoolIdPattern.test(schoolId)) {
-            showToast('School ID must follow the format ##-####-##');
-            return;
-          }
-        }
-
-        // Get selected departments and services
-        const selectedDeptIds = JSON.parse(document.getElementById('edit-selected-departments').value || '[]');
-
-        // FIXED: Make sure we're getting the service IDs correctly
-        const selectedServiceIds = JSON.parse(document.getElementById('edit-selected-services').value || '[]');
-
-        console.log('Saving with service IDs:', selectedServiceIds); // Debug log
-
-        // Validate department selection for certain roles
-        const roleId = parseInt(document.getElementById('edit_role_id').value);
-        const noDeptRequiredRoleIds = [1, 2]; // Head Admin and Vice President
-
-        if (selectedDeptIds.length === 0 && !noDeptRequiredRoleIds.includes(roleId)) {
-          showToast('Please select at least one department for this role');
-          return;
-        }
-
-        const formData = {
-          admin_id: adminId,
-          first_name: document.getElementById('edit_first_name').value,
-          middle_name: document.getElementById('edit_middle_name').value,
-          last_name: document.getElementById('edit_last_name').value,
-          title: document.getElementById('edit_title').value,
-          email: document.getElementById('edit_email').value,
-          contact_number: document.getElementById('edit_contact_number').value || null,
-          role_id: roleId,
-          school_id: schoolId || null,
-          password: document.getElementById('edit_password').value || undefined,
-          department_ids: selectedDeptIds,
-          service_ids: selectedServiceIds, // Make sure this is included
-          signature_url: null,
-          signature_public_id: null
+            window.adminToDelete = adminId;
+            new bootstrap.Modal(document.getElementById('deleteConfirmationModal')).show();
         };
 
-        console.log('Sending form data:', formData); // Debug log
+        // Confirm delete
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', async function () {
+                const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+                const adminId = window.adminToDelete;
+                if (!adminId) return;
 
-        const saveBtn = this;
-        const originalText = saveBtn.innerHTML;
-        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-        saveBtn.disabled = true;
+                const btn = this;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
+                btn.disabled = true;
 
-        try {
-          const response = await fetch(`/api/admins/${adminId}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(formData)
-          });
+                try {
+                    const response = await fetch(`/api/admins/${adminId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/json'
+                        }
+                    });
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Backend error response:', errorData);
-            throw new Error(errorData.message || 'Failed to update admin');
-          }
+                    const result = await response.json();
 
-          const responseData = await response.json();
-          console.log('Update successful:', responseData); // Debug log
+                    if (response.ok) {
+                        if (typeof showToast === 'function') {
+                            showToast('Admin deleted successfully', 'success');
+                        }
+                        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal')).hide();
 
-          showToast('Admin updated successfully!', 'success');
-
-          // Refresh both the admin list and resources grid
-          await Promise.all([
-            loadAdminList(),
-            loadManagingResources()
-          ]);
-
-          // Clear any cached data to force fresh load next time
-          window.departmentsData = null;
-          window.servicesData = null;
-          window.rolesData = null;
-
-          // Hide the modal
-          bootstrap.Modal.getInstance(document.getElementById('editAdminModal')).hide();
-
-        } catch (error) {
-          console.error('Error updating admin:', error);
-          showToast(error.message || 'Failed to update admin', 'error');
-        } finally {
-          saveBtn.innerHTML = originalText;
-          saveBtn.disabled = false;
+                        const currentPage = window.adminPagination?.current_page || 1;
+                        await loadAdminsTab(currentPage);
+                    } else {
+                        if (typeof showToast === 'function') {
+                            showToast(result.message || 'Delete failed', 'error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    if (typeof showToast === 'function') {
+                        showToast('Error deleting admin', 'error');
+                    }
+                } finally {
+                    btn.innerHTML = 'Delete Admin';
+                    btn.disabled = false;
+                }
+            });
         }
-      });
 
-      // Initialize the page
-      async function initializePage() {
-        await Promise.all([
-          loadDepartments(),
-          loadServices(), // Make sure services are loaded
-          loadRoles()
-        ]);
+        // Save edited admin
+        const saveAdminBtn = document.getElementById('saveAdminChanges');
+        if (saveAdminBtn) {
+            saveAdminBtn.addEventListener('click', async function () {
+                const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+                const adminId = document.getElementById('edit_admin_id')?.value;
+                const formData = {
+                    admin_id: adminId,
+                    first_name: document.getElementById('edit_first_name')?.value,
+                    middle_name: document.getElementById('edit_middle_name')?.value,
+                    last_name: document.getElementById('edit_last_name')?.value,
+                    title: document.getElementById('edit_title')?.value,
+                    email: document.getElementById('edit_email')?.value,
+                    contact_number: document.getElementById('edit_contact_number')?.value || null,
+                    role_id: parseInt(document.getElementById('edit_role_id')?.value) || null,
+                    school_id: document.getElementById('edit_school_id')?.value || null,
+                    password: document.getElementById('edit_password')?.value || undefined,
+                    department_ids: document.getElementById('editDepartmentSelect').value ? [parseInt(document.getElementById('editDepartmentSelect').value)] : [],
+                    department_roles: document.getElementById('editDepartmentRoleSelect').value ? [parseInt(document.getElementById('editDepartmentRoleSelect').value)] : [],
+                };
 
-        await Promise.all([
-          loadAdminList(),
-          loadManagingResources()
-        ]);
+                const btn = this;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+                btn.disabled = true;
 
-        // Create checklists for add modal
-        createAddDepartmentChecklist();
-        createAddServiceChecklist();
-      }
+                try {
+                    const response = await fetch(`/api/admins/${adminId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
 
-      initializePage();
-    });
-  </script>
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        if (typeof showToast === 'function') {
+                            showToast('Admin updated successfully', 'success');
+                        }
+                        bootstrap.Modal.getInstance(document.getElementById('editAdminModal')).hide();
+
+                        const currentPage = window.adminPagination?.current_page || 1;
+                        await loadAdminsTab(currentPage);
+                    } else {
+                        // Extract validation error messages
+                        let errorMessage = 'Update failed';
+
+                        if (result.message) {
+                            errorMessage = result.message;
+                        }
+
+                        if (result.errors) {
+                            const errorMessages = [];
+                            for (const field in result.errors) {
+                                const error = result.errors[field];
+                                if (Array.isArray(error)) {
+                                    errorMessages.push(error.join(' '));
+                                } else {
+                                    errorMessages.push(error);
+                                }
+                            }
+                            errorMessage = errorMessages.join(' ');
+                        }
+
+                        if (typeof showToast === 'function') {
+                            showToast(errorMessage, 'error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    if (typeof showToast === 'function') {
+                        showToast('Network error. Please try again.', 'error');
+                    }
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        // Add admin form submission
+        const addAdminForm = document.getElementById('addAdminForm');
+        if (addAdminForm) {
+            addAdminForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+                const formData = new FormData(this);
+                const deptIds = document.getElementById('addDepartmentSelect').value ? [parseInt(document.getElementById('addDepartmentSelect').value)] : [];
+                const deptRoles = document.getElementById('addDepartmentRoleSelect').value ? [parseInt(document.getElementById('addDepartmentRoleSelect').value)] : [];
+
+                const data = {
+                    first_name: formData.get('first_name'),
+                    middle_name: formData.get('middle_name'),
+                    last_name: formData.get('last_name'),
+                    title: formData.get('title'),
+                    email: formData.get('email'),
+                    contact_number: formData.get('contact_number'),
+                    role_id: parseInt(formData.get('role_id')),
+                    school_id: formData.get('school_id') || null,
+                    password: formData.get('password'),
+                    department_ids: deptIds,
+                    department_roles: deptRoles,
+                    photo_url: 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png',
+                    photo_public_id: 'ksdmh4mmpxdtjogdgjmm'
+                };
+
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn ? submitBtn.innerHTML : 'Add Admin';
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
+                    submitBtn.disabled = true;
+                }
+
+                try {
+                    const response = await fetch('/api/admins', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        if (typeof showToast === 'function') {
+                            showToast('Admin added successfully', 'success');
+                        }
+                        bootstrap.Modal.getInstance(document.getElementById('addAdminModal')).hide();
+                        this.reset();
+
+                        document.getElementById('addSelectedDeptIds').value = '[]';
+                        document.querySelectorAll('.add-dept-cb').forEach(cb => cb.checked = false);
+
+                        await loadAdminsTab(1);
+                    } else {
+                        // Extract validation error messages
+                        let errorMessage = 'Failed to add admin';
+
+                        if (result.message) {
+                            errorMessage = result.message;
+                        }
+
+                        if (result.errors) {
+                            // Laravel validation errors
+                            const errorMessages = [];
+                            for (const field in result.errors) {
+                                const error = result.errors[field];
+                                if (Array.isArray(error)) {
+                                    errorMessages.push(error.join(' '));
+                                } else {
+                                    errorMessages.push(error);
+                                }
+                            }
+                            errorMessage = errorMessages.join(' ');
+                        }
+
+                        if (typeof showToast === 'function') {
+                            showToast(errorMessage, 'error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    if (typeof showToast === 'function') {
+                        showToast('Network error. Please try again.', 'error');
+                    }
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }
+                }
+            });
+        }
+
+        function updateAddDeptPreview() {
+            const selected = Array.from(document.querySelectorAll('.add-dept-cb:checked')).map(cb => cb.value);
+            const hiddenIds = document.getElementById('addSelectedDeptIds');
+            const counter = document.getElementById('addDeptCounter');
+
+            if (hiddenIds) hiddenIds.value = JSON.stringify(selected);
+            if (counter) {
+                counter.textContent = `${selected.length} department${selected.length !== 1 ? 's' : ''} selected`;
+            }
+        }
+
+        function populateEditDepartmentChecklist(selectedDeptId, selectedRoleId) {
+            // Populate department dropdown
+            const deptSelect = document.getElementById('editDepartmentSelect');
+            if (deptSelect) {
+                deptSelect.innerHTML = '<option value="">Select department</option>';
+                departmentsList.forEach(dept => {
+                    const selected = dept.department_id === selectedDeptId ? 'selected' : '';
+                    deptSelect.innerHTML += `
+                                                            <option value="${dept.department_id}" ${selected}>${dept.department_name} ${dept.department_code ? '(' + dept.department_code + ')' : ''}</option>
+                                                        `;
+                });
+                // Store selected dept ID for role lookup
+                deptSelect.dataset.selectedDept = selectedDeptId || '';
+            }
+
+            // Populate department roles
+            const roleSelect = document.getElementById('editDepartmentRoleSelect');
+            if (roleSelect) {
+                roleSelect.innerHTML = '<option value="">Select role</option>';
+                departmentRolesList.forEach(role => {
+                    const selected = role.role_id === selectedRoleId ? 'selected' : '';
+                    roleSelect.innerHTML += `
+                                                            <option value="${role.role_id}" ${selected}>${role.role_name}</option>
+                                                        `;
+                });
+                // Store selected role ID
+                roleSelect.dataset.selectedRole = selectedRoleId || '';
+            }
+        }
+    </script>
 @endsection

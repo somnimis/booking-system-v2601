@@ -3,9 +3,9 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -18,12 +18,12 @@ return new class extends Migration
             $table->string('cloudinary_public_id')->default('oxvsxogzu9koqhctnf7s')->nullable();
             $table->string('description', 80)->nullable();
             $table->integer('sort_order')->default(0);
-            $table->enum('image_type', ['Primary','Secondary']);
+            $table->enum('image_type', ['Primary', 'Secondary']);
             $table->timestamps();
-            
+
             // Foreign key constraints
             $table->foreign('equipment_id')->references('equipment_id')->on('equipment')->onDelete('cascade');
-   
+
             // Indexes for performance
             $table->index(['equipment_id', 'sort_order']);
 
@@ -36,5 +36,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('equipment_images');
+        DB::statement('DROP TYPE IF EXISTS equipment_images_image_type');
     }
 };

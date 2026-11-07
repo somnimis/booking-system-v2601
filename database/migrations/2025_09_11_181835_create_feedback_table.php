@@ -23,37 +23,13 @@ return new class extends Migration {
                 ->on('requisition_forms')
                 ->onDelete('cascade');   // delete feedback if requisition form is deleted
 
-            $table->enum('system_performance', [
-                'poor',
-                'fair',
-                'satisfactory',
-                'very good',
-                'outstanding'
-            ]);
-
-            $table->enum('booking_experience', [
-                'poor',
-                'fair',
-                'good',
-                'very good',
-                'excellent'
-            ]);
-
-            $table->enum('ease_of_use', [
-                'very difficult',
-                'difficult',
-                'neutral',
-                'easy',
-                'very easy'
-            ]);
-
-            $table->enum('useability', [
-                'very unlikely',
-                'unlikely',
-                'neutral',
-                'likely',
-                'very likely'
-            ]);
+            // Ratings stored as tinyint 1–5.
+            // Label mapping lives in App\Models\Feedback::RATING_LABELS — single source of truth.
+            // 1 = worst, 5 = best. Nullable to allow partial submissions.
+            $table->unsignedTinyInteger('system_performance')->nullable();
+            $table->unsignedTinyInteger('booking_experience')->nullable();
+            $table->unsignedTinyInteger('ease_of_use')->nullable();
+            $table->unsignedTinyInteger('useability')->nullable();
 
             $table->text('additional_feedback')->nullable();
 

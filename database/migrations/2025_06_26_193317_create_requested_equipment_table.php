@@ -12,6 +12,10 @@ return new class extends Migration {
     {
         Schema::create('requested_equipment', function (Blueprint $table) {
             $table->id('requested_equipment_id');
+
+            // NEW -- Snapshot price. based on base_fee and rate_type from equipment pk: equipment_id table
+            $table->decimal('fee_snapshot', 8, 2)->nullable();
+
             $table->integer('quantity')->default(1);
             $table->unsignedBigInteger('request_id')->index();
             $table->unsignedBigInteger('equipment_id')->index();

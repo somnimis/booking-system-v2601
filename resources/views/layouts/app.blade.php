@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,66 +10,83 @@
   <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
-   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-   
-  
-  <!-- Your existing global styles -->
   <link rel="stylesheet" href="{{ asset('css/public/global-styles.css') }}" />
-  
-  <!-- NEW: Responsive styles for all user-facing pages -->
   <link rel="stylesheet" href="{{ asset('css/public/responsive-styles.css') }}" />
   
+
+  @stack('styles')
+  <link rel="stylesheet" href="{{ asset('css/public/navbar.css') }}" />
+  @livewireStyles
+
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
-        :root {
-    /* Primary Color Scheme */
-    --cpu-primary: #003366; /* Main CPU blue */
-    --cpu-primary-hover: #004a94; /* Hover state for primary elements */
-    --cpu-primary-light: rgba(0, 51, 102, 0.1); /* Light background variants */
+    :root {
 
-    /* Secondary Color Scheme */
-    --cpu-secondary: #e8b342; /* Gold accent color */
-    --cpu-secondary-hover: #d39b21; /* Gold hover state */
+      /* Primary Color Scheme */
+      --cpu-primary: #003366;
+      /* Main CPU blue */
+      --cpu-primary-hover: #004a94;
+      /* Hover state for primary elements */
+      --cpu-primary-light: rgba(0, 51, 102, 0.1);
+      /* Light background variants */
 
-    /* Neutral Colors */
-    --cpu-white: #ffffff;
-    --cpu-light-bg: #f5f7f8; /* Navbar background */
-    --cpu-text-dark: #333333;
-    --light-gray: #f8f9fa; /* Default text color */
+      /* Secondary Color Scheme */
+      --cpu-secondary: #e8b342;
+      /* Gold accent color */
+      --cpu-secondary-hover: #d39b21;
+      /* Gold hover state */
 
-    /* Functional Colors */
-    --cpu-border-accent: #f2b123; /* Navbar bottom border */
-    --cpu-shadow: rgba(0, 0, 0, 0.1); /* Shadow color */
-}
+      /* Neutral Colors */
+      --cpu-white: #ffffff;
+      --cpu-light-bg: #f5f7f8;
+      /* Navbar background */
+      --cpu-text-dark: #333333;
+      --light-gray: #f8f9fa;
+      /* Default text color */
+
+      /* Functional Colors */
+      --cpu-border-accent: #f2b123;
+      /* Navbar bottom border */
+      --cpu-shadow: rgba(0, 0, 0, 0.1);
+      /* Shadow color */
+
+      --app-bg: #f4f6f8;
+    }
+
+    body {
+      background-color: var(--app-bg);
+    }
 
     /* Custom pagination colors using CPU theme */
     .pagination .page-link {
-      color: var(--cpu-primary); /* dark blue text */
+      color: var(--cpu-primary);
+      /* dark blue text */
     }
 
     .pagination .page-link:hover {
-      color: var(--cpu-primary-hover); /* hover text color */
+      color: var(--cpu-primary-hover);
+      /* hover text color */
     }
 
     /* Active page */
     .pagination .page-item.active .page-link {
       background-color: var(--cpu-primary);
       border-color: var(--cpu-primary);
-      color: #fff; /* white text for contrast */
+      color: #fff;
+      /* white text for contrast */
     }
 
     /* Disabled state */
     .pagination .page-item.disabled .page-link {
-      color: #6c757d; /* gray */
+      color: #6c757d;
+      /* gray */
       pointer-events: none;
       background-color: var(--light-gray);
       border-color: #dee2e6;
-    }
-
-    * {
-      font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
     }
 
     /* Make all scrollbars thin and subtle across browsers */
@@ -91,33 +109,56 @@
       background-color: #adb5bd;
       border-radius: 10px;
     }
-    /* Hide top-header bar on events calendar page */
-body.events-calendar-page .top-header-bar, footer.footer-container {
-    display: none !important;
-}
 
+    /* Hide top-header bar and footer on events calendar page */
+    body.events-calendar-page .top-header-bar,
+    body.events-calendar-page footer.footer-container {
+      display: none !important;
+    }
+
+    /* Sticky footer layout */
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+    }
+
+    /* Forces main to take up all available space, pushing footer down */
+    main {
+      flex: 1 0 auto;
+    }
+
+    footer.footer-container {
+      flex-shrink: 0;
+    }
   </style>
 
 </head>
+
 <body class="@yield('body_class', '')">
   {{-- Header + Navbar --}}
   @include('partials.navbar')
 
   {{-- Page-specific content --}}
   <main>
+    {{ $slot ?? '' }}
     @yield('content')
   </main>
 
   {{-- Footer --}}
   @include('partials.footer')
 
-{{-- Scripts --}}
+  {{-- Scripts --}}
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="{{ asset('js/public/bootstrap-init.js') }}"></script>
-<script src="{{ asset('js/public/responsive-helpers.js') }}"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="{{ asset('js/public/bootstrap-init.js') }}"></script>
+  <script src="{{ asset('js/public/responsive-helpers.js') }}"></script>
+  <script src="{{ asset('js/admin/toast.js') }}"></script>
 
 
-@yield('scripts')
+  @yield('scripts')
+  @livewireScripts
 </body>
+
 </html>

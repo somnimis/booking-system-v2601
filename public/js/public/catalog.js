@@ -59,6 +59,7 @@ class BookingCatalog {
         this.itemCategories = [];
         this.currentLayout = this.config.defaultLayout;
         this.selectedItems = [];
+        this.cartBadgeCount = 0;
         this.statusFilter = "All";
         this.searchQuery = "";
         this.searchTimeout = null;
@@ -72,6 +73,21 @@ class BookingCatalog {
         this.cacheDomElements();
         this.setupEventListeners();
         this.setInitialUI();
+
+        // Check URL parameter for tab
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get("tab");
+        if (tabParam && ["venues", "rooms", "equipment"].includes(tabParam)) {
+            this.catalogType = tabParam;
+            document
+                .querySelectorAll(".catalog-type-tab")
+                .forEach((t) => t.classList.remove("active"));
+            const tabBtn = document.querySelector(
+                `.catalog-type-tab[data-type="${tabParam}"]`,
+            );
+            if (tabBtn) tabBtn.classList.add("active");
+        }
+
         await this.loadCategories();
         await this.loadCatalogData();
         await this.loadFormStatuses();
@@ -223,6 +239,10 @@ class BookingCatalog {
     }
 
     async switchCatalogType(type) {
+        // Update URL
+        const url = new URL(window.location);
+        url.searchParams.set("tab", type);
+        window.history.pushState({}, "", url);
         this.catalogType = type;
         this.currentPage = 1;
         this.searchQuery = "";
@@ -782,13 +802,23 @@ ${
         try {
             const response = await this.fetchData("/api/requisition/get-items");
             this.selectedItems = response.data?.selected_items || [];
+            
+            // Force the count from the backend. If it's missing for some reason, 
+            // fallback to the raw length of the filtered JS array.
+            this.cartBadgeCount = response.data?.cart_count !== undefined 
+                ? response.data.cart_count 
+                : this.selectedItems.filter(s => s.type !== 'service').length;
+                
             this.updateCartBadge();
             this.syncButtonsWithSelectedItems();
         } catch (e) {
             console.warn("Failed to fetch selected items:", e);
             this.selectedItems = [];
+            this.cartBadgeCount = 0;
+            this.updateCartBadge();
         }
     }
+
 
     syncButtonsWithSelectedItems() {
         // Reset all add-remove buttons to default state first
@@ -839,9 +869,12 @@ ${
 
     updateCartBadge() {
         if (!this.elements.requisitionBadge) return;
-        if (this.selectedItems.length > 0) {
-            this.elements.requisitionBadge.textContent =
-                this.selectedItems.length;
+        
+        // Ensure it's a number
+        const count = parseInt(this.cartBadgeCount) || 0;
+
+        if (count > 0) {
+            this.elements.requisitionBadge.textContent = count;
             this.elements.requisitionBadge.style.display = "";
             this.elements.requisitionBadge.classList.remove("d-none");
         } else {
@@ -909,8 +942,11 @@ ${
             } else if (action === "remove") {
                 await this.removeFromForm(id, type);
             }
-            await this.fetchSelectedItems();
+            
+            // Wait for the fetch to complete BEFORE broadcasting the update
+            await this.fetchSelectedItems(); 
             localStorage.setItem("formUpdated", Date.now().toString());
+            
         } catch (error) {
             this.showToast(error.message, "error");
         }

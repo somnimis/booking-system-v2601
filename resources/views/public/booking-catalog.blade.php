@@ -9,8 +9,7 @@
     {{-- All design overrides are handled purely in catalog.css --}}
 
     {{-- ── Hero ── --}}
-    <section class="catalog-hero-section"
-        style="background-image: url('{{ asset('assets/homepage.jpg') }}');">
+    <section class="catalog-hero-section" style="background-image: url('{{ asset('assets/homepage.jpg') }}');">
         <div class="catalog-hero-content">
             <h2 id="catalogHeroTitle">Booking Catalog</h2>
         </div>
@@ -35,8 +34,7 @@
                                 <i class="fa-solid fa-calendar me-2"></i> Events Calendar
                             </a>
                             <div style="position:relative;">
-                                <span id="requisitionBadge"
-                                    class="badge bg-danger rounded-pill position-absolute"
+                                <span id="requisitionBadge" class="badge bg-danger rounded-pill position-absolute"
                                     style="top:-0.7rem; right:-0.7rem; font-size:0.8em; z-index:2; display:none;">
                                     0
                                 </span>
@@ -52,13 +50,8 @@
                     <div class="sidebar-card">
                         <h5>Browse by Category</h5>
                         <div class="filter-list" id="categoryFilterList">
-                            <x-skeleton
-                                :lines="6"
-                                rounded="lg"
-                                intensity="medium"
-                                :lineHeights="['24px','20px','20px','20px','20px','16px']"
-                                :colWidths="[8,12,10,9,7,5]"
-                                :margins="['15px','10px','10px','10px','10px','0']" />
+                            <x-skeleton :lines="6" rounded="lg" intensity="medium" :lineHeights="['24px', '20px', '20px', '20px', '20px', '16px']"
+                                :colWidths="[8, 12, 10, 9, 7, 5]" :margins="['15px', '10px', '10px', '10px', '10px', '0']" />
                         </div>
                     </div>
 
@@ -66,13 +59,8 @@
                     <div class="sidebar-card mt-3" id="buildingFilterCard" style="display:none;">
                         <h5>Browse by Building</h5>
                         <div id="buildingFilterList">
-                            <x-skeleton
-                                :lines="4"
-                                rounded="lg"
-                                intensity="medium"
-                                :lineHeights="['24px','20px','20px','20px']"
-                                :colWidths="[8,10,9,7]"
-                                :margins="['15px','10px','10px','0']" />
+                            <x-skeleton :lines="4" rounded="lg" intensity="medium" :lineHeights="['24px', '20px', '20px', '20px']"
+                                :colWidths="[8, 10, 9, 7]" :margins="['15px', '10px', '10px', '0']" />
                         </div>
                     </div>
                 </div>
@@ -82,7 +70,8 @@
 
                     {{-- Toolbar: Tabs + Filters + Search --}}
                     <div class="right-content-header w-100">
-                        <div class="d-flex flex-column flex-xl-row align-items-stretch align-items-xl-center gap-3 mb-3 w-100">
+                        <div
+                            class="d-flex flex-column flex-xl-row align-items-stretch align-items-xl-center gap-3 mb-3 w-100">
 
                             {{-- Type Tabs --}}
                             <div class="catalog-type-tabs flex-wrap flex-sm-nowrap">
@@ -98,19 +87,19 @@
                             </div>
 
                             {{-- Filter + Search (right side) --}}
-                            <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 ms-auto">
+                            <div
+                                class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 ms-auto">
 
                                 {{-- Filter Dropdown --}}
                                 <div class="dropdown filter-sort-dropdowns flex-shrink-0">
-                                    <button class="btn btn-sm dropdown-toggle" type="button"
-                                        data-bs-toggle="dropdown" aria-expanded="false"
-                                        id="filterDropdown" data-bs-auto-close="outside">
+                                    <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                                        aria-expanded="false" id="filterDropdown" data-bs-auto-close="outside">
                                         <i class="bi bi-sliders2 me-1"></i>
                                         <span class="d-none d-sm-inline">Filters</span>
                                     </button>
 
-                                    <ul class="dropdown-menu dropdown-menu-end p-2"
-                                        style="min-width:220px;" id="filterDropdownMenu">
+                                    <ul class="dropdown-menu dropdown-menu-end p-2" style="min-width:220px;"
+                                        id="filterDropdownMenu">
 
                                         {{-- Status --}}
                                         <li>
@@ -120,8 +109,8 @@
                                             <div class="px-2 mb-2">
                                                 <div class="form-check">
                                                     <input class="form-check-input status-option" type="radio"
-                                                        name="statusFilter" id="statusAll" value="All"
-                                                        data-status="All" checked>
+                                                        name="statusFilter" id="statusAll" value="All" data-status="All"
+                                                        checked>
                                                     <label class="form-check-label w-100" for="statusAll">All</label>
                                                 </div>
                                                 <div class="form-check">
@@ -147,7 +136,9 @@
                                             </div>
                                         </li>
 
-                                        <li><hr class="dropdown-divider my-2"></li>
+                                        <li>
+                                            <hr class="dropdown-divider my-2">
+                                        </li>
 
                                         {{-- Layout --}}
                                         <li>
@@ -181,13 +172,12 @@
                                     <form id="catalogSearchForm">
                                         <div class="input-group">
                                             <input type="text" class="form-control" id="catalogSearchInput"
-                                                placeholder="Search venues, rooms, or equipment…"
-                                                aria-label="Search">
+                                                placeholder="Search venues, rooms, or equipment…" aria-label="Search">
                                             <button class="btn btn-primary" type="submit" id="catalogSearchBtn">
                                                 <i class="bi bi-search"></i>
                                             </button>
-                                            <button class="btn btn-outline-secondary" type="button"
-                                                id="clearSearchBtn" style="display:none;">
+                                            <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn"
+                                                style="display:none;">
                                                 <i class="bi bi-x"></i>
                                             </button>
                                         </div>
@@ -216,7 +206,8 @@
                                         <div class="col-lg-3 col-md-12">
                                             <div class="scrollable-left-column">
                                                 {{-- Facility Info --}}
-                                                <div class="card mb-3" style="border:1px solid var(--border);border-radius:var(--radius-md);">
+                                                <div class="card mb-3"
+                                                    style="border:1px solid var(--border);border-radius:var(--radius-md);">
                                                     <div class="card-body">
                                                         <div class="facility-availability-info text-center">
                                                             <div id="facilityAvailabilityImage" class="mb-3"></div>
@@ -238,25 +229,33 @@
                                                 </div>
 
                                                 {{-- Mini Calendar --}}
-                                                <div class="card mb-3" style="border:1px solid var(--border);border-radius:var(--radius-md);">
+                                                <div class="card mb-3"
+                                                    style="border:1px solid var(--border);border-radius:var(--radius-md);">
                                                     <div class="card-body">
                                                         <div class="calendar-content">
                                                             <div class="mini-calendar">
-                                                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                                                    <button class="btn btn-sm btn-secondary prev-month" type="button">
+                                                                <div
+                                                                    class="d-flex justify-content-between align-items-center mb-3">
+                                                                    <button class="btn btn-sm btn-secondary prev-month"
+                                                                        type="button">
                                                                         <i class="bi bi-chevron-left"></i>
                                                                     </button>
-                                                                    <h6 class="mb-0 month-year" id="availabilityCurrentMonthYear"></h6>
-                                                                    <button class="btn btn-sm btn-secondary next-month" type="button">
+                                                                    <h6 class="mb-0 month-year"
+                                                                        id="availabilityCurrentMonthYear"></h6>
+                                                                    <button class="btn btn-sm btn-secondary next-month"
+                                                                        type="button">
                                                                         <i class="bi bi-chevron-right"></i>
                                                                     </button>
                                                                 </div>
                                                                 <div class="calendar-header d-flex mb-2">
-                                                                    @foreach (['S','M','T','W','T','F','S'] as $d)
-                                                                        <div class="day-header text-center flex-fill small text-muted">{{ $d }}</div>
+                                                                    @foreach (['S', 'M', 'T', 'W', 'T', 'F', 'S'] as $d)
+                                                                        <div
+                                                                            class="day-header text-center flex-fill small text-muted">
+                                                                            {{ $d }}</div>
                                                                     @endforeach
                                                                 </div>
-                                                                <div class="calendar-days" id="availabilityMiniCalendarDays">
+                                                                <div class="calendar-days"
+                                                                    id="availabilityMiniCalendarDays">
                                                                     {{-- Populated by JavaScript --}}
                                                                 </div>
                                                             </div>
@@ -276,7 +275,8 @@
                                                 </div>
 
                                                 {{-- Legend --}}
-                                                <div class="card" style="border:1px solid var(--border);border-radius:var(--radius-md);">
+                                                <div class="card"
+                                                    style="border:1px solid var(--border);border-radius:var(--radius-md);">
                                                     <div class="card-body py-2">
                                                         <div id="dynamicLegend" class="d-flex flex-wrap gap-3">
                                                             <div class="text-muted small">Loading status colors…</div>
@@ -285,10 +285,13 @@
                                                 </div>
 
                                                 {{-- Calendar --}}
-                                                <div class="card flex-grow-1 mt-3" style="border:1px solid var(--border);border-radius:var(--radius-md);">
+                                                <div class="card flex-grow-1 mt-3"
+                                                    style="border:1px solid var(--border);border-radius:var(--radius-md);">
                                                     <div class="card-body p-3 d-flex flex-column">
-                                                        <div class="calendar-content flex-grow-1 d-flex flex-column position-relative">
-                                                            <div id="facilityAvailabilityCalendar" class="flex-grow-1"></div>
+                                                        <div
+                                                            class="calendar-content flex-grow-1 d-flex flex-column position-relative">
+                                                            <div id="facilityAvailabilityCalendar" class="flex-grow-1">
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -297,7 +300,8 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Close</button>
                                     <button type="button" class="btn btn-primary" id="bookNowBtn">
                                         <i class="bi bi-calendar-plus me-1"></i> Book This Facility
                                     </button>
@@ -390,8 +394,8 @@
     </div>
 
     {{-- ── Availability Modal ── --}}
-    <div class="modal fade" id="availabilityModal" tabindex="-1"
-        aria-labelledby="availabilityModalLabel" aria-hidden="true">
+    <div class="modal fade" id="availabilityModal" tabindex="-1" aria-labelledby="availabilityModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width:95%;">
             <div class="modal-content">
                 <div class="modal-header">
@@ -415,7 +419,7 @@
     <script src="{{ asset('js/public/catalog.js') }}"></script>
     <script src="{{ asset('js/admin/toast.js') }}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', async function () {
+        document.addEventListener('DOMContentLoaded', async function() {
             const bookingCatalog = new BookingCatalog({
                 containerId: 'catalogItemsContainer',
                 loadingIndicatorId: 'loadingIndicator',
@@ -442,7 +446,6 @@
                 }
             });
 
-            // No need to pass CalendarModule anymore since it's global
             await bookingCatalog.init();
             console.log('BookingCatalog initialized successfully');
 

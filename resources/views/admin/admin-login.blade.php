@@ -1,21 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>CPU Facility Booking - Admin Login</title>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
-    <style>
-        /* ============================================
-           REFINED INSTITUTIONAL THEME - ADMIN LOGIN
-           Matching catalog.css design system
-           ============================================ */
 
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fraunces:wght@600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
         :root {
             --navy: #041a4b;
             --navy-mid: #0b2d72;
@@ -47,9 +46,36 @@
             box-sizing: border-box;
         }
 
-        /* Allow border-radius on specific elements */
-        .profile-img, .login-container, .login-container input, 
-        .login-button, .home-button, .error-box {
+        .btn-outline-secondary {
+            width: 100%;
+            padding: 0.875rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 1rem;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.5px;
+            color: #6c757d !important;
+            border-color: #dee2e6 !important;
+            background-color: #fff !important;
+            text-decoration: none;
+            display: inline-block;
+            line-height: normal;
+            box-sizing: border-box;
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: #f8f9fa !important;
+            border-color: #ced4da !important;
+            color: #495057 !important;
+        }
+
+        .profile-img,
+        .login-container,
+        .login-container input,
+        .login-button,
+        .error-box {
             border-radius: var(--radius-md) !important;
         }
 
@@ -96,13 +122,13 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        /* Title Section */
         .title-container {
             display: flex;
             flex-direction: column;
@@ -149,7 +175,6 @@
             border-radius: 2px;
         }
 
-        /* Form Groups */
         .form-group {
             width: 100%;
             margin-bottom: 1.25rem;
@@ -187,7 +212,6 @@
             color: var(--text-light);
         }
 
-        /* Login Button */
         .login-button {
             width: 100%;
             padding: 0.875rem;
@@ -208,44 +232,11 @@
             box-shadow: var(--shadow-md);
         }
 
-        .login-button:active {
-            transform: translateY(0);
-        }
-
         .login-button:disabled {
             opacity: 0.7;
             cursor: not-allowed;
-            transform: none;
         }
 
-        /* Home Button */
-        .home-button {
-            width: 100%;
-            padding: 0.875rem;
-            background: var(--white);
-            color: var(--navy);
-            border: 1px solid var(--border);
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            text-decoration: none;
-            display: inline-block;
-            font-family: 'DM Sans', sans-serif;
-            letter-spacing: 0.5px;
-        }
-
-        .home-button:hover {
-            background: var(--navy-light);
-            border-color: var(--navy);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .home-button:active {
-            transform: translateY(0);
-        }
-
-        /* Error Box */
         .error-box {
             color: #991b1b;
             background-color: var(--danger-bg);
@@ -258,7 +249,6 @@
             text-align: left;
         }
 
-        /* Spinner */
         .spinner-border {
             display: inline-block;
             width: 1rem;
@@ -272,21 +262,33 @@
         }
 
         @keyframes spinner-border {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
-        /* Shake Animation */
         .shake {
             animation: shake 0.5s ease-in-out;
         }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-6px); }
-            40%, 80% { transform: translateX(6px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20%,
+            60% {
+                transform: translateX(-6px);
+            }
+
+            40%,
+            80% {
+                transform: translateX(6px);
+            }
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .login-container {
                 padding: 1.75rem;
@@ -305,7 +307,7 @@
                 padding: 0.75rem 0.875rem;
             }
 
-            .login-button, .home-button {
+            .login-button {
                 padding: 0.75rem;
             }
         }
@@ -345,10 +347,10 @@
                 padding: 0.7rem 0.875rem;
                 font-size: 0.85rem;
             }
-
         }
     </style>
 </head>
+
 <body>
     <div class="login-container">
         <div class="title-container">
@@ -371,39 +373,47 @@
             </div>
 
             <button type="submit" id="loginBtn" class="login-button">Login</button>
-            <a href="{{ url('/home') }}" class="home-button">Return to Homepage</a>
+            <a href="{{ url('/home') }}" class="btn btn-outline-secondary text-decoration-none">Return to Homepage</a>
         </form>
     </div>
 
     <script>
-        document.getElementById('loginBtn').addEventListener('click', async function(e) {
+        (function checkExistingSession() {
+            const token = localStorage.getItem('adminToken');
+            if (token) {
+                fetch('/api/admin/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.href = '/admin/dashboard';
+                        } else {
+                            localStorage.removeItem('adminToken');
+                            sessionStorage.removeItem('adminToken');
+                        }
+                    })
+                    .catch(() => {
+                        localStorage.removeItem('adminToken');
+                        sessionStorage.removeItem('adminToken');
+                    });
+            }
+        })();
+
+        document.getElementById('loginBtn').addEventListener('click', async function (e) {
             e.preventDefault();
-            e.stopImmediatePropagation();
-            
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorBox = document.getElementById('errorBox');
             const loginBtn = this;
-            const loginContainer = document.querySelector('.login-container');
-        
-            // Clear previous error
+
             errorBox.style.display = 'none';
-            errorBox.innerHTML = '';
-            loginContainer.classList.remove('shake');
-        
-            // Basic validation
-            if (!email || !password) {
-                errorBox.textContent = 'Please enter both email and password.';
-                errorBox.style.display = 'block';
-                loginContainer.classList.add('shake');
-                setTimeout(() => loginContainer.classList.remove('shake'), 500);
-                return;
-            }
-        
-            // Disable button and show loading state
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="spinner-border"></span> Authenticating...';
-        
+
             try {
                 const response = await fetch('/api/admin/login', {
                     method: 'POST',
@@ -411,68 +421,49 @@
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ email, password }),
-                    redirect: 'manual'
+                    body: JSON.stringify({ email, password })
                 });
-        
-                if (response.status === 0) {
-                    throw new Error('Network error. Please check your connection.');
-                }
-        
+
                 const data = await response.json();
-        
+
                 if (!response.ok) {
                     throw new Error(data.message || 'Invalid email or password.');
                 }
-        
-                // Successful login - store token
+
                 localStorage.setItem('adminToken', data.token);
-                
-                // Check user role from the login response
-                const userRole = data.admin?.role;
-                
-                // Redirect based on role title using absolute paths from root
-                if (userRole && (
-                    userRole.role_title === "Vice President of Administration" || 
-                    userRole.role_title === "Approving Officer"
-                )) {
-                    window.location.href = '/admin/signatory/dashboard';
-                } else {
-                    window.location.href = '/admin/dashboard';
-                }
-        
+                sessionStorage.setItem('adminToken', data.token);
+
+                window.location.href = `/admin/dashboard?token=${data.token}`;
+
             } catch (error) {
                 errorBox.textContent = error.message;
                 errorBox.style.display = 'block';
-                loginContainer.classList.add('shake');
-                setTimeout(() => loginContainer.classList.remove('shake'), 500);
                 console.error('Login error:', error);
             } finally {
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Login';
             }
         });
-        
-        // Allow Enter key to submit form
-        document.getElementById('loginForm').addEventListener('keypress', function(e) {
+
+        document.getElementById('loginForm').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 document.getElementById('loginBtn').click();
             }
         });
-        
-        // Clear error when user starts typing
+
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
-        
+
         function clearError() {
             const errorBox = document.getElementById('errorBox');
             errorBox.style.display = 'none';
             document.querySelector('.login-container').classList.remove('shake');
         }
-        
+
         emailInput.addEventListener('input', clearError);
         passwordInput.addEventListener('input', clearError);
     </script>
 </body>
+
 </html>

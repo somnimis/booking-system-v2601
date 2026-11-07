@@ -384,7 +384,7 @@
                                     <!-- Calendar Title -->
                                     <div class="col-md-6">
                                         <label class="form-label fw-medium">Calendar Title</label>
-                                        <input type="text" class="form-control" name="calendar_title"
+                                        <input type="text" class="form-control" name="event_title"
                                             placeholder="e.g., Quarterly Meeting - Sales Team" maxlength="50">
                                         <small class="text-muted"><span id="calendarTitleCounter">0/50 characters</span></small>
                                     </div>
@@ -392,7 +392,7 @@
                                     <!-- Calendar Description -->
                                     <div class="col-md-6">
                                         <label class="form-label fw-medium">Calendar Description</label>
-                                        <textarea class="form-control" name="calendar_description" rows="2" maxlength="100"
+                                        <textarea class="form-control" name="event_details" rows="2" maxlength="100"
                                             placeholder="Brief description visible on calendar..."></textarea>
                                         <small class="text-muted"><span id="calendarDescriptionCounter">0/100 characters</span></small>
                                     </div>

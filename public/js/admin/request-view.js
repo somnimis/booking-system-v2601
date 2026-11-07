@@ -1,1069 +1,1432 @@
 /**
- * Request View Module
- * Handles single requisition form viewing, approvals, fees, and timeline
+ * ============================================================================
+ * Request View (Thin) Module
+ * ============================================================================
+ * Streamlined version using single-query API endpoint.
+ *
+ * This module handles the admin-side detailed view of a single requisition
+ * request. It fetches all related data (user, form, schedule, fees, approvals,
+ * comments, documents) from a single API endpoint and renders it across
+ * multiple UI sections including:
+ *   - Header (request ID + status badge)
+ *   - Action buttons (approve/reject/finalize/schedule/ongoing/close)
+ *   - Request details (letter body, event info, attachments)
+ *   - Timeline (comments, fees, approvals/rejections)
+ *   - Approval tracker (categorized approvers with status)
+ *
+ * @module RequestViewThin
+ * ============================================================================
  */
 
-const RequestView = (function() {
-    // Private variables
-    let requestId = null;
-    let adminToken = null;
-    let currentComments = [];
-    let currentFees = [];
-    let selectedStatus = '';
-    let currentTimelineFilter = 'all';
-    let isTimelineLoaded = false;
+const RequestViewThin = (function () {
+    /**
+     * ========================================================================
+     * STATE
+     * ========================================================================
+     * Module-level mutable state. All values are set during `init()` and
+     * subsequently referenced by renderers, actions, and event handlers.
+     * ========================================================================
+     */
+    let requestId = null; // The requisition request ID (from URL path)
+    let adminToken = null; // Admin auth token (from localStorage)
+    let requestData = null; // Full request payload from the API
+    let timelineFilter = "all"; // Active timeline filter (all|comment|fee|approval)
 
-    // DOM Elements cache
-    let elements = {};
+    /**
+     * ========================================================================
+     * HELPERS — Formatting & UI Utilities
+     * ========================================================================
+     * Small, pure utility functions used across renderers. Includes money
+     * formatting, HTML escaping, relative/absolute time formatting, and a
+     * lightweight toast notification.
+     * ========================================================================
+     */
 
-    // Helper: Format money
-    function formatMoney(amount) {
-        let num = parseFloat(amount);
-        if (isNaN(num)) return '₱0.00';
-        return '₱' + num.toLocaleString('en-PH', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
+    /**
+     * Format a numeric amount as Philippine Peso currency (₱1,234.56).
+     * @param {number|string} amount
+     * @returns {string}
+     */
+    const formatMoney = (amount) => {
+        const num = parseFloat(amount) || 0;
+        return (
+            "₱" +
+            num.toLocaleString("en-PH", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            })
+        );
+    };
 
-    // Helper: Escape HTML
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
+    /**
+     * Escape a string for safe insertion into HTML.
+     * Uses a detached div's textContent to auto-escape entities.
+     * @param {string} text
+     * @returns {string}
+     */
+    const escapeHtml = (text) => {
+        const div = document.createElement("div");
+        div.textContent = text || "";
         return div.innerHTML;
-    }
+    };
 
-    // Helper: Format time ago
-    function formatTimeAgo(timestamp) {
+    /**
+     * Convert a timestamp into a short relative time string
+     * (e.g., "just now", "5m ago", "2h ago", "3d ago").
+     * @param {string|Date} timestamp
+     * @returns {string}
+     */
+    const formatTimeAgo = (timestamp) => {
+        if (!timestamp) return "";
         const now = new Date();
-        const commentTime = new Date(timestamp);
-        const diffInSeconds = Math.floor((now - commentTime) / 1000);
-        if (diffInSeconds < 60) return 'just now';
-        if (diffInSeconds < 3600) {
-            const minutes = Math.floor(diffInSeconds / 60);
-            return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-        }
-        if (diffInSeconds < 86400) {
-            const hours = Math.floor(diffInSeconds / 3600);
-            return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-        }
-        if (diffInSeconds < 604800) {
-            const days = Math.floor(diffInSeconds / 86400);
-            return `${days} day${days !== 1 ? 's' : ''} ago`;
-        }
-        return commentTime.toLocaleDateString();
-    }
+        const time = new Date(timestamp);
+        const diff = Math.floor((now - time) / 1000);
 
-    // Helper: Show toast notification
-    function showToast(message, type = 'success', duration = 3000) {
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center border-0 position-fixed start-0 mb-2`;
-        toast.style.zIndex = '1100';
-        toast.style.bottom = '0';
-        toast.style.left = '0';
-        toast.style.margin = '1rem';
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(20px)';
-        toast.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-        toast.style.backgroundColor = type === 'success' ? '#004183ff' : '#dc3545';
-        toast.style.color = '#fff';
-        toast.style.borderRadius = '0.3rem';
-        toast.innerHTML = `
-            <div class="d-flex align-items-center px-3 py-1">
-                <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                <div class="toast-body flex-grow-1">${message}</div>
-                <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
-            </div>
-        `;
-        document.body.appendChild(toast);
-        const bsToast = new bootstrap.Toast(toast, { autohide: false });
-        bsToast.show();
-        setTimeout(() => {
-            toast.style.opacity = '1';
-            toast.style.transform = 'translateY(0)';
-        }, 10);
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(20px)';
-            setTimeout(() => {
-                bsToast.hide();
-                toast.remove();
-            }, 400);
-        }, duration);
-    }
+        if (diff < 60) return "just now";
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+        return time.toLocaleDateString();
+    };
 
-    // Format date endorsed
-    function formatDateEndorsed(dateString) {
-        if (!dateString || dateString === 'N/A') return 'N/A';
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        } catch {
-            return dateString;
-        }
-    }
-
-    // Format start date/time
-    function formatStartDateTime(schedule) {
-        const startDate = new Date(schedule.start_date + 'T' + schedule.start_time);
-        return `${startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} | ${startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-    }
-
-    // Format end date/time
-    function formatEndDateTime(schedule) {
-        const endDate = new Date(schedule.end_date + 'T' + schedule.end_time);
-        return `${endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} | ${endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-    }
-
-    // Mark notification as read
-    async function markNotificationAsRead() {
-        try {
-            await fetch(`/api/admin/notifications/requisition/${requestId}/mark-as-read`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${adminToken}`, 'Accept': 'application/json' }
-            });
-        } catch (error) {
-            console.error('Error marking notification as read:', error);
-        }
-    }
-
-    // Load approval history
-    async function loadApprovalHistory() {
-        try {
-            const response = await fetch(`/api/admin/requisition/${requestId}/approval-history`, {
-                headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch approval history');
-            const approvalHistory = await response.json();
-
-            const approvalsModalBody = document.querySelector('#approvalsModal .modal-body');
-            const rejectionsModalBody = document.querySelector('#rejectionsModal .modal-body');
-
-            if (approvalsModalBody) {
-                approvalsModalBody.innerHTML = generateApprovalHistoryHTML(approvalHistory.filter(item => item.action === 'approved'));
-            }
-            if (rejectionsModalBody) {
-                rejectionsModalBody.innerHTML = generateApprovalHistoryHTML(approvalHistory.filter(item => item.action === 'rejected'));
-            }
-        } catch (error) {
-            console.error('Error loading approval history:', error);
-        }
-    }
-
-    function generateApprovalHistoryHTML(history) {
-        if (!history || history.length === 0) return '<div class="text-center text-muted py-4">No records found</div>';
-        return history.map(item => `
-            <div class="d-flex align-items-center mb-3 p-2 border rounded">
-                <div class="me-3 flex-shrink-0">
-                    ${item.admin_photo ?
-                        `<img src="${item.admin_photo}" class="rounded-circle" width="45" height="45">` :
-                        `<div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white" style="width: 45px; height: 45px;">
-                            ${item.admin_name.split(' ').map(n => n.charAt(0)).join('')}
-                        </div>`
-                    }
-                </div>
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <strong class="d-block">${item.admin_name}</strong>
-                            <small class="text-muted">${item.action} this request</small>
-                            ${item.remarks ? `<div class="mt-1 small text-muted">"${item.remarks}"</div>` : ''}
-                        </div>
-                        <small class="text-muted">${item.formatted_date}</small>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    // Load mixed activity (comments + fees)
-    async function loadMixedActivity() {
-        try {
-            const commentsResponse = await fetch(`/api/admin/requisition/${requestId}/comments`, {
-                headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            const feesResponse = await fetch(`/api/admin/requisition/${requestId}/fees`, {
-                headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            const commentsResult = await commentsResponse.json();
-            const feesResult = await feesResponse.json();
-            currentComments = commentsResult.comments || [];
-            currentFees = feesResult || [];
-        } catch (error) {
-            console.error('Error loading activity:', error);
-        }
-    }
-
-    // Update document buttons and icons
-    function updateDocumentIcons(documents) {
-        function updateButton(buttonId, iconId, hasDocument, documentUrl, title) {
-            const button = document.getElementById(buttonId);
-            const icon = document.getElementById(iconId);
-            if (button && icon) {
-                if (hasDocument) {
-                    button.classList.remove('btn-document-null');
-                    button.classList.add('btn-primary');
-                    button.disabled = false;
-                    button.setAttribute('data-document-url', documentUrl);
-                    button.setAttribute('data-document-title', title);
-                    button.setAttribute('data-bs-toggle', 'modal');
-                    button.setAttribute('data-bs-target', '#documentModal');
-                    icon.classList.remove('text-muted');
-                    icon.classList.add('text-primary');
-                } else {
-                    button.classList.remove('btn-primary');
-                    button.classList.add('btn-document-null');
-                    button.disabled = true;
-                    icon.classList.add('text-muted');
-                    icon.classList.remove('text-primary');
-                }
-            }
-        }
-
-        updateButton('formalLetterBtn', 'formalLetterIcon', documents.formal_letter.url, documents.formal_letter.url, 'Formal Letter');
-        updateButton('facilityLayoutBtn', 'facilityLayoutIcon', documents.facility_layout.url, documents.facility_layout.url, 'Facility Layout');
-        updateButton('proofOfPaymentBtn', 'proofOfPaymentIcon', documents.proof_of_payment.url, documents.proof_of_payment.url, 'Proof of Payment');
-
-        const hasOfficialReceipt = documents.official_receipt.url || documents.form_details?.official_receipt_num;
-        const receiptUrl = documents.official_receipt.url || (documents.form_details?.official_receipt_num ? `/official-receipt/${requestId}` : null);
-        updateButton('officialReceiptBtn', 'officialReceiptIcon', hasOfficialReceipt, receiptUrl, 'Official Receipt');
-
-        if (documents.form_details?.official_receipt_num && !documents.official_receipt.url) {
-            const button = document.getElementById('officialReceiptBtn');
-            if (button) {
-                button.onclick = () => window.open(`/official-receipt/${requestId}`, '_blank');
-            }
-        }
-    }
-
-    // Update base fees display
-    function updateBaseFees(requestedItems, schedule) {
-        const facilitiesContainer = document.getElementById('facilitiesFees');
-        const equipmentContainer = document.getElementById('equipmentFees');
-        if (!facilitiesContainer || !equipmentContainer) return;
-
-        facilitiesContainer.innerHTML = '';
-        equipmentContainer.innerHTML = '';
-
-        const startDateTime = new Date(`${schedule.start_date}T${schedule.start_time}`);
-        const endDateTime = new Date(`${schedule.end_date}T${schedule.end_time}`);
-        const durationHours = Math.max(0, (endDateTime - startDateTime) / (1000 * 60 * 60));
-
-        if (requestedItems.facilities?.length > 0) {
-            requestedItems.facilities.forEach(facility => {
-                const feeAmount = parseFloat(facility.fee);
-                let itemTotal, rateDescription;
-                if (facility.rate_type === 'Per Hour' && durationHours > 0) {
-                    itemTotal = feeAmount * durationHours;
-                    rateDescription = `${formatMoney(feeAmount)}/hr × ${durationHours.toFixed(1)} hrs`;
-                } else {
-                    itemTotal = feeAmount;
-                    rateDescription = `${formatMoney(feeAmount)}/event`;
-                }
-                const element = document.createElement('div');
-                element.className = `fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded ${facility.is_waived ? 'waived' : ''}`;
-                element.innerHTML = `
-                    <div class="d-flex align-items-center">
-                        <div class="form-check me-2">
-                            <input class="form-check-input waiver-checkbox" type="checkbox" data-type="facility" data-id="${facility.requested_facility_id}" ${facility.is_waived ? 'checked' : ''}>
-                        </div>
-                        <span class="item-name">${escapeHtml(facility.name)}</span>
-                    </div>
-                    <div class="text-end">
-                        <small>${rateDescription}</small>
-                        <div><strong>${formatMoney(itemTotal)}</strong></div>
-                    </div>
-                `;
-                facilitiesContainer.appendChild(element);
-            });
-        } else {
-            facilitiesContainer.innerHTML = '<div class="text-muted small">No facilities requested</div>';
-        }
-
-        if (requestedItems.equipment?.length > 0) {
-            requestedItems.equipment.forEach(equipment => {
-                const unitFee = parseFloat(equipment.fee);
-                const quantity = equipment.quantity || 1;
-                let itemTotal, rateDescription;
-                if (equipment.rate_type === 'Per Hour' && durationHours > 0) {
-                    itemTotal = (unitFee * durationHours) * quantity;
-                    rateDescription = `${formatMoney(unitFee)}/hr × ${durationHours.toFixed(1)} hrs × ${quantity}`;
-                } else {
-                    itemTotal = unitFee * quantity;
-                    rateDescription = `${formatMoney(unitFee)}/event × ${quantity}`;
-                }
-                const element = document.createElement('div');
-                element.className = `fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded ${equipment.is_waived ? 'waived' : ''}`;
-                element.innerHTML = `
-                    <div class="d-flex align-items-center">
-                        <div class="form-check me-2">
-                            <input class="form-check-input waiver-checkbox" type="checkbox" data-type="equipment" data-id="${equipment.requested_equipment_id}" ${equipment.is_waived ? 'checked' : ''}>
-                        </div>
-                        <span class="item-name">${escapeHtml(equipment.name)} ${quantity > 1 ? `(×${quantity})` : ''}</span>
-                    </div>
-                    <div class="text-end">
-                        <small>${rateDescription}</small>
-                        <div><strong>${formatMoney(itemTotal)}</strong></div>
-                    </div>
-                `;
-                equipmentContainer.appendChild(element);
-            });
-        } else {
-            equipmentContainer.innerHTML = '<div class="text-muted small">No equipment requested</div>';
-        }
-
-        document.querySelectorAll('#baseFeesContainer .waiver-checkbox').forEach(checkbox => {
-            const newCheckbox = checkbox.cloneNode(true);
-            checkbox.parentNode.replaceChild(newCheckbox, checkbox);
-            newCheckbox.addEventListener('change', () => handleWaiverChange(newCheckbox));
+    /**
+     * Combine a date and time string into a formatted absolute datetime.
+     * @param {string} date - ISO date (YYYY-MM-DD)
+     * @param {string} time - Time string (HH:MM)
+     * @returns {string}
+     */
+    const formatDateTime = (date, time) => {
+        if (!date) return "N/A";
+        const dt = new Date(`${date}T${time || "00:00"}`);
+        return dt.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
         });
-    }
+    };
 
-    // Update additional fees display
-    function updateAdditionalFees(requisitionFees) {
-        const container = document.getElementById('additionalFeesContainer');
-        if (!container) return;
-        container.innerHTML = '';
-
-        if (requisitionFees?.length > 0) {
-            requisitionFees.forEach(fee => {
-                let amountText = '';
-                let isDiscount = false;
-                if (fee.type === 'fee') {
-                    amountText = formatMoney(fee.fee_amount);
-                } else if (fee.type === 'discount') {
-                    isDiscount = true;
-                    amountText = fee.discount_type === 'Percentage' ? `-${parseFloat(fee.discount_amount)}%` : `-${formatMoney(fee.discount_amount)}`;
-                } else if (fee.type === 'mixed') {
-                    const feePart = fee.fee_amount > 0 ? formatMoney(fee.fee_amount) : '';
-                    const discountPart = fee.discount_amount > 0 ? (fee.discount_type === 'Percentage' ? `-${parseFloat(fee.discount_amount)}%` : `-${formatMoney(fee.discount_amount)}`) : '';
-                    amountText = `${feePart} ${discountPart}`.trim();
-                }
-
-                let labelHtml = escapeHtml(fee.label);
-                if (fee.account_num) labelHtml += ` <span class="text-muted small">(${escapeHtml(fee.account_num)})</span>`;
-
-                const element = document.createElement('div');
-                element.className = 'fee-item d-flex justify-content-between align-items-center mb-2 p-2 rounded';
-                element.innerHTML = `
-                    <div><span class="item-name ${isDiscount ? 'text-danger' : ''}">${labelHtml}</span></div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="item-price fw-bold ${isDiscount ? 'text-danger' : ''}">${amountText}</span>
-                        <button class="btn btn-sm btn-danger delete-fee-btn" data-fee-id="${fee.fee_id}"><i class="fa fa-times"></i></button>
-                    </div>
-                `;
-                container.appendChild(element);
-            });
-
-            container.querySelectorAll('.delete-fee-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const feeId = e.currentTarget.dataset.feeId;
-                    if (!feeId) return;
-                    try {
-                        const response = await fetch(`/api/admin/requisition/${requestId}/fee/${feeId}`, {
-                            method: 'DELETE',
-                            headers: { 'Authorization': `Bearer ${adminToken}` }
-                        });
-                        if (!response.ok) throw new Error('Failed to delete fee');
-                        showToast('Fee removed successfully', 'success');
-                        await fetchRequestDetails();
-                    } catch (error) {
-                        console.error('Error removing fee:', error);
-                        showToast('Failed to remove fee', 'error');
-                    }
-                });
-            });
-        } else {
-            container.innerHTML = '<div class="text-center text-muted py-4"><i class="fa fa-coins fa-2x d-block mb-2"></i><p class="mb-0">No additional fees or discounts</p></div>';
-        }
-    }
-
-    // Handle waiver change
-    async function handleWaiverChange(checkbox) {
-        const type = checkbox.dataset.type;
-        const id = parseInt(checkbox.dataset.id);
-        const isWaived = checkbox.checked;
-
-        const itemRow = checkbox.closest('.fee-item');
-        if (itemRow) itemRow.classList.toggle('waived', isWaived);
-
-        const waivedFacilities = [];
-        const waivedEquipment = [];
-        document.querySelectorAll('.waiver-checkbox').forEach(cb => {
-            if (cb.checked) {
-                if (cb.dataset.type === 'facility') waivedFacilities.push(parseInt(cb.dataset.id));
-                else if (cb.dataset.type === 'equipment') waivedEquipment.push(parseInt(cb.dataset.id));
-            }
+    /**
+     * Format an ISO timestamp as an absolute date + time string,
+     * e.g. "Sep 13, 2026, 5:10 PM". Used for submission / completion dates.
+     * @param {string} iso
+     * @returns {string}
+     */
+    const formatAbsoluteDate = (iso) => {
+        if (!iso) return "N/A";
+        const dt = new Date(iso);
+        return dt.toLocaleString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
         });
+    };
 
-        try {
-            const response = await fetch(`/api/admin/requisition/${requestId}/waive`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ waived_facilities: waivedFacilities, waived_equipment: waivedEquipment })
-            });
-            if (!response.ok) throw new Error('Failed to update waiver');
-            await fetchRequestDetails();
-        } catch (error) {
-            checkbox.checked = !isWaived;
-            if (itemRow) itemRow.classList.toggle('waived');
-            showToast('Failed to update waiver: ' + error.message, 'error');
+    /**
+     * ========================================================================
+     * API — Network Requests
+     * ========================================================================
+     * Wrappers around the admin requisition endpoints. All requests include
+     * the admin bearer token for authentication.
+     * ========================================================================
+     */
+
+    /**
+     * Fetch the consolidated view-data payload for the current request.
+     * @returns {Promise<Object>} Parsed JSON response
+     * @throws {Error} If the response is not OK
+     */
+    const fetchData = async () => {
+        const response = await fetch(
+            `/api/admin/requisition/${requestId}/view-data`,
+            {
+                headers: {
+                    Authorization: `Bearer ${adminToken}`,
+                    Accept: "application/json",
+                },
+            },
+        );
+        if (!response.ok) throw new Error("Failed to load request");
+        return response.json();
+    };
+
+    /**
+     * POST an action to a request sub-endpoint (approve, reject, finalize,
+     * mark-scheduled, update-status, comment, close, etc.).
+     * @param {string} endpoint - Sub-path appended after the request ID
+     * @param {Object} [data={}] - JSON body to send
+     * @returns {Promise<Object>} Parsed JSON response
+     * @throws {Error} If the response is not OK
+     */
+    const postAction = async (endpoint, data = {}) => {
+        const response = await fetch(
+            `/api/admin/requisition/${requestId}/${endpoint}`,
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${adminToken}`,
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                },
+                body: JSON.stringify(data),
+            },
+        );
+        const result = await response.json();
+        if (!response.ok) {
+            const parts = [result.error, result.details].filter(Boolean);
+            throw new Error(
+                parts.join(". ") || result.message || "Action failed",
+            );
         }
-    }
+        return result;
+    };
 
-    // Handle waive all
-    async function handleWaiveAll(switchElement) {
-        const waiveAll = switchElement.checked;
-        try {
-            const response = await fetch(`/api/admin/requisition/${requestId}/waive`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ waive_all: waiveAll })
-            });
-            if (!response.ok) throw new Error('Failed to update waive all');
-            await fetchRequestDetails();
-            showToast(waiveAll ? 'All items waived successfully' : 'All waivers removed', 'success');
-        } catch (error) {
-            switchElement.checked = !waiveAll;
-            showToast('Failed to update waive all: ' + error.message, 'error');
-        }
-    }
+    /**
+     * ========================================================================
+     * RENDERERS — UI Construction
+     * ========================================================================
+     * Functions that take API data and populate specific DOM sections of the
+     * request view. Each renderer is idempotent and can be re-run to refresh
+     * its section.
+     * ========================================================================
+     */
 
-    // Refresh all fee displays
-    async function refreshAllFeeDisplays() {
-        try {
-            const response = await fetch(`/api/admin/requisition-forms/${requestId}`, {
-                headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch updated request data');
-            const requestData = await response.json();
+    /**
+     * Render the request ID, status badge, and subtitle row.
+     *
+     * Subtitle composition:
+     *   - "Submitted {date}" (+ "· Finalized on {date} by {admin}" when finalized)
+     *   - Finalization indicator: color-coded dot + label
+     *   - "Completed on {date}" only for terminal statuses
+     *
+     * @param {Object} data - Full request payload
+     */
+    const renderHeader = (data) => {
+        const formattedId = String(data.request_id).padStart(4, "0");
+        document.getElementById("requestIdDisplay").textContent = formattedId;
+        document.getElementById("requestIdDisplayMirror").textContent =
+            formattedId;
 
-            const feeTotalElement = document.getElementById('feeBreakdownTotal');
-            if (feeTotalElement) feeTotalElement.textContent = formatMoney(requestData.fees?.approved_fee || 0);
+        const status = data.form_details.status;
+        document.getElementById("statusBadgeContainer").innerHTML =
+            `<span class="badge" style="background:${status.color};color:white;padding:8px 16px;font-size:0.9rem">${status.name}</span>`;
 
-            if (requestData.fees?.requisition_fees) updateAdditionalFees(requestData.fees.requisition_fees);
-            if (requestData.requested_items && requestData.schedule) updateBaseFees(requestData.requested_items, requestData.schedule);
+        // ----- Subtitle -----
+        const tracking = data.status_tracking || {};
+        const approval = data.approval_info || {};
 
-            document.getElementById('approvalsCount').textContent = requestData.approval_info?.approval_count || 0;
-            document.getElementById('rejectionsCount').textContent = requestData.approval_info?.rejection_count || 0;
+        const submittedAt = formatAbsoluteDate(tracking.created_at);
 
-            const statusBadge = document.getElementById('statusBadge');
-            if (statusBadge && requestData.form_details?.status) {
-                statusBadge.textContent = requestData.form_details.status.name;
-                statusBadge.style.backgroundColor = requestData.form_details.status.color;
-            }
-        } catch (error) {
-            console.error('Error refreshing fee displays:', error);
-        }
-    }
-
-    // Main fetch request details
-    async function fetchRequestDetails() {
-        try {
-            document.getElementById('loadingState').style.display = 'block';
-            document.getElementById('contentState').style.display = 'none';
-
-            const response = await fetch(`/api/admin/requisition-forms/${requestId}`, {
-                headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch request details');
-            const request = await response.json();
-
-            document.getElementById('requestIdTitle').textContent = 'RID #' + String(requestId).padStart(4, '0');
-            const statusBadge = document.getElementById('statusBadge');
-            statusBadge.textContent = request.form_details.status.name;
-            statusBadge.style.backgroundColor = request.form_details.status.color;
-
-            document.getElementById('formDetails').innerHTML = `
-                <div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted">Requester:</span><span class="fw-medium">${request.user_details.first_name} ${request.user_details.last_name}</span></div>
-                <div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted">School ID:</span><span class="fw-medium">${request.user_details.school_id || 'N/A'}</span></div>
-                <div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted">Email:</span><span class="fw-medium">${request.user_details.email}</span></div>
-                <div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted">Organization:</span><span class="fw-medium">${request.user_details.organization_name || 'N/A'}</span></div>
-                <div class="d-flex justify-content-between py-1"><span class="text-muted">Contact #:</span><span class="fw-medium">${request.user_details.contact_number || 'N/A'}</span></div>
-            `;
-
-            document.getElementById('eventDetails').innerHTML = `
-                <div class="row g-3">
-                    <div class="col-sm-6">
-                        <div class="mb-3"><div class="fw-bold text-primary">Rental Purpose</div><div>${request.form_details.purpose}</div></div>
-                        <div class="mb-3"><div class="fw-bold text-primary">Number of Tables</div><div>${request.form_details.num_tables || 0}</div></div>
-                        <div class="mb-3"><div class="fw-bold text-primary">Start Schedule</div><div>${formatStartDateTime(request.schedule)}</div></div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="mb-3"><div class="fw-bold text-primary">Participants</div><div>${request.form_details.num_participants}</div></div>
-                        <div class="mb-3"><div class="fw-bold text-primary">Number of Chairs</div><div>${request.form_details.num_chairs || 0}</div></div>
-                        <div class="mb-3"><div class="fw-bold text-primary">End Schedule</div><div>${formatEndDateTime(request.schedule)}</div></div>
-                    </div>
-                    <div class="col-12"><div class="fw-bold text-primary">Additional Requests</div><div>${request.form_details.additional_requests || 'No additional requests.'}</div></div>
-                </div>
-            `;
-
-            document.getElementById('requestedItems').innerHTML = `
-                <div class="requested-items-list">
-                    ${request.requested_items.facilities.length > 0 ? `
-                        <div class="mb-3"><h6 class="fw-bold mb-2">Facilities:</h6>
-                        ${request.requested_items.facilities.map(f => `<div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded"><span>${f.name}</span><span class="fw-bold">${formatMoney(f.fee)}${f.rate_type === 'Per Hour' ? '/hour' : '/event'}</span></div>`).join('')}
-                        </div>
-                    ` : ''}
-                    ${request.requested_items.equipment.length > 0 ? `
-                        <div><h6 class="fw-bold mb-2">Equipment:</h6>
-                        ${request.requested_items.equipment.map(e => `<div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded"><span>${e.name} × ${e.quantity || 1}</span><span class="fw-bold">${formatMoney(e.fee)}${e.rate_type === 'Per Hour' ? '/hour' : '/event'}</span></div>`).join('')}
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-
-            document.getElementById('approvalsCount').textContent = request.approval_info?.approval_count || 0;
-            document.getElementById('rejectionsCount').textContent = request.approval_info?.rejection_count || 0;
-            updateDocumentIcons(request.documents);
-
-            await loadMixedActivity();
-            await loadApprovalHistory();
-
-            if (request.fees?.approved_fee !== undefined) {
-                const feeTotalElement = document.getElementById('feeBreakdownTotal');
-                if (feeTotalElement) feeTotalElement.textContent = formatMoney(request.fees.approved_fee);
-                if (request.requested_items && request.schedule) updateBaseFees(request.requested_items, request.schedule);
-                if (request.fees.requisition_fees) updateAdditionalFees(request.fees.requisition_fees);
-            }
-
-            await checkAdminRoleAndUpdateUI();
-
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('contentState').style.display = 'block';
-        } catch (error) {
-            console.error('Error:', error);
-            showToast('Failed to load request details', 'error');
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('contentState').innerHTML = `<div class="alert alert-danger">Failed to load request details. ${error.message}</div>`;
-            document.getElementById('contentState').style.display = 'block';
-        }
-    }
-
-    // Check admin role and update UI
-    async function checkAdminRoleAndUpdateUI() {
-        try {
-            const response = await fetch('/api/admin/profile', {
-                headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            if (!response.ok) return;
-            const adminData = await response.json();
-            const roleTitle = adminData.role?.role_title;
-            const isHeadAdmin = roleTitle === 'Head Admin';
-            const isApprovingOfficer = roleTitle === 'Approving Officer' || roleTitle === 'Chief Approving Officer';
-
-            const actionsSection = document.querySelector('.col-md-3 .card-body .mb-4');
-            if (!actionsSection) return;
-
-            const existingDynamic = actionsSection.querySelectorAll('.dynamic-action-btn, .action-taken-message');
-            existingDynamic.forEach(el => el.remove());
-
-            document.getElementById('approveBtn').style.display = 'none';
-            document.getElementById('rejectBtn').style.display = 'none';
-            document.getElementById('finalizeBtn').style.display = 'none';
-            document.getElementById('moreActionsDropdown').style.display = 'none';
-
-            const requestResponse = await fetch(`/api/admin/requisition-forms/${requestId}`, {
-                headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            const request = await requestResponse.json();
-            const currentStatusId = request.form_details.status.id;
-            const terminalStatuses = [7, 8, 9];
-
-            if (isHeadAdmin) {
-                if (terminalStatuses.includes(currentStatusId)) {
-                    actionsSection.innerHTML += '<div class="action-taken-message text-center p-3"><i class="bi bi-info-circle-fill text-secondary fs-4 d-block mb-2"></i><p class="mb-0 small text-muted">No actions available for this status.</p></div>';
-                    return;
-                }
-                if ([1, 2].includes(currentStatusId)) document.getElementById('finalizeBtn').style.display = 'block';
-                else if (currentStatusId === 3) {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn btn-primary w-100 mb-2 dynamic-action-btn';
-                    btn.innerHTML = '<i class="bi bi-calendar-event me-1"></i> Mark Scheduled';
-                    btn.onclick = () => new bootstrap.Modal(document.getElementById('markScheduledModal')).show();
-                    actionsSection.appendChild(btn);
-                } else if (currentStatusId === 4) {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn btn-primary w-100 mb-2 dynamic-action-btn';
-                    btn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Mark Ongoing';
-                    btn.onclick = () => handleStatusAction('Ongoing');
-                    actionsSection.appendChild(btn);
-                } else if (currentStatusId === 5) {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn btn-warning w-100 mb-2 dynamic-action-btn';
-                    btn.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i> Mark Overdue';
-                    btn.onclick = () => handleStatusAction('Late');
-                    actionsSection.appendChild(btn);
-                } else if (currentStatusId === 6) {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn btn-danger w-100 mb-2 dynamic-action-btn';
-                    btn.innerHTML = '<i class="bi bi-cash-stack me-1"></i> Add Penalty Fee';
-                    btn.onclick = () => {
-                        const amount = prompt('Enter late penalty amount:');
-                        if (amount && !isNaN(parseFloat(amount))) addLatePenalty(parseFloat(amount));
-                        else if (amount) showToast('Please enter a valid penalty amount.', 'error');
-                    };
-                    actionsSection.appendChild(btn);
-                }
-                if (!terminalStatuses.includes(currentStatusId)) {
-                    const closeBtn = document.createElement('button');
-                    closeBtn.className = 'btn btn-light-danger w-100 mb-2 dynamic-action-btn';
-                    closeBtn.innerHTML = '<i class="bi bi-x-circle me-1"></i> Close Form';
-                    closeBtn.onclick = () => new bootstrap.Modal(document.getElementById('closeFormModal')).show();
-                    actionsSection.appendChild(closeBtn);
-                }
-            } else if (isApprovingOfficer) {
-                const hasTakenAction = await checkIfAdminHasTakenAction(adminData.admin_id);
-                if (hasTakenAction) {
-                    actionsSection.innerHTML += '<div class="action-taken-message text-center p-3"><i class="bi bi-check-circle-fill text-success fs-4 d-block mb-2"></i><p class="mb-0 small text-muted">You have already taken action for this request.</p></div>';
-                } else if ([1, 2].includes(currentStatusId)) {
-                    document.getElementById('approveBtn').style.display = 'block';
-                    document.getElementById('rejectBtn').style.display = 'block';
-                } else {
-                    actionsSection.innerHTML += '<div class="action-taken-message text-center p-3"><i class="bi bi-info-circle-fill text-secondary fs-4 d-block mb-2"></i><p class="mb-0 small text-muted">No actions available for this request status.</p></div>';
-                }
-            } else {
-                actionsSection.innerHTML += '<div class="action-taken-message text-center p-3"><i class="bi bi-shield-exclamation fs-4 d-block mb-2 text-muted"></i><p class="mb-0 small text-muted">You don\'t have permission to take actions.</p></div>';
-            }
-        } catch (error) {
-            console.error('Error checking admin role:', error);
-        }
-    }
-
-    async function checkIfAdminHasTakenAction(adminId) {
-        try {
-            const response = await fetch(`/api/admin/requisition/${requestId}/approval-history`, {
-                headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            if (!response.ok) return false;
-            const approvalHistory = await response.json();
-            return approvalHistory.some(record => record.admin_id === adminId);
-        } catch {
-            return false;
-        }
-    }
-
-    async function addLatePenalty(penaltyAmount) {
-        try {
-            const response = await fetch(`/api/admin/requisition/${requestId}/late-penalty`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ penalty_amount: penaltyAmount })
-            });
-            if (!response.ok) throw new Error('Failed to add late penalty');
-            showToast('Late penalty added successfully!', 'success');
-            fetchRequestDetails();
-        } catch (error) {
-            showToast('Error: ' + error.message, 'error');
-        }
-    }
-
-    function showStatusUpdateModal(status) {
-        const modalContent = document.getElementById('statusModalContent');
-        modalContent.innerHTML = `
-            <div class="text-center">
-                <i class="fa fa-exclamation-circle fa-3x text-warning mb-3"></i>
-                <p>Are you sure? This action cannot be undone.</p>
-                <p class="text-muted small">This will set the form's status to <strong>${status}</strong>.</p>
-            </div>
-            ${status === 'Late' ? `
-                <div class="mt-4">
-                    <div class="mb-3">
-                        <label for="latePenaltyAmount" class="form-label">Late Penalty Amount (Optional)</label>
-                        <input type="number" class="form-control" id="latePenaltyAmount" placeholder="Enter penalty amount" step="0.01" min="0" value="0">
-                    </div>
-                </div>
-            ` : ''}
-        `;
-        selectedStatus = status;
-        new bootstrap.Modal(document.getElementById('statusUpdateModal')).show();
-    }
-
-    function handleStatusAction(action) {
-        if (action === 'Scheduled') {
-            new bootstrap.Modal(document.getElementById('markScheduledModal')).show();
+        // Finalization indicator — color-coded dot + label (no pill chrome)
+        let pillLabel, dotColor;
+        if (approval.is_finalized) {
+            pillLabel = "Finalized";
+            dotColor = "#198754"; // Bootstrap success
+        } else if (approval.can_finalize) {
+            pillLabel = "Can Finalize";
+            dotColor = "#ffc107"; // Bootstrap warning
         } else {
-            showStatusUpdateModal(action);
+            pillLabel = "Not Finalized";
+            dotColor = "#6c757d"; // Bootstrap secondary
         }
-    }
 
-    // Timeline functions
-    async function loadTimelineContent() {
-        const timelineContent = document.getElementById('timelineContent');
-        timelineContent.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary mb-2"></div><p class="small mb-0">Loading activity...</p></div>';
+        const tooltipText =
+            "Once finalized, the form can no longer be edited and the approved fee is locked in.";
 
-        try {
-            let activities = [];
-            if (currentTimelineFilter === 'all' || currentTimelineFilter === 'comment') {
-                const commentsResponse = await fetch(`/api/admin/requisition/${requestId}/comments`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
-                const commentsResult = await commentsResponse.json();
-                (commentsResult.comments || []).forEach(comment => {
-                    activities.push({ type: 'comment', data: comment, timestamp: new Date(comment.created_at) });
-                });
-            }
-            if (currentTimelineFilter === 'all' || currentTimelineFilter === 'fee') {
-                const feesResponse = await fetch(`/api/admin/requisition/${requestId}/fees`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
-                const feesResult = await feesResponse.json();
-                (feesResult || []).forEach(fee => {
-                    activities.push({ type: 'fee', data: fee, timestamp: new Date(fee.created_at) });
-                });
-            }
+        // Terminal statuses where we surface the completion timestamp
+        const terminalStatuses = ["Completed", "Rejected", "Cancelled"];
+        const showCompletedOn =
+            terminalStatuses.includes(status.name) && tracking.returned_at;
 
-            activities.sort((a, b) => b.timestamp - a.timestamp);
+        const finalizedBy = tracking.finalized_by
+            ? `${tracking.finalized_by.first_name} ${tracking.finalized_by.last_name}`
+            : null;
+        const closedBy = tracking.closed_by
+            ? `${tracking.closed_by.first_name} ${tracking.closed_by.last_name}`
+            : null;
 
-            if (activities.length === 0) {
-                timelineContent.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-comment-slash fa-2x mb-2"></i><p class="small mb-0">No activity yet</p></div>';
-            } else {
-                timelineContent.innerHTML = activities.map(activity => {
-                    if (activity.type === 'comment') return generateTimelineCommentHTML(activity.data);
-                    return generateTimelineFeeHTML(activity.data);
-                }).join('');
-            }
-            isTimelineLoaded = true;
-        } catch (error) {
-            console.error('Error loading timeline:', error);
-            timelineContent.innerHTML = '<div class="text-center text-danger py-4"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><p class="small mb-0">Failed to load activity</p></div>';
+        // Build the finalized suffix as a single inline string so it merges
+        // into the "Submitted ..." segment (no flex-gap between).
+        const finalizedSuffix =
+            tracking.is_finalized && tracking.finalized_at
+                ? ` &middot; <i class="bi bi-circle-fill me-1" style="color:#198754;font-size:0.5rem;vertical-align:middle;"></i>Finalized on ${escapeHtml(formatAbsoluteDate(tracking.finalized_at))}${finalizedBy ? ` by ${escapeHtml(finalizedBy)}` : ""}`
+                : "";
+
+        const parts = [
+            `<span><i class="bi bi-calendar3 me-1"></i>Submitted ${escapeHtml(submittedAt)}${finalizedSuffix}</span>`,
+        ];
+
+        // Indicator only renders pre-finalization — once finalized, the
+        // timestamp sentence above carries the full context.
+        if (!approval.is_finalized) {
+            parts.push(`<span class="text-muted">&middot;</span>`);
+            parts.push(
+                `<span data-bs-toggle="tooltip"
+                       data-bs-placement="top"
+                       title="${escapeHtml(tooltipText)}"
+                       style="cursor:help;">
+                    <i class="bi bi-circle-fill me-1" style="color:${dotColor};font-size:0.5rem;vertical-align:middle;"></i>${pillLabel}
+                </span>`,
+            );
         }
-    }
 
-    function generateTimelineCommentHTML(comment) {
-        return `
-            <div class="timeline-item mb-3">
-                <div class="d-flex align-items-start">
-                    <div class="me-2 flex-shrink-0">
-                        ${comment.admin.photo_url ?
-                            `<img src="${comment.admin.photo_url}" class="rounded-circle" width="32" height="32">` :
-                            `<div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                                ${comment.admin.first_name.charAt(0)}${comment.admin.last_name.charAt(0)}
-                            </div>`
-                        }
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <strong class="small">${comment.admin.first_name} ${comment.admin.last_name}</strong>
-                            <small class="text-muted">${formatTimeAgo(comment.created_at)}</small>
-                        </div>
-                        <div class="bg-light p-2 rounded small">${escapeHtml(comment.comment)}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
+        document.getElementById("requestSubtitle").innerHTML = parts.join(" ");
+    };
 
-    function generateTimelineFeeHTML(fee) {
-        const amount = parseFloat(fee.type === 'discount' ? fee.discount_amount : fee.fee_amount);
-        const typeName = fee.type === 'discount' ? 'Discount' : 'Additional fee';
-        const adminName = fee.added_by?.name || 'Admin';
-        let amountDisplay = fee.type === 'discount' ?
-            (fee.discount_type === 'Percentage' ? `${parseFloat(amount)}%` : `-${formatMoney(amount)}`) :
-            formatMoney(amount);
-        return `
-            <div class="timeline-item mb-3">
-                <div class="d-flex align-items-start">
-                    <div class="me-2 flex-shrink-0">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #d4edda; color: #28a745;">
-                            <i class="fas fa-money-bill" style="font-size: 0.9rem;"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <strong class="small">${adminName}</strong>
-                            <small class="text-muted">${formatTimeAgo(fee.created_at)}</small>
-                        </div>
-                        <div class="bg-light p-2 rounded small">added ${typeName} - ${fee.label}: ${amountDisplay}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
+    /**
+     * Render contextual action buttons based on the current admin's role
+     * and the form's status.
+     *
+     * Role matrix:
+     *   Role 1 (Head Admin)              → Confirm Reservation · Close Reservation (always)
+     *   Role 5 (Issuing Officer)         → Confirm Reservation · Close Reservation (always)
+     *   Role 2 (Final Approving Officer) → Approve · Reject (status 1 only; reject also closes)
+     *   Role 3 (Approving Officer)       → Approve · Reject (status 1 only)
+     *   Other roles                      → no actions
+     *
+     * Terminal statuses (5/6/7) always show "No actions available".
+     * Head Admin overrides bypass all status guards (backend also permits this).
+     */
+    const renderActionButtons = (data) => {
+        const container = document.getElementById("actionButtonsTop");
+        const statusId = data.form_details.status.id;
+        const approvalInfo = data.approval_info;
+        const canAct = approvalInfo.current_admin_can_act === true;
+        const roleId = window.Admin?.role_id;
 
-    async function sendComment() {
-        const commentText = document.getElementById('timelineComment').value.trim();
-        if (!commentText) {
-            showToast('Please enter a comment', 'error');
+        const TERMINAL_STATUSES = [5, 6, 7];
+        const RESERVED_STATUS = 4;
+
+        // ---- Hard blockers (evaluated before any status logic) ----
+
+        // Role 4 (Inventory Manager) never sees action buttons.
+        if (roleId === 4) {
+            container.innerHTML =
+                '<span class="text-muted small fst-italic">No actions available for your role</span>';
             return;
         }
-        try {
-            const response = await fetch(`/api/admin/requisition/${requestId}/comment`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ comment: commentText })
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.message || 'Failed to add comment');
-            if (result.success) {
-                document.getElementById('timelineComment').value = '';
-                isTimelineLoaded = false;
-                loadTimelineContent();
-                showToast('Comment added successfully', 'success');
-            }
-        } catch (error) {
-            showToast('Failed to add comment: ' + error.message, 'error');
+
+        // Approving Officer (role 3) on Reserved sees a specific message.
+        if (statusId === RESERVED_STATUS && roleId === 3) {
+            container.innerHTML =
+                '<span class="text-muted small fst-italic">This form is already Reserved.</span>';
+            return;
         }
-    }
 
-    // Setup event listeners
-    function setupEventListeners() {
-        document.getElementById('approveBtn').addEventListener('click', () => new bootstrap.Modal(document.getElementById('approveModal')).show());
-        document.getElementById('rejectBtn').addEventListener('click', () => new bootstrap.Modal(document.getElementById('rejectModal')).show());
-        document.getElementById('finalizeBtn').addEventListener('click', () => new bootstrap.Modal(document.getElementById('finalizeModal')).show());
-        document.getElementById('closeForm').addEventListener('click', () => new bootstrap.Modal(document.getElementById('closeFormModal')).show());
-        document.getElementById('addFeeBtn').addEventListener('click', () => new bootstrap.Modal(document.getElementById('feeModal')).show());
-        document.getElementById('waiveAllSwitch').addEventListener('change', (e) => handleWaiveAll(e.target));
+        // Terminal statuses: no actions at all.
+        if (TERMINAL_STATUSES.includes(statusId)) {
+            container.innerHTML =
+                '<span class="text-muted small fst-italic">No actions available</span>';
+            return;
+        }
 
-        document.querySelectorAll('.status-option').forEach(option => {
-            option.addEventListener('click', (e) => {
-                e.preventDefault();
-                handleStatusAction(option.dataset.value);
+        // ---- Build button HTML per role ----
+
+        let buttonsHtml = "";
+        const isIssuingOrHeadAdmin = roleId === 1 || roleId === 5;
+        const isApprover = roleId === 2 || roleId === 3;
+
+        if (statusId === RESERVED_STATUS) {
+            // Reserved: Close Reservation only, for roles 1, 2, 5.
+            if (roleId === 1 || roleId === 2 || roleId === 5) {
+                const isHeadAdmin = roleId === 1;
+                container.dataset.headAdmin = isHeadAdmin ? "1" : "0";
+                buttonsHtml = `
+                    <button class="btn btn-danger" id="closeReservationBtn">
+                        <i class="bi bi-x-circle"></i> Close Reservation
+                    </button>
+                `;
+            }
+        } else if (isIssuingOrHeadAdmin) {
+            // Roles 1 & 5: Confirm + Close Reservation, always.
+            const isHeadAdmin = roleId === 1;
+            container.dataset.headAdmin = isHeadAdmin ? "1" : "0";
+
+            buttonsHtml = `
+                <div class="d-flex flex-column gap-2">
+                    <button class="btn btn-primary" id="confirmReservationBtn">
+                        <i class="bi bi-bookmark-check"></i> Confirm Reservation
+                    </button>
+                    <button class="btn btn-danger" id="closeReservationBtn">
+                        <i class="bi bi-x-circle"></i> Close Reservation
+                    </button>
+                </div>
+            `;
+        } else if (isApprover && statusId === 1) {
+            // Roles 2 & 3: Approve + Reject, only on Pending Approval.
+            const isFinalApprover = roleId === 2;
+            container.dataset.finalApprover = isFinalApprover ? "1" : "0";
+
+            buttonsHtml = `
+                <button class="btn btn-outline-secondary" id="rejectBtn">
+                    <i class="bi bi-x-lg"></i> Reject
+                </button>
+                <div class="vr mx-1 align-self-stretch"></div>
+                <button class="btn btn-success fw-bold" id="approveBtn">
+                    <i class="bi bi-check-lg"></i> Approve Request
+                </button>
+            `;
+        }
+
+        // Message shown when this admin has already acted on this request.
+        const actedMsgHtml =
+            !canAct && isApprover && statusId === 1
+                ? `<span class="d-inline-flex flex-column align-items-center justify-content-center text-muted small pe-2"
+                          style="min-height:42px;line-height:1.15;">
+                       <i class="bi bi-check-circle-fill text-success mb-1"></i>
+                       <span class="text-center">You have already<br>acted on this request</span>
+                   </span>`
+                : "";
+
+        // No buttons and no acted message → informational fallback.
+        if (!buttonsHtml && !actedMsgHtml) {
+            container.innerHTML =
+                '<span class="text-muted small fst-italic">No actions available for your role</span>';
+            return;
+        }
+
+        container.innerHTML = actedMsgHtml + buttonsHtml;
+
+        // ---- Event bindings ----
+
+        // Approve (roles 2 & 3)
+        document.getElementById("approveBtn")?.addEventListener("click", () =>
+            showActionModal({
+                title: "Confirm Approval",
+                body: `<p>Are you sure you want to approve this request?</p>
+                       <label class="form-label">Remarks (Optional)</label>
+                       <textarea class="form-control" id="approveRemarks" rows="3"></textarea>`,
+                confirmClass: "btn-success",
+                confirmText: "Approve",
+                onConfirm: async () => {
+                    const remarks =
+                        document.getElementById("approveRemarks").value;
+                    await postAction("approve", { remarks: remarks || null });
+                    showToast("Request approved", "success");
+                    await refreshAfterAction();
+                },
+            }),
+        );
+
+        // Reject (roles 2 & 3). Role 2 also closes the form with the same remark.
+        document.getElementById("rejectBtn")?.addEventListener("click", () =>
+            showActionModal({
+                title: "Confirm Rejection",
+                body: `<p>Are you sure you want to reject this request?</p>
+                       <label class="form-label">Reason (Optional)</label>
+                       <textarea class="form-control" id="rejectRemarks" rows="3"></textarea>`,
+                confirmClass: "btn-danger",
+                confirmText: "Reject",
+                onConfirm: async () => {
+                    const remarks =
+                        document.getElementById("rejectRemarks").value;
+
+                    // 1. Reject the request.
+                    await postAction("reject", { remarks: remarks || null });
+
+                    // 2. Final Approving Officers also close the form in the
+                    //    same action, using the same remark as the closure reason.
+                    if (container.dataset.finalApprover === "1") {
+                        await postAction("close", {
+                            closure_reason: remarks || null,
+                        });
+                    }
+
+                    showToast("Request rejected", "success");
+                    await refreshAfterAction();
+                },
+            }),
+        );
+
+        // Confirm Reservation (roles 1 & 5)
+        document
+            .getElementById("confirmReservationBtn")
+            ?.addEventListener("click", () => {
+                const isHeadAdmin = container.dataset.headAdmin === "1";
+                const warningHtml = isHeadAdmin
+                    ? `<div class="alert alert-warning small mb-3">
+                           <i class="bi bi-exclamation-triangle me-1"></i>
+                           You are about to confirm this reservation as Head Administrator.
+                       </div>`
+                    : "";
+
+                showActionModal({
+                    title: "Confirm Reservation",
+                    body: `${warningHtml}
+                           <p class="small text-muted">Enter the official receipt number to confirm this reservation.</p>
+                           <label class="form-label">Official Receipt Number *</label>
+                           <input type="text" class="form-control" id="officialReceiptNum" required>`,
+                    confirmClass: "btn-primary",
+                    confirmText: "Confirm Reservation",
+                    onConfirm: async () => {
+                        const receiptNum = document
+                            .getElementById("officialReceiptNum")
+                            .value.trim();
+                        if (!receiptNum)
+                            throw new Error("Please enter receipt number");
+
+                        // If this admin still has a pending approval row
+                        // (e.g., stage-3 officer who hasn't approved), record
+                        // approval before finalizing the reservation.
+                        if (canAct) {
+                            await postAction("approve", { remarks: null });
+                        }
+
+                        await postAction("finalize-reservation", {
+                            official_receipt_num: receiptNum,
+                        });
+
+                        showToast("Reservation confirmed", "success");
+                        await refreshAfterAction();
+                    },
+                });
+            });
+
+        // Close Reservation (roles 1 & 5)
+        document
+            .getElementById("closeReservationBtn")
+            ?.addEventListener("click", () => {
+                const isHeadAdmin = container.dataset.headAdmin === "1";
+                const warningHtml = isHeadAdmin
+                    ? `<div class="alert alert-warning small mb-3">
+                           <i class="bi bi-exclamation-triangle me-1"></i>
+                           You are about to close this reservation as Head Administrator.
+                       </div>`
+                    : "";
+
+                showActionModal({
+                    title: "Close Reservation",
+                    body: `${warningHtml}
+                           <p class="mb-3">Are you sure you want to close this reservation?<br>
+                           <strong>This action cannot be undone.</strong></p>
+                           <label class="form-label">Closure Reason (Optional)</label>
+                           <textarea class="form-control" id="closureReason" rows="3"></textarea>`,
+                    confirmClass: "btn-danger",
+                    confirmText: "Close Reservation",
+                    onConfirm: async () => {
+                        const reason = document
+                            .getElementById("closureReason")
+                            .value.trim();
+
+                        await postAction("close", {
+                            closure_reason: reason || null,
+                        });
+
+                        showToast("Reservation closed", "success");
+                        await refreshAfterAction();
+                    },
+                });
+            });
+    };
+
+    /**
+     * Render one requested item (facility/equipment/service) as a line in
+     * Booking Details.
+     *
+     * Rules:
+     *   - Flat rate        → name [×qty]                          ₱X/event
+     *   - Per Hour         → name [×qty] (N hrs)                  ₱X/hr
+     *                                                              ₱subtotal
+     *
+     * All values come straight from the API. No client-side math.
+     */
+    const renderLineItem = (item) => {
+        const isPerHour = item.rate_type === "Per Hour";
+        const suffix = isPerHour ? "/hr" : "/event";
+
+        // Left side: name + optional qty + optional duration hint
+        const qtyText =
+            item.quantity && item.quantity > 1
+                ? ` &times;${item.quantity}`
+                : "";
+        const durText = isPerHour
+            ? ` (${escapeHtml(item.duration_text || "")})`
+            : "";
+        // Prefer duration text from item if provided; fall back to data.duration.text via closure is
+        // not available here, so we rely on the caller to have set it. Currently we don't pass it
+        // per item, so we omit the parenthetical when unknown.
+        const left = `${escapeHtml(item.name)}${qtyText}`;
+
+        const waivedClass = item.is_waived
+            ? "text-muted text-decoration-line-through"
+            : "";
+
+        return `
+        <div class="d-flex justify-content-between small">
+            <span>${left}</span>
+            <span class="${waivedClass}">
+                ${formatMoney(item.fee)}${suffix}
+            </span>
+        </div>
+        ${
+            isPerHour && !item.is_waived
+                ? `<div class="d-flex justify-content-end small">
+                       <span class="text-muted">${formatMoney(item.subtotal)}</span>
+                   </div>`
+                : ""
+        }
+    `;
+    };
+
+    /**
+     * Render the request details panel — letter header, letter body (requester,
+     * purpose, participants, additional requests), event details (schedule,
+     * facilities, equipment, total fee), and attachment links.
+     * @param {Object} data - Full request payload
+     */
+    const renderDetails = (data) => {
+        const user = data.user_details;
+        const form = data.form_details;
+        const schedule = data.schedule;
+        const cal = form.calendar_info || {};
+
+        document.getElementById("letterHeader").innerHTML = `
+        <div>
+            <div class="letter-title">${escapeHtml(cal.title || "Untitled Request")}</div>
+        </div>
+    `;
+
+        document.getElementById("letterBody").innerHTML = `
+        ${
+            cal.description || form.purpose
+                ? `<div class="letter-section">
+                    <div class="letter-section-label">Description</div>
+                    <div>${escapeHtml(cal.description || form.purpose || "")}</div>
+                </div>`
+                : ""
+        }
+
+        <div class="letter-section">
+            <div class="letter-section-label">Requester</div>
+            <div class="fw-semibold">${escapeHtml(user.first_name)} ${escapeHtml(user.last_name)}</div>
+            <div class="letter-meta">
+                ${escapeHtml(user.organization_name || "N/A")}
+                ${user.school_id ? " &middot; ID: " + escapeHtml(user.school_id) : ""}
+            </div>
+            <div class="letter-meta">
+                ${escapeHtml(user.email)} &middot; ${escapeHtml(user.contact_number || "N/A")}
+            </div>
+        </div>
+
+        ${
+            form.additional_requests
+                ? `<div class="letter-section">
+            <div class="letter-section-label">Additional Requests</div>
+            <div class="letter-meta">${escapeHtml(form.additional_requests)}</div>
+        </div>`
+                : ""
+        }
+
+        <div class="letter-section">
+            <!-- 1. Main Parent Layout Row -->
+            <div class="row g-4 align-items-start">
+                
+                <!-- 2. Left Column Content (8 out of 12 columns wide) -->
+                <div class="col-md-8">
+                    <div class="letter-section-label">Purpose &amp; Participants</div>
+                    
+                    <!-- Purpose Text -->
+                    <div class="mb-1.5">
+                        <div class="d-flex align-items-start gap-1.5 text-dark" style="font-size: 0.95rem;">
+                            <i class="fa-solid fa-calendar-days text-secondary" style="width: 14px; margin-right: 10px; margin-top: 4px;"></i>
+                            <div class="letter-meta">
+                            <span style="white-space: pre-wrap;">${escapeHtml(form.purpose || "N/A")}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nested Logistics Matrix Row (Stacks on mobile, 2x2 on tablets/desktops) -->
+                    <div class="row g-2 mt-0 text-dark" style="letter-spacing: -0.1px; max-width: 450px;">
+                        
+                        <!-- Top Left: Participants -->
+                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                            <i class="fa-solid fa-user text-secondary" style="width: 16px; margin-right: 10px;"></i> 
+                            <span>Participants: ${form.num_participants || 0}</span>
+                        </div>
+                        
+                        <!-- Top Right: Tables -->
+                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                            <i class="fa-solid fa-table-columns text-secondary" style="width: 16px; margin-right: 10px;"></i> 
+                            <span>Tables: ${form.num_tables || 0}</span>
+                        </div>
+                        
+                        <!-- Bottom Left: Chairs -->
+                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                            <!-- Removed font-size: 0.9rem custom string icon scale rule -->
+                            <i class="fa-solid fa-chair text-secondary" style="width: 16px; margin-right: 10px;"></i> 
+                            <span>Chairs: ${form.num_chairs || 0}</span>
+                        </div>
+                        
+                        <!-- Bottom Right: Microphones -->
+                        <div class="letter-meta col-12 col-sm-6 d-flex align-items-center">
+                            <i class="fa-solid fa-microphone-lines text-secondary" style="width: 16px; margin-right: 10px;"></i> 
+                            <span>Microphones: ${form.num_microphones || 0}</span>
+                        </div>
+                        
+                    </div> <!-- Closes Inner Matrix Row -->
+
+                                    
+                </div> <!-- Closes Main Left Column (col-md-8) cleanly! -->
+
+                <!-- 3. Right Column Content (4 out of 12 columns wide) -->
+                <div class="col-md-4">
+                    <div class="letter-section-label">Attachments</div>
+                    <!-- Dynamic elements load right into here -->
+                    <div id="attachmentsContainer"></div>
+                </div> <!-- Closes Main Right Column (col-md-4) -->
+
+            </div> <!-- Closes Main Parent Layout Row -->
+        </div> <!-- Closes Main Letter Section Block -->
+
+        `;
+
+        const facilities = data.requested_items.facilities || [];
+        const equipment = data.requested_items.equipment || [];
+        const services = data.requested_items.services || [];
+
+        document.getElementById("eventDetails").innerHTML = `
+        <div class="mb-3">
+            <div class="fw-bold letter-section-label">Start</div>
+            <div>${formatDateTime(schedule.start_date, schedule.start_time)}</div>
+        </div>
+        <div class="mb-3">
+            <div class="fw-bold letter-section-label">End</div>
+            <div>${formatDateTime(schedule.end_date, schedule.end_time)}</div>
+        </div>
+        <div class="mb-3">
+            <div class="fw-bold letter-section-label">Duration</div>
+            <div>${escapeHtml(data.duration?.text || `${data.duration_hours} hours`)}</div>
+        </div>
+        ${
+            facilities.length
+                ? `<div class="mb-3">
+                    <div class="fw-bold letter-section-label">Facilities</div>
+                    ${facilities.map(renderLineItem).join("")}
+                </div>`
+                : ""
+        }
+        ${
+            equipment.length
+                ? `<div class="mb-3">
+                    <div class="fw-bold letter-section-label">Equipment</div>
+                    ${equipment.map(renderLineItem).join("")}
+                </div>`
+                : ""
+        }
+        ${
+            services.length
+                ? `<div class="mb-3">
+                    <div class="fw-bold letter-section-label">Services</div>
+                    ${services.map(renderLineItem).join("")}
+                </div>`
+                : ""
+        }
+        <div class="pt-3 border-top"> <!-- Increased padding-top to lower content from top border -->
+            <!-- Align-items-baseline ensures the label matches the vertical alignment of its value -->
+            <div class="d-flex justify-content-between align-items-baseline">
+                <span class="fw-bold letter-section-label">Tentative Fee</span>
+                <span class="fw-semibold">${formatMoney(data.fees.tentative_fee)}</span>
+            </div>
+            ${
+                data.fees.adjustments_total !== 0
+                    ? `<div class="d-flex justify-content-between align-items-baseline small mt-1">
+                           <span class="text-muted">Fee Adjustments</span>
+                           <span class="${data.fees.adjustments_total > 0 ? "text-success" : "text-danger"}">
+                               ${data.fees.adjustments_total > 0 ? "+" : "-"}${formatMoney(Math.abs(data.fees.adjustments_total))}
+                           </span>
+                       </div>`
+                    : ""
+            }
+            <div class="border-top mt-3 mb-3"></div> <!-- Increased bottom margin from mb-2 to mb-3 -->
+            <div class="d-flex justify-content-between align-items-center">
+                <!-- lh-sm reduces line-height to bring the Approved Fee label and value closer together -->
+                <div class="lh-sm">
+                    <div class="fw-bold letter-section-label">Approved Fee</div>
+                    <div class="fs-4 fw-bold text-primary">${formatMoney(data.fees.approved_fee)}</div>
+                </div>
+                ${
+                    data.approval_info.is_finalized
+                        ? `<span data-bs-toggle="tooltip" data-bs-placement="top"
+                                 title="Fees are locked once the form is finalized"
+                                 style="cursor:not-allowed;">
+                               <button class="btn btn-sm btn-outline-secondary" disabled style="pointer-events:none;">
+                                   <i class="bi bi-lock me-1"></i> Fees Locked
+                               </button>
+                           </span>`
+                        : `<a href="/admin/requisition/${requestId}/financials"
+                              class="btn btn-sm btn-outline-secondary">
+                               <i class="bi bi-pencil me-1"></i> Edit Fees
+                           </a>`
+                }
+            </div>
+        </div>
+        `;
+
+        const docs = data.documents;
+        document.getElementById("attachmentsContainer").innerHTML = `
+        <div class="d-flex flex-column gap-2">
+            <a href="${docs.formal_letter.url || "#"}" target="_blank"
+               class="btn btn-sm ${docs.formal_letter.url ? "btn-outline-secondary" : "btn-outline-secondary disabled"}">
+                <i class="bi bi-file-text me-1"></i> Formal Letter
+            </a>
+            <a href="${docs.proof_of_payment.url || "#"}" target="_blank"
+               class="btn btn-sm ${docs.proof_of_payment.url ? "btn-outline-secondary" : "btn-outline-secondary disabled"}">
+                <i class="bi bi-receipt me-1"></i> Proof of Payment
+            </a>
+            ${
+                docs.official_receipt.number
+                    ? `<a href="/official-receipt/${requestId}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-receipt-cutoff me-1"></i> Official Receipt
+                       </a>`
+                    : `<button class="btn btn-sm btn-outline-secondary disabled">
+                        <i class="bi bi-receipt-cutoff me-1"></i> No Receipt
+                       </button>`
+            }
+        </div>
+        `;
+    };
+
+    /**
+     * Render the activity timeline (comments, fees, approvals/rejections),
+     * honoring the current `timelineFilter`. Items are merged and sorted
+     * chronologically in descending order.
+     */
+    const renderTimeline = () => {
+        const container = document.getElementById("timelineContent");
+        if (!requestData) return;
+
+        let items = [];
+
+        // Comments
+        if (timelineFilter === "all" || timelineFilter === "comment") {
+            (requestData.comments || []).forEach((c) => {
+                items.push({
+                    type: "comment",
+                    timestamp: new Date(c.created_at),
+                    data: c,
+                });
+            });
+        }
+
+        // Fees
+        if (timelineFilter === "all" || timelineFilter === "fee") {
+            (requestData.requisition_fees || []).forEach((f) => {
+                items.push({
+                    type: "fee",
+                    timestamp: new Date(f.created_at),
+                    data: f,
+                });
+            });
+        }
+
+        // Approvals
+        if (timelineFilter === "all" || timelineFilter === "approval") {
+            (requestData.approval_history || [])
+                .filter((a) => a.action !== "pending")
+                .forEach((a) => {
+                    items.push({
+                        type:
+                            a.action === "approved" ? "approval" : "rejection",
+                        timestamp: new Date(a.date_updated || a.acted_at),
+                        data: a,
+                    });
+                });
+        }
+
+        // Sort by timestamp desc
+        items.sort((a, b) => b.timestamp - a.timestamp);
+
+        if (!items.length) {
+            container.innerHTML =
+                '<div class="text-center text-muted py-4">No activity found</div>';
+            return;
+        }
+
+        container.innerHTML = items
+            .map((item) => {
+                if (item.type === "comment") {
+                    const c = item.data;
+                    return `
+                    <div class="timeline-item comment">
+                        <div class="d-flex justify-content-between">
+                            <strong class="small">${escapeHtml(c.admin?.first_name)} ${escapeHtml(c.admin?.last_name)}</strong>
+                            <small class="text-muted">${formatTimeAgo(c.created_at)}</small>
+                        </div>
+                        <div class="small bg-white p-2 rounded mt-1">${escapeHtml(c.comment)}</div>
+                    </div>
+                `;
+                }
+
+                if (item.type === "fee") {
+                    const f = item.data;
+                    const isDiscount = f.discount_amount > 0;
+                    return `
+                    <div class="timeline-item fee">
+                        <div class="d-flex justify-content-between">
+                            <strong class="small">${escapeHtml(f.added_by?.name || "Admin")}</strong>
+                            <small class="text-muted">${formatTimeAgo(f.created_at)}</small>
+                        </div>
+                        <div class="small bg-white p-2 rounded mt-1">
+                            ${isDiscount ? "Added discount" : "Added fee"}: <strong>${escapeHtml(f.label)}</strong>
+                            - ${isDiscount ? "-" : ""}${formatMoney(isDiscount ? f.discount_amount : f.fee_amount)}
+                        </div>
+                    </div>
+                `;
+                }
+
+                const a = item.data;
+                const admin = a.acted_by || a.required_admin;
+                return `
+                <div class="timeline-item ${item.type}">
+                    <div class="d-flex justify-content-between">
+                        <strong class="small">${escapeHtml(admin?.name || "Unknown")}</strong>
+                        <small class="text-muted">${formatTimeAgo(a.date_updated || a.acted_at)}</small>
+                    </div>
+                    <div class="small bg-white p-2 rounded mt-1">
+                        ${
+                            item.type === "approval"
+                                ? `<i class="bi bi-check-circle-fill text-success me-1"></i>Approved`
+                                : `<i class="bi bi-x-circle-fill text-danger me-1"></i>Rejected`
+                        }
+                        <span class="text-muted">&middot; Stage ${a.stage}</span>
+                        ${a.remarks ? `<br><em>"${escapeHtml(a.remarks)}"</em>` : ""}
+                    </div>
+                </div>
+            `;
+            })
+            .join("");
+    };
+
+    /**
+     * ========================================================================
+     * ACTIONS — User-Triggered Operations
+     * ========================================================================
+     * Async functions that perform side-effecting operations (status updates,
+     * comments, data refresh) and update the UI accordingly.
+     * ========================================================================
+     */
+
+    /**
+     * Update the request's status by name (e.g., "Ongoing") and reload.
+     * @param {string} statusName
+     * @param {Object} [extra={}] - Additional payload fields
+     */
+    const updateStatus = async (statusName, extra = {}) => {
+        try {
+            await postAction("update-status", {
+                status_name: statusName,
+                ...extra,
+            });
+            showToast(`Status updated to ${statusName}, "success"`);
+            setTimeout(() => location.reload(), 1000);
+        } catch (error) {
+            showToast(error.message, "error");
+        }
+    };
+
+    /**
+     * Read the comment input, POST it, then refresh only the comments
+     * portion of `requestData` and re-render the timeline.
+     */
+    const addComment = async () => {
+        const input = document.getElementById("commentInput");
+        const comment = input.value.trim();
+        if (!comment) return;
+
+        try {
+            await postAction("comment", { comment });
+            input.value = "";
+
+            // Refresh comments in data
+            const freshData = await fetchData();
+            requestData.comments = freshData.data.comments;
+            renderTimeline();
+            showToast("Comment added", "success");
+        } catch (error) {
+            showToast(error.message, "error");
+        }
+    };
+
+    /**
+     * Surgical refresh after an approve/reject action.
+     *
+     * Mirrors the approach used by addComment: re-fetch view-data once,
+     * assign ONLY the fields that change on approve/reject, then re-render
+     * only the sections those fields drive. No full-page reload.
+     *
+     * Sections touched:
+     *   - Header (status badge + finalization pill via status_tracking)
+     *   - Action buttons (approval_info.current_admin_can_act flips)
+     *   - Timeline (approval_history gains a row)
+     *   - Approval tracker card (separate endpoint)
+     */
+    const refreshAfterAction = async () => {
+        const fresh = await fetchData();
+
+        // Patch only the fields that can change on approve/reject.
+        requestData.approval_history = fresh.data.approval_history;
+        requestData.approval_info = fresh.data.approval_info;
+        requestData.form_details.status = fresh.data.form_details.status;
+        requestData.status_tracking = fresh.data.status_tracking;
+
+        // Re-render affected sections only.
+        renderHeader(requestData);
+        renderActionButtons(requestData);
+        renderTimeline();
+
+        // Tracker card uses its own endpoint — refresh it too.
+        try {
+            const tracker = await fetchApprovalTracker();
+            renderApprovalTracker(tracker);
+        } catch (err) {
+            console.error("Approval tracker refresh failed:", err);
+        }
+    };
+
+    /**
+     * ========================================================================
+     * APPROVAL TRACKER — Categorized Approver List
+     * ========================================================================
+     * Fetches and renders the list of required approvers grouped by stage
+     * (Approving Officers, Final Approving Officer, Issuing Officer) with
+     * per-admin status indicators.
+     * ========================================================================
+     */
+
+    /**
+     * Fetch the approval-status payload for the current request.
+     * @returns {Promise<Object>}
+     * @throws {Error} If the response is not OK
+     */
+    const fetchApprovalTracker = async () => {
+        const response = await fetch(
+            `/api/admin/requisition/${requestId}/approval-status`,
+            {
+                headers: {
+                    Authorization: `Bearer ${adminToken}`,
+                    Accept: "application/json",
+                },
+            },
+        );
+        if (!response.ok) throw new Error("Failed to load approval tracker");
+        return response.json();
+    };
+
+    /**
+     * Render the approval tracker card: progress badge, per-stage groups,
+     * and an "Other Approvers" fallback group for uncategorized admins.
+     * @param {Object} tracker - Approval tracker payload from the API
+     */
+    const renderApprovalTracker = (tracker) => {
+        const container = document.getElementById("approvalsContainer");
+        const badge = document.getElementById("approvalCountBadge");
+
+        const current = tracker.current_approvals || 0;
+        const max = tracker.max_approvals || 0;
+
+        badge.textContent = `${current} of ${max} acted`;
+        badge.className = "ms-auto text-muted small fw-normal";
+
+        const admins = tracker.required_admins || [];
+
+        if (!admins.length) {
+            container.innerHTML = `
+        <div class="text-center text-muted py-4">
+            <i class="bi bi-people fs-3 d-block mb-2 opacity-50"></i>
+            <small>No approvers assigned</small>
+        </div>`;
+            return;
+        }
+
+        // Categorize by stage (from ApprovalChainService)
+        //   stage 1 = Approving Officers (Department Managers, role_id 3)
+        //   stage 2 = Final Approving Officer (role_id 2)
+        //   stage 3 = Issuing Officer (role_id 5)
+        const categories = [
+            {
+                key: "stage1",
+                label: "Approving Officers",
+                icon: "bi-people",
+                stage: 1,
+            },
+            {
+                key: "stage2",
+                label: "Final Approving Officer",
+                icon: "bi-shield-check",
+                stage: 2,
+            },
+            {
+                key: "stage3",
+                label: "Issuing Officer",
+                icon: "bi-box-seam",
+                stage: 3,
+            },
+        ];
+
+        const categorized = {};
+        const usedIds = new Set();
+
+        categories.forEach((cat) => {
+            categorized[cat.key] = admins.filter((a) => {
+                if (usedIds.has(a.admin_id)) return false;
+                if (a.stage === cat.stage) {
+                    usedIds.add(a.admin_id);
+                    return true;
+                }
+                return false;
             });
         });
 
-        document.getElementById('confirmApprove').addEventListener('click', async () => {
-            const remarks = document.getElementById('approveRemarks').value;
-            try {
-                const response = await fetch(`/api/admin/requisition/${requestId}/approve`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ remarks })
-                });
-                if (!response.ok) throw new Error('Failed to approve');
-                showToast('Request approved successfully!', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('approveModal')).hide();
-                fetchRequestDetails();
-            } catch (error) {
-                showToast('Error: ' + error.message, 'error');
-            }
-        });
+        const uncategorized = admins.filter((a) => !usedIds.has(a.admin_id));
 
-        document.getElementById('confirmReject').addEventListener('click', async () => {
-            const remarks = document.getElementById('rejectRemarks').value;
-            try {
-                const response = await fetch(`/api/admin/requisition/${requestId}/reject`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ remarks })
-                });
-                if (!response.ok) throw new Error('Failed to reject');
-                showToast('Request rejected successfully!', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
-                fetchRequestDetails();
-            } catch (error) {
-                showToast('Error: ' + error.message, 'error');
-            }
-        });
+        const renderAdminRow = (a) => {
+            const isApproved = a.status === "Approved";
+            const isRejected = a.status === "Rejected";
 
-        document.getElementById('confirmFinalize').addEventListener('click', async () => {
-            try {
-                const response = await fetch(`/api/admin/requisition/${requestId}/finalize`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
-                });
-                if (!response.ok) throw new Error('Failed to finalize');
-                showToast('Form finalized successfully!', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('finalizeModal')).hide();
-                setTimeout(() => location.reload(), 1500);
-            } catch (error) {
-                showToast('Error: ' + error.message, 'error');
-            }
-        });
+            const initials = (a.name || "?")
+                .split(" ")
+                .map((n) => n[0])
+                .slice(0, 2)
+                .join("")
+                .toUpperCase();
 
-        document.getElementById('confirmMarkScheduled').addEventListener('click', async () => {
-            const officialReceiptNum = document.getElementById('officialReceiptNum').value.trim();
-            if (!officialReceiptNum) {
-                showToast('Please enter an official receipt number', 'error');
-                return;
-            }
-            try {
-                const response = await fetch(`/api/admin/requisition/${requestId}/mark-scheduled`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ official_receipt_num: officialReceiptNum })
-                });
-                if (!response.ok) throw new Error('Failed to mark as scheduled');
-                showToast('Request marked as scheduled successfully!', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('markScheduledModal')).hide();
-                setTimeout(() => location.reload(), 1500);
-            } catch (error) {
-                showToast('Error: ' + error.message, 'error');
-            }
-        });
+            const rowBg = isApproved
+                ? "bg-success-subtle"
+                : isRejected
+                  ? "bg-danger-subtle"
+                  : "bg-light";
+            const avatarBg = isApproved
+                ? "#198754"
+                : isRejected
+                  ? "#dc3545"
+                  : "#6c757d";
+            const badgeClass = isApproved
+                ? "bg-success"
+                : isRejected
+                  ? "bg-danger"
+                  : "bg-secondary text-white";
+            const badgeLabel = isApproved
+                ? "Approved"
+                : isRejected
+                  ? "Rejected"
+                  : "Pending";
 
-        document.getElementById('confirmCloseForm').addEventListener('click', async () => {
-            try {
-                const response = await fetch(`/api/admin/requisition/${requestId}/close`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
-                if (!response.ok) throw new Error('Failed to close form');
-                showToast('Form closed successfully!', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('closeFormModal')).hide();
-                setTimeout(() => window.location.href = '/admin/calendar', 1500);
-            } catch (error) {
-                showToast('Error: ' + error.message, 'error');
-            }
-        });
+            const overlayIcon = isApproved
+                ? `<i class="bi bi-check-circle-fill text-success position-absolute"
+        style="bottom:-2px;right:-2px;font-size:14px;"></i>`
+                : isRejected
+                  ? `<i class="bi bi-x-circle-fill text-danger position-absolute"
+          style="bottom:-2px;right:-2px;font-size:14px;"></i>`
+                  : "";
 
-        document.getElementById('confirmStatusUpdate').addEventListener('click', async () => {
-            if (!selectedStatus) return;
-            try {
-                const requestData = { status_name: selectedStatus };
-                if (selectedStatus === 'Late') {
-                    const penaltyAmount = document.getElementById('latePenaltyAmount')?.value;
-                    if (penaltyAmount && parseFloat(penaltyAmount) > 0) {
-                        requestData.late_penalty_fee = parseFloat(penaltyAmount);
-                    }
+            return `
+        <div class="d-flex align-items-center p-2 mb-1 rounded ${rowBg}">
+            <div class="me-2 flex-shrink-0 position-relative">
+                ${
+                    a.photo_url
+                        ? `<img src="${a.photo_url}" class="rounded-circle" width="36" height="36"
+                               style="object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                           <div class="rounded-circle d-none align-items-center justify-content-center text-white"
+                                style="width:36px;height:36px;font-size:0.75rem;background:${avatarBg};">
+                               ${escapeHtml(initials)}
+                           </div>`
+                        : `<div class="rounded-circle d-flex align-items-center justify-content-center text-white"
+                                style="width:36px;height:36px;font-size:0.75rem;background:${avatarBg};">
+                               ${escapeHtml(initials)}
+                           </div>`
                 }
-                const response = await fetch(`/api/admin/requisition/${requestId}/update-status`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestData)
-                });
-                if (!response.ok) throw new Error('Failed to update status');
-                showToast('Status updated successfully!', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal')).hide();
-                setTimeout(() => location.reload(), 1000);
-            } catch (error) {
-                showToast('Error: ' + error.message, 'error');
-            }
+                ${overlayIcon}
+            </div>
+            <div class="flex-grow-1 min-w-0">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-truncate">
+                        <div class="fw-semibold small text-truncate">${escapeHtml(a.name)}</div>
+                        <div class="text-muted text-truncate" style="font-size:0.72rem;">
+                            ${escapeHtml(a.title || a.role_name || "Approver")}
+                        </div>
+                    </div>
+                    <span class="badge ${badgeClass} ms-2"
+                          style="font-size:0.65rem;white-space:nowrap;">
+                        ${badgeLabel}
+                    </span>
+                </div>
+            </div>
+        </div>
+    `;
+        };
+
+        let html = "";
+
+        categories.forEach((cat) => {
+            const group = categorized[cat.key];
+            if (!group.length) return;
+
+            html += `
+<div class="mb-3">
+    <div class="d-flex align-items-center mb-2 px-1">
+        <i class="bi ${cat.icon} text-secondary me-2"></i>
+        <span class="text-uppercase fw-bold text-muted"
+              style="font-size:0.7rem;letter-spacing:0.05em;">
+            ${cat.label}
+        </span>
+        <span class="ms-auto text-muted" style="font-size:0.7rem;">
+            ${group.length}
+        </span>
+    </div>
+    ${group.map(renderAdminRow).join("")}
+</div>
+    `;
         });
 
-        document.getElementById('saveFeeBtn').addEventListener('click', async () => {
-            const type = document.getElementById('feeType').value;
-            const value = parseFloat(document.getElementById('feeValue').value);
-            const label = document.getElementById('feeLabel').value;
-            const discountType = document.getElementById('discountType').value;
-            const accountNum = document.getElementById('accountNum').value.trim();
+        if (uncategorized.length) {
+            html += `
+        <div class="mb-3">
+            <div class="d-flex align-items-center mb-2 px-1">
+                <i class="bi bi-person-gear text-secondary me-2"></i>
+                <span class="text-uppercase fw-bold text-muted"
+                      style="font-size:0.7rem;letter-spacing:0.05em;">
+                    Other Approvers
+                </span>
+            </div>
+            ${uncategorized.map(renderAdminRow).join("")}
+        </div>
+    `;
+        }
 
-            if (!type || !value || !label) {
-                showToast('Please fill all required fields.', 'error');
-                return;
-            }
+        container.innerHTML = html;
+    };
 
+    /**
+     * ========================================================================
+     * MODALS & EVENT SETUP
+     * ========================================================================
+     * Shared modal builder and one-time DOM event binding for tabs, the
+     * timeline filter, comment input, and back-to-top button.
+     * ========================================================================
+     */
+
+    /**
+     * Show a generic confirmation modal with dynamic title, body, confirm
+     * button styling, and an onConfirm callback. The confirm button is
+     * cloned to remove prior listeners before attaching the new handler.
+     * @param {Object} config
+     * @param {string} config.title
+     * @param {string} config.body
+     * @param {string} [config.confirmClass="btn-primary"]
+     * @param {string} [config.confirmText="Confirm"]
+     * @param {Function} config.onConfirm - async callback; errors are toasted
+     */
+    const showActionModal = (config) => {
+        document.getElementById("actionModalTitle").textContent = config.title;
+        document.getElementById("actionModalBody").innerHTML = config.body;
+
+        const confirmBtn = document.getElementById("actionModalConfirm");
+        confirmBtn.className = `btn ${config.confirmClass || "btn-primary"}`;
+        confirmBtn.textContent = config.confirmText || "Confirm";
+
+        const modal = bootstrap.Modal.getOrCreateInstance(
+            document.getElementById("actionModal"),
+        );
+
+        const fresh = confirmBtn.cloneNode(true);
+        confirmBtn.replaceWith(fresh);
+        fresh.addEventListener("click", async () => {
             try {
-                let endpoint, requestData;
-                if (type === 'additional') {
-                    endpoint = `/api/admin/requisition/${requestId}/fee`;
-                    requestData = { label, fee_amount: value, account_num: accountNum || null };
-                } else {
-                    endpoint = `/api/admin/requisition/${requestId}/discount`;
-                    requestData = { label, discount_amount: value, discount_type: discountType, account_num: accountNum || null };
-                }
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestData)
-                });
-                if (!response.ok) throw new Error('Failed to add fee/discount');
-                showToast('Fee/discount added successfully', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('feeModal')).hide();
-                document.getElementById('feeType').value = '';
-                document.getElementById('feeValue').value = '';
-                document.getElementById('feeLabel').value = '';
-                document.getElementById('accountNum').value = '';
-                await refreshAllFeeDisplays();
-            } catch (error) {
-                showToast('Failed to add fee/discount: ' + error.message, 'error');
+                await config.onConfirm();
+                modal.hide();
+            } catch (err) {
+                showToast(err.message, "error");
             }
         });
 
-        document.getElementById('feeType').addEventListener('change', function() {
-            const discountSection = document.getElementById('discountTypeSection');
-            discountSection.style.display = this.value === 'discount' ? 'block' : 'none';
-            if (this.value === 'vat') {
-                document.getElementById('feeLabel').value = 'Less VAT';
-                document.getElementById('feeValue').value = '12';
-                document.getElementById('discountType').value = 'Percentage';
-            }
-        });
+        modal.show();
+    };
 
+    /**
+     * Wire up tab buttons (`[data-tab]`) to toggle active classes on both
+     * the tab header and its corresponding `${tab}Pane` content pane.
+     */
+    const setupTabs = () => {
+        document.querySelectorAll("[data-tab]").forEach((tab) => {
+            tab.addEventListener("click", () => {
+                document
+                    .querySelectorAll("[data-tab]")
+                    .forEach((t) => t.classList.remove("active"));
+                document
+                    .querySelectorAll(".tab-pane")
+                    .forEach((p) => p.classList.remove("active"));
+
+                tab.classList.add("active");
+                document
+                    .getElementById(`${tab.dataset.tab}Pane`)
+                    .classList.add("active");
+            });
+        });
+    };
+
+    /**
+     * Bind one-time event listeners for the timeline filter, refresh button,
+     * comment input/send button, and the back-to-top scroll button.
+     */
+    const setupEventListeners = () => {
         // Timeline
-        const stickyBtn = document.getElementById('stickyTimelineBtn');
-        const timelineModal = document.getElementById('timelineModal');
-        const closeBtn = document.getElementById('closeTimelineBtn');
+        document
+            .getElementById("timelineFilter")
+            ?.addEventListener("change", (e) => {
+                timelineFilter = e.target.value;
+                renderTimeline();
+            });
 
-        stickyBtn.addEventListener('click', () => {
-            timelineModal.classList.toggle('show');
-            if (!isTimelineLoaded) loadTimelineContent();
-        });
-        if (closeBtn) closeBtn.addEventListener('click', () => timelineModal.classList.remove('show'));
-        document.getElementById('refreshTimelineBtn').addEventListener('click', () => {
-            isTimelineLoaded = false;
-            loadTimelineContent();
-            showToast('Timeline refreshed', 'success');
-        });
-        document.getElementById('timelineFilter').addEventListener('change', (e) => {
-            currentTimelineFilter = e.target.value;
-            loadTimelineContent();
-        });
-        document.getElementById('timelineSendBtn').addEventListener('click', sendComment);
-        document.getElementById('timelineComment').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendComment();
-            }
-        });
+        document
+            .getElementById("refreshTimeline")
+            ?.addEventListener("click", async () => {
+                const freshData = await fetchData();
+                // Timeline-related fields.
+                requestData.comments = freshData.data.comments;
+                requestData.requisition_fees = freshData.data.requisition_fees;
+                requestData.approval_history = freshData.data.approval_history;
+                // Header + actions.
+                requestData.approval_info = freshData.data.approval_info;
+                requestData.status_tracking = freshData.data.status_tracking;
+                requestData.form_details.status =
+                    freshData.data.form_details.status;
+
+                renderTimeline();
+                renderHeader(requestData);
+                renderActionButtons(requestData);
+
+                // Approval Status card.
+                try {
+                    const tracker = await fetchApprovalTracker();
+                    renderApprovalTracker(tracker);
+                } catch (err) {
+                    console.error("Approval tracker refresh failed:", err);
+                }
+
+                showToast("Refreshed", "success");
+            });
+
+        document
+            .getElementById("sendCommentBtn")
+            ?.addEventListener("click", addComment);
+        document
+            .getElementById("commentInput")
+            ?.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") addComment();
+            });
+
+        // Bootstrap tooltips (re-init after header render)
+        document
+            .querySelectorAll('[data-bs-toggle="tooltip"]')
+            .forEach((el) => bootstrap.Tooltip.getOrCreateInstance(el));
 
         // Back to top
-        const backToTop = document.getElementById('backToTop');
-        window.addEventListener('scroll', () => backToTop.classList.toggle('show', window.pageYOffset > 300));
-        backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-        // Document preview
-        document.addEventListener('click', (event) => {
-            let button = event.target.closest('[data-document-url]');
-            if (button && button.hasAttribute('data-document-url')) {
-                event.preventDefault();
-                const url = button.getAttribute('data-document-url');
-                const title = button.getAttribute('data-document-title');
-                const ext = url.split('.').pop().toLowerCase();
-                const isPDF = ext === 'pdf';
-                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-
-                const overlay = document.createElement('div');
-                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;justify-content:center;align-items:center;cursor:pointer';
-                overlay.onclick = (e) => e.target === overlay && overlay.remove();
-
-                const closeBtnDoc = document.createElement('button');
-                closeBtnDoc.innerHTML = '&times;';
-                closeBtnDoc.style.cssText = 'position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;width:40px;height:40px;font-size:24px;cursor:pointer';
-                closeBtnDoc.onclick = () => overlay.remove();
-                overlay.appendChild(closeBtnDoc);
-
-                if (isPDF) {
-                    const iframe = document.createElement('iframe');
-                    iframe.src = `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
-                    iframe.style.cssText = 'width:90%;height:90%;border:none;border-radius:8px';
-                    overlay.appendChild(iframe);
-                } else if (isImage) {
-                    const img = document.createElement('img');
-                    img.src = url;
-                    img.style.cssText = 'max-width:90%;max-height:90%;border-radius:8px';
-                    overlay.appendChild(img);
-                } else {
-                    overlay.innerHTML += `<div style="background:white;padding:2rem;border-radius:8px;text-align:center"><p>This file type cannot be previewed.</p><a href="${url}" target="_blank" class="btn btn-primary">Download File</a></div>`;
-                }
-                document.body.appendChild(overlay);
-            }
+        const backToTop = document.getElementById("backToTop");
+        window.addEventListener("scroll", () => {
+            backToTop.classList.toggle("show", window.scrollY > 300);
         });
-    }
+        backToTop.addEventListener("click", () =>
+            window.scrollTo({ top: 0, behavior: "smooth" }),
+        );
+    };
 
-    // Public init method
-    function init(id) {
+    /**
+     * ========================================================================
+     * INIT — Module Entry Point
+     * ========================================================================
+     * Called once on DOMContentLoaded with the request ID parsed from the URL
+     * path. Orchestrates the initial fetch + render sequence, then wires up
+     * all event listeners.
+     * ========================================================================
+     */
+
+    /**
+     * Initialize the request view for a given request ID.
+     * @param {string|number} id - Requisition request ID
+     */
+    const init = async (id) => {
         requestId = id;
-        adminToken = localStorage.getItem('adminToken');
+        adminToken = localStorage.getItem("adminToken");
+
         if (!adminToken) {
-            console.error('No authentication token found');
+            document.getElementById("loadingState").innerHTML =
+                '<div class="alert alert-danger">Authentication required</div>';
             return;
         }
-        markNotificationAsRead();
-        fetchRequestDetails();
-        setupEventListeners();
-    }
+
+        try {
+            // Mark notification as read (fire and forget)
+            fetch(
+                `/api/admin/notifications/requisition/${requestId}/mark-as-read`,
+                {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${adminToken}` },
+                },
+            ).catch(() => {});
+
+            // Fetch all data in single query
+            const result = await fetchData();
+            requestData = result.data;
+
+            // Render
+            renderHeader(requestData);
+            renderActionButtons(requestData);
+            renderDetails(requestData);
+            renderTimeline();
+
+            // Fetch approval tracker (separate endpoint, non-blocking)
+            fetchApprovalTracker()
+                .then(renderApprovalTracker)
+                .catch((err) => {
+                    console.error("Approval tracker error:", err);
+                    document.getElementById("approvalsContainer").innerHTML =
+                        '<div class="text-center text-muted py-4"><small>Failed to load approvers</small></div>';
+                });
+
+            // Show content
+            document.getElementById("loadingState").style.display = "none";
+            document.getElementById("contentState").style.display = "block";
+
+            // Setup
+            setupTabs();
+            setupEventListeners();
+        } catch (error) {
+            console.error("Init error:", error);
+            document.getElementById("loadingState").innerHTML =
+                `<div class="alert alert-danger">
+                    <strong>Error:</strong> ${escapeHtml(error.message)}
+                    <br><button class="btn btn-sm btn-danger mt-2" onclick="location.reload()">Retry</button>
+                </div>`;
+        }
+    };
 
     return { init };
 })();
+
+window.RequestViewThin = RequestViewThin;
+
+/**
+ * ============================================================================
+ * BOOTSTRAP — DOMContentLoaded Entry
+ * ============================================================================
+ * Parses the request ID from the URL path and kicks off the module. If the
+ * module failed to load (e.g., script error), shows a fallback error message.
+ * ============================================================================
+ */
+document.addEventListener("DOMContentLoaded", () => {
+    const pathParts = window.location.pathname.split("/");
+    const requestId = pathParts[pathParts.length - 1];
+
+    if (typeof RequestViewThin !== "undefined") {
+        RequestViewThin.init(requestId);
+    } else {
+        console.error("RequestViewThin module not loaded");
+        document.getElementById("loadingState").innerHTML =
+            '<div class="alert alert-danger">Failed to load module. Please refresh.</div>';
+    }
+});

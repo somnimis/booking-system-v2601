@@ -51,7 +51,7 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'check.admin.role' => \App\Http\Middleware\CheckAdminRole::class,
+        'admin.api' => \App\Http\Middleware\AdminApiAuth::class,
     ];
 
     protected function schedule(Schedule $schedule)

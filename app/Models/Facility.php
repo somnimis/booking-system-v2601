@@ -18,6 +18,7 @@ class Facility extends Model
         'facility_code',
         'total_levels',
         'category_id',
+        'managed_by',
         'subcategory_id',
         'location_note',
         'capacity',
@@ -49,6 +50,16 @@ class Facility extends Model
     }
 
     // Relationships
+    public function events()
+    {
+        return $this->belongsToMany(CalendarEvent::class, 'event_venues', 'facility_id', 'event_id')
+            ->withTimestamps()
+            ->using(EventVenue::class);
+    }
+    public function manager()
+    {
+        return $this->belongsTo(Department::class, 'managed_by', 'department_id');
+    }
     public function admins()
     {
         return $this->belongsToMany(Admin::class, 'admin_facilities', 'facility_id', 'admin_id')
@@ -102,6 +113,10 @@ class Facility extends Model
         return $this->belongsTo(Facility::class, 'parent_facility_id', 'facility_id');
     }
     public function childFacilities()
+    {
+        return $this->hasMany(Facility::class, 'parent_facility_id', 'facility_id');
+    }
+    public function children()
     {
         return $this->hasMany(Facility::class, 'parent_facility_id', 'facility_id');
     }

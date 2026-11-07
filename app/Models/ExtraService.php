@@ -6,16 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class ExtraService extends Model
 {
-    // Table name
     protected $table = 'extra_services';
     protected $primaryKey = 'service_id';
-
-    // Disable timestamps
     public $timestamps = false;
 
-    // Mass assignable fields
     protected $fillable = [
-        'service_name'
+        'service_name',
+        'managed_by',
+        'account_number',
+        'service_fee'
     ];
 
     // Relationships
@@ -24,10 +23,10 @@ class ExtraService extends Model
     {
         return $this->belongsToMany(
             RequisitionForm::class,
-            'requested_services',  // ← CORRECT pivot table
-            'service_id',          // ← Foreign key on pivot table to extra_services  
-            'request_id'           // ← Foreign key on pivot table to requisition_forms
-        )->withTimestamps();       // ← Add this if your pivot table has timestamps
+            'requested_services',
+            'service_id',
+            'request_id'
+        );
     }
 
     public function requestedServices()
@@ -39,17 +38,23 @@ class ExtraService extends Model
         );
     }
 
-    public function adminServices()
+    /**
+     * Calendar events this service is assigned to.
+     * Inverse of CalendarEvent::services().
+     */
+    public function calendarEvents()
     {
-        return $this->hasMany(AdminService::class, 'service_id', 'service_id');
+        return $this->belongsToMany(
+            CalendarEvent::class,
+            'event_services',
+            'service_id',
+            'event_id'
+        )->withPivot(['event_service_id', 'notes'])
+            ->withTimestamps();
     }
 
-/**
- * The admins that belong to the service.
- */
-public function admins()
-{
-    return $this->belongsToMany(Admin::class, 'admin_services', 'service_id', 'admin_id');
-}
-
+    public function managingDepartment()
+    {
+        return $this->belongsTo(Department::class, 'managed_by', 'department_id');
+    }
 }

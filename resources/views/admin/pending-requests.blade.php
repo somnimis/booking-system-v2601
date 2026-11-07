@@ -1,350 +1,370 @@
-{{-- pending-requests-tab.blade.php --}}
 @extends('layouts.admin')
 @section('title', 'Pending Requests')
 @section('content')
-<style>
-    /* Pending Requests specific styles - adapted from signatory dashboard */
-    .requisition-card {
-        background: #fff;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        border: 1px solid #e9ecef;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-    
-    .requisition-card:hover {
-        background-color: #f8f9fa;
-        border-color: #dee2e6;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    
-    .requester-name {
-        font-weight: 600;
-        color: #212529;
-        margin-bottom: 0.25rem;
-        font-size: 0.95rem;
-    }
-    
-    .organization-badge {
-        background-color: #e9ecef;
-        color: #495057;
-        font-size: 0.7rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 0.25rem;
-        display: inline-block;
-    }
-    
-    .status-badge {
-        font-size: 0.7rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: 500;
-        white-space: nowrap;
-    }
-    
-    .status-pending {
-        background-color: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeaa7;
-    }
-    
-    .status-awaiting {
-        background-color: #d1ecf1;
-        color: #0c5460;
-        border: 1px solid #bee5eb;
-    }
-    
-    .item-chip {
-        background-color: #f1f3f5;
-        color: #495057;
-        font-size: 0.7rem;
-        padding: 0.15rem 0.4rem;
-        border-radius: 0.25rem;
-        display: inline-block;
-        margin-right: 0.25rem;
-        margin-bottom: 0.25rem;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    
-    .item-chip i {
-        margin-right: 0.2rem;
-        font-size: 0.6rem;
-    }
-    
-    .schedule-info {
-        font-size: 0.7rem;
-        color: #6c757d;
-        margin-top: 0.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-        flex-wrap: wrap;
-    }
-    
-    .schedule-info i {
-        font-size: 0.6rem;
-    }
-    
-    .request-id {
-        font-size: 0.65rem;
-        color: #adb5bd;
-        font-weight: 500;
-    }
-    
-    .refresh-btn {
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        color: #6c757d;
-        background: transparent;
-        border: 1px solid transparent;
-        transition: all 0.2s;
-    }
-    
-    .refresh-btn:hover {
-        color: #135ba3;
-        background-color: rgba(0,0,0,0.02);
-    }
-    
-    .refresh-btn:hover i {
-        color: #135ba3 !important;
-    }
-    
-    .refresh-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-    
-    .animate-spin {
-        animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
+    <style>
+        /* Modern Banner Styles - Navy Blue Theme */
+        .create-reservation-banner {
+            background: linear-gradient(135deg, #0e388c 0%, #1a4a9e 100%);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(11, 45, 114, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+        }
 
-    /* Pagination styles - from signatory dashboard */
-    .pagination-container {
-        margin-top: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    
-    .pagination-info {
-        font-size: 0.85rem;
-        color: #6c757d;
-    }
-    
-    .pagination-controls {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    
-    .btn-pagination {
-        background: #fff;
-        border: 1px solid #dee2e6;
-        color: #495057;
-        padding: 0.375rem 0.75rem;
-        border-radius: 0.375rem;
-        font-size: 0.85rem;
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-    
-    .btn-pagination:hover:not(:disabled) {
-        background: #e9ecef;
-        border-color: #ced4da;
-    }
-    
-    .btn-pagination:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    
-    .btn-pagination.active {
-        background: #0d6efd;
-        border-color: #0d6efd;
-        color: white;
-    }
-    
-    /* Per page selector */
-    .per-page-selector {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .per-page-selector select {
-        width: auto;
-        min-width: 70px;
-        padding: 0.25rem 1.5rem 0.25rem 0.5rem;
-        font-size: 0.85rem;
-        background-position: right 0.25rem center;
-    }
-    
-    /* Loading spinner */
-    .loading-spinner {
-        min-height: 200px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .requester-name {
+        .create-reservation-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='rgba(255,255,255,0.05)' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: bottom;
+            background-size: cover;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .banner-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .banner-text h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .banner-text p {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 0;
             font-size: 0.9rem;
+            max-width: 550px;
+            line-height: 1.5;
         }
-        .btn-pagination {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.8rem;
-        }
-    }
-</style>
 
-<main id="main">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <!-- Pending Requests Card -->
-                <div class="card p-3">
-                    <div id="pendingRequestsApp">
-                        <!-- Header with Title, Count, and Controls -->
-                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <h5 class="fw-bold mb-0 text-primary">
-                                    <i class="bi bi-clock-history me-2"></i>
-                                    Pending Requisitions
-                                </h5>
-                                <span class="badge bg-primary" id="pendingRequestsCount">0</span>
+        .btn-create-reservation {
+            background: white;
+            color: #0b2d72;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-create-reservation:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(11, 45, 114, 0.3);
+            color: #0b2d72;
+            background: #f8f9fa;
+        }
+
+        .btn-create-reservation i {
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .banner-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .banner-text p {
+                max-width: 100%;
+            }
+
+            .create-reservation-banner {
+                padding: 1.25rem;
+            }
+
+            .banner-text h3 {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* Tab badge styling - Navy Blue */
+        .nav-tabs .badge {
+            background-color: #0b2d72 !important;
+            color: white;
+        }
+
+        /* Tab link text styling */
+        .nav-tabs .nav-link {
+            color: #000000;
+            font-weight: 500;
+            border: none;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: #0b2d72;
+            border: none;
+            background-color: transparent;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #0b2d72;
+            background-color: transparent;
+            border-bottom: 2px solid #0b2d72;
+            font-weight: 600;
+        }
+
+        /* Remove default Bootstrap tab border */
+        .nav-tabs {
+            border-bottom: none;
+            gap: 0.5rem;
+        }
+
+        /* Status badge styles */
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+        }
+
+        /* Mobile-friendly requisition card styles */
+        .requisition-card {
+            background: #fff;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .requisition-card:hover {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+
+        .requester-name {
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 0.25rem;
+        }
+
+        .schedule-info {
+            font-size: 0.7rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+        }
+
+        .schedule-info i {
+            font-size: 0.6rem;
+        }
+
+        .request-id {
+            font-size: 0.65rem;
+            color: #adb5bd;
+            font-weight: 500;
+        }
+
+        /* Pagination styles */
+        .pagination-container {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .pagination-info {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-pagination {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-pagination:hover:not(:disabled) {
+            background: #e9ecef;
+            border-color: #ced4da;
+        }
+
+        .btn-pagination:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-pagination.active {
+            background: #0b2d72;
+            border-color: #0b2d72;
+            color: white;
+        }
+    </style>
+
+    <main id="main">
+        <div class="container-fluid px-4">
+            <div class="row g-0">
+                <!-- Modern Create Reservation Banner -->
+                <div class="col-12">
+                    <div class="create-reservation-banner">
+                        <div class="banner-content">
+                            <div class="banner-text">
+                                <h3>
+                                    <i class="bi bi-plus-circle me-2"></i>
+                                    Create Reservation
+                                </h3>
+                                <p>
+                                    Create reservations on behalf of users.
+                                </p>
                             </div>
-                            
-                            <div class="d-flex align-items-center gap-2">
+                            <a href="{{ url('/admin/reservations/create') }}" class="btn-create-reservation">
+                                <i class="bi bi-calendar-plus"></i>
+                                Create New Reservation
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requisitions List with Tabs -->
+                <div class="col-12">
+                    <div class="card p-3">
+                        <!-- Tabs with Sort and Show controls in the same row -->
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                            <!-- Bootstrap Tabs -->
+                            <ul class="nav nav-tabs mb-0" id="requisitionTabs" role="tablist" style="border-bottom: none;">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="pending-tab" data-bs-toggle="tab"
+                                        data-bs-target="#pending" type="button" role="tab" aria-controls="pending"
+                                        aria-selected="true">
+                                        Pending Approval <span id="pendingCount" class="badge bg-secondary ms-1">0</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="awaiting-tab" data-bs-toggle="tab"
+                                        data-bs-target="#awaiting" type="button" role="tab" aria-controls="awaiting"
+                                        aria-selected="false">
+                                        Awaiting Payment <span id="awaitingCount" class="badge bg-secondary ms-1">0</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="payment-submitted-tab" data-bs-toggle="tab"
+                                        data-bs-target="#payment-submitted" type="button" role="tab"
+                                        aria-controls="payment-submitted" aria-selected="false">
+                                        Verifying Payment <span id="paymentSubmittedCount"
+                                            class="badge bg-secondary ms-1">0</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="reserved-tab" data-bs-toggle="tab"
+                                        data-bs-target="#reserved" type="button" role="tab" aria-controls="reserved"
+                                        aria-selected="false">
+                                        Reserved <span id="reservedCount" class="badge bg-secondary ms-1">0</span>
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <!-- Sort and Per Page Controls -->
+                            <div class="d-flex align-items-center gap-3">
+                                <!-- Sort Dropdown -->
+                                <div class="sort-selector d-flex align-items-center gap-1">
+                                    <label for="sortOrder" class="small text-muted mb-0">Sort:</label>
+                                    <select id="sortOrder" class="form-select form-select-sm" style="width: 140px;">
+                                        <option value="desc">Newest First</option>
+                                        <option value="asc" selected>Oldest First</option>
+                                    </select>
+                                </div>
+
                                 <!-- Per Page Selector -->
                                 <div class="per-page-selector d-flex align-items-center gap-1">
                                     <label for="perPage" class="small text-muted mb-0">Show:</label>
-                                    <select id="perPage" class="form-select form-select-sm" v-model="perPage" @change="changePerPage">
+                                    <select id="perPage" class="form-select form-select-sm" style="width: 90px;">
+                                        <option value="4" selected>4</option>
                                         <option value="10">10</option>
                                         <option value="15">15</option>
                                         <option value="25">25</option>
                                         <option value="50">50</option>
                                     </select>
                                 </div>
-                                
-                                <!-- Refresh Button -->
-                                <button type="button"
-                                    class="btn btn-link text-secondary text-decoration-none refresh-btn p-1"
-                                    @click="refreshPendingRequests" :disabled="loading">
-                                    <i class="bi" :class="loading ? 'bi-arrow-clockwise animate-spin' : 'bi-arrow-clockwise'"></i>
-                                    <span class="small">Refresh</span>
-                                </button>
                             </div>
                         </div>
 
-                        <!-- Loading Spinner -->
-                        <div class="loading-spinner text-center py-5" v-if="loading">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="text-muted mt-2 small">Loading pending requests...</p>
-                        </div>
-
-                        <!-- Pending Requests List -->
-                        <div v-else>
-                            <!-- Empty State -->
-                            <div v-if="pendingRequests.length === 0" class="text-center py-5">
-                                <i class="bi bi-inbox display-4 text-muted mb-3"></i>
-                                <p class="text-muted mb-0">No pending requests found.</p>
-                                <p class="text-muted small">Statuses: Pending Approval or Awaiting Payment</p>
-                            </div>
-
-                            <!-- Requests List -->
-                            <div v-for="request in pendingRequests" :key="request.request_id"
-                                class="requisition-card"
-                                @click="goToEvent(request.request_id)">
-                                
-                                <!-- Header with Name and Organization -->
-                                <div class="d-flex justify-content-between align-items-start mb-1">
-                                    <div class="d-flex align-items-center flex-wrap gap-1">
-                                        <span class="requester-name">@{{ request.requester.name }}</span>
-                                        <span class="text-muted small" v-if="request.requester.organization">
-                                            - @{{ request.requester.organization }}
-                                        </span>
+                        <!-- Tab Content -->
+                        <div class="tab-content" id="requisitionTabsContent">
+                            <!-- Pending Approval Tab -->
+                            <div class="tab-pane fade show active" id="pending" role="tabpanel"
+                                aria-labelledby="pending-tab">
+                                <div id="pendingRequisitionsContainer">
+                                    <div class="text-center text-muted py-4">
+                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                        <div class="mt-2">Loading pending requisitions...</div>
                                     </div>
-                                    <span class="status-badge" :class="getStatusClass(request.status.name)">
-                                        @{{ request.status.name }}
-                                    </span>
                                 </div>
-                                
-                                <!-- Requested Items -->
-                                <div class="mb-1">
-                                    <span v-for="(item, index) in displayItems(request.requested_items)" :key="index" 
-                                          class="item-chip" :title="item.name">
-                                        <i class="bi" :class="item.type === 'facility' ? 'bi-building' : 'bi-tools'"></i>
-                                        @{{ item.name }}<span v-if="item.quantity > 1"> (@{{ item.quantity }})</span>
-                                    </span>
-                                    <span class="item-chip text-muted" v-if="hasMoreItems(request.requested_items)">
-                                        <i class="bi bi-three-dots"></i>
-                                        @{{ getRemainingCount(request.requested_items) }} more...
-                                    </span>
-                                </div>
-                                
-                                <!-- Schedule Info -->
-                                <div class="schedule-info">
-                                    <i class="bi bi-calendar3 me-1"></i> 
-                                    @{{ request.schedule.display }}
-                                    <span class="mx-1">•</span>
-                                    <i class="bi bi-hourglass-split me-1"></i>
-                                    @{{ formatDuration(request) }}
-                                </div>
-                                
-                                <!-- Footer with Request ID -->
-                                <div class="d-flex justify-content-between align-items-center mt-1">
-                                    <span class="request-id">#@{{ padRequestId(request.request_id) }}</span>
-                                    <i class="bi bi-chevron-right text-primary" style="font-size: 0.8rem;"></i>
+                                <div id="pendingPaginationContainer" class="pagination-container" style="display: none;">
                                 </div>
                             </div>
 
-                            <!-- Pagination -->
-                            <div class="pagination-container" v-if="totalPages > 1">
-                                <div class="pagination-info">
-                                    Showing @{{ meta.from || 0 }} to @{{ meta.to || 0 }} of @{{ totalItems }} entries
+                            <!-- Awaiting Payment Tab -->
+                            <div class="tab-pane fade" id="awaiting" role="tabpanel" aria-labelledby="awaiting-tab">
+                                <div id="awaitingRequisitionsContainer">
+                                    <div class="text-center text-muted py-4">
+                                        Click the tab to load awaiting payment requisitions...
+                                    </div>
                                 </div>
-                                <div class="pagination-controls">
-                                    <!-- Previous Button -->
-                                    <button class="btn-pagination" 
-                                            @click="changePage(currentPage - 1)" 
-                                            :disabled="currentPage === 1">
-                                        <i class="bi bi-chevron-left"></i> Previous
-                                    </button>
-                                    
-                                    <!-- Page Numbers -->
-                                    <button v-for="page in displayedPages" 
-                                            :key="page"
-                                            class="btn-pagination" 
-                                            :class="{ active: page === currentPage }"
-                                            @click="changePage(page)"
-                                            v-if="page !== '...'">
-                                        @{{ page }}
-                                    </button>
-                                    <span v-else class="btn-pagination disabled">...</span>
-                                    
-                                    <!-- Next Button -->
-                                    <button class="btn-pagination" 
-                                            @click="changePage(currentPage + 1)" 
-                                            :disabled="currentPage === totalPages">
-                                        Next <i class="bi bi-chevron-right"></i>
-                                    </button>
+                                <div id="awaitingPaginationContainer" class="pagination-container" style="display: none;">
+                                </div>
+                            </div>
+
+                            <!-- Payment Submitted Tab -->
+                            <div class="tab-pane fade" id="payment-submitted" role="tabpanel"
+                                aria-labelledby="payment-submitted-tab">
+                                <div id="paymentSubmittedRequisitionsContainer">
+                                    <div class="text-center text-muted py-4">
+                                        Click the tab to load payment submitted requisitions...
+                                    </div>
+                                </div>
+                                <div id="paymentSubmittedPaginationContainer" class="pagination-container"
+                                    style="display: none;"></div>
+                            </div>
+
+                            <!-- Reserved Tab -->
+                            <div class="tab-pane fade" id="reserved" role="tabpanel" aria-labelledby="reserved-tab">
+                                <div id="reservedRequisitionsContainer">
+                                    <div class="text-center text-muted py-4">
+                                        Click the tab to load reserved requisitions...
+                                    </div>
+                                </div>
+                                <div id="reservedPaginationContainer" class="pagination-container" style="display: none;">
                                 </div>
                             </div>
                         </div>
@@ -352,215 +372,333 @@
                 </div>
             </div>
         </div>
-    </div>
-</main>
+    </main>
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-<script>
-    (function() {
-        'use strict';
+    <script src="{{ asset('js/admin/requests-list.js') }}"></script>
+    <script>
+        // State management
+        let currentTab = 'pending';
+        let currentPage = 1;
+        let currentPerPage = 4;
+        let currentSortOrder = 'asc';
 
-        // Configuration
-        const CONFIG = {
-            api: {
-                pendingRequests: '/api/admin/pending-requests',
-                pendingCount: '/api/admin/pending-requests-count'
-            },
-            pagination: {
-                defaultPerPage: 10,
-                pageRange: 2
-            }
+        // Track loaded tabs and their data
+        let loadedTabs = {
+            pending: false,
+            awaiting: false,
+            'payment-submitted': false,
+            reserved: false
         };
 
-        // Get admin token
-        const adminToken = localStorage.getItem('adminToken');
-        if (!adminToken) {
-            console.error('No admin token found');
-            window.location.href = '/admin/login';
-            return;
+        let tabData = {
+            pending: null,
+            awaiting: null,
+            'payment-submitted': null,
+            reserved: null
+        };
+
+        let tabPagination = {
+            pending: null,
+            awaiting: null,
+            'payment-submitted': null,
+            reserved: null
+        };
+
+        // Status ID mapping
+        const STATUS_IDS = {
+            pending: 1,
+            awaiting: 2,
+            'payment-submitted': 3,
+            reserved: 4
+        };
+
+        // DOM Elements
+        let elements = {};
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeElements();
+            setupEventListeners();
+
+            // Load counts immediately on page load
+            fetchAllCounts();
+
+            // Handle URL tab parameter and load initial tab content
+            handleUrlTabParameterAndLoad();
+        });
+
+        function initializeElements() {
+            elements = {
+                pendingCount: document.getElementById('pendingCount'),
+                awaitingCount: document.getElementById('awaitingCount'),
+                paymentSubmittedCount: document.getElementById('paymentSubmittedCount'),
+                reservedCount: document.getElementById('reservedCount'),
+                pendingContainer: document.getElementById('pendingRequisitionsContainer'),
+                awaitingContainer: document.getElementById('awaitingRequisitionsContainer'),
+                paymentSubmittedContainer: document.getElementById('paymentSubmittedRequisitionsContainer'),
+                reservedContainer: document.getElementById('reservedRequisitionsContainer'),
+                pendingPagination: document.getElementById('pendingPaginationContainer'),
+                awaitingPagination: document.getElementById('awaitingPaginationContainer'),
+                paymentSubmittedPagination: document.getElementById('paymentSubmittedPaginationContainer'),
+                reservedPagination: document.getElementById('reservedPaginationContainer'),
+                perPageSelect: document.getElementById('perPage'),
+                sortOrderSelect: document.getElementById('sortOrder'),
+                pendingTab: document.getElementById('pending-tab'),
+                awaitingTab: document.getElementById('awaiting-tab'),
+                paymentSubmittedTab: document.getElementById('payment-submitted-tab'),
+                reservedTab: document.getElementById('reserved-tab')
+            };
         }
 
-        // Initialize Vue app
-        window.pendingRequestsApp = new Vue({
-            el: '#pendingRequestsApp',
-            data: {
-                pendingRequests: [],
-                loading: false,
-                currentPage: 1,
-                totalPages: 1,
-                totalItems: 0,
-                perPage: CONFIG.pagination.defaultPerPage,
-                meta: {
-                    from: 0,
-                    to: 0
-                }
-            },
-            computed: {
-                displayedPages() {
-                    const delta = CONFIG.pagination.pageRange;
-                    const range = [];
-                    const rangeWithDots = [];
-                    let l;
+        function setupEventListeners() {
+            // Tab click handlers - true lazy loading
+            elements.pendingTab.addEventListener('shown.bs.tab', () => loadTabContent('pending'));
+            elements.awaitingTab.addEventListener('shown.bs.tab', () => loadTabContent('awaiting'));
+            elements.paymentSubmittedTab.addEventListener('shown.bs.tab', () => loadTabContent('payment-submitted'));
+            elements.reservedTab.addEventListener('shown.bs.tab', () => loadTabContent('reserved'));
 
-                    for (let i = 1; i <= this.totalPages; i++) {
-                        if (i === 1 || i === this.totalPages || 
-                            (i >= this.currentPage - delta && i <= this.currentPage + delta)) {
-                            range.push(i);
-                        }
-                    }
+            // Per page change
+            elements.perPageSelect.addEventListener('change', function () {
+                currentPerPage = parseInt(this.value);
+                currentPage = 1;
+                reloadCurrentTab();
+            });
 
-                    range.forEach((i) => {
-                        if (l) {
-                            if (i - l === 2) {
-                                rangeWithDots.push(l + 1);
-                            } else if (i - l !== 1) {
-                                rangeWithDots.push('...');
-                            }
-                        }
-                        rangeWithDots.push(i);
-                        l = i;
-                    });
+            // Sort order change
+            elements.sortOrderSelect.addEventListener('change', function () {
+                currentSortOrder = this.value;
+                currentPage = 1;
+                reloadCurrentTab();
+            });
+        }
 
-                    return rangeWithDots;
-                }
-            },
-            methods: {
-                async loadPendingRequests(page = 1) {
-                    this.loading = true;
-                    this.currentPage = page;
+        /**
+         * Handle URL tab parameter and load initial content
+         */
+        function handleUrlTabParameterAndLoad() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
 
-                    try {
-                        const params = new URLSearchParams({
-                            page: page,
-                            per_page: this.perPage
-                        });
+            // Determine which tab to activate
+            let activeTab = 'pending';
 
-                        const response = await fetch(`${CONFIG.api.pendingRequests}?${params}`, {
-                            headers: {
-                                'Authorization': `Bearer ${adminToken}`,
-                                'Accept': 'application/json'
-                            }
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
-                        }
-
-                        const result = await response.json();
-                        
-                        this.pendingRequests = result.data || [];
-                        this.totalPages = result.meta?.last_page || 1;
-                        this.totalItems = result.meta?.total || 0;
-                        this.meta = {
-                            from: result.meta?.from || 0,
-                            to: result.meta?.to || 0
-                        };
-
-                        // Update pending count badge
-                        this.updatePendingCount();
-
-                    } catch (error) {
-                        console.error('Error loading pending requests:', error);
-                        this.pendingRequests = [];
-                        this.showToast('Failed to load pending requests', 'error');
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-
-                async refreshPendingRequests() {
-                    await this.loadPendingRequests(this.currentPage);
-                    this.showToast('Pending requests refreshed', 'success');
-                },
-
-                async updatePendingCount() {
-                    try {
-                        const response = await fetch(CONFIG.api.pendingCount, {
-                            headers: {
-                                'Authorization': `Bearer ${adminToken}`,
-                                'Accept': 'application/json'
-                            }
-                        });
-
-                        if (response.ok) {
-                            const result = await response.json();
-                            if (result.success) {
-                                document.getElementById('pendingRequestsCount').textContent = result.count;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error fetching pending count:', error);
-                    }
-                },
-
-                formatDuration(request) {
-                    return request.schedule?.duration || 'N/A';
-                },
-
-                displayItems(items) {
-                    if (!items || items.length === 0) return [];
-                    return items.slice(0, 2);
-                },
-
-                hasMoreItems(items) {
-                    return items && items.length > 2;
-                },
-
-                getRemainingCount(items) {
-                    return items.length - 2;
-                },
-
-                getStatusClass(statusName) {
-                    return statusName === 'Pending Approval' ? 'status-pending' : 'status-awaiting';
-                },
-
-                padRequestId(id) {
-                    return id.toString().padStart(4, '0');
-                },
-
-                changePage(page) {
-                    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
-                        this.loadPendingRequests(page);
-                    }
-                },
-
-                changePerPage() {
-                    this.currentPage = 1;
-                    this.loadPendingRequests(1);
-                },
-
-                goToEvent(requestId) {
-                    window.location.href = `/admin/requisition/${requestId}`;
-                },
-
-                showToast(message, type = 'success') {
-                    // Use existing toast function if available
-                    if (typeof window.showToast === 'function') {
-                        window.showToast(message, type);
-                        return;
-                    }
-
-                    // Simple fallback
-                    console.log(`[${type}] ${message}`);
-                }
-            },
-            mounted() {
-                // Load initial data
-                this.loadPendingRequests(1);
-                
-                // Set up per page selector sync
-                const perPageSelect = document.getElementById('perPage');
-                if (perPageSelect) {
-                    perPageSelect.value = this.perPage;
-                    perPageSelect.addEventListener('change', (e) => {
-                        this.perPage = parseInt(e.target.value);
-                        this.changePerPage();
-                    });
-                }
+            if (tabParam && (tabParam === 'pending' || tabParam === 'awaiting' || tabParam === 'payment-submitted' || tabParam === 'reserved')) {
+                activeTab = tabParam;
             }
-        });
-    })();
-</script>
+
+            // Activate the correct tab
+            const tabToActivate = document.getElementById(`${activeTab}-tab`);
+            if (tabToActivate) {
+                // Use Bootstrap tab API to activate
+                const bsTab = new bootstrap.Tab(tabToActivate);
+                bsTab.show();
+            }
+
+            // Load the active tab content immediately (not just on click)
+            loadTabContent(activeTab, true); // Pass true to indicate initial load
+        }
+
+        /**
+         * Load content for a specific tab (true lazy loading)
+         * @param {string} tab - The tab to load
+         * @param {boolean} isInitialLoad - Whether this is the initial page load
+         */
+        function loadTabContent(tab, isInitialLoad = false) {
+            currentTab = tab;
+
+            // If tab already loaded and this isn't forcing a reload, just display cached data
+            if (loadedTabs[tab] && tabData[tab] && !isInitialLoad) {
+                displayRequisitions(tabData[tab], tab);
+                displayPagination(tabPagination[tab], tab);
+                return;
+            }
+
+            // Load tab content (either first time or forced reload)
+            fetchRequisitionsByStatus(1, tab);
+        }
+
+        /**
+         * Fetch requisitions for a specific status
+         */
+        function fetchRequisitionsByStatus(page = 1, tab) {
+            const token = localStorage.getItem('adminToken');
+            const statusId = STATUS_IDS[tab];
+
+            if (!token || !statusId) {
+                console.error('Missing token or status ID');
+                return;
+            }
+
+            // Show loading state
+            showTabLoading(tab);
+
+            const url = `/api/admin/requisitions/pending?page=${page}&per_page=${currentPerPage}&sort_order=${currentSortOrder}&status_id=${statusId}`;
+
+            fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success === false) throw new Error(data.message || 'Failed to load data');
+
+                    // Store data for this tab
+                    tabData[tab] = data.data || [];
+                    tabPagination[tab] = data.meta;
+                    loadedTabs[tab] = true;
+
+                    // Display the data
+                    displayRequisitions(data.data || [], tab);
+                    displayPagination(data.meta, tab);
+                })
+                .catch(error => {
+                    console.error(`Error loading ${tab} requisitions:`, error);
+                    showTabError(tab, error.message);
+                });
+        }
+
+        function showTabLoading(tab) {
+            RequestsList.showLoading(getContainerForTab(tab));
+            const paginationContainer = getPaginationContainerForTab(tab);
+            if (paginationContainer) {
+                paginationContainer.style.display = 'none';
+            }
+        }
+
+        function showTabError(tab, errorMessage) {
+            RequestsList.showError(
+                getContainerForTab(tab),
+                errorMessage,
+                () => retryLoadTab(tab)
+            );
+        }
+
+        window.retryLoadTab = function (tab) {
+            loadedTabs[tab] = false;
+            tabData[tab] = null;
+            fetchRequisitionsByStatus(1, tab);
+        };
+
+        function reloadCurrentTab() {
+            if (currentTab) {
+                // Reset loaded state to force fresh load with new pagination/sort
+                loadedTabs[currentTab] = false;
+                tabData[currentTab] = null;
+                fetchRequisitionsByStatus(1, currentTab);
+            }
+        }
+
+        /**
+         * Fetch all tab counts using the new counts endpoint
+         */
+        function fetchAllCounts() {
+            const token = localStorage.getItem('adminToken');
+
+            if (!token) {
+                console.error('No authentication token found');
+                return;
+            }
+
+            // Show loading state on badges
+            showCountsLoading();
+
+            fetch('/api/admin/requisitions/pending-count', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('COUNT DATA:', data);
+                    if (data.success && data.counts) {
+                        updateTabBadges(data.counts);
+                    } else {
+                        throw new Error('Invalid response format');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching tab counts:', error);
+                    showCountsError();
+                });
+        }
+
+        function showCountsLoading() {
+            const badges = ['pendingCount', 'awaitingCount', 'paymentSubmittedCount', 'reservedCount'];
+            badges.forEach(badge => {
+                if (elements[badge]) {
+                    elements[badge].innerHTML = '<span class="spinner-border spinner-border-sm" style="width: 0.8rem; height: 0.8rem;"></span>';
+                }
+            });
+        }
+
+        function showCountsError() {
+            const badges = ['pendingCount', 'awaitingCount', 'paymentSubmittedCount', 'reservedCount'];
+            badges.forEach(badge => {
+                if (elements[badge]) {
+                    elements[badge].textContent = '!';
+                    elements[badge].classList.add('bg-danger');
+                }
+            });
+        }
+
+        function updateTabBadges(counts) {
+            if (elements.pendingCount) elements.pendingCount.textContent = counts.pending || 0;
+            if (elements.awaitingCount) elements.awaitingCount.textContent = counts.awaiting || 0;
+            if (elements.paymentSubmittedCount) elements.paymentSubmittedCount.textContent = counts.verifying || 0;  // was counts.payment_submitted
+            if (elements.reservedCount) elements.reservedCount.textContent = counts.reserved || 0;
+        }
+        /**
+         * Display requisitions in the container
+         */
+        function displayRequisitions(requisitions, tab) {
+            RequestsList.renderCards(requisitions, getContainerForTab(tab));
+        }
+
+        /**
+         * Display pagination for a specific tab
+         */
+        function displayPagination(meta, tab) {
+            RequestsList.renderPagination(meta, getPaginationContainerForTab(tab), {
+                onPageChange: (page) => fetchRequisitionsByStatus(page, tab)
+            });
+        }
+
+        /**
+         * Get container element for a tab
+         */
+        function getContainerForTab(tab) {
+            const mapping = {
+                'pending': elements.pendingContainer,
+                'awaiting': elements.awaitingContainer,
+                'payment-submitted': elements.paymentSubmittedContainer,
+                'reserved': elements.reservedContainer
+            };
+            return mapping[tab];
+        }
+
+        /**
+         * Get pagination container for a tab
+         */
+        function getPaginationContainerForTab(tab) {
+            const mapping = {
+                'pending': elements.pendingPagination,
+                'awaiting': elements.awaitingPagination,
+                'payment-submitted': elements.paymentSubmittedPagination,
+                'reserved': elements.reservedPagination
+            };
+            return mapping[tab];
+        }
+
+        // Make retryLoadTab available globally
+        window.retryLoadTab = retryLoadTab;
+    </script>
 @endsection

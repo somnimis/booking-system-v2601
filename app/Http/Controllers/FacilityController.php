@@ -9,21 +9,112 @@ use App\Models\LookupTables\AvailabilityStatus;
 use Illuminate\Http\Request;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class FacilityController extends Controller
 {
     // ----- Index - Show all facilities ----- //
 
-    public function getFacilitiesForDropdown()
+    public function getFacilitiesWithSelected(Request $request)
     {
-        $facilities = Facility::select('facility_id', 'facility_name')
-            ->orderBy('facility_name')
-            ->get();
+        $search = $request->input('search');
+        $filter = $request->input('filter');
+        $page = $request->input('page', 1);
+        $perPage = 10;
+
+        // Get facilities with pagination
+        $query = Facility::select(
+            'facility_id',
+            'parent_facility_id',
+            'facility_code',
+            'facility_name'
+        );
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('facility_name', 'like', "%{$search}%")
+                    ->orWhere('facility_code', 'like', "%{$search}%");
+            });
+        }
+
+        if ($filter) {
+            [$type, $id] = explode(':', $filter);
+            if ($type === 'category') {
+                $query->where('category_id', $id);
+            }
+            if ($type === 'subcategory') {
+                $query->where('subcategory_id', $id);
+            }
+        }
+
+        $facilities = $query->orderBy('facility_name')->paginate($perPage, ['*'], 'page', $page);
+
+        // Get selected item IDs from session
+        $selectedItems = session('selected_items', []);
+        $selectedFacilityIds = collect($selectedItems)
+            ->filter(fn($item) => $item['type'] === 'facility')
+            ->pluck('facility_id')
+            ->toArray();
+
+        // Get parent names for buildings
+        $parentIds = $facilities->pluck('parent_facility_id')->filter()->unique()->toArray();
+        $parentNames = [];
+        if (!empty($parentIds)) {
+            $parentNames = Facility::whereIn('facility_id', $parentIds)
+                ->pluck('facility_name', 'facility_id')
+                ->toArray();
+        }
 
         return response()->json([
-            'success' => true,
-            'data' => $facilities
+            'data' => $facilities->items(),
+            'current_page' => $facilities->currentPage(),
+            'last_page' => $facilities->lastPage(),
+            'total' => $facilities->total(),
+            'per_page' => $facilities->perPage(),
+            'selected_ids' => $selectedFacilityIds,
+            'parent_names' => $parentNames,
         ]);
+    }
+
+    public function getFacilitiesForDropdown(Request $request)
+    {
+        $search = $request->input('search');
+        $parentFacilityId = $request->input('parent_facility_id');
+        $filter = $request->input('filter');
+
+        $query = Facility::select(
+            'facility_id',
+            'parent_facility_id',
+            'facility_code',
+            'facility_name'
+        );
+
+        $query->when($search, function ($query) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('facility_name', 'like', "%{$search}%")
+                    ->orWhere('facility_code', 'like', "%{$search}%");
+            });
+        });
+
+        $query->when($parentFacilityId, function ($query) use ($parentFacilityId) {
+            $query->where('parent_facility_id', $parentFacilityId);
+        });
+
+        if ($filter) {
+            [$type, $id] = explode(':', $filter);
+
+            if ($type === 'category') {
+                $query->where('category_id', $id);
+            }
+
+            if ($type === 'subcategory') {
+                $query->where('subcategory_id', $id);
+            }
+        }
+
+        return $query
+            ->orderBy('facility_name')
+            ->paginate(10);
     }
 
     public function publicIndex(): JsonResponse
@@ -114,62 +205,62 @@ class FacilityController extends Controller
     }
 
     // === FACILITY DETAILS API ENDPOINT === //
-public function getFacilityDetails($id): JsonResponse
-{
-    try {
-        if (!$id) {
+    public function getFacilityDetails($id): JsonResponse
+    {
+        try {
+            if (!$id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Facility ID is required'
+                ], 400);
+            }
+
+            $facility = Facility::with([
+                'category',
+                'subcategory',
+                'status',
+                'department',
+                'images',
+                'amenities',
+                'parentFacility',
+                'childFacilities'
+            ])->find($id);
+
+            if (!$facility) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Facility not found'
+                ], 404);
+            }
+
+            $formattedFacility = $this->formatPublicFacility($facility);
+            $formattedFacility['has_children'] = $facility->childFacilities->count() > 0;
+            $formattedFacility['parent_facility_name'] = $facility->parentFacility?->facility_name;
+            $formattedFacility['amenities'] = $facility->amenities->map(function ($amenity) {
+                return [
+                    'amenity_id' => $amenity->amenity_id,
+                    'amenity_name' => $amenity->amenity_name
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $formattedFacility
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error fetching facility details', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Facility ID is required'
-            ], 400);
+                'message' => 'Failed to fetch facility details',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        
-        $facility = Facility::with([
-            'category',
-            'subcategory',
-            'status',
-            'department',
-            'images',
-            'amenities',
-            'parentFacility',
-            'childFacilities'
-        ])->find($id);
-        
-        if (!$facility) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Facility not found'
-            ], 404);
-        }
-        
-        $formattedFacility = $this->formatPublicFacility($facility);
-        $formattedFacility['has_children'] = $facility->childFacilities->count() > 0;
-        $formattedFacility['parent_facility_name'] = $facility->parentFacility?->facility_name;
-        $formattedFacility['amenities'] = $facility->amenities->map(function($amenity) {
-            return [
-                'amenity_id' => $amenity->amenity_id,
-                'amenity_name' => $amenity->amenity_name
-            ];
-        });
-        
-        return response()->json([
-            'success' => true,
-            'data' => $formattedFacility
-        ]);
-        
-    } catch (\Exception $e) {
-        \Log::error('Error fetching facility details', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to fetch facility details',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
     // === FORMAT PUBLIC FACILITY (NO DEPARTMENT) === //
     private function formatPublicFacility($facility)
     {
@@ -235,10 +326,8 @@ public function getFacilityDetails($id): JsonResponse
                 'floor_level' => 'nullable|integer|min:1',
                 'facility_code' => 'nullable|string|max:20',
                 'total_levels' => 'nullable|integer|min:1',
-                'created_by' => 'required|exists:admins,admin_id'
+                'created_by' => 'required|exists:admins,admin_id' // Add this validation
             ]);
-
-            $user = auth()->user();
 
             $facility = Facility::create([
                 'facility_name' => $data['facility_name'],
@@ -256,7 +345,7 @@ public function getFacilityDetails($id): JsonResponse
                 'floor_level' => $data['floor_level'] ?? null,
                 'facility_code' => $data['facility_code'] ?? null,
                 'total_levels' => $data['total_levels'] ?? null,
-                'created_by' => $user->admin_id
+                'created_by' => $data['created_by'] // Use the created_by from request
             ]);
 
             // Attach all selected departments to the pivot table
@@ -264,7 +353,7 @@ public function getFacilityDetails($id): JsonResponse
 
             \Log::info('Facility created successfully', [
                 'facility_id' => $facility->facility_id,
-                'created_by' => $user->admin_id,
+                'created_by' => $data['created_by'],
                 'departments' => $data['departments']
             ]);
 
@@ -281,7 +370,6 @@ public function getFacilityDetails($id): JsonResponse
             \Log::error('Error creating facility', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'user_id' => auth()->check() ? auth()->user()->admin_id : 'unknown',
                 'request_data' => $request->except(['password', 'token'])
             ]);
 
@@ -367,20 +455,19 @@ public function getFacilityDetails($id): JsonResponse
     }
 
     /**
-     * Mass assign departments to multiple facilities
+     * Mass assign a department to multiple facilities (update managed_by field)
      */
-    public function massAssignDepartments(Request $request): JsonResponse
+    public function massAssignDepartment(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
                 'facility_ids' => 'required|array|min:1',
                 'facility_ids.*' => 'exists:facilities,facility_id',
-                'department_ids' => 'required|array|min:1',
-                'department_ids.*' => 'exists:departments,department_id',
+                'department_id' => 'required|exists:departments,department_id',
             ]);
 
             $facilityIds = $validated['facility_ids'];
-            $departmentIds = $validated['department_ids'];
+            $departmentId = $validated['department_id'];
 
             $results = [
                 'success' => [],
@@ -391,8 +478,9 @@ public function getFacilityDetails($id): JsonResponse
                 try {
                     $facility = Facility::findOrFail($facilityId);
 
-                    // Replace all existing departments with the new ones
-                    $facility->departments()->sync($departmentIds);
+                    // Update the managed_by field
+                    $facility->managed_by = $departmentId;
+                    $facility->save();
 
                     $results['success'][] = [
                         'facility_id' => $facilityId,
@@ -400,8 +488,9 @@ public function getFacilityDetails($id): JsonResponse
                     ];
 
                 } catch (\Exception $e) {
-                    \Log::error('Failed to mass assign departments to facility', [
+                    \Log::error('Failed to assign department to facility', [
                         'facility_id' => $facilityId,
+                        'department_id' => $departmentId,
                         'error' => $e->getMessage()
                     ]);
 
@@ -416,11 +505,11 @@ public function getFacilityDetails($id): JsonResponse
             $failedCount = count($results['failed']);
 
             if ($successCount === 0) {
-                $message = "Failed to assign departments to any facilities.";
+                $message = "Failed to assign department to any facilities.";
             } else if ($failedCount === 0) {
-                $message = "Successfully assigned departments to " . ($successCount === 1 ? "1 facility" : "{$successCount} facilities");
+                $message = "Successfully assigned department to " . ($successCount === 1 ? "1 facility" : "{$successCount} facilities");
             } else {
-                $message = "Assigned departments to {$successCount} " . ($successCount === 1 ? "facility" : "facilities") .
+                $message = "Assigned department to {$successCount} " . ($successCount === 1 ? "facility" : "facilities") .
                     ", failed for {$failedCount} " . ($failedCount === 1 ? "facility" : "facilities");
             }
 
@@ -587,34 +676,6 @@ public function getFacilityDetails($id): JsonResponse
                 'success' => false,
                 'error' => $e->getMessage(),
                 'public_id_used' => $publicId
-            ], 500);
-        }
-    }
-
-    public function testCloudinaryConnection()
-    {
-        try {
-            // Test basic Cloudinary connectivity
-            $ping = Cloudinary::uploadApi()->ping();
-
-            \Log::info('Cloudinary ping test', ['result' => $ping]);
-
-            return response()->json([
-                'success' => true,
-                'ping_result' => $ping,
-                'message' => 'Cloudinary connection successful'
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Cloudinary connection test failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-                'message' => 'Cloudinary connection failed - check credentials'
             ], 500);
         }
     }

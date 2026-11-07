@@ -65,8 +65,8 @@ class RequisitionFormatterService
                     'color' => $form->formStatus->color_code,
                 ],
                 'calendar_info' => [
-                    'title' => $form->calendar_title,
-                    'description' => $form->calendar_description,
+                    'title' => $form->event_title,
+                    'description' => $form->event_details,
                 ],
                 'official_receipt_num' => $form->official_receipt_num,
             ],
@@ -103,7 +103,8 @@ class RequisitionFormatterService
                 'breakdown' => [
                     'subtotal' => [
                         'facilities' => collect($feeSummary['breakdown']['facilities'] ?? [])->sum('fee'),
-                        'equipment' => collect($feeSummary['breakdown']['equipment'] ?? [])->sum('fee')
+                        'equipment' => collect($feeSummary['breakdown']['equipment'] ?? [])->sum('fee'),
+                        'services' => collect($feeSummary['breakdown']['services'] ?? [])->sum('fee'), 
                     ],
                     'additional_fees' => $feeSummary['additional_fees'] ?? 0,
                     'discounts' => $feeSummary['discounts'] ?? 0,
@@ -202,6 +203,7 @@ class RequisitionFormatterService
             'organization_name' => $form->organization_name,
             'contact_number' => $form->contact_number,
             'access_code' => $form->access_code,
+            'official_receipt_num' => $form->official_receipt_num,
             'num_participants' => $form->num_participants,
             'start_date' => $form->start_date,
             'end_date' => $form->end_date,
@@ -213,8 +215,8 @@ class RequisitionFormatterService
             'formatted_start_time' => $formattedStartTime,
             'formatted_end_time' => $formattedEndTime,
             'formatted_schedule' => $formattedSchedule,
-            'calendar_title' => $form->calendar_title,
-            'calendar_description' => $form->calendar_description,
+            'event_title' => $form->event_title,
+            'event_details' => $form->event_details,
             'requested_facilities' => $form->requestedFacilities->map(fn($rf) => [
                 'requested_facility_id' => $rf->requested_facility_id,
                 'facility_id' => $rf->facility_id,
@@ -247,6 +249,7 @@ class RequisitionFormatterService
                     'late_penalty' => $feeSummary['late_penalty'],
                     'facilities' => $feeSummary['breakdown']['facilities'],
                     'equipment' => $feeSummary['breakdown']['equipment'],
+                    'services'   => $feeSummary['breakdown']['services'],
                 ],
             ],
             'total_fee' => $feeSummary['approved_fee'],
@@ -285,8 +288,8 @@ class RequisitionFormatterService
                 'color' => $form->formStatus->color_code,
             ],
             'calendar_info' => [
-                'title' => $form->calendar_title,
-                'description' => $form->calendar_description,
+                'title' => $form->event_title,
+                'description' => $form->event_details,
             ],
             'official_receipt_num' => $form->official_receipt_num,
         ];
@@ -325,9 +328,16 @@ class RequisitionFormatterService
                 'is_waived' => $equipment->is_waived,
                 'total_fee' => $equipment->equipment->base_fee * $equipment->quantity,
             ])->values(),
+            'services' => $form->requestedServices->map(fn($service) => [
+                'requested_service_id' => $service->requested_service_id,
+                'service_id' => $service->service_id,
+                'name' => $service->service->service_name,
+                'fee' => $service->service->service_fee ?? 0,
+                'rate_type' => 'Flat',
+                'is_waived' => $service->is_waived,
+            ])->values(),
         ];
     }
-
     public function formatRequisitionFee($fee): array
     {
         return [
@@ -366,6 +376,7 @@ class RequisitionFormatterService
                 'id' => $form->closedBy->admin_id,
                 'name' => $form->closedBy->first_name . ' ' . $form->closedBy->last_name,
             ] : null,
+            'closure_reason' => $form->closure_reason,
             'returned_at' => $form->returned_at,
         ];
     }
@@ -373,15 +384,9 @@ class RequisitionFormatterService
     public function getDocumentDetails($form): array
     {
         return [
-            'endorser' => $form->endorser,
-            'date_endorsed' => $form->date_endorsed,
             'formal_letter' => [
-                'url' => $form->formal_letter_url,
-                'public_id' => $form->formal_letter_public_id,
-            ],
-            'facility_layout' => [
-                'url' => $form->facility_layout_url,
-                'public_id' => $form->facility_layout_public_id,
+                'url' => $form->event_documents_url,
+                'public_id' => $form->event_documents_public_id,
             ],
             'official_receipt' => [
                 'number' => $form->official_receipt_no,
@@ -434,6 +439,7 @@ class RequisitionFormatterService
                 'late_penalty' => $feeSummary['late_penalty'],
                 'facilities' => $feeSummary['breakdown']['facilities'],
                 'equipment' => $feeSummary['breakdown']['equipment'],
+                'services' => $feeSummary['breakdown']['services'], // ← ADD
             ],
             'requisition_fees' => $form->requisitionFees->map(
                 fn($fee) => $this->formatRequisitionFee($fee)

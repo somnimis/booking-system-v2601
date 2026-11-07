@@ -2770,8 +2770,8 @@
 
                     if (isAdmin && eventType === 'requisition') {
                         this.currentRequestId = eventData.request_id;
-                        this.originalCalendarTitle = eventData.calendar_title;
-                        this.originalCalendarDescription = eventData.calendar_description;
+                        this.originalCalendarTitle = eventData.event_title;
+                        this.originalCalendarDescription = eventData.event_details;
                     }
 
                     if (eventType === 'calendar') {
@@ -3811,7 +3811,7 @@
             }
 
             // Character counter for calendar title (50 max)
-            const calendarTitleInput = document.querySelector('input[name="calendar_title"]');
+            const calendarTitleInput = document.querySelector('input[name="event_title"]');
             const calendarTitleCounter = document.getElementById('calendarTitleCounter');
 
             if (calendarTitleInput && calendarTitleCounter) {
@@ -3838,7 +3838,7 @@
             }
 
             // Character counter for calendar description (100 max)
-            const calendarDescriptionTextarea = document.querySelector('textarea[name="calendar_description"]');
+            const calendarDescriptionTextarea = document.querySelector('textarea[name="event_details"]');
             const calendarDescriptionCounter = document.getElementById('calendarDescriptionCounter');
 
             if (calendarDescriptionTextarea && calendarDescriptionCounter) {
@@ -4296,8 +4296,8 @@
                 const schoolId = document.querySelector('input[name="school_id"]')?.value || '';
                 const endorser = document.querySelector('input[name="endorser"]')?.value || '';
                 const additionalRequests = document.querySelector('textarea[name="additional_requests"]')?.value || '';
-                const calendarTitle = document.querySelector('input[name="calendar_title"]')?.value || '';
-                const calendarDescription = document.querySelector('textarea[name="calendar_description"]')?.value || '';
+                const calendarTitle = document.querySelector('input[name="event_title"]')?.value || '';
+                const calendarDescription = document.querySelector('textarea[name="event_details"]')?.value || '';
                 const accessCode = document.querySelector('input[name="access_code"]')?.value || '';
 
                 // Get purpose value
@@ -4508,8 +4508,8 @@
                     additional_requests: additionalRequests || null,
                     endorser: endorser || null,
                     date_endorsed: document.querySelector('input[name="date_endorsed"]')?.value || null,
-                    calendar_title: calendarTitle || null,
-                    calendar_description: calendarDescription || null,
+                    event_title: calendarTitle || null,
+                    event_details: calendarDescription || null,
                     facilities: selectedFacilities,
                     equipment: selectedEquipment,
                     services: selectedServices,

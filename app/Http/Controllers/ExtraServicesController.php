@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\ExtraService;
-use App\Models\AdminService;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 
@@ -18,17 +17,32 @@ class ExtraServicesController extends Controller
         );
     }
 
+    public function getDropdown()
+    {
+        try {
+            $services = ExtraService::select('service_id', 'service_name')
+                ->orderBy('service_name')
+                ->get();
+            return response()->json(['success' => true, 'data' => $services]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching services dropdown: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to fetch services'], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'service_name' => 'required|string|max:80',
+            'managed_by' => 'nullable|exists:departments,department_id',
+            'account_number' => 'nullable|integer',
+            'service_fee' => 'nullable|numeric|min:0',
         ]);
 
         $extraService = ExtraService::create($validated);
-        $serviceName = $extraService->service_name;
 
         return response()->json([
-            'message' => "Extra service '{$serviceName}' was created successfully.",
+            'message' => "Extra service '{$extraService->service_name}' was created successfully.",
             'data' => $extraService
         ], 201);
     }
@@ -37,14 +51,16 @@ class ExtraServicesController extends Controller
     {
         $validated = $request->validate([
             'service_name' => 'required|string|max:80',
+            'managed_by' => 'nullable|exists:departments,department_id',
+            'account_number' => 'nullable|integer',
+            'service_fee' => 'nullable|numeric|min:0',
         ]);
 
         $extraService = ExtraService::findOrFail($service_id);
         $extraService->update($validated);
-        $serviceName = $extraService->service_name;
 
         return response()->json([
-            'message' => "Extra service '{$serviceName}' was updated successfully.",
+            'message' => "Extra service '{$extraService->service_name}' was updated successfully.",
             'data' => $extraService
         ], 200);
     }
@@ -61,81 +77,36 @@ class ExtraServicesController extends Controller
         ], 200);
     }
 
-    /* ----- Assigning admins to extra services ----- */
-
-public function assignService(Request $request)
-{
-    $admin = $request->user(); // Logged-in admin
-
-    $validated = $request->validate([
-        'service_ids' => 'required|array',
-        'service_ids.*' => 'exists:extra_services,service_id',
-    ]);
-
-    $assignedServices = [];
-    $skippedServices = [];
-
-    foreach ($validated['service_ids'] as $serviceId) {
-        $exists = AdminService::where('admin_id', $admin->admin_id)
-            ->where('service_id', $serviceId)
-            ->exists();
-
-        if ($exists) {
-            $skippedServices[] = $serviceId;
-            continue;
-        }
-
-        $adminService = AdminService::create([
-            'admin_id' => $admin->admin_id,
-            'service_id' => $serviceId
-        ]);
-
-        $assignedServices[] = [
-            'service_id' => $serviceId,
-            'service_name' => ExtraService::find($serviceId)->service_name
-        ];
-    }
-
-    $messageParts = [];
-    if (!empty($assignedServices)) {
-        $assignedNames = implode(', ', array_column($assignedServices, 'service_name'));
-        $messageParts[] = "Assigned: {$assignedNames}";
-    }
-    if (!empty($skippedServices)) {
-        $skippedNames = implode(', ', ExtraService::whereIn('service_id', $skippedServices)->pluck('service_name')->toArray());
-        $messageParts[] = "Skipped (already assigned): {$skippedNames}";
-    }
-
-    return response()->json([
-        'message' => implode(' | ', $messageParts),
-        'data' => $assignedServices
-    ], 201);
-}
-
-
-public function getAdminServices($adminId = null)
-{
-    if ($adminId) {
-        // Return services for specific admin
-        $services = AdminService::where('admin_id', $adminId)->get();
-    } else {
-        // Return all admin-service relationships (for filtering client-side)
-        $services = AdminService::all();
-    }
-    
-    return response()->json($services, 200);
-}
-
-    public function unassignService($adminServiceId)
+    /**
+     * Get all extra services with IDs already in the session cart.
+     *
+     * Mirrors FacilityController::getFacilitiesWithSelected() and
+     * EquipmentController::getEquipmentWithSelected() for the frontend
+     * services picker.
+     *
+     * No pagination: extra_services is a small lookup table (~10 rows).
+     * No filters: no category/subcategory hierarchy exists on services.
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getServicesWithSelected(Request $request)
     {
-        $adminService = AdminService::findOrFail($adminServiceId);
-        $serviceName = $adminService->service->service_name ?? 'Service';
+        $services = ExtraService::select('service_id', 'service_name', 'service_fee')
+            ->orderBy('service_name')
+            ->get();
 
-        $adminService->delete();
+        // Pull service_ids already in the session cart so the UI can disable them.
+        $selectedItems = session('selected_items', []);
+        $selectedServiceIds = collect($selectedItems)
+            ->filter(fn($item) => $item['type'] === 'service')
+            ->pluck('service_id')
+            ->toArray();
 
         return response()->json([
-            'message' => "Service '{$serviceName}' unassigned successfully"
-        ], 200);
+            'data' => $services,
+            'selected_ids' => $selectedServiceIds,
+        ]);
     }
 
 }

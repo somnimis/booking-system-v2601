@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 
 class RequisitionForm extends Model
 {
@@ -30,6 +31,7 @@ class RequisitionForm extends Model
         'start_time',
         'end_time',
         'all_day',
+        'cleanup_hours',
         'is_late',
         'late_penalty_fee',
         'returned_at',
@@ -39,20 +41,21 @@ class RequisitionForm extends Model
         'is_closed',
         'closed_at',
         'closed_by',
-        'endorser',
-        'date_endorsed',
+        'closure_reason',
         'tentative_fee',
         'approved_fee',
-        'calendar_title',
-        'calendar_description',
+        'event_title',
+        'event_details',
         'access_code',
-        'formal_letter_url',
-        'formal_letter_public_id',
-        'facility_layout_url',
-        'facility_layout_public_id',
+        'event_documents_url',  
+        'event_documents_public_id',
         'proof_of_payment_url',
-        'proof_of_payment_public_id'
+        'proof_of_payment_public_id',
+        'upload_token',          
+        'official_receipt_num',  
+        'control_num',         
     ];
+
     protected $casts = [
         'start_date' => 'string',
         'end_date' => 'string',
@@ -70,54 +73,49 @@ class RequisitionForm extends Model
         'approved_fee' => 'decimal:2',
     ];
 
-    protected static function booted()
-{
-    static::updated(function ($requisition) {
-        // Check if status changed
-        if ($requisition->isDirty('status_id')) {
-            $oldStatus = FormStatus::find($requisition->getOriginal('status_id'));
-            $newStatus = FormStatus::find($requisition->status_id);
-            
-            // Create notification for Pending Approval -> Awaiting Payment
-            if ($oldStatus && $newStatus && 
-                $oldStatus->status_name === 'Pending Approval' && 
-                $newStatus->status_name === 'Awaiting Payment') {
-                
-                // Get all admins who should receive this notification
-                // You can modify this to notify specific admin roles
-                $admins = Admin::all(); // Or filter by role
-                
-                foreach ($admins as $admin) {
-                    Notification::create([
-                        'admin_id' => $admin->admin_id,
-                        'type' => 'status_update',
-                        'message' => "Requisition #{$requisition->request_id} from {$requisition->first_name} {$requisition->last_name} is now awaiting payment.",
-                        'request_id' => $requisition->request_id,
-                        'is_read' => false
-                    ]);
-                }
-            }
-            
-            // Optional: Create for other important status changes
-            if ($oldStatus && $newStatus && 
-                $oldStatus->status_name === 'Awaiting Payment' && 
-                $newStatus->status_name === 'Scheduled') {
-                
-                $admins = Admin::all();
-                
-                foreach ($admins as $admin) {
-                    Notification::create([
-                        'admin_id' => $admin->admin_id,
-                        'type' => 'payment_confirmed',
-                        'message' => "Payment for requisition #{$requisition->request_id} has been confirmed.",
-                        'request_id' => $requisition->request_id,
-                        'is_read' => false
-                    ]);
-                }
-            }
+      /**
+     * Scope to filter requisitions visible to an admin based on managed departments
+     */
+    public function scopeVisibleToAdmin(Builder $query, array $departmentIds): Builder
+    {
+        if (empty($departmentIds)) {
+            return $query->whereRaw('1 = 0'); // No results if no departments
         }
-    });
-}
+
+        return $query->where(function ($subQuery) use ($departmentIds) {
+            $subQuery->whereHas('requestedFacilities.facility', function ($q) use ($departmentIds) {
+                $q->whereIn('managed_by', $departmentIds);
+            })->orWhereHas('requestedEquipment.equipment', function ($q) use ($departmentIds) {
+                $q->whereIn('managed_by', $departmentIds);
+            });
+        });
+    }
+
+    /**
+     * Scope to filter by status
+     */
+    public function scopeWithStatus(Builder $query, int|array $statusIds): Builder
+    {
+        return $query->whereIn('status_id', (array) $statusIds);
+    }
+
+    /**
+     * Scope to get active reservations for today
+     */
+    public function scopeActiveToday(Builder $query): Builder
+    {
+        $today = now()->format('Y-m-d');
+        return $query->whereDate('start_date', '<=', $today)
+                     ->whereDate('end_date', '>=', $today);
+    }
+
+    /**
+     * Scope to order by urgency
+     */
+    public function scopeOrderByUrgency(Builder $query, string $direction = 'asc'): Builder
+    {
+        return $query->orderBy('created_at', $direction);
+    }
     // Relationships
     public function notifications()
     {

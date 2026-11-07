@@ -14,6 +14,10 @@ return new class extends Migration
         Schema::create('requisition_purposes', function (Blueprint $table) {
             $table->tinyIncrements('purpose_id');
             $table->string('purpose_name', 50)->index();
+            $table->unsignedTinyInteger('routes_to')->nullable();
+            $table->decimal('discount_fee', 10, 2)->nullable();
+            $table->enum('discount_type', ['flat', 'percentage'])->default('flat');
+            $table->foreign('routes_to')->references('department_id')->on('departments')->onDelete('set null');
         });
     }
 
@@ -23,5 +27,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('requisition_purposes');
+        DB::statement('DROP TYPE IF EXISTS requisition_purposes_discount_type');
     }
 };

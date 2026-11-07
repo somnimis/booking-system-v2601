@@ -24,22 +24,54 @@ class NotificationService
         $this->ScheduleFormatter = $scheduleFormatter;
     }
 
-    public static function notifyNewRequisition(RequisitionForm $requisition)
+        /**
+     * Create a notification record for each admin in the list.
+     * Single write path for all stage-ready notifications (DRY).
+     */
+    private function createFor($adminIds, string $type, string $message, int $requestId): int
     {
-        // Get all Head Admins (role_id 1), VPA (role_id 2), and Approving Officers (role_id 3)
-        $admins = Admin::whereIn('role_id', [1, 2, 3])->get();
-
-        $message = "New requisition submitted by {$requisition->first_name} {$requisition->last_name}";
-
-        foreach ($admins as $admin) {
+        $count = 0;
+        foreach ($adminIds as $adminId) {
             Notification::create([
-                'admin_id' => $admin->admin_id,
-                'type' => 'new_requisition',
-                'message' => $message,
-                'request_id' => $requisition->request_id,
-                'is_read' => false
+                'admin_id'   => $adminId,
+                'type'       => $type,
+                'message'    => $message,
+                'request_id' => $requestId,
+                'is_read'    => false,
             ]);
+            $count++;
         }
+        return $count;
+    }
+
+    /**
+     * Notify stage-1 approvers that a new requisition requires their action.
+     * Called from ApprovalChainService::createApprovalChain.
+     */
+    public function notifyStage1Ready(RequisitionForm $form, $adminIds): int
+    {
+        $message = "Requisition #{$form->request_id} from {$form->first_name} {$form->last_name} requires your approval (Approving Officer).";
+        return $this->createFor($adminIds, 'approval_request', $message, $form->request_id);
+    }
+
+    /**
+     * Notify stage-2 approvers that stage 1 is complete.
+     * Called from ApprovalChainService::moveToNextStage when stage 1 clears.
+     */
+    public function notifyStage2Ready(RequisitionForm $form, $adminIds): int
+    {
+        $message = "Requisition #{$form->request_id} from {$form->first_name} {$form->last_name} is ready for final approval. Fees can be adjusted before finalizing.";
+        return $this->createFor($adminIds, 'stage_ready', $message, $form->request_id);
+    }
+
+    /**
+     * Notify stage-3 approvers that payment is being verified.
+     * Called from UserRequisitionController::uploadPaymentReceipt.
+     */
+    public function notifyStage3Ready(RequisitionForm $form, $adminIds): int
+    {
+        $message = "Requisition #{$form->request_id} from {$form->first_name} {$form->last_name} is approved. Please issue the official receipt to move it to Reserved.";
+        return $this->createFor($adminIds, 'stage_ready', $message, $form->request_id);
     }
 
     public static function getUnreadCount($adminId)
@@ -93,9 +125,6 @@ class NotificationService
     /**
      * Send approval request emails to all admins responsible for this requisition
      * 
-     * Business Rule: Admins are considered approvers if:
-     * - For facilities/equipment: They manage departments that match the resource's departments
-     * - For services: They are directly assigned to manage the service
      */
     public function sendAdminApprovalEmails(RequisitionForm $requisitionForm)
     {
@@ -148,7 +177,8 @@ class NotificationService
                     $resourceTypes = [
                         'facility' => 'Facility',
                         'equipment' => 'Equipment',
-                        'service' => 'Service'
+                        'service' => 'Service',
+                        'purpose' => 'Purpose',
                     ];
 
                     if (isset($adminData->resources) && is_array($adminData->resources)) {
@@ -172,7 +202,8 @@ class NotificationService
                     $groupedResources = [
                         'facilities' => array_filter($resources, fn($r) => $r['type'] === 'facility'),
                         'equipment' => array_filter($resources, fn($r) => $r['type'] === 'equipment'),
-                        'services' => array_filter($resources, fn($r) => $r['type'] === 'service')
+                        'services' => array_filter($resources, fn($r) => $r['type'] === 'service'),
+                        'purposes' => array_filter($resources, fn($r) => $r['type'] === 'purpose'),
                     ];
 
                     // Create a simple string list for fallback
@@ -203,13 +234,16 @@ class NotificationService
                         'has_facilities' => !empty($groupedResources['facilities']),
                         'has_equipment' => !empty($groupedResources['equipment']),
                         'has_services' => !empty($groupedResources['services']),
+                        'has_purposes'      => !empty($groupedResources['purposes']),
                         'facilities_count' => count($groupedResources['facilities']),
                         'equipment_count' => count($groupedResources['equipment']),
                         'services_count' => count($groupedResources['services']),
+                        'purposes_count'    => count($groupedResources['purposes']),
                         'total_resources' => count($resources),
                         'equipment_badge_color' => '#17a2b8',
                         'facility_badge_color' => '#28a745',
-                        'service_badge_color' => '#ffc107'
+                        'service_badge_color' => '#ffc107',
+                        'purpose_badge_color' => '#6f42c1'
                     ];
 
                     \Log::info('Sending approval email to admin:', [
@@ -817,8 +851,8 @@ class NotificationService
                 'purpose' => $form->purpose->purpose_name ?? 'N/A',
                 'num_participants' => $form->num_participants,
                 'access_code' => $form->access_code,
-                'calendar_title' => $form->calendar_title ?? 'Booking #' . $form->request_id,
-                'calendar_description' => $form->calendar_description,
+                'event_title' => $form->event_title ?? 'Booking #' . $form->request_id,
+                'event_details' => $form->event_details,
                 'is_multi_day' => $baseSchedule['is_multi_day']
             ];
 

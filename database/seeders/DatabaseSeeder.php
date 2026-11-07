@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             AdminRoleSeeder::class,
             AvailabilityStatusSeeder::class,
             ConditionSeeder::class,
+            DepartmentRoleSeeder::class,
             DepartmentSeeder::class,
             EquipmentCategorySeeder::class,
             AdminSeeder::class,
@@ -28,13 +29,15 @@ class DatabaseSeeder extends Seeder
             FacilitySubcategorySeeder::class,
             ParentFacilitySeeder::class,
             FacilitySeeder::class,
-            AdminExtraServiceSeeder::class,
             AdminFacilitySeeder::class,
             FacilityImageSeeder::class,
             RequisitionPurposeSeeder::class,
             FormStatusSeeder::class,
-            RequisitionFormsSeeder::class,
-            CalendarEventSeeder::class
+            //RequisitionFormsSeeder::class,
+            //CalendarEventSeeder::class,
+            //RequisitionCommentSeeder::class,
+            //UserFeedbackSeeder::class,
+
         ]);
     }
 }
