@@ -302,6 +302,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ---------------- Facility Management ---------------- //
     Route::get('admin/manage-facilities', [ManageFacilitiesController::class, 'index']);
+    Route::get('admin/manage-facilities/search', [ManageFacilitiesController::class, 'search']);
+    Route::get('admin/manage-facilities/section', [ManageFacilitiesController::class, 'section']);
+    Route::get('admin/facilities/{buildingId}/children', [ManageFacilitiesController::class, 'children']);
     Route::post('admin/add-facility', [FacilityController::class, 'store']);
     Route::put('admin/facilities/{facilityId}', [FacilityController::class, 'update']);
     Route::delete('/admin/facilities/{facilityId}', [FacilityController::class, 'destroy']);

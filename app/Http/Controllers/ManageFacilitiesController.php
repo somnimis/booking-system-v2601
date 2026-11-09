@@ -4,148 +4,97 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Facility;
+use App\Models\LookupTables\FacilityCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
  * ManageFacilitiesController
  *
- * Dedicated, merged controller for the manage-facilities admin page.
- * Consolidates what were previously 3 separate API calls on page load:
- *   - GET /api/facilities          (all facilities, no pagination)
- *   - GET /api/availability-statuses
- *   - GET /api/facility-categories
+ * Admin-facing endpoints for the manage-facilities page.
  *
- * Now resolved in a single request:
  *   GET /api/admin/manage-facilities
+ *       → accordion data: { venues: [], buildings: [] } (top-level only)
+ *       → filters: statuses + categories (with nested subcategories)
+ *       → applies status_id / category_id / subcategory_id filters
  *
- * Supports:
- *   - Server-side pagination (12 per page)
- *   - Filter by status_id
- *   - Filter by category_id
- *   - Filter by parent_facility_id (buildings)
- *   - Search by facility_name
- *   - Returns filter metadata (statuses, categories, parent buildings) in first-page response
+ *   GET /api/admin/manage-facilities/search?q=...
+ *       → flat search results, ignores all filters (orthogonal)
+ *
+ *   GET /api/admin/facilities/{buildingId}/children?page=N
+ *       → paginated rooms for one building (lazy-loaded on expand)
+ *
+ * Building type is derived server-side:
+ *   parent_facility_id IS NULL + has children  → 'building' (container)
+ *   parent_facility_id IS NULL + no children   → 'venue'    (standalone)
+ *   parent_facility_id NOT NULL                → 'room'
  */
 class ManageFacilitiesController extends Controller
 {
-    // Number of facilities returned per page
-    private const PER_PAGE = 12;
-
+    private const CHILDREN_PER_PAGE = 10;
+    private const SEARCH_LIMIT = 50;
+    private const ACCORDION_LIMIT = 10;
 
     /**
-     * GET /api/admin/manage-facilities
-     *
-     * Returns paginated facilities plus filter metadata (statuses, categories,
-     * parent buildings). Filter metadata is always included so the frontend
-     * can populate dropdowns without an extra round-trip.
-     *
-     * Query Parameters:
-     *   page          int     Page number (default: 1)
-     *   status_id     int     Filter by availability_status.status_id
-     *   category_id   int     Filter by facility_categories.category_id
-     *   parent_id     int     Filter by parent_facility_id (0 = top-level only)
-     *   search        string  Partial match on facility_name
+     * Accordion data for the manage-facilities page.
+     * Top-level only: standalone venues (no children) + buildings (with children).
      */
     public function index(Request $request): JsonResponse
     {
         try {
-            // ── Build the facilities query ─────────────────────────────────
-            $query = Facility::with([
-                'category',
-                'subcategory',
-                'status',
-                'images',
-            ]);
+            $query = Facility::with(['category', 'subcategory', 'status', 'images', 'childFacilities'])
+                ->whereNull('parent_facility_id');
 
-            // Filter: status
-            if ($request->filled('status_id')) {
-                $query->where('status_id', (int) $request->status_id);
-            }
+            $this->applyFilters($query, $request);
 
-            // Filter: category
-            if ($request->filled('category_id')) {
-                $query->where('category_id', (int) $request->category_id);
-            }
+            // Cap each section independently. Venues = no children; Buildings = has children.
+            // Also return total counts so the blade can show "X of Y" or "Load more" if desired.
+            $venuesQuery = (clone $query)->whereDoesntHave('childFacilities');
+            $buildingsQuery = (clone $query)->whereHas('childFacilities');
 
-            // Filter: building (parent_facility_id)
-            // parent_id=0  → top-level facilities only (parent_facility_id IS NULL)
-            // parent_id=N  → children of building N
-            if ($request->filled('parent_id')) {
-                $parentId = (int) $request->parent_id;
-                if ($parentId === 0) {
-                    $query->whereNull('parent_facility_id');
-                } else {
-                    $query->where('parent_facility_id', $parentId);
-                }
-            }
+            $venuesTotal = (clone $venuesQuery)->count();
+            $buildingsTotal = (clone $buildingsQuery)->count();
 
-            // Filter: search
-            if ($request->filled('search')) {
-                $term = $request->search;
-                $query->where('facility_name', 'LIKE', "%{$term}%");
-            }
+            /** @var \Illuminate\Database\Eloquent\Collection<int, Facility> $venueModels */
+            $venueModels = $venuesQuery->orderBy('facility_name')->limit(self::ACCORDION_LIMIT)->get();
 
-            // ── Paginate ───────────────────────────────────────────────────
-            $paginated = $query
-                ->orderBy('facility_name')
-                ->paginate(self::PER_PAGE);
+            /** @var \Illuminate\Database\Eloquent\Collection<int, Facility> $buildingModels */
+            $buildingModels = $buildingsQuery->orderBy('facility_name')->limit(self::ACCORDION_LIMIT)->get();
 
-            // ── Format facility rows (no department data) ──────────────────
-            $facilities = $paginated->getCollection()->map(
-                fn($f) => $this->formatFacility($f)
-            );
+            $venues = $venueModels->map(fn($f) => $this->formatFacility($f))->values()->all();
+            $buildings = $buildingModels->map(fn($f) => $this->formatFacility($f))->values()->all();
 
-            // ── Filter metadata (always returned) ─────────────────────────
-            // Statuses – read directly from the pivot table already loaded
-            // by the relationship; avoids a separate model import.
+            // Filter metadata (statuses + categories with nested subcategories)
             $statuses = \DB::table('availability_statuses')
                 ->select('status_id', 'status_name')
                 ->orderBy('status_name')
                 ->get();
 
-            $categories = \DB::table('facility_categories')
-                ->select('category_id', 'category_name')
+            $categories = FacilityCategory::with('subcategories')
                 ->orderBy('category_name')
-                ->get();
-
-            // Parent buildings: facilities where parent_facility_id IS NULL
-            // AND that have at least one child facility (rooms/spaces under them)
-            $parentBuildings = Facility::whereNull('parent_facility_id')
-                ->whereHas('childFacilities') // Changed from 'children' to 'childFacilities'
-                ->select('facility_id', 'facility_name')
-                ->orderBy('facility_name')
                 ->get()
-                ->map(fn($b) => [
-                    'facility_id' => $b->facility_id,
-                    'facility_name' => $b->facility_name,
+                ->map(fn($c) => [
+                    'category_id' => $c->category_id,
+                    'category_name' => $c->category_name,
+                    'subcategories' => $c->subcategories->map(fn($s) => [
+                        'subcategory_id' => $s->subcategory_id,
+                        'subcategory_name' => $s->subcategory_name,
+                    ])->values(),
                 ]);
 
             return response()->json([
                 'success' => true,
-
-                // Paginated facility data
-                'data' => $facilities,
-
-                // Pagination meta
-                'pagination' => [
-                    'current_page' => $paginated->currentPage(),
-                    'last_page' => $paginated->lastPage(),
-                    'per_page' => $paginated->perPage(),
-                    'total' => $paginated->total(),
-                    'from' => $paginated->firstItem(),
-                    'to' => $paginated->lastItem(),
+                'data' => [
+                    'venues' => $venues,
+                    'buildings' => $buildings,
+                    'venues_total' => $venuesTotal,
+                    'buildings_total' => $buildingsTotal,
                 ],
-
-                // Filter dropdowns – always returned so the blade only ever
-                // needs one API call to bootstrap the entire page.
                 'filters' => [
                     'statuses' => $statuses,
                     'categories' => $categories,
-                    'parent_buildings' => $parentBuildings,
                 ],
             ]);
-
         } catch (\Exception $e) {
             \Log::error('ManageFacilitiesController@index failed', [
                 'error' => $e->getMessage(),
@@ -155,44 +104,207 @@ class ManageFacilitiesController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch facilities data',
-                'error' => $e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Format a single Facility model into the shape expected by the blade.
-     * Department data is intentionally excluded.
+     * Paginated loader for a single accordion section (venues OR buildings).
+     * Used by the "Load more" button in the manage-facilities blade.
+     *
+     * Query params:
+     *   - section  : "venues" | "buildings"  (required)
+     *   - page     : int (default 1)
+     *   - status_id / category_id / subcategory_id (same filters as index)
+     */
+    public function section(Request $request): JsonResponse
+    {
+        try {
+            $section = $request->query('section');
+            if (!in_array($section, ['venues', 'buildings'], true)) {
+                return response()->json(['success' => false, 'message' => 'Invalid section'], 422);
+            }
+
+            $query = Facility::with(['category', 'subcategory', 'status', 'images', 'childFacilities'])
+                ->whereNull('parent_facility_id');
+
+            $this->applyFilters($query, $request);
+
+            if ($section === 'venues') {
+                $query->whereDoesntHave('childFacilities');
+            } else {
+                $query->whereHas('childFacilities');
+            }
+
+            $paginated = $query->orderBy('facility_name')
+                ->paginate(self::ACCORDION_LIMIT);
+
+            /** @var \Illuminate\Database\Eloquent\Collection<int, Facility> $rows */
+            $rows = $paginated->getCollection();
+
+            return response()->json([
+                'success' => true,
+                'data' => $rows->map(fn($f) => $this->formatFacility($f))->values()->all(),
+                'pagination' => [
+                    'current_page' => $paginated->currentPage(),
+                    'last_page' => $paginated->lastPage(),
+                    'total' => $paginated->total(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('ManageFacilitiesController@section failed', [
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json(['success' => false, 'message' => 'Failed to load section'], 500);
+        }
+    }
+
+    /**
+     * Flat search — orthogonal to accordion & filters.
+     * Returns up to SEARCH_LIMIT facility_name or facility_code matches, alphabetical.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        try {
+            $term = trim((string) $request->query('q', ''));
+
+            if ($term === '') {
+                return response()->json(['success' => true, 'results' => []]);
+            }
+
+            /** @var \Illuminate\Database\Eloquent\Collection<int, Facility> $facilities */
+            $facilities = Facility::with(['category', 'subcategory', 'status', 'images', 'childFacilities'])
+                ->where(function ($q) use ($term) {
+                    $q->where('facility_name', 'ILIKE', "%{$term}%")
+                        ->orWhere('facility_code', 'ILIKE', "%{$term}%");
+                })
+                ->orderBy('facility_name')
+                ->limit(self::SEARCH_LIMIT)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'results' => $facilities->map(fn($f) => $this->formatFacility($f)),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('ManageFacilitiesController@search failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Search failed',
+            ], 500);
+        }
+    }
+
+    /**
+     * Lazy-loaded rooms for a single building.
+     * Only status_id and subcategory_id filters are honored here —
+     * category_id would narrow rooms to the wrong set (children are rooms).
+     */
+    public function children(Request $request, int $buildingId): JsonResponse
+    {
+        try {
+            $query = Facility::with(['category', 'subcategory', 'status', 'images', 'childFacilities'])
+                ->where('parent_facility_id', $buildingId);
+
+            if ($request->filled('status_id')) {
+                $query->where('status_id', (int) $request->status_id);
+            }
+            if ($request->filled('subcategory_id')) {
+                $query->where('subcategory_id', (int) $request->subcategory_id);
+            }
+
+            $paginated = $query->orderBy('facility_name')
+                ->paginate(self::CHILDREN_PER_PAGE);
+
+            return response()->json([
+                'success' => true,
+                'data' => $paginated->getCollection()->map(fn($f) => $this->formatFacility($f)),
+                'pagination' => [
+                    'current_page' => $paginated->currentPage(),
+                    'last_page' => $paginated->lastPage(),
+                    'total' => $paginated->total(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('ManageFacilitiesController@children failed', [
+                'building_id' => $buildingId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch rooms for this building',
+            ], 500);
+        }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────
+
+    /**
+     * Apply status / category / subcategory filters.
+     * Category filter is inclusive of its subcategories by schema design:
+     * every facility in a subcategory already carries that subcategory's
+     * parent category_id, so where('category_id', X) covers both.
+     */
+    private function applyFilters($query, Request $request): void
+    {
+        if ($request->filled('status_id')) {
+            $query->where('status_id', (int) $request->status_id);
+        }
+        if ($request->filled('category_id')) {
+            $query->where('category_id', (int) $request->category_id);
+        }
+        if ($request->filled('subcategory_id')) {
+            $query->where('subcategory_id', (int) $request->subcategory_id);
+        }
+    }
+
+    /**
+     * Format a Facility into the row shape consumed by the blade.
+     *
+     * @param  Facility  $facility
      */
     private function formatFacility(Facility $facility): array
     {
+        $primary = $facility->images
+            ->firstWhere('image_type', 'Primary')
+            ?? $facility->images->sortBy('sort_order')->first();
+
+        $childrenCount = $facility->childFacilities->count();
+        $isBuilding = $facility->parent_facility_id === null && $childrenCount > 0;
+
+        if ($facility->parent_facility_id !== null) {
+            $buildingType = 'room';
+        } elseif ($isBuilding) {
+            $buildingType = 'building';
+        } else {
+            $buildingType = 'venue';
+        }
+
         return [
             'facility_id' => $facility->facility_id,
             'parent_facility_id' => $facility->parent_facility_id,
             'facility_name' => $facility->facility_name,
-            'description' => $facility->description,
-            'location_note' => $facility->location_note ?? 'Location TBA',
-            'capacity' => $facility->capacity,
-            'location_type' => $facility->location_type,
-            'base_fee' => $facility->base_fee,
-            'rate_type' => $facility->rate_type,
-            'floor_level' => $facility->floor_level,
-            'total_levels' => $facility->total_levels,
             'facility_code' => $facility->facility_code,
-            'maximum_rental_hour' => $facility->maximum_rental_hour,
+            'description' => $facility->description,
+            'capacity' => $facility->capacity,
+            'base_fee' => $isBuilding ? null : $facility->base_fee,
+            'rate_type' => $isBuilding ? null : $facility->rate_type,
+            'building_type' => $buildingType,
+            'children_count' => $childrenCount,
 
-            // Resolved relationship fields
             'category_id' => $facility->category_id,
+            'subcategory_id' => $facility->subcategory_id,
             'status_id' => $facility->status_id,
             'category_name' => $facility->category?->category_name ?? 'Uncategorized',
             'subcategory_name' => $facility->subcategory?->subcategory_name,
             'status_name' => $facility->status?->status_name,
+            'status_color_code' => $facility->status?->color_code,
 
-            // Images
-            'images' => $facility->images->map(fn($img) => [
-                'image_url' => $img->image_url,
-                'is_primary' => $img->is_primary ?? false,
-            ])->values()->toArray(),
+            'primary_image_url' => $primary?->image_url,
         ];
     }
 }

@@ -91,8 +91,8 @@ class FacilityController extends Controller
 
         $query->when($search, function ($query) use ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('facility_name', 'like', "%{$search}%")
-                    ->orWhere('facility_code', 'like', "%{$search}%");
+                $q->where('facility_name', 'ILIKE', "%{$search}%")
+                    ->orWhere('facility_code', 'ILIKE', "%{$search}%");
             });
         });
 
