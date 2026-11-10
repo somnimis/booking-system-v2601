@@ -6,7 +6,6 @@ use App\Models\Equipment;
 use App\Models\EquipmentItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 
 
@@ -286,99 +285,124 @@ class EquipmentController extends Controller
     }
 
     public function getEquipmentWithSelected(Request $request)
-{
-    $search = $request->input('search');
-    $filter = $request->input('filter');
-    $page = $request->input('page', 1);
-    $perPage = 10;
+    {
+        $search = $request->input('search');
+        $filter = $request->input('filter');
+        $page = $request->input('page', 1);
+        $perPage = 10;
 
-    $query = Equipment::join(
-        'availability_statuses',
-        'equipment.status_id',
-        '=',
-        'availability_statuses.status_id'
-    )
-    ->select(
-        'equipment.equipment_id',
-        'equipment.equipment_name',
-        'availability_statuses.status_name'
-    );
+        $query = Equipment::join(
+            'availability_statuses',
+            'equipment.status_id',
+            '=',
+            'availability_statuses.status_id'
+        )
+            ->select(
+                'equipment.equipment_id',
+                'equipment.equipment_name',
+                'availability_statuses.status_name'
+            );
 
-    if ($search) {
-        $query->where('equipment.equipment_name', 'like', "%{$search}%");
-    }
-
-    if ($filter) {
-        [$type, $id] = explode(':', $filter);
-        if ($type === 'category') {
-            $query->where('equipment.category_id', $id);
+        if ($search) {
+            $query->where('equipment.equipment_name', 'like', "%{$search}%");
         }
-    }
 
-    $equipment = $query->orderBy('equipment.equipment_name')->paginate($perPage, ['*'], 'page', $page);
-
-    // Filter out "Hidden" status
-    $filteredItems = $equipment->items();
-    $filteredItems = array_filter($filteredItems, fn($e) => $e->status_name !== 'Hidden');
-
-    // Get selected item IDs from session
-    $selectedItems = session('selected_items', []);
-    $selectedEquipmentIds = collect($selectedItems)
-        ->filter(fn($item) => $item['type'] === 'equipment')
-        ->pluck('equipment_id')
-        ->toArray();
-
-    return response()->json([
-        'data' => array_values($filteredItems),
-        'current_page' => $equipment->currentPage(),
-        'last_page' => $equipment->lastPage(),
-        'total' => count($filteredItems),
-        'per_page' => $perPage,
-        'selected_ids' => $selectedEquipmentIds,
-    ]);
-}
-
-public function getEquipmentForDropdown(Request $request): JsonResponse
-{
-    $search = $request->input('search');
-    $filter = $request->input('filter');
-
-    $query = Equipment::join(
-        'availability_statuses',
-        'equipment.status_id',
-        '=',
-        'availability_statuses.status_id'
-    )
-    ->select(
-        'equipment.equipment_id',
-        'equipment.equipment_name',
-        'availability_statuses.status_name'
-    )
-    ->when($search, function ($query) use ($search) {
-        $query->where(
-            'equipment.equipment_name',
-            'like',
-            "%{$search}%"
-        );
-    });
-
-    if ($filter) {
-        [$type, $id] = explode(':', $filter);
-
-        if ($type === 'category') {
-            $query->where('equipment.category_id', $id);
+        if ($filter) {
+            [$type, $id] = explode(':', $filter);
+            if ($type === 'category') {
+                $query->where('equipment.category_id', $id);
+            }
         }
+
+        $equipment = $query->orderBy('equipment.equipment_name')->paginate($perPage, ['*'], 'page', $page);
+
+        // Filter out "Hidden" status
+        $filteredItems = $equipment->items();
+        $filteredItems = array_filter($filteredItems, fn($e) => $e->status_name !== 'Hidden');
+
+        // Get selected item IDs from session
+        $selectedItems = session('selected_items', []);
+        $selectedEquipmentIds = collect($selectedItems)
+            ->filter(fn($item) => $item['type'] === 'equipment')
+            ->pluck('equipment_id')
+            ->toArray();
+
+        return response()->json([
+            'data' => array_values($filteredItems),
+            'current_page' => $equipment->currentPage(),
+            'last_page' => $equipment->lastPage(),
+            'total' => count($filteredItems),
+            'per_page' => $perPage,
+            'selected_ids' => $selectedEquipmentIds,
+        ]);
     }
 
-    return response()->json(
-        $query
-            ->orderBy('equipment.equipment_name')
-            ->paginate(
-                perPage: 10,
-                page: $request->input('page', 1)
+    public function getEquipmentForDropdown(Request $request): JsonResponse
+    {
+        $search = $request->input('search');
+        $filter = $request->input('filter');
+
+        $query = Equipment::join(
+            'availability_statuses',
+            'equipment.status_id',
+            '=',
+            'availability_statuses.status_id'
+        )
+            ->select(
+                'equipment.equipment_id',
+                'equipment.equipment_name',
+                'availability_statuses.status_name'
             )
-    );
-}
+            ->when($search, function ($query) use ($search) {
+                $query->where(
+                    'equipment.equipment_name',
+                    'like',
+                    "%{$search}%"
+                );
+            });
+
+        if ($filter) {
+            [$type, $id] = explode(':', $filter);
+
+            if ($type === 'category') {
+                $query->where('equipment.category_id', $id);
+            }
+        }
+
+        return response()->json(
+            $query
+                ->orderBy('equipment.equipment_name')
+                ->paginate(
+                    perPage: 10,
+                    page: $request->input('page', 1)
+                )
+        );
+    }
+
+    /**
+     * Paginated equipment dropdown for the mass-assign modal.
+     * Matches by name OR brand (ILIKE, partial, case-insensitive).
+     * Returns paginator shape so the modal can paginate + search.
+     */
+    public function getEquipmentForMassAssign(Request $request): JsonResponse
+    {
+        $search = trim((string) $request->input('search', ''));
+
+        $query = Equipment::query()
+            ->select('equipment_id', 'equipment_name', 'brand')
+            ->when($search !== '', function ($q) use ($search) {
+                $like = "%{$search}%";
+                $q->where(function ($qq) use ($like) {
+                    $qq->where('equipment_name', 'ILIKE', $like)
+                        ->orWhere('brand', 'ILIKE', $like);
+                });
+            })
+            ->orderBy('equipment_name');
+
+        return response()->json(
+            $query->paginate(perPage: 10, page: $request->input('page', 1))
+        );
+    }
 
     /**
      * Mass assign departments to multiple equipment
@@ -497,373 +521,24 @@ public function getEquipmentForDropdown(Request $request): JsonResponse
     public function destroy($id): JsonResponse
     {
         try {
-            $equipment = Equipment::with(['images', 'items'])->findOrFail($id);
+            $equipment = Equipment::findOrFail($id);
 
-            \Log::info('Starting equipment deletion process', [
-                'equipment_id' => $id,
-                'equipment_name' => $equipment->equipment_name,
-                'image_count' => $equipment->images->count(),
-                'item_count' => $equipment->items->count()
-            ]);
-
-            // Collect all Cloudinary public_ids for bulk deletion
-            $publicIds = [];
-
-            // Process equipment images
-            foreach ($equipment->images as $image) {
-                if (
-                    $image->cloudinary_public_id &&
-                    $image->cloudinary_public_id !== 'oxvsxogzu9koqhctnf7s' &&
-                    !in_array($image->cloudinary_public_id, $publicIds)
-                ) {
-
-                    $publicIds[] = $image->cloudinary_public_id;
-                    \Log::info('Added image to Cloudinary deletion list', [
-                        'public_id' => $image->cloudinary_public_id,
-                        'image_id' => $image->image_id
-                    ]);
-                }
-                // Delete the database record
-                $image->delete();
-            }
-
-            // Process equipment items
-            foreach ($equipment->items as $item) {
-                if (
-                    $item->cloudinary_public_id &&
-                    $item->cloudinary_public_id !== 'oxvsxogzu9koqhctnf7s' &&
-                    !in_array($item->cloudinary_public_id, $publicIds)
-                ) {
-
-                    $publicIds[] = $item->cloudinary_public_id;
-                    \Log::info('Added item image to Cloudinary deletion list', [
-                        'public_id' => $item->cloudinary_public_id,
-                        'item_id' => $item->item_id
-                    ]);
-                }
-                // Delete the database record
-                $item->delete();
-            }
-
-            // Bulk delete from Cloudinary if we have public_ids
-            if (!empty($publicIds)) {
-                try {
-                    \Log::info('Attempting Cloudinary bulk deletion', [
-                        'public_ids' => $publicIds,
-                        'total_images' => count($publicIds)
-                    ]);
-
-                    $result = Cloudinary::destroy($publicIds);
-
-                    \Log::info('Cloudinary bulk deletion successful', [
-                        'result' => $result,
-                        'deleted_count' => count($publicIds)
-                    ]);
-                } catch (\Exception $cloudinaryError) {
-                    \Log::error('Cloudinary bulk deletion failed', [
-                        'error' => $cloudinaryError->getMessage(),
-                        'public_ids' => $publicIds,
-                        'trace' => $cloudinaryError->getTraceAsString()
-                    ]);
-                    // Continue with database deletion even if Cloudinary fails
-                }
-            } else {
-                \Log::info('No Cloudinary images to delete', [
-                    'equipment_id' => $id
-                ]);
-            }
-
-            // Delete the equipment itself
+            // equipment_images + equipment_items cascade-delete via FK constraints.
             $equipment->delete();
 
-            \Log::info('Equipment deletion completed successfully', [
-                'equipment_id' => $id,
-                'cloudinary_images_deleted' => count($publicIds)
-            ]);
+            \Log::info('Equipment deleted successfully', ['equipment_id' => $id]);
 
-            return response()->json([
-                'message' => 'Equipment deleted successfully',
-                'cloudinary_images_deleted' => count($publicIds)
-            ]);
-
+            return response()->json(['message' => 'Equipment deleted successfully']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            \Log::error('Equipment not found for deletion', [
-                'equipment_id' => $id,
-                'error' => $e->getMessage()
-            ]);
             return response()->json(['message' => 'Equipment not found'], 404);
-
         } catch (\Exception $e) {
             \Log::error('Error deleting equipment', [
-                'error' => $e->getMessage(),
                 'equipment_id' => $id,
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json([
-                'message' => 'Failed to delete equipment: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function saveImageReference(Request $request, $equipmentId): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'image_url' => 'required|url',
-                'cloudinary_public_id' => 'required|string',
-                'description' => 'nullable|string|max:255'
-            ]);
-
-            $equipment = Equipment::findOrFail($equipmentId);
-
-            // Determine image type (first image = primary, others = secondary)
-            $imageType = $equipment->images()->count() == 0 ? 'Primary' : 'Secondary';
-
-            // Create the image record
-            $image = $equipment->images()->create([
-                'image_url' => $validated['image_url'],
-                'image_type' => $imageType,
-                'cloudinary_public_id' => $validated['cloudinary_public_id'],
-                'description' => $validated['description'] ?? 'Equipment photo',
-                'sort_order' => $equipment->images()->count() + 1
-            ]);
-
-            \Log::info('Image reference saved successfully', [
-                'equipment_id' => $equipmentId,
-                'image_id' => $image->image_id,
-                'public_id' => $validated['cloudinary_public_id']
-            ]);
-
-            return response()->json([
-                'message' => 'Image reference saved successfully',
-                'image_id' => $image->image_id,
-                'type' => $imageType
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Error saving image reference', [
                 'error' => $e->getMessage(),
-                'equipmentId' => $equipmentId,
-                'request_data' => $request->all()
             ]);
-
-            return response()->json([
-                'message' => 'Failed to save image reference: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Failed to delete equipment: ' . $e->getMessage()], 500);
         }
     }
-
-    // ----- Upload Equipment Images ----- //
-
-    public function uploadImage(Request $request, $equipmentId): JsonResponse
-    {
-        // Validate the uploaded image and data
-        $validated = $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'description' => 'nullable|string|max:255',
-            'image_type' => 'sometimes|in:Primary,Secondary' // Change validation to match enum values
-        ]);
-
-        // Find the equipment
-        $equipment = Equipment::findOrFail($equipmentId);
-
-        // Upload to Cloudinary
-        $uploaded = Cloudinary::upload(
-            $request->file('image')->getRealPath(),
-            ['upload_preset' => 'equipment-photos']
-        );
-
-        $imageUrl = $uploaded->getSecurePath();
-        $publicId = $uploaded->getPublicId();
-
-        // Determine image type if not provided - use enum string values
-        $imageType = $validated['image_type'] ??
-            ($equipment->images()->count() == 0 ? 'Primary' : 'Secondary'); // Use string values
-
-        // Create the image record
-        $equipment->images()->create([
-            'image_url' => $imageUrl,
-            'image_type' => $imageType, // Change to match database column name
-            'cloudinary_public_id' => $publicId,
-            'description' => $validated['description'] ?? null,
-            'sort_order' => $equipment->images()->count() + 1
-        ]);
-
-        return response()->json([
-            'message' => 'Image uploaded successfully',
-            'type' => $imageType,
-            'image_url' => $imageUrl,
-            'public_id' => $publicId
-        ]);
-    }
-
-    // ----- Upload Images In Bulk ----- //
-    public function uploadMultipleImages(Request $request, $equipmentId): JsonResponse
-    {
-        // Validate the images and optional image_type
-        $validated = $request->validate([
-            'images' => 'required|array',
-            'images.*' => 'required|image|mimes:jpeg,png,jjpg,gif|max:2048',
-            'description' => 'nullable|string|max:255',
-            'image_type' => 'sometimes|in:Primary,Secondary', // Change validation
-        ]);
-
-        // Find the equipment
-        $equipment = Equipment::findOrFail($equipmentId);
-
-        $currentImageCount = $equipment->images()->count();
-        $typeId = $validated['image_type'] ?? null;
-
-        foreach ($validated['images'] as $index => $image) {
-            // Upload to Cloudinary
-            $upload = Cloudinary::upload(
-                $image->getRealPath(),
-                ['upload_preset' => 'equipment-photos']
-            );
-
-            $imageUrl = $upload->getSecurePath();
-            $publicId = $upload->getPublicId();
-
-            // Decide image type (first image = primary if none specified)
-            $imageType = $typeId ?? (($currentImageCount + $index) === 0 ? 'Primary' : 'Secondary');
-
-            // Create image record
-            $equipment->images()->create([
-                'image_url' => $imageUrl,
-                'image_type' => $imageType, // Change to match database column name
-                'cloudinary_public_id' => $publicId,
-                'description' => $validated['description'] ?? null,
-                'sort_order' => $currentImageCount + $index + 1,
-            ]);
-        }
-
-        return response()->json(['message' => 'Images uploaded successfully']);
-    }
-
-
-    // ----- Delete Equipment Images ----- //
-
-    public function deleteCloudinaryImage(Request $request): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'public_id' => 'required|string'
-            ]);
-
-            // Simple Cloudinary delete - no equipment/auth checks needed
-            $result = Cloudinary::destroy($validated['public_id']);
-
-            return response()->json([
-                'message' => 'Image deleted from Cloudinary',
-                'result' => $result
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Cloudinary delete error', ['error' => $e->getMessage()]);
-            return response()->json(['message' => 'Failed to delete image'], 500);
-        }
-    }
-
-    public function deleteImage($equipmentId, $imageId): JsonResponse
-    {
-        \Log::info('Attempting to delete image', [
-            'equipmentId' => $equipmentId,
-            'imageId' => $imageId
-        ]);
-
-        try {
-            // Find the equipment
-            $equipment = Equipment::findOrFail($equipmentId);
-            \Log::info('Equipment found', ['equipment_id' => $equipment->equipment_id]);
-
-            // Find the image
-            $image = $equipment->images()->findOrFail($imageId);
-            \Log::info('Image found', [
-                'image_id' => $image->image_id,
-                'cloudinary_public_id' => $image->cloudinary_public_id,
-                'image_url' => $image->image_url
-            ]);
-
-            // Store public ID before deletion
-            $publicId = $image->cloudinary_public_id;
-
-            // Delete DB record first
-            \Log::info('Deleting database record');
-            $image->delete();
-            \Log::info('Database record deleted');
-
-            // Delete from Cloudinary if public ID exists (do this after DB deletion)
-            if ($publicId && $publicId !== 'oxvsxogzu9koqhctnf7s') { // Skip default placeholder
-                \Log::info('Attempting Cloudinary delete', [
-                    'public_id' => $publicId
-                ]);
-
-                try {
-                    Cloudinary::destroy($publicId);
-                    \Log::info('Cloudinary delete successful');
-                } catch (\Exception $cloudinaryError) {
-                    \Log::error('Cloudinary delete failed but continuing', [
-                        'error' => $cloudinaryError->getMessage(),
-                        'public_id' => $publicId
-                    ]);
-                    // Continue even if Cloudinary delete fails
-                }
-            }
-
-            // Reorder remaining images
-            $this->reorderImageRecords($equipment);
-            \Log::info('Images reordered');
-
-            return response()->json(['message' => 'Image deleted successfully']);
-
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            \Log::error('Model not found in deleteImage', [
-                'error' => $e->getMessage(),
-                'equipmentId' => $equipmentId,
-                'imageId' => $imageId
-            ]);
-            return response()->json(['message' => 'Image or equipment not found'], 404);
-
-        } catch (\Exception $e) {
-            \Log::error('Error in deleteImage', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'equipmentId' => $equipmentId,
-                'imageId' => $imageId
-            ]);
-            return response()->json([
-                'message' => 'Failed to delete image: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    private function reorderImageRecords(Equipment $equipment): void
-    {
-        $images = $equipment->images()->orderBy('sort_order')->get();
-        foreach ($images as $index => $image) {
-            $image->update(['sort_order' => $index + 1]);
-        }
-    }
-
-    // ----- Reorder Images ----- //
-
-    public function reorderImages(Request $request, $equipmentId): JsonResponse
-    {
-        $request->validate([
-            'order' => 'required|array',
-            'order.*' => 'exists:equipment_images,image_id'
-        ]);
-
-        $equipment = Equipment::findOrFail($equipmentId);
-
-        foreach ($request->input('order') as $position => $imageId) {
-            $equipment->images()->where('image_id', $imageId)
-                ->update(['sort_order' => $position + 1]);
-        }
-
-        return response()->json(['message' => 'Images reordered successfully']);
-    }
-
 
     // ----- Formatting ----- //
 

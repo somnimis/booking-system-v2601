@@ -283,6 +283,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ---------------- Equipment Management ---------------- //
     Route::get('admin/manage-equipment', [ManageEquipmentController::class, 'index']);
+    Route::get('admin/manage-equipment/section', [ManageEquipmentController::class, 'section']);
+    Route::get('admin/manage-equipment/search', [ManageEquipmentController::class, 'search']);
+    Route::get('admin/equipment/{equipmentId}/items-list', [ManageEquipmentController::class, 'items'])
+    ->whereNumber('equipmentId');
+    Route::get('admin/manage-equipment/dropdown', [EquipmentController::class, 'getEquipmentForMassAssign']);
     Route::post('admin/equipment', [EquipmentController::class, 'store']);
     Route::put('admin/equipment/{equipmentId}', [EquipmentController::class, 'update']);
     Route::delete('/admin/equipment/{equipmentId}', [EquipmentController::class, 'destroy']);

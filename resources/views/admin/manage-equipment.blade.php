@@ -3,1194 +3,1303 @@
 @section('title', 'Manage Equipment')
 
 @section('content')
-  <style>
-    .layout-select {
-      min-width: 180px;
-    }
+    {{-- Local styles — remove if you've already moved these into your external stylesheet --}}
+    <style>
+        .mgmt-topbar {
+            min-width: 0;
+        }
 
-    /* Loading overlay styles */
-    .equipment-container-loading {
-      position: relative;
-      min-height: 400px;
-    }
+        .mgmt-search-group {
+            flex: 1 1 240px;
+            min-width: 0;
+        }
 
-    .loading-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255, 255, 255, 0.95);
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-    }
+        .mgmt-search-group .form-control {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
 
-    .loading-spinner {
-      text-align: center;
-    }
+        .mgmt-status-select {
+            width: auto;
+            min-width: 150px;
+            max-width: 200px;
+            flex-shrink: 0;
+        }
 
-    .loading-spinner .spinner-border {
-      width: 3rem;
-      height: 3rem;
-    }
+        .mgmt-row {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
 
-    .pagination.disabled-pagination {
-      opacity: 0.5;
-      pointer-events: none;
-    }
+        .mgmt-sidebar {
+            width: 280px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1rem;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+        }
 
-    .pagination.disabled-pagination .page-link {
-      cursor: not-allowed;
-      background-color: #e9ecef;
-    }
+        .mgmt-sidebar h6 {
+            color: var(--cpu-primary, #003366);
+            font-weight: 600;
+        }
 
-    /* Pagination stays at bottom */
-    .d-flex.justify-content-center.mt-auto.pt-3 {
-      flex-shrink: 0;
-    }
+        .cat-tree {
+            font-size: .9rem;
+        }
 
-    /* Target the equipment dropdown menu in both states (open and closed) */
-    #equipmentDropdownToggle+.dropdown-menu,
-    #equipmentDropdownToggle+.dropdown-menu.show {
-      z-index: 9999 !important;
-      position: absolute !important;
-    }
+        .cat-tree .cat-node {
+            margin-bottom: .35rem;
+        }
 
-    .btn-outline-danger {
-      background-color: #ffe5e5;
-      border-color: #dc3545;
-      color: #dc3545;
-    }
+        .cat-tree .cat-node label {
+            cursor: pointer;
+        }
 
-    .btn-outline-danger:hover {
-      background-color: #dc3545;
-      color: #fff;
-    }
+        .cat-tree input[type="radio"] {
+            margin-right: .35rem;
+        }
 
-    .filters-row {
-      flex-wrap: nowrap !important;
-      overflow-x: auto;
-      overflow-y: hidden;
-      white-space: nowrap;
-    }
+        .mgmt-main {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            min-height: 300px;
+        }
 
-    /* Toast notification styles */
-    .toast {
-      z-index: 1100;
-      bottom: 0;
-      left: 0;
-      margin: 1rem;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: transform 0.4s ease, opacity 0.4s ease;
-      min-width: 250px;
-      border-radius: 0.3rem;
-    }
+        .section-header {
+            cursor: pointer;
+            user-select: none;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: .65rem 1rem;
+            font-weight: 600;
+            color: var(--cpu-primary, #003366);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: .5rem;
+        }
 
-    .toast .loading-bar {
-      height: 3px;
-      background: rgba(255, 255, 255, 0.7);
-      width: 100%;
-      transition: width 3000ms linear;
-    }
+        .section-header:hover {
+            background: #f0f4f8;
+        }
 
-    /* Custom pagination colors using CPU theme */
-    .pagination .page-link {
-      color: var(--cpu-primary);
-    }
+        .section-header>span:first-child {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
 
-    .pagination .page-link:hover {
-      color: var(--cpu-primary-hover);
-    }
+        .section-header .count {
+            font-size: .85rem;
+            color: #6c757d;
+            font-weight: 400;
+        }
 
-    .pagination .page-item.active .page-link {
-      background-color: var(--cpu-primary);
-      border-color: var(--cpu-primary);
-      color: #fff;
-    }
+        .section-body,
+        .children-wrap {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows .25s ease;
+        }
 
-    .pagination .page-item.disabled .page-link {
-      color: #6c757d;
-      pointer-events: none;
-      background-color: var(--light-gray);
-      border-color: #dee2e6;
-    }
+        .section-body>.inner,
+        .children-wrap>.inner {
+            overflow: hidden;
+            min-height: 0;
+        }
 
-    /* Fix button group corner rounding */
-    .btn-group>.btn:first-child {
-      border-top-right-radius: 0 !important;
-      border-bottom-right-radius: 0 !important;
-    }
+        .section-body.open,
+        .children-wrap.open {
+            grid-template-rows: 1fr;
+        }
 
-    .btn-group>.dropdown-toggle-split {
-      border-top-left-radius: 0 !important;
-      border-bottom-left-radius: 0 !important;
-    }
+        .children-wrap {
+            margin-left: 2.5rem;
+            padding-left: 1rem;
+            border-left: 2px solid #e9ecef;
+        }
 
-    /* Loading skeleton styles */
-    .skeleton-card {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: loading 1.5s infinite;
-      border-radius: 8px;
-    }
+        .section-header .toggle-icon {
+            transition: transform .25s ease;
+        }
 
-    @keyframes loading {
-      0% {
-        background-position: 200% 0;
-      }
+        .section-header.closed .toggle-icon {
+            transform: rotate(-90deg);
+        }
 
-      100% {
-        background-position: -200% 0;
-      }
-    }
-  </style>
+        .node {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            display: flex;
+            gap: .75rem;
+            align-items: center;
+            padding: .65rem;
+            margin-bottom: .5rem;
+        }
 
-  <!-- Main Content -->
-  <main id="main">
-    <div class="container-fluid px-4">
-      <!-- Header & Controls -->
-      <div>
-        <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="card-title m-0 fw-bold">Manage Equipment</h2>
-        </div>
+        .node-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
 
-        <!-- Filters, Search Bar & Buttons (single scrollable row) -->
-        <div class="row mb-3 g-2 align-items-center filters-row">
-          <div class="col-auto flex-shrink-0">
-            <select id="layoutSelect" class="form-select layout-select">
-              <option value="grid">Grid Layout</option>
-              <option value="list">List Layout</option>
-            </select>
-          </div>
+        .node-img.sm {
+            width: 56px;
+            height: 56px;
+        }
 
-          <div class="col-auto flex-shrink-0">
-            <select id="statusFilter" class="form-select">
-              <option value="all">All Statuses</option>
-            </select>
-          </div>
+        .node-body {
+            flex: 1;
+            min-width: 0;
+        }
 
-          <div class="col-auto flex-shrink-0">
-            <select id="categoryFilter" class="form-select">
-              <option value="all">All Categories</option>
-            </select>
-          </div>
+        .node-title {
+            font-weight: 600;
+            color: #212529;
+            margin: 0;
+        }
 
-          <div class="col flex-grow-1">
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input type="text" id="searchInput" class="form-control" placeholder="Search Equipment...">
+        .node-meta {
+            font-size: .8rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .node-actions {
+            display: flex;
+            flex-direction: column;
+            gap: .25rem;
+            flex-shrink: 0;
+        }
+
+        .node-actions .btn {
+            white-space: nowrap;
+        }
+
+        .badge-type {
+            font-size: .65rem;
+        }
+
+        .btn-expand .bi {
+            transition: transform .25s ease;
+            display: inline-block;
+        }
+
+        .btn-expand.expanded .bi {
+            transform: rotate(180deg);
+        }
+
+        /* Loading overlay — pure white background per request */
+        #loadingOverlay {
+            position: absolute;
+            inset: 0;
+            background: #ffffff;
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        #resultsView {
+            display: none;
+        }
+
+        #resultsView.active {
+            display: block;
+        }
+
+        #accordionView.hidden {
+            display: none;
+        }
+
+        @media (max-width: 991.98px) {
+            .mgmt-sidebar {
+                position: fixed;
+                top: 0;
+                left: -320px;
+                width: 300px;
+                height: 100vh;
+                max-height: 100vh;
+                z-index: 1060;
+                transition: left .25s ease;
+                border-radius: 0;
+            }
+
+            .mgmt-sidebar.show {
+                left: 0;
+            }
+
+            .mgmt-sidebar-backdrop {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, .4);
+                z-index: 1055;
+            }
+
+            .mgmt-sidebar-backdrop.show {
+                display: block;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .mgmt-sidebar-backdrop {
+                display: none !important;
+            }
+
+            #filterPanelToggle {
+                display: none !important;
+            }
+        }
+    </style>
+
+    <main id="main">
+        <div class="container-fluid px-3 px-md-4">
+
+            {{-- ============ TOP BAR ============ --}}
+            <div class="d-flex gap-2 align-items-center mb-3 flex-nowrap mgmt-topbar">
+                <button id="filterPanelToggle" class="btn btn-outline-secondary flex-shrink-0" type="button" title="Filters">
+                    <i class="bi bi-funnel"></i>
+                </button>
+
+                <div class="input-group flex-grow-1 flex-shrink-1 mgmt-search-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search equipment...">
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" style="display:none;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <div class="d-flex gap-2 flex-shrink-0">
+                    <select id="statusFilter" class="form-select mgmt-status-select">
+                        <option value="">All Statuses</option>
+                    </select>
+                    <a href="{{ url('/admin/add-equipment') }}" class="btn btn-primary text-nowrap flex-shrink-0"
+                        title="Add New">
+                        <i class="bi bi-plus-circle-fill me-2"></i><span class="btn-label">Add New</span>
+                    </a>
+                    <button type="button" id="massAssignBtn" class="btn btn-primary text-nowrap flex-shrink-0"
+                        title="Mass Assign Departments">
+                        <i class="bi bi-diagram-3-fill me-2"></i><span class="btn-label">Mass Assign Departments</span>
+                    </button>
+                </div>
             </div>
-          </div>
 
-          <div class="col-auto text-nowrap">
-            <div class="btn-group" role="group">
-              <a href="{{ url('/admin/add-equipment') }}" class="btn btn-primary">
-                <i class="bi bi-plus-circle-fill me-2"></i>Add New
-              </a>
-              <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"
-                id="equipmentDropdownToggle" data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="visually-hidden">Toggle Dropdown</span>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="equipmentDropdownToggle">
-                <li>
-                  <button class="dropdown-item" type="button" data-bs-toggle="modal"
-                    data-bs-target="#massAssignDepartmentsModal">
-                    <i class="bi bi-diagram-3-fill me-2"></i>Mass Assign Departments
-                  </button>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+            {{-- ============ TWO-COLUMN ROW ============ --}}
+            <div class="mgmt-row">
 
-        <!-- Equipment List (scrollable) -->
-        <div id="equipmentContainer">
-          <div class="row g-2" id="equipmentCardsContainer">
-            <!-- Loading skeletons will be shown here -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Pagination Controls (fixed at bottom) -->
-      <div class="d-flex justify-content-center mt-auto pt-3">
-        <nav aria-label="Equipment pagination">
-          <ul class="pagination" id="paginationContainer"></ul>
-        </nav>
-      </div>
-
-      <!-- Mass Assign Departments Modal -->
-      <div class="modal fade" id="massAssignDepartmentsModal" tabindex="-1"
-        aria-labelledby="massAssignDepartmentsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="massAssignDepartmentsModalLabel" style="color: #003366;">Mass Assign Department
-                to Equipment</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <form id="massAssignForm">
-                <!-- Equipment Selection -->
-                <div class="mb-4">
-                  <div class="mb-2 d-flex justify-content-between align-items-center">
-                    <label class="form-label fw-bold mb-0" style="color: #003366;">Select Equipment</label>
-                    <div>
-                      <button type="button" id="selectAllEquipment" class="btn btn-sm btn-primary me-2"
-                        style="background-color: #003366; color: white;">
-                        <i class="bi bi-check-all"></i> Select All
-                      </button>
-                      <button type="button" id="clearAllEquipment" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-x-circle"></i> Clear All
-                      </button>
+                {{-- LEFT SIDEBAR --}}
+                <aside class="mgmt-sidebar" id="filterPanel">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Categories</h6>
+                        <button type="button" id="clearFiltersBtn" class="btn btn-sm btn-link p-0" disabled>Clear</button>
                     </div>
-                  </div>
-                  <select id="equipmentMultiSelect" class="form-select" multiple size="8" style="border-color: #003366;">
-                  </select>
-                  <div class="form-text text-muted">Hold Ctrl/Cmd to select multiple equipment</div>
-                </div>
 
-                <!-- Department Selection - Changed to single select -->
-                <div class="mb-4">
-                  <label class="form-label fw-bold" style="color: #003366;">Select Department to Assign</label>
-                  <select id="departmentSingleSelect" class="form-select" style="border-color: #003366;">
-                    <option value="">Select Department</option>
-                  </select>
-                  <div class="form-text text-muted">Select the department that will manage the selected equipment</div>
-                </div>
+                    <div class="cat-tree" id="categoryTree">
+                        <div class="cat-node">
+                            <label class="d-block">
+                                <input type="radio" name="categoryRadio" value="" class="category-radio" checked>
+                                All Categories
+                            </label>
+                        </div>
+                        {{-- JS fills the rest --}}
+                    </div>
+                </aside>
 
-                <!-- Summary -->
-                <div class="alert" style="background-color: #f8f9fa; border-left: 4px solid #003366;"
-                  id="selectionSummary">
-                  <i class="bi bi-info-circle me-2" style="color: #003366;"></i>
-                  <span id="summaryText">No equipment selected</span>
-                </div>
-              </form>
+                <div class="mgmt-sidebar-backdrop" id="filterPanelBackdrop"></div>
+
+                {{-- RIGHT MAIN --}}
+                <section class="mgmt-main" id="mainColumn">
+
+                    {{-- Accordion view (single section: Equipment) --}}
+                    <div id="accordionView">
+
+                        <div class="section-header" data-section="equipment">
+                            <span>
+                                <i class="bi bi-chevron-down toggle-icon"></i>Equipment
+                            </span>
+                            <span class="count" id="equipmentCount">0 items</span>
+                        </div>
+                        <div class="section-body open" id="equipmentBody">
+                            <div class="inner" id="equipmentSection"></div>
+                        </div>
+
+                    </div>
+
+                    {{-- Results overlay (search + filtered) --}}
+                    <div id="resultsView">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 text-muted" id="resultsHeader">Results</h6>
+                        </div>
+                        <div id="resultsList"></div>
+                    </div>
+
+                    {{-- Loading overlay (pure white bg) --}}
+                    <div id="loadingOverlay">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted mb-0">Loading equipment...</p>
+                        </div>
+                    </div>
+
+                </section>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn" id="executeMassAssignBtn" style="background-color: #003366; color: white;"
-                onmouseover="this.style.backgroundColor='#004080'" onmouseout="this.style.backgroundColor='#003366'">
-                <i class="bi bi-check-circle me-2"></i>Assign Department
-              </button>
-            </div>
-          </div>
+
+            {{-- Modals (shared partials from facilities; <template>-wrapped, lazy-cloned) --}}
+            @include('partials.resource-management.delete-confirmation-modal', [
+                'resourceLabel' => 'Equipment',
+            ])
+            @include('partials.resource-management.mass-assign-departments-modal', [
+                'resourceLabel' => 'Equipment',
+            ])
+            @include('partials.resource-management.assignment-warning-modal', [
+                'resourceLabel' => 'Equipment',
+            ])
+
         </div>
-      </div>
-
-      <!-- Warning Modal -->
-      <div class="modal fade" id="assignmentWarningModal" tabindex="-1" aria-labelledby="warningModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="warningModalLabel" style="color: #003366;">Confirm Department Assignment</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <div class="text-center mb-3">
-                <i class="bi bi-exclamation-triangle-fill" style="color: #003366; font-size: 2.5rem;"></i>
-              </div>
-              <p class="text-center mb-0">
-                This action will <strong>replace all existing department assignments</strong> for the selected equipment
-                with the new departments.
-              </p>
-              <p class="text-center text-muted mt-2 mb-0">
-                Are you sure you want to continue?
-              </p>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn" id="confirmAssignBtn" style="background-color: #003366; color: white;"
-                onmouseover="this.style.backgroundColor='#004080'" onmouseout="this.style.backgroundColor='#003366'">
-                <i class="bi bi-check-circle me-2"></i>Yes, Assign Departments
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
-
+    </main>
 @endsection
-
 @section('scripts')
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
+    <script src="{{ asset('js/admin/toast.js') }}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
 
-      // Authentication check
-      const token = localStorage.getItem("adminToken");
-      if (!token) {
-        window.location.href = "/admin/login";
-        return;
-      }
+            const token = localStorage.getItem("adminToken");
+            if (!token) return window.location.href = "/admin/login";
 
-      // DOM elements
-      const equipmentContainer = document.getElementById("equipmentContainer");
-      const searchInput = document.getElementById("searchInput");
-      const layoutSelect = document.getElementById("layoutSelect");
-      const statusFilter = document.getElementById("statusFilter");
-      const categoryFilter = document.getElementById("categoryFilter");
-      const paginationContainer = document.getElementById("paginationContainer");
+            // ==================== DOM ====================
+            const $ = (id) => document.getElementById(id);
+            const els = {
+                filterPanel: $('filterPanel'),
+                filterPanelToggle: $('filterPanelToggle'),
+                filterPanelBackdrop: $('filterPanelBackdrop'),
+                searchInput: $('searchInput'),
+                clearSearchBtn: $('clearSearchBtn'),
+                clearFiltersBtn: $('clearFiltersBtn'),
+                statusFilter: $('statusFilter'),
+                categoryTree: $('categoryTree'),
+                accordionView: $('accordionView'),
+                equipmentSection: $('equipmentSection'),
+                equipmentCount: $('equipmentCount'),
+                equipmentBody: $('equipmentBody'),
+                resultsView: $('resultsView'),
+                resultsHeader: $('resultsHeader'),
+                resultsList: $('resultsList'),
+                loadingOverlay: $('loadingOverlay'),
+            };
 
-      // State variables
-      let allEquipment = [];
-      let filteredEquipment = [];
-      let currentPage = 1;
-      let totalPages = 1;
-      let totalItems = 0;
-      let itemsPerPage = 12;
-      let isLoading = false;
+            // ==================== STATE ====================
+            const state = {
+                filtersLoaded: false,
+                categoriesById: {},
+                selectedCategoryId: null,
+                childCache: {}, // equipmentId -> { rows, currentPage, lastPage }
+                searchTimer: null,
+                currentDeleteId: null,
+                currentDeleteEquipmentId: null,
+                sectionState: {
+                    equipment: {
+                        loaded: false,
+                        currentPage: 0,
+                        lastPage: 1,
+                        loadedCount: 0,
+                        total: 0
+                    },
+                },
+            };
 
-      // Filter state
-      let currentFilters = {
-        status_id: 'all',
-        category_id: 'all',
-        search: ''
-      };
+            // ==================== API ====================
+            const apiFetch = async (url, options = {}) => {
+                const res = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        ...(options.body && !(options.body instanceof FormData) ? {
+                            'Content-Type': 'application/json'
+                        } : {}),
+                        ...(options.headers || {}),
+                    },
+                });
+                if (res.status === 401) {
+                    localStorage.removeItem("adminToken");
+                    alert("Your session has expired. Please log in again.");
+                    window.location.href = "/admin/login";
+                    throw new Error("Unauthorized");
+                }
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            };
 
-      // Debounce timer for search
-      let searchDebounceTimer;
+            const showLoading = () => els.loadingOverlay.style.display = 'flex';
+            const hideLoading = () => els.loadingOverlay.style.display = 'none';
 
-      // Initialize the page
-      async function init() {
-        try {
-          await fetchEquipmentData();
-          setupEventListeners();
-        } catch (error) {
-          console.error("Initialization error:", error);
-          showToast("Failed to initialize page. Please refresh and try again.", "error");
-        }
-      }
+            // ==================== HELPERS ====================
+            const escapeHtml = (s) => s === null || s === undefined ? '' : String(s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-      // Fetch equipment data from merged API
-      async function fetchEquipmentData(page = 1) {
-        if (isLoading) return;
+            const typeBadge = (t) => ({
+                equipment: '<span class="badge bg-primary badge-type">Equipment</span>',
+                item: '<span class="badge bg-secondary badge-type">Item</span>',
+            } [t] || '');
 
-        isLoading = true;
-        showLoadingOverlay(); // Changed from showLoadingSkeletons()
+            const FALLBACK_IMG =
+                "https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png";
+            const imgFor = (r) => r.primary_image_url || FALLBACK_IMG;
 
-        try {
-          // Build query parameters
-          const params = new URLSearchParams();
-          params.append('page', page);
+            const hasActiveFilters = () =>
+                !!els.statusFilter.value || !!state.selectedCategoryId;
 
-          if (currentFilters.status_id && currentFilters.status_id !== 'all') {
-            params.append('status_id', currentFilters.status_id);
-          }
+            const buildFilterQuery = () => {
+                const p = new URLSearchParams();
+                if (els.statusFilter.value) p.set('status_id', els.statusFilter.value);
+                if (state.selectedCategoryId) p.set('category_id', state.selectedCategoryId);
+                return p.toString();
+            };
 
-          if (currentFilters.category_id && currentFilters.category_id !== 'all') {
-            params.append('category_id', currentFilters.category_id);
-          }
+            // ==================== LAZY MODAL LOADER ====================
+            const ensureModal = (templateId, modalId) => {
+                if (document.getElementById(modalId)) return true;
+                const tpl = document.getElementById(templateId);
+                if (!tpl) {
+                    console.error(`[ensureModal] template not found: #${templateId}`);
+                    return false;
+                }
+                document.body.appendChild(tpl.content.cloneNode(true));
+                return true;
+            };
 
-          if (currentFilters.search && currentFilters.search.trim()) {
-            params.append('search', currentFilters.search.trim());
-          }
+            // ==================== CATEGORY TREE (flat) ====================
+            const renderCategoryTree = (categories) => {
+                state.categoriesById = {};
+                const rows = categories.map(c => {
+                    state.categoriesById[c.category_id] = c;
+                    return `
+            <div class="cat-node" data-category-id="${c.category_id}">
+              <label class="d-block">
+                <input type="radio" name="categoryRadio" value="${c.category_id}" class="category-radio">
+                ${escapeHtml(c.category_name)}
+              </label>
+            </div>`;
+                }).join('');
+                els.categoryTree.innerHTML = `
+          <div class="cat-node">
+            <label class="d-block">
+              <input type="radio" name="categoryRadio" value="" class="category-radio" checked>
+              All Categories
+            </label>
+          </div>${rows}`;
+                wireCategoryEvents();
+            };
 
-          const response = await fetch(`/api/admin/manage-equipment?${params.toString()}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          });
+            const wireCategoryEvents = () => {
+                els.categoryTree.querySelectorAll('.category-radio').forEach(r => {
+                    r.addEventListener('change', () => {
+                        if (!r.checked) return;
+                        state.selectedCategoryId = r.value ? parseInt(r.value) : null;
+                        refreshView();
+                    });
+                });
+            };
 
-          if (response.status === 401) {
-            localStorage.removeItem("adminToken");
-            showToast("Your session has expired. Please log in again.", "error");
-            setTimeout(() => {
-              window.location.href = "/admin/login";
-            }, 2000);
-            return;
-          }
+            const resetFilters = () => {
+                state.selectedCategoryId = null;
+                els.statusFilter.value = '';
+                els.categoryTree.querySelectorAll('input[type="radio"]').forEach(r => r.checked = r.value ===
+                    '');
+                els.clearFiltersBtn.disabled = true;
+            };
 
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
+            // ==================== NODE RENDER ====================
+            const renderNode = (row) => {
+                const isEquipment = row.equipment_id !== undefined && row.item_id === undefined;
+                const statusBadge = row.status_name ?
+                    `<span class="badge" style="background-color:${escapeHtml(row.status_color_code || '#6c757d')}; color:#fff;">${escapeHtml(row.status_name)}</span>` :
+                    '';
 
-          const result = await response.json();
+                if (isEquipment) {
+                    const itemsBadge = row.items_count > 0 ?
+                        ` · <strong>${row.items_count} item${row.items_count === 1 ? '' : 's'}</strong>` : '';
+                    const price = row.base_fee !== null && row.base_fee !== undefined ?
+                        `<p class="node-meta mb-0">
+                 <i class="bi bi-cash-stack me-1"></i>
+                 ₱${parseFloat(row.base_fee).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                 <span class="text-muted">(${escapeHtml(row.rate_type || '')})</span>
+               </p>` : '';
 
-          if (!result.success) {
-            throw new Error(result.message || "Failed to fetch equipment");
-          }
+                    return `
+            <div class="node" data-equipment-id="${row.equipment_id}" data-type="equipment">
+              <img src="${imgFor(row)}" class="node-img"
+                   onerror="this.src='${FALLBACK_IMG}'" alt="${escapeHtml(row.equipment_name)}">
+              <div class="node-body">
+                <p class="node-title">${escapeHtml(row.equipment_name)}${row.brand ? ` <span class="text-muted small">(${escapeHtml(row.brand)})</span>` : ''}</p>
+                <p class="node-meta">
+                  <i class="bi bi-tag-fill me-1"></i>${escapeHtml(row.category_name)}
+                  ${itemsBadge}
+                </p>
+                ${price}
+                <div class="mt-1">${statusBadge} ${typeBadge('equipment')}</div>
+              </div>
+              <div class="node-actions">
+                <a href="/admin/edit-equipment?id=${row.equipment_id}" class="btn btn-sm btn-primary">Manage</a>
+                <button class="btn btn-sm btn-danger btn-delete-equipment" data-id="${row.equipment_id}">Delete</button>
+                ${row.items_count > 0
+                  ? `<button class="btn btn-sm btn-outline-secondary btn-expand"
+                                                     data-id="${row.equipment_id}" title="Expand"><i class="bi bi-chevron-down"></i></button>`
+                  : ''}
+              </div>
+            </div>
+            ${row.items_count > 0
+              ? `<div class="children-wrap" data-children-for="${row.equipment_id}"><div class="inner"></div></div>`
+              : ''}
+          `;
+                }
 
-          // Store equipment data
-          allEquipment = result.data || [];
-          filteredEquipment = [...allEquipment];
+                // Item row (used in expanded children AND search item results)
+                const parentMeta = row.equipment_name ?
+                    `<span class="text-muted mx-1">•</span>
+             <i class="bi bi-box-seam me-1"></i>Parent: ${escapeHtml(row.equipment_name)}` :
+                    '';
+                const categoryMeta = row.category_name ?
+                    `<i class="bi bi-tag-fill me-1"></i>${escapeHtml(row.category_name)}` :
+                    '';
+                const barcodeMeta = row.barcode_number ?
+                    `<p class="node-meta mb-0"><i class="bi bi-upc-scan me-1"></i>${escapeHtml(row.barcode_number)}</p>` :
+                    '';
+                const conditionBadge = row.condition_name ?
+                    `<span class="badge bg-info text-dark">${escapeHtml(row.condition_name)}</span>` : '';
 
-          // Update pagination info
-          totalPages = result.pagination.last_page;
-          currentPage = result.pagination.current_page;
-          totalItems = result.pagination.total;
+                return `
+          <div class="node" data-item-id="${row.item_id}" data-type="item">
+            <img src="${imgFor(row)}" class="node-img sm"
+                 onerror="this.src='${FALLBACK_IMG}'" alt="${escapeHtml(row.item_name)}">
+            <div class="node-body">
+              <p class="node-title">${escapeHtml(row.item_name)}</p>
+              <p class="node-meta">${categoryMeta}${parentMeta}</p>
+              ${barcodeMeta}
+              <div class="mt-1">${statusBadge} ${conditionBadge} ${typeBadge('item')}</div>
+            </div>
+            <div class="node-actions">
+<a href="/admin/edit-equipment?id=${row.equipment_id}" class="btn btn-sm btn-primary">Manage</a>
+<button class="btn btn-sm btn-danger btn-delete-item"
+        data-id="${row.item_id}"
+        data-equipment-id="${row.equipment_id}">Delete</button>
+            </div>
+          </div>`;
+            };
 
-          // Populate filter dropdowns on first load only
-          if (page === 1 && result.filters) {
-            populateStatusFilter(result.filters.statuses);
-            populateCategoryFilter(result.filters.categories);
-          }
+            const wireNodeEvents = (root) => {
+                root.querySelectorAll('.btn-delete-equipment').forEach(b =>
+                    b.addEventListener('click', () => openDeleteModal(b.dataset.id, 'equipment')));
+                root.querySelectorAll('.btn-delete-item').forEach(b =>
+                    b.addEventListener('click', () =>
+                        openDeleteModal(b.dataset.id, 'item', b.dataset.equipmentId)));
+                root.querySelectorAll('.btn-expand').forEach(b =>
+                    b.addEventListener('click', () => toggleEquipment(b.dataset.id, b)));
+            };
 
-          // Render equipment
-          renderEquipment();
+            // ==================== ACCORDION RENDER ====================
+            const loadMoreHtml = (section) => {
+                const s = state.sectionState[section];
+                if (!s || s.currentPage >= s.lastPage) return '';
+                return `
+          <div class="text-center my-2">
+            <button class="btn btn-sm btn-outline-secondary btn-load-more-section" data-section="${section}">
+              <i class="bi bi-arrow-down-circle me-1"></i>
+              Load more equipment (${s.loadedCount}/${s.total})
+            </button>
+          </div>`;
+            };
 
-          // Update pagination controls
-          updatePagination();
+            const renderAccordion = (data) => {
+                const equipment = data.equipment || [];
+                const total = data.equipment_total ?? equipment.length;
+                const PER_PAGE = 10;
 
-        } catch (error) {
-          console.error("Error fetching equipment:", error);
-          showToast(error.message || "Failed to load equipment", "error");
-          showEmptyState("Failed to load equipment. Please try again.");
-        } finally {
-          isLoading = false;
-          hideLoadingOverlay(); // Changed from setting isLoading false
-        }
-      }
+                state.sectionState.equipment = {
+                    loaded: true,
+                    currentPage: Math.ceil(equipment.length / PER_PAGE) || 1,
+                    lastPage: Math.max(1, Math.ceil(total / PER_PAGE)),
+                    loadedCount: equipment.length,
+                    total: total,
+                };
 
-      // Show loading overlay
-      function showLoadingOverlay() {
-        const container = document.getElementById('equipmentContainer');
-        if (!container) return;
+                els.equipmentSection.innerHTML = equipment.length ?
+                    equipment.map(renderNode).join('') + loadMoreHtml('equipment') :
+                    '<p class="text-muted small mb-0 p-2">No equipment match your filters.</p>';
 
-        // Add loading class to container
-        container.classList.add('equipment-container-loading');
+                const fmt = (shown, tot) =>
+                    shown < tot ? `${shown} of ${tot} items` : `${tot} item${tot === 1 ? '' : 's'}`;
+                els.equipmentCount.textContent = fmt(equipment.length, total);
 
-        // Check if overlay already exists
-        let overlay = container.querySelector('.loading-overlay');
-        if (!overlay) {
-          overlay = document.createElement('div');
-          overlay.className = 'loading-overlay';
-          overlay.innerHTML = `
-                      <div class="loading-spinner">
-                        <div class="spinner-border text-primary" role="status">
-                          <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2 text-muted">Loading equipment...</p>
-                      </div>
-                    `;
-          container.appendChild(overlay);
-        } else {
-          overlay.style.display = 'flex';
-        }
+                wireNodeEvents(els.equipmentSection);
+                wireLoadMore(els.equipmentSection, 'equipment');
+            };
 
-        // Disable pagination
-        const pagination = document.getElementById('paginationContainer');
-        if (pagination) {
-          pagination.classList.add('disabled-pagination');
-        }
-      }
+            const loadMoreSection = async (section) => {
+                const s = state.sectionState[section];
+                if (!s || s.currentPage >= s.lastPage) return;
 
-      // Hide loading overlay
-      function hideLoadingOverlay() {
-        const container = document.getElementById('equipmentContainer');
-        if (!container) return;
+                const btn = document.querySelector(`.btn-load-more-section[data-section="${section}"]`);
+                if (btn) btn.disabled = true;
 
-        container.classList.remove('equipment-container-loading');
+                const p = new URLSearchParams({
+                    section,
+                    page: s.currentPage + 1
+                });
+                if (els.statusFilter.value) p.set('status_id', els.statusFilter.value);
+                if (state.selectedCategoryId) p.set('category_id', state.selectedCategoryId);
 
-        const overlay = container.querySelector('.loading-overlay');
-        if (overlay) {
-          overlay.style.display = 'none';
-        }
+                try {
+                    const res = await apiFetch(`/api/admin/manage-equipment/section?${p.toString()}`);
+                    const rows = res.data || [];
 
-        // Re-enable pagination
-        const pagination = document.getElementById('paginationContainer');
-        if (pagination) {
-          pagination.classList.remove('disabled-pagination');
-        }
-      }
+                    els.equipmentSection.querySelectorAll('.btn-load-more-section').forEach(b => b
+                        .parentElement.remove());
+                    els.equipmentSection.insertAdjacentHTML('beforeend', rows.map(renderNode).join(''));
 
-      // Populate status filter dropdown
-      function populateStatusFilter(statuses) {
-        statusFilter.innerHTML = '<option value="all">All Statuses</option>';
+                    s.currentPage = res.pagination.current_page;
+                    s.lastPage = res.pagination.last_page;
+                    s.loadedCount += rows.length;
 
-        if (statuses && Array.isArray(statuses)) {
-          statuses.forEach((status) => {
-            const option = document.createElement("option");
-            option.value = status.status_id;
-            option.textContent = status.status_name;
-            statusFilter.appendChild(option);
-          });
-        }
-      }
+                    wireNodeEvents(els.equipmentSection);
+                    els.equipmentSection.insertAdjacentHTML('beforeend', loadMoreHtml(section));
+                    wireLoadMore(els.equipmentSection, section);
 
-      // Populate category filter dropdown
-      function populateCategoryFilter(categories) {
-        categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+                    const fmt = (shown, tot) =>
+                        shown < tot ? `${shown} of ${tot} items` : `${tot} item${tot === 1 ? '' : 's'}`;
+                    els.equipmentCount.textContent = fmt(s.loadedCount, s.total);
+                } catch (e) {
+                    console.error(e);
+                    if (typeof showToast === 'function') showToast('Failed to load more', 'error');
+                    if (btn) btn.disabled = false;
+                }
+            };
 
-        if (categories && Array.isArray(categories)) {
-          categories.forEach((category) => {
-            const option = document.createElement("option");
-            option.value = category.category_id;
-            option.textContent = category.category_name;
-            categoryFilter.appendChild(option);
-          });
-        }
-      }
+            const wireLoadMore = (root, section) => {
+                root.querySelectorAll(`.btn-load-more-section[data-section="${section}"]`).forEach(btn => {
+                    btn.addEventListener('click', () => loadMoreSection(section));
+                });
+            };
 
-      // Render equipment cards
-      function renderEquipment() {
-        const container = document.getElementById('equipmentCardsContainer');
-        if (!container) return;
+            // ==================== SECTION COLLAPSE (header) ====================
+            document.querySelectorAll('.section-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    els.equipmentBody.classList.toggle('open');
+                    header.classList.toggle('closed');
+                });
+            });
 
-        container.innerHTML = "";
+            // ==================== LAZY LOAD ITEMS ====================
+            const loadItemsPage = async (equipmentId, page) => {
+                return apiFetch(`/api/admin/equipment/${equipmentId}/items-list?page=${page}`);
+            };
 
-        if (!filteredEquipment || filteredEquipment.length === 0) {
-          showEmptyState("No equipment found matching your criteria");
-          return;
-        }
+            const renderItems = (wrap, equipmentId, res, append = false) => {
+                if (!wrap) return;
+                const inner = wrap.querySelector('.inner');
 
-        const layout = layoutSelect.value;
-        container.className = layout === "list" ? "row g-3" : "row g-2";
+                const cache = state.childCache[equipmentId] ||= {
+                    rows: [],
+                    currentPage: 0,
+                    lastPage: 1
+                };
+                if (append) cache.rows.push(...(res.data || []));
+                else cache.rows = res.data || [];
+                cache.currentPage = res.pagination.current_page;
+                cache.lastPage = res.pagination.last_page;
 
-        filteredEquipment.forEach((equipment) => {
-          const statusClass = getStatusClass(equipment.status.status_name);
+                const nodesHtml = cache.rows.map(renderNode).join('');
+                const lmHtml = cache.currentPage < cache.lastPage ?
+                    `<button class="btn btn-sm btn-outline-secondary btn-load-more my-2" data-id="${equipmentId}">
+               <i class="bi bi-arrow-down-circle me-1"></i>Load more items (${cache.rows.length}/${res.pagination.total})
+             </button>` :
+                    '';
 
-          // Find primary image
-          let primaryImage = "https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png";
+                inner.innerHTML = (cache.rows.length ?
+                    nodesHtml :
+                    '<p class="text-muted small mb-2 p-2">No items match your filters.</p>') + lmHtml;
 
-          if (equipment.images && equipment.images.length > 0) {
-            const validImages = equipment.images.filter(img => img.image_url && img.image_url.trim() !== '');
-            if (validImages.length > 0) {
-              const sortOrder1Image = validImages.find(img => img.sort_order === 1);
-              const primaryTypeImage = validImages.find(img => img.image_type === "Primary");
+                wrap.classList.add('open');
+                wireNodeEvents(inner);
 
-              primaryImage = sortOrder1Image?.image_url ||
-                primaryTypeImage?.image_url ||
-                validImages[0]?.image_url ||
-                primaryImage;
-            }
-          }
+                const lm = inner.querySelector('.btn-load-more');
+                if (lm) lm.addEventListener('click', async () => {
+                    lm.disabled = true;
+                    try {
+                        const next = await loadItemsPage(equipmentId, cache.currentPage + 1);
+                        renderItems(wrap, equipmentId, next, true);
+                    } catch (e) {
+                        console.error(e);
+                        if (typeof showToast === 'function') showToast('Failed to load more items',
+                            'error');
+                        lm.disabled = false;
+                    }
+                });
+            };
 
-          const card = document.createElement("div");
+            const renderItemsFromCache = (wrap, equipmentId, cache) => {
+                const inner = wrap.querySelector('.inner');
+                if (!inner) return;
 
-          if (layout === "list") {
-            card.className = "col-12 equipment-card mb-0";
-            card.innerHTML = `
-                          <div class="card h-100 shadow-sm rounded-3">
-                            <div class="row g-0">
-                              <div class="col-md-2" style="max-width: 120px; flex: 0 0 120px;">
-                                <img src="${primaryImage}" 
-                                     class="img-fluid rounded-start" 
-                                     style="width: 120px; height: 120px; object-fit: cover;" 
-                                     alt="${escapeHtml(equipment.equipment_name)}"
-                                     onerror="this.src='https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png'">
-                              </div>
-                              <div class="col-md-8">
-                                <div class="card-body py-3">
-                                  <h5 class="card-title fw-bold mb-2">${escapeHtml(equipment.equipment_name)}</h5>
-                                  <p class="card-text mb-2">
-                                    <span class="badge ${statusClass} me-2">${escapeHtml(equipment.status.status_name)}</span>
-                                    <small class="text-muted">
-                                      <i class="bi bi-tag-fill text-primary me-1"></i>${escapeHtml(equipment.category.category_name)}
-                                      <i class="bi bi-box-fill text-primary ms-2 me-1"></i>${equipment.available_quantity}/${equipment.total_quantity} available
-                                    </small>
-                                  </p>
-                                  <p class="card-text text-muted mb-0">
-                                    ${escapeHtml(equipment.description || "No description available")}
-                                  </p>
-                                </div>
-                              </div>
-                              <div class="col-md-2 d-flex align-items-center justify-content-center">
-                                <div class="d-grid gap-2 w-100 px-2">
-                                  <a href="/admin/edit-equipment?id=${equipment.equipment_id}" 
-                                     class="btn btn-sm btn-primary">
-                                     Manage
-                                  </a>
-                                  <button class="btn btn-sm btn-outline-danger btn-delete" 
-                                          data-id="${equipment.equipment_id}"
-                                          data-name="${escapeHtml(equipment.equipment_name)}">
-                                    Delete
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        `;
-          } else {
-            card.className = "col-md-4 col-lg-3 equipment-card mb-3";
-            card.innerHTML = `
-                          <div class="card h-100">
-                            <img src="${primaryImage}" 
-                                 class="card-img-top" 
-                                 style="height: 150px; object-fit: cover;" 
-                                 alt="${escapeHtml(equipment.equipment_name)}"
-                                 onerror="this.src='https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png'">
-                            <div class="card-body d-flex flex-column p-2">
-                              <div>
-                                <h6 class="card-title mb-1 fw-bold">${escapeHtml(equipment.equipment_name)}</h6>
-                                <p class="card-text text-muted mb-1 small">
-                                  <i class="bi bi-tag-fill text-primary me-1"></i>${escapeHtml(equipment.category.category_name)}
-                                  <i class="bi bi-box-fill text-primary ms-2 me-1"></i>${equipment.available_quantity}/${equipment.total_quantity}
-                                </p>
-                                <span class="badge ${statusClass} mb-2">${escapeHtml(equipment.status.status_name)}</span>
-                                <p class="card-text mb-2 small text-truncate">${escapeHtml(equipment.description || "No description available")}</p>
-                              </div>
-                              <div class="equipment-actions mt-auto d-grid gap-1">
-                                <a href="/admin/edit-equipment?id=${equipment.equipment_id}" class="btn btn-sm btn-primary btn-manage">Manage</a>
-                                <button class="btn btn-sm btn-outline-danger btn-delete" 
-                                        data-id="${equipment.equipment_id}"
-                                        data-name="${escapeHtml(equipment.equipment_name)}">Delete</button>
-                              </div>
-                            </div>
-                          </div>
-                        `;
-          }
+                const nodesHtml = cache.rows.map(renderNode).join('');
+                const lmHtml = cache.currentPage < cache.lastPage ?
+                    `<button class="btn btn-sm btn-outline-secondary btn-load-more my-2" data-id="${equipmentId}">
+               <i class="bi bi-arrow-down-circle me-1"></i>Load more items (${cache.rows.length}/${cache.lastPage * 10})
+             </button>` :
+                    '';
 
-          container.appendChild(card);
+                inner.innerHTML = (cache.rows.length ?
+                    nodesHtml :
+                    '<p class="text-muted small mb-2 p-2">No items match your filters.</p>') + lmHtml;
+
+                wireNodeEvents(inner);
+
+                const lm = inner.querySelector('.btn-load-more');
+                if (lm) lm.addEventListener('click', async () => {
+                    lm.disabled = true;
+                    try {
+                        const next = await loadItemsPage(equipmentId, cache.currentPage + 1);
+                        renderItems(wrap, equipmentId, next, true);
+                    } catch (e) {
+                        console.error(e);
+                        if (typeof showToast === 'function') showToast('Failed to load more items',
+                            'error');
+                        lm.disabled = false;
+                    }
+                });
+            };
+
+            const toggleEquipment = async (equipmentId, btn) => {
+                const nodeEl = btn.closest('.node');
+                const wrap = nodeEl?.nextElementSibling;
+                if (!wrap || !wrap.matches(`[data-children-for="${equipmentId}"]`)) return;
+
+                const isOpen = wrap.classList.contains('open');
+                if (isOpen) {
+                    wrap.classList.remove('open');
+                    btn.classList.remove('expanded');
+                    return;
+                }
+
+                wrap.classList.add('open');
+                btn.classList.add('expanded');
+
+                const cache = state.childCache[equipmentId];
+                if (cache?.rows.length) {
+                    renderItemsFromCache(wrap, equipmentId, cache);
+                    return;
+                }
+
+                const inner = wrap.querySelector('.inner');
+                inner.innerHTML = '<p class="text-muted small mb-2 p-2">Loading items...</p>';
+                try {
+                    const res = await loadItemsPage(equipmentId, 1);
+                    renderItems(wrap, equipmentId, res, false);
+                } catch (e) {
+                    console.error(e);
+                    inner.innerHTML = '<p class="text-danger small mb-2 p-2">Failed to load items.</p>';
+                }
+            };
+
+            // ==================== RESULTS OVERLAY ====================
+            const renderResults = (rows, headerText, emptyText) => {
+                els.accordionView.classList.add('hidden');
+                els.resultsView.classList.add('active');
+                els.resultsHeader.textContent = headerText;
+
+                if (!rows.length) {
+                    els.resultsList.innerHTML = `
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-search fs-1"></i>
+              <p class="mt-2 mb-0">${escapeHtml(emptyText)}</p>
+            </div>`;
+                    return;
+                }
+
+                els.resultsList.innerHTML = rows.map(renderNode).join('');
+                wireNodeEvents(els.resultsList);
+            };
+
+            const exitResults = () => {
+                els.resultsView.classList.remove('active');
+                els.accordionView.classList.remove('hidden');
+            };
+
+            // ==================== FETCHERS ====================
+            const fetchIndexForAccordion = async (populate = false) => {
+                showLoading();
+                try {
+                    const res = await apiFetch('/api/admin/manage-equipment');
+                    if (populate && !state.filtersLoaded) {
+                        els.statusFilter.innerHTML = '<option value="">All Statuses</option>';
+                        (res.filters.statuses || []).forEach(s => {
+                            els.statusFilter.insertAdjacentHTML('beforeend',
+                                `<option value="${s.status_id}">${escapeHtml(s.status_name)}</option>`
+                            );
+                        });
+                        renderCategoryTree(res.filters.categories || []);
+                        state.filtersLoaded = true;
+                    }
+                    exitResults();
+                    renderAccordion(res.data);
+                } catch (e) {
+                    console.error(e);
+                    els.equipmentSection.innerHTML = '<p class="text-danger small p-2">Failed to load.</p>';
+                } finally {
+                    hideLoading();
+                }
+            };
+
+            const fetchFilteredResults = async () => {
+                showLoading();
+                try {
+                    const q = buildFilterQuery();
+                    const res = await apiFetch(`/api/admin/manage-equipment?${q}`);
+                    const equipmentRows = res.data.equipment || [];
+                    const itemRows = res.data.matching_items || [];
+
+                    // Merge equipment rows + matching items into a single overlay list.
+                    // Items carry equipment_name for context (already in formatItem).
+                    const rows = [...equipmentRows, ...itemRows];
+
+                    renderResults(rows,
+                        `Filtered Results — ${rows.length} match${rows.length === 1 ? '' : 'es'}`,
+                        'No equipment or items match the selected filters.');
+                } catch (e) {
+                    console.error(e);
+                    if (typeof showToast === 'function') showToast('Failed to load results', 'error');
+                } finally {
+                    hideLoading();
+                }
+            };
+
+            const runSearch = async (q) => {
+                showLoading();
+                try {
+                    const res = await apiFetch(
+                        `/api/admin/manage-equipment/search?q=${encodeURIComponent(q)}`);
+                    const results = res.results || [];
+                    // Flatten: result_type + payload
+                    const rows = results.map(r => r.result_type === 'item' ? r.item : r.equipment);
+                    renderResults(rows,
+                        `Search Results — ${rows.length} match${rows.length === 1 ? '' : 'es'} for "${q}"`,
+                        'No equipment found.');
+                } catch (e) {
+                    console.error(e);
+                    if (typeof showToast === 'function') showToast('Search failed', 'error');
+                } finally {
+                    hideLoading();
+                }
+            };
+
+            // ==================== VIEW REFRESH ====================
+            const refreshView = () => {
+                const hasSearch = !!els.searchInput.value.trim();
+                if (hasSearch) return;
+                if (hasActiveFilters()) {
+                    els.clearFiltersBtn.disabled = false;
+                    fetchFilteredResults();
+                } else {
+                    els.clearFiltersBtn.disabled = true;
+                    exitResults();
+                }
+            };
+
+            // ==================== EVENT WIRES ====================
+            els.statusFilter.addEventListener('change', refreshView);
+
+            els.searchInput.addEventListener('input', () => {
+                clearTimeout(state.searchTimer);
+                const q = els.searchInput.value.trim();
+                if (!q) {
+                    els.clearSearchBtn.style.display = 'none';
+                    refreshView();
+                    return;
+                }
+                els.clearSearchBtn.style.display = 'block';
+                state.searchTimer = setTimeout(() => runSearch(q), 350);
+            });
+
+            els.searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    els.searchInput.value = '';
+                    els.clearSearchBtn.style.display = 'none';
+                    refreshView();
+                }
+            });
+
+            els.clearSearchBtn.addEventListener('click', () => {
+                els.searchInput.value = '';
+                els.clearSearchBtn.style.display = 'none';
+                refreshView();
+            });
+
+            els.clearFiltersBtn.addEventListener('click', () => {
+                resetFilters();
+                refreshView();
+            });
+
+            els.filterPanelToggle.addEventListener('click', () => {
+                els.filterPanel.classList.add('show');
+                els.filterPanelBackdrop.classList.add('show');
+            });
+            els.filterPanelBackdrop.addEventListener('click', () => {
+                els.filterPanel.classList.remove('show');
+                els.filterPanelBackdrop.classList.remove('show');
+            });
+
+            // ==================== DELETE (lazy) ====================
+            const openDeleteModal = (id, type, equipmentId = null) => {
+                state.currentDeleteId = id;
+                state.currentDeleteType = type;
+                state.currentDeleteEquipmentId = equipmentId;
+                ensureModal('deleteModalTemplate', 'deleteConfirmationModal');
+
+                if (!state._deleteWired) {
+                    document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
+                        if (!state.currentDeleteId) return;
+                        const btn = document.getElementById('confirmDeleteBtn');
+                        btn.disabled = true;
+
+                        const url = state.currentDeleteType === 'item' ?
+                            `/api/admin/equipment/${state.currentDeleteEquipmentId}/items/${state.currentDeleteId}` :
+                            `/api/admin/equipment/${state.currentDeleteId}`;
+
+                        try {
+                            await apiFetch(url, {
+                                method: 'DELETE'
+                            });
+                            if (typeof showToast === 'function') showToast(
+                                `${state.currentDeleteType === 'item' ? 'Item' : 'Equipment'} deleted successfully`,
+                                'success');
+                            delete state.childCache[state.currentDeleteId];
+                            bootstrap.Modal.getInstance(document.getElementById(
+                                'deleteConfirmationModal'))?.hide();
+                            if (hasActiveFilters()) fetchFilteredResults();
+                            else fetchIndexForAccordion();
+                        } catch (e) {
+                            console.error(e);
+                            if (typeof showToast === 'function') showToast('Failed to delete',
+                                'error');
+                        } finally {
+                            btn.disabled = false;
+                            state.currentDeleteId = null;
+                            state.currentDeleteType = null;
+                        }
+                    });
+                    state._deleteWired = true;
+                }
+
+                const el = document.getElementById('deleteConfirmationModal');
+                if (!el) return;
+                el.style.zIndex = '1075';
+                const modal = new bootstrap.Modal(el);
+                el.addEventListener('shown.bs.modal', () => {
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    if (backdrops.length) backdrops[backdrops.length - 1].style.zIndex = '1070';
+                }, {
+                    once: true
+                });
+                modal.show();
+            };
+
+            // ==================== MASS ASSIGN ====================
+            const maState = {
+                page: 1,
+                lastPage: 1,
+                total: 0,
+                search: '',
+                currentRows: [],
+                selected: new Map(),
+                searchTimer: null,
+                departmentsLoaded: false,
+                pendingAssignment: null,
+                wired: false,
+            };
+
+            const maFetchPage = async (page = 1) => {
+                const p = new URLSearchParams({
+                    page
+                });
+                if (maState.search) p.set('search', maState.search);
+                return apiFetch(`/api/admin/manage-equipment/dropdown?${p.toString()}`);
+            };
+
+            const maRenderCheckboxList = () => {
+                const list = document.getElementById('massAssignCheckboxList');
+                if (!list) return;
+
+                if (!maState.currentRows.length) {
+                    list.innerHTML = '<p class="text-muted small mb-0 p-2">No equipment found.</p>';
+                    return;
+                }
+
+                list.innerHTML = maState.currentRows.map(row => {
+                    const checked = maState.selected.has(row.equipment_id) ? 'checked' : '';
+                    const brand = row.brand ?
+                        ` <span class="text-muted small">(${escapeHtml(row.brand)})</span>` : '';
+                    return `
+            <div class="form-check py-1 border-bottom">
+              <input class="form-check-input ma-facility-checkbox" type="checkbox"
+                     value="${row.equipment_id}" id="ma-fac-${row.equipment_id}" ${checked}>
+              <label class="form-check-label small" for="ma-fac-${row.equipment_id}">
+                ${escapeHtml(row.equipment_name)}${brand}
+              </label>
+            </div>`;
+                }).join('');
+
+                list.querySelectorAll('.ma-facility-checkbox').forEach(cb => {
+                    cb.addEventListener('change', () => {
+                        const id = parseInt(cb.value);
+                        const row = maState.currentRows.find(r => r.equipment_id === id);
+                        if (!row) return;
+                        if (cb.checked) maState.selected.set(id, {
+                            name: row.equipment_name,
+                            brand: row.brand
+                        });
+                        else maState.selected.delete(id);
+                        maRenderSelectedList();
+                    });
+                });
+            };
+
+            const maRenderSelectedList = () => {
+                const list = document.getElementById('massAssignSelectedList');
+                const count = document.getElementById('massAssignSelectedCount');
+                if (!list) return;
+                count.textContent = maState.selected.size;
+
+                if (maState.selected.size === 0) {
+                    list.innerHTML = '<p class="text-muted small mb-0">No equipment selected yet.</p>';
+                    return;
+                }
+
+                list.innerHTML = Array.from(maState.selected.entries()).map(([id, info]) => `
+          <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+            <span class="small text-truncate" style="max-width: 85%;">${escapeHtml(info.name)}</span>
+            <button type="button" class="btn btn-sm btn-link text-danger p-0 ma-remove-selected"
+                    data-id="${id}" title="Remove" style="line-height: 1;">
+              <i class="bi bi-x-circle-fill" style="color: #dc3545;"></i>
+            </button>
+          </div>`).join('');
+
+                list.querySelectorAll('.ma-remove-selected').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        maState.selected.delete(parseInt(btn.dataset.id));
+                        maRenderSelectedList();
+                        maRenderCheckboxList();
+                    });
+                });
+            };
+
+            const maUpdatePaginationUI = () => {
+                const ind = document.getElementById('massAssignPageIndicator');
+                const total = document.getElementById('massAssignTotalCount');
+                const prev = document.getElementById('massAssignPrev');
+                const next = document.getElementById('massAssignNext');
+                if (ind) ind.textContent = `${maState.page} / ${maState.lastPage}`;
+                if (total) total.textContent = `${maState.total} item${maState.total === 1 ? '' : 's'}`;
+                if (prev) prev.disabled = maState.page <= 1;
+                if (next) next.disabled = maState.page >= maState.lastPage;
+            };
+
+            const maLoadPage = async (page) => {
+                const res = await maFetchPage(page);
+                const rows = Array.isArray(res.data) ? res.data : (res.data || []);
+                maState.currentRows = rows;
+                maState.page = res.current_page || 1;
+                maState.lastPage = res.last_page || 1;
+                maState.total = res.total || rows.length;
+                maRenderCheckboxList();
+                maUpdatePaginationUI();
+            };
+
+            const maLoadDepartments = async () => {
+                if (maState.departmentsLoaded) return;
+                try {
+                    const res = await apiFetch("/api/departments");
+                    const list = Array.isArray(res) ? res : (res.data || []);
+                    const sel = document.getElementById('departmentSingleSelect');
+                    if (sel) sel.innerHTML = '<option value="">Select a department...</option>' +
+                        list.map(d =>
+                            `<option value="${d.department_id}">${escapeHtml(d.department_name)}</option>`)
+                        .join('');
+                    maState.departmentsLoaded = true;
+                } catch (e) {
+                    console.error(e);
+                    if (typeof showToast === 'function') showToast('Failed to load departments', 'error');
+                }
+            };
+
+            const wireMassAssignControls = () => {
+                const searchInput = document.getElementById('massAssignSearch');
+                const searchClear = document.getElementById('massAssignSearchClear');
+                const prev = document.getElementById('massAssignPrev');
+                const next = document.getElementById('massAssignNext');
+                const selectPage = document.getElementById('massAssignSelectPage');
+                const clearAll = document.getElementById('massAssignClearAll');
+                const execBtn = document.getElementById('executeMassAssignBtn');
+                const confirmBtn = document.getElementById('confirmAssignBtn');
+                if (!searchInput || !execBtn || !confirmBtn) return;
+
+                searchInput.addEventListener('input', () => {
+                    clearTimeout(maState.searchTimer);
+                    const q = searchInput.value.trim();
+                    searchClear.style.display = q ? 'block' : 'none';
+                    maState.searchTimer = setTimeout(() => {
+                        maState.search = q;
+                        maLoadPage(1);
+                    }, 300);
+                });
+                searchClear.addEventListener('click', () => {
+                    searchInput.value = '';
+                    searchClear.style.display = 'none';
+                    maState.search = '';
+                    maLoadPage(1);
+                });
+                prev.addEventListener('click', () => {
+                    if (maState.page > 1) maLoadPage(maState.page - 1);
+                });
+                next.addEventListener('click', () => {
+                    if (maState.page < maState.lastPage) maLoadPage(maState.page + 1);
+                });
+                selectPage.addEventListener('click', () => {
+                    maState.currentRows.forEach(r =>
+                        maState.selected.set(r.equipment_id, {
+                            name: r.equipment_name,
+                            brand: r.brand
+                        }));
+                    maRenderCheckboxList();
+                    maRenderSelectedList();
+                });
+                clearAll.addEventListener('click', () => {
+                    maState.selected.clear();
+                    maRenderCheckboxList();
+                    maRenderSelectedList();
+                });
+
+                execBtn.addEventListener('click', () => {
+                    const deptSel = document.getElementById('departmentSingleSelect');
+                    const deptId = deptSel?.value;
+                    if (maState.selected.size === 0) return showToast(
+                        'Please select at least one equipment', 'error');
+                    if (!deptId) return showToast('Please select a department', 'error');
+
+                    maState.pendingAssignment = {
+                        ids: Array.from(maState.selected.keys()),
+                        deptId: parseInt(deptId),
+                        deptName: deptSel.options[deptSel.selectedIndex].text,
+                    };
+
+                    ensureModal('assignmentWarningTemplate', 'assignmentWarningModal');
+                    const w = document.getElementById('assignmentWarningModal');
+                    if (w) {
+                        const massAssignEl = document.getElementById('massAssignDepartmentsModal');
+                        const massAssignZ = parseInt(massAssignEl?.style.zIndex) || 1055;
+                        w.style.zIndex = String(massAssignZ + 100);
+                        const modal = bootstrap.Modal.getOrCreateInstance(w);
+                        modal.show();
+                        setTimeout(() => {
+                            const backdrops = document.querySelectorAll('.modal-backdrop');
+                            if (backdrops.length) backdrops[backdrops.length - 1].style.zIndex =
+                                String(massAssignZ + 50);
+                        }, 0);
+                    }
+                });
+
+                confirmBtn.addEventListener('click', async () => {
+                    if (!maState.pendingAssignment) return;
+                    const btn = confirmBtn;
+                    const orig = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML =
+                        '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+                    try {
+                        await apiFetch('/api/admin/equipment/mass-assign-departments', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                equipment_ids: maState.pendingAssignment.ids,
+                                department_id: maState.pendingAssignment.deptId,
+                            }),
+                        });
+                        showToast(
+                            `Assigned ${maState.pendingAssignment.ids.length} equipment to ${maState.pendingAssignment.deptName}`,
+                            'success');
+                        bootstrap.Modal.getInstance(document.getElementById(
+                            'assignmentWarningModal'))?.hide();
+                        bootstrap.Modal.getInstance(document.getElementById(
+                            'massAssignDepartmentsModal'))?.hide();
+                        maState.selected.clear();
+                        state.childCache = {};
+                        if (hasActiveFilters()) fetchFilteredResults();
+                        else fetchIndexForAccordion();
+                    } catch (e) {
+                        console.error(e);
+                        showToast('Failed: ' + e.message, 'error');
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = orig;
+                        maState.pendingAssignment = null;
+                    }
+                });
+            };
+
+            const openMassAssignModal = async () => {
+                ensureModal('massAssignModalTemplate', 'massAssignDepartmentsModal');
+                if (!document.getElementById('massAssignDepartmentsModal')) {
+                    showToast('Failed to open modal', 'error');
+                    return;
+                }
+
+                maState.page = 1;
+                maState.search = '';
+                maState.currentRows = [];
+                maState.selected.clear();
+                maState.pendingAssignment = null;
+
+                const searchInput = document.getElementById('massAssignSearch');
+                const searchClear = document.getElementById('massAssignSearchClear');
+                const deptSel = document.getElementById('departmentSingleSelect');
+                const selList = document.getElementById('massAssignSelectedList');
+                const selCount = document.getElementById('massAssignSelectedCount');
+
+                if (searchInput) searchInput.value = '';
+                if (searchClear) searchClear.style.display = 'none';
+                if (deptSel) deptSel.value = '';
+                if (selList) selList.innerHTML =
+                    '<p class="text-muted small mb-0">No equipment selected yet.</p>';
+                if (selCount) selCount.textContent = '0';
+
+                if (!maState.wired) {
+                    wireMassAssignControls();
+                    maState.wired = true;
+                }
+
+                await Promise.all([maLoadPage(1), maLoadDepartments()]);
+
+                new bootstrap.Modal(document.getElementById('massAssignDepartmentsModal')).show();
+            };
+
+            document.getElementById('massAssignBtn').addEventListener('click', openMassAssignModal);
+
+            // ==================== BOOT ====================
+            fetchIndexForAccordion(true);
         });
-
-        // Add event listeners to delete buttons
-        addDeleteButtonListeners();
-      }
-
-      // Helper function to escape HTML
-      function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      // Show empty state
-      function showEmptyState(message = "No equipment found.") {
-        const container = document.getElementById('equipmentCardsContainer');
-        if (container) {
-          container.innerHTML = `
-                        <div class="col-12 text-center py-5">
-                          <i class="bi bi-tools fs-1 text-muted" style="font-size: 4rem !important;"></i>
-                          <p class="mt-2 text-muted">${escapeHtml(message)}</p>
-                        </div>
-                      `;
-        }
-        paginationContainer.innerHTML = '';
-      }
-
-      // Get appropriate status class
-      function getStatusClass(status) {
-        switch (status?.toLowerCase()) {
-          case "available":
-            return "bg-success";
-          case "reserved":
-            return "bg-warning text-dark";
-          case "unavailable":
-            return "bg-danger";
-          case "under maintenance":
-            return "bg-info text-dark";
-          default:
-            return "bg-secondary";
-        }
-      }
-
-      // Set up event listeners
-      function setupEventListeners() {
-        // Search with debounce
-        searchInput.addEventListener("input", function () {
-          clearTimeout(searchDebounceTimer);
-          searchDebounceTimer = setTimeout(() => {
-            currentFilters.search = searchInput.value;
-            fetchEquipmentData(1);
-          }, 500);
-        });
-
-        // Status filter
-        statusFilter.addEventListener("change", function () {
-          currentFilters.status_id = statusFilter.value;
-          fetchEquipmentData(1);
-        });
-
-        // Category filter
-        categoryFilter.addEventListener("change", function () {
-          currentFilters.category_id = categoryFilter.value;
-          fetchEquipmentData(1);
-        });
-
-        // Layout switch
-        layoutSelect.addEventListener("change", function () {
-          renderEquipment();
-        });
-      }
-
-      // Add event listeners to delete buttons
-      function addDeleteButtonListeners() {
-        document.querySelectorAll(".btn-delete").forEach((button) => {
-          button.removeEventListener('click', handleDeleteClick);
-          button.addEventListener('click', handleDeleteClick);
-        });
-      }
-
-      function handleDeleteClick(e) {
-        const button = e.currentTarget;
-        const equipmentId = button.dataset.id;
-        const equipmentName = button.dataset.name;
-        showDeleteConfirmationModal(equipmentId, equipmentName);
-      }
-
-      function showDeleteConfirmationModal(equipmentId, equipmentName) {
-        const modalHtml = `
-                      <div class="modal fade" id="deleteEquipmentModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                          <div class="modal-content">
-                            <div class="modal-header">
-                              <h5 class="modal-title">Confirm Deletion</h5>
-                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body text-center">
-                              <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 2.5rem;"></i>
-                              <p class="mt-3 mb-1">Are you sure you want to delete <strong>"${escapeHtml(equipmentName)}"</strong>?</p>
-                              <p class="text-danger mt-1">This action cannot be undone.</p>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                              <button type="button" class="btn btn-danger" id="confirmDeleteEquipmentBtn">Delete Equipment</button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        const modal = new bootstrap.Modal(document.getElementById('deleteEquipmentModal'));
-        modal.show();
-
-        document.getElementById('confirmDeleteEquipmentBtn').addEventListener('click', async function () {
-          try {
-            const success = await deleteEquipment(equipmentId);
-            if (success) {
-              showToast('Equipment deleted successfully!', 'success');
-              await fetchEquipmentData(currentPage);
-            }
-          } catch (error) {
-            console.error("Error deleting equipment:", error);
-            showToast('Failed to delete equipment: ' + error.message, 'error');
-          } finally {
-            modal.hide();
-            setTimeout(() => {
-              document.getElementById('deleteEquipmentModal')?.remove();
-            }, 300);
-          }
-        });
-
-        document.getElementById('deleteEquipmentModal').addEventListener('hidden.bs.modal', function () {
-          this.remove();
-        });
-      }
-
-      // Toast notification function
-      window.showToast = function (message, type = 'success', duration = 3000) {
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center border-0 position-fixed start-0 mb-2`;
-        toast.style.zIndex = '1100';
-        toast.style.bottom = '0';
-        toast.style.left = '0';
-        toast.style.margin = '1rem';
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(20px)';
-        toast.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-        toast.setAttribute('role', 'alert');
-        toast.setAttribute('aria-live', 'assertive');
-        toast.setAttribute('aria-atomic', 'true');
-
-        const bgColor = type === 'success' ? '#004183ff' : '#dc3545';
-        toast.style.backgroundColor = bgColor;
-        toast.style.color = '#fff';
-        toast.style.minWidth = '250px';
-        toast.style.borderRadius = '0.3rem';
-
-        toast.innerHTML = `
-                      <div class="d-flex align-items-center px-3 py-1"> 
-                        <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                        <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${escapeHtml(message)}</div>
-                        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                      </div>
-                      <div class="loading-bar" style="height: 3px; background: rgba(255,255,255,0.7); width: 100%; transition: width ${duration}ms linear;"></div>
-                    `;
-
-        document.body.appendChild(toast);
-        const bsToast = new bootstrap.Toast(toast, { autohide: false });
-        bsToast.show();
-
-        requestAnimationFrame(() => {
-          toast.style.opacity = '1';
-          toast.style.transform = 'translateY(0)';
-        });
-
-        const loadingBar = toast.querySelector('.loading-bar');
-        requestAnimationFrame(() => {
-          loadingBar.style.width = '0%';
-        });
-
-        setTimeout(() => {
-          toast.style.opacity = '0';
-          toast.style.transform = 'translateY(20px)';
-          setTimeout(() => {
-            bsToast.hide();
-            toast.remove();
-          }, 400);
-        }, duration);
-      };
-
-      // Delete equipment
-      async function deleteEquipment(id) {
-        try {
-          const response = await fetch(`/api/admin/equipment/${id}`, {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-              'Content-Type': 'application/json'
-            },
-          });
-
-          if (response.status === 401) {
-            localStorage.removeItem("adminToken");
-            showToast("Your session has expired. Please log in again.", "error");
-            setTimeout(() => {
-              window.location.href = "/admin/login";
-            }, 2000);
-            return false;
-          }
-
-          if (!response.ok) {
-            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-            try {
-              const errorData = await response.json();
-              errorMessage = errorData.message || errorMessage;
-            } catch (parseError) { }
-            throw new Error(errorMessage);
-          }
-
-          return true;
-        } catch (error) {
-          console.error('Equipment deletion failed:', error);
-          throw error;
-        }
-      }
-
-      // Update pagination controls
-      function updatePagination() {
-        paginationContainer.innerHTML = "";
-
-        if (totalPages <= 1) {
-          return;
-        }
-
-        // Previous button
-        const prevLi = document.createElement("li");
-        prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
-        prevLi.innerHTML = `
-                      <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
-                        <span aria-hidden="true">&laquo;</span>
-                        <span class="visually-hidden">Previous</span>
-                      </a>
-                    `;
-
-        prevLi.addEventListener("click", (e) => {
-          e.preventDefault();
-          if (currentPage > 1) {
-            fetchEquipmentData(currentPage - 1);
-          }
-        });
-        paginationContainer.appendChild(prevLi);
-
-        // Page numbers
-        const maxVisiblePages = 5;
-        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-        if (endPage - startPage + 1 < maxVisiblePages) {
-          startPage = Math.max(1, endPage - maxVisiblePages + 1);
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-          const pageLi = document.createElement("li");
-          pageLi.className = `page-item ${i === currentPage ? "active" : ""}`;
-          pageLi.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
-          pageLi.addEventListener("click", (e) => {
-            e.preventDefault();
-            fetchEquipmentData(i);
-          });
-          paginationContainer.appendChild(pageLi);
-        }
-
-        // Next button
-        const nextLi = document.createElement("li");
-        nextLi.className = `page-item ${currentPage === totalPages ? "disabled" : ""}`;
-        nextLi.innerHTML = `
-                      <a class="page-link" href="#" data-page="${currentPage + 1}">
-                        <span aria-hidden="true">&raquo;</span>
-                        <span class="visually-hidden">Next</span>
-                      </a>
-                    `;
-        nextLi.addEventListener("click", (e) => {
-          e.preventDefault();
-          if (currentPage < totalPages) {
-            fetchEquipmentData(currentPage + 1);
-          }
-        });
-        paginationContainer.appendChild(nextLi);
-      }
-
-      document.getElementById('selectAllEquipment')?.addEventListener('click', function () {
-        const select = document.getElementById('equipmentMultiSelect');
-        if (select) {
-          Array.from(select.options).forEach(option => {
-            option.selected = true;
-          });
-          updateSelectionSummary();
-        }
-      });
-
-      document.getElementById('clearAllEquipment')?.addEventListener('click', function () {
-        const select = document.getElementById('equipmentMultiSelect');
-        if (select) {
-          Array.from(select.options).forEach(option => {
-            option.selected = false;
-          });
-          updateSelectionSummary();
-        }
-      });
-
-      // Mass Assignment Modal functionality
-      let equipmentList = [];
-      let departmentsList = [];
-
-      async function fetchEquipmentForDropdown() {
-        try {
-          const select = document.getElementById('equipmentMultiSelect');
-          if (!select) return;
-
-          // Show loading state
-          select.innerHTML = '<option disabled>Loading equipment...</option>';
-
-          // Fetch ALL equipment only when modal opens
-          const response = await fetch("/api/admin/equipment/all", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error("Failed to fetch equipment");
-          }
-
-          const result = await response.json();
-
-          if (!result.success) {
-            throw new Error(result.message || "Failed to fetch equipment");
-          }
-
-          equipmentList = result.data || [];
-          populateEquipmentMultiSelect();
-
-        } catch (error) {
-          console.error("Error loading equipment:", error);
-          showToast('Failed to load equipment: ' + error.message, 'error');
-
-          const select = document.getElementById('equipmentMultiSelect');
-          if (select) {
-            select.innerHTML = '<option disabled>Failed to load equipment. Please try again.</option>';
-          }
-        }
-      }
-
-      async function fetchDepartmentsForModal() {
-        try {
-          const response = await fetch("/api/departments", {
-            headers: {
-              'Accept': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
-            },
-          });
-
-          if (!response.ok) throw new Error("Failed to fetch departments");
-
-          const result = await response.json();
-          departmentsList = Array.isArray(result) ? result : (result.data || []);
-          populateDepartmentSingleSelect();
-        } catch (error) {
-          console.error("Error fetching departments:", error);
-          showToast('Failed to load departments', 'error');
-        }
-      }
-
-      function populateEquipmentMultiSelect() {
-        const select = document.getElementById('equipmentMultiSelect');
-        if (!select) return;
-
-        select.innerHTML = '';
-
-        if (equipmentList.length === 0) {
-          select.innerHTML = '<option disabled>No equipment found</option>';
-          return;
-        }
-
-        equipmentList.forEach(equipment => {
-          const option = document.createElement('option');
-          option.value = equipment.equipment_id;
-          option.textContent = equipment.equipment_name;
-          select.appendChild(option);
-        });
-      }
-
-      function populateDepartmentSingleSelect() {
-        const select = document.getElementById('departmentSingleSelect');
-        if (!select) return;
-        select.innerHTML = '<option value="">Select Department</option>';
-
-        departmentsList.forEach(dept => {
-          const option = document.createElement('option');
-          option.value = dept.department_id;
-          option.textContent = dept.department_name;
-          select.appendChild(option);
-        });
-      }
-
-      function updateSelectionSummary() {
-        const equipmentSelect = document.getElementById('equipmentMultiSelect');
-        const departmentSelect = document.getElementById('departmentSingleSelect');
-
-        const equipmentCount = equipmentSelect ? equipmentSelect.selectedOptions.length : 0;
-        const departmentId = departmentSelect ? departmentSelect.value : '';
-
-        const summarySpan = document.getElementById('summaryText');
-        if (summarySpan) {
-          if (equipmentCount === 0) {
-            summarySpan.textContent = 'Please select at least one equipment item';
-          } else if (!departmentId) {
-            summarySpan.textContent = 'Please select a department to assign';
-          } else {
-            const departmentName = departmentSelect.options[departmentSelect.selectedIndex]?.text || '';
-            summarySpan.textContent = `${equipmentCount} equipment item(s) will be assigned to ${departmentName}. Current department assignments will be replaced.`;
-          }
-        }
-      }
-      document.getElementById('executeMassAssignBtn')?.addEventListener('click', function () {
-        const equipmentSelect = document.getElementById('equipmentMultiSelect');
-        const departmentSelect = document.getElementById('departmentSingleSelect');
-
-        const equipmentIds = equipmentSelect ? Array.from(equipmentSelect.selectedOptions).map(opt => parseInt(opt.value)) : [];
-        const departmentId = departmentSelect ? departmentSelect.value : '';
-
-        if (equipmentIds.length === 0) {
-          showToast('Please select at least one equipment item', 'error');
-          return;
-        }
-
-        if (!departmentId) {
-          showToast('Please select a department', 'error');
-          return;
-        }
-
-        window.pendingAssignment = {
-          equipmentIds: equipmentIds,
-          departmentId: departmentId
-        };
-
-        const warningModal = new bootstrap.Modal(document.getElementById('assignmentWarningModal'));
-        warningModal.show();
-      });
-
-      document.getElementById('confirmAssignBtn')?.addEventListener('click', async function () {
-        if (!window.pendingAssignment) return;
-
-        const { equipmentIds, departmentId } = window.pendingAssignment;
-
-        const btn = this;
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-
-        try {
-          const response = await fetch('/api/admin/equipment/mass-assign-departments', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({
-              equipment_ids: equipmentIds,
-              department_id: departmentId  // Changed from department_ids to department_id
-            })
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || 'Failed to process mass assignment');
-          }
-
-          const result = await response.json();
-          showToast(result.message, 'success');
-
-          const warningModal = bootstrap.Modal.getInstance(document.getElementById('assignmentWarningModal'));
-          const massModal = bootstrap.Modal.getInstance(document.getElementById('massAssignDepartmentsModal'));
-
-          if (warningModal) warningModal.hide();
-          if (massModal) massModal.hide();
-
-          window.pendingAssignment = null;
-
-          await fetchEquipmentData(currentPage);
-
-        } catch (error) {
-          console.error('Error in mass assignment:', error);
-          showToast('Failed to process mass assignment: ' + error.message, 'error');
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML = originalText;
-        }
-      });
-
-      document.getElementById('equipmentMultiSelect')?.addEventListener('change', updateSelectionSummary);
-      document.getElementById('departmentSingleSelect')?.addEventListener('change', updateSelectionSummary);
-
-      const massAssignModal = document.getElementById('massAssignDepartmentsModal');
-      if (massAssignModal) {
-        massAssignModal.addEventListener('show.bs.modal', function () {
-          // This will fetch ALL equipment only when modal opens
-          fetchEquipmentForDropdown();  // This now fetches all equipment
-          fetchDepartmentsForModal();
-
-          const equipmentSelect = document.getElementById('equipmentMultiSelect');
-          const departmentSelect = document.getElementById('departmentSingleSelect');
-
-          if (equipmentSelect) equipmentSelect.selectedIndex = -1;
-          if (departmentSelect) departmentSelect.selectedIndex = 0;
-
-          updateSelectionSummary();
-        });
-      }
-
-      // Fix dropdown placement
-      const equipmentDropdownToggle = document.getElementById('equipmentDropdownToggle');
-      if (equipmentDropdownToggle) {
-        new bootstrap.Dropdown(equipmentDropdownToggle, {
-          popperConfig: {
-            modifiers: [
-              {
-                name: 'preventOverflow',
-                options: { boundary: 'viewport' }
-              },
-              {
-                name: 'flip',
-                options: { fallbackPlacements: ['bottom-start', 'bottom-end', 'top-start', 'top-end'] }
-              }
-            ]
-          }
-        });
-
-        equipmentDropdownToggle.addEventListener('show.bs.dropdown', function () {
-          const dropdownMenu = document.querySelector('#equipmentDropdownToggle + .dropdown-menu');
-          if (dropdownMenu && dropdownMenu.parentElement !== document.body) {
-            document.body.appendChild(dropdownMenu);
-          }
-        });
-      }
-
-      // Start the application
-      init();
-    });
-  </script>
+    </script>
 @endsection
