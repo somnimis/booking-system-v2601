@@ -61,7 +61,6 @@ Route::middleware('web')->group(function () {
     Route::view('/your-bookings', 'public.your-bookings');
     Route::view('/user-payment', 'public.user-payment');
     Route::view('/policies', 'public.policies');
-    Route::view('/inquiries', 'public.inquiries');
     Route::view('/user-guide', 'public.user-guide')->name('user-guide');
     Route::view('/privacy-policy', 'public.privacy-policy')->name('privacy-policy');
     Route::view('/terms-of-use', 'public.terms-of-use')->name('terms-of-use');
@@ -157,9 +156,9 @@ Route::middleware('web')->group(function () {
             return view('admin.form-review', ['requestId' => $requestId]);
         });
 
-        Route::get('/admin/archives', function () {
-            return view('admin.archives');
-        })->name('admin.archives');
+        Route::get('/admin/transactions', function () {
+            return view('admin.transactions');
+        })->name('admin.transactions');
 
         // Facility Management
         Route::get('/admin/add-facility', function () {

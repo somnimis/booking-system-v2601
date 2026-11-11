@@ -353,7 +353,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/pending', [ReservationListingsController::class, 'paginatedPendingRequests']);
         Route::get('/ongoing', [ReservationListingsController::class, 'paginatedOngoingRequests']);
         Route::get('/completed', [ReservationListingsController::class, 'completedRequests']);
-        Route::get('/archives', [ReservationListingsController::class, 'getArchivedRequisitions']);
+        Route::get('/transactions', [ReservationListingsController::class, 'getCompletedTransactions']);
         Route::get('/pending-count', [ReservationListingsController::class, 'getPendingCount']);
         Route::get('/actionable', [ReservationListingsController::class, 'paginatedActionableRequests']);
     });

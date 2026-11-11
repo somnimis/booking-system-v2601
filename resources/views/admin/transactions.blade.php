@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Archives')
+@section('title', 'Transactions')
 
 @section('content')
 
@@ -422,7 +422,7 @@
 
                 try {
                     const token = localStorage.getItem('adminToken');
-                    const response = await fetch('/api/admin/archives', {
+                    const response = await fetch('/api/admin/requisitions/transactions', {
                         headers: {
                             'Authorization': `Bearer ${token}`,
                             'Accept': 'application/json'
