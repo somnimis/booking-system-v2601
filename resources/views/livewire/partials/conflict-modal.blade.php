@@ -9,7 +9,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-start">
+            <div class="modal-body text-start" style="max-height: 70vh; overflow-y: auto;">
                 <div>{!! $conflictHtml !!}</div>
             </div>
             <div class="modal-footer">

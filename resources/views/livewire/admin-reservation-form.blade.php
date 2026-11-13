@@ -56,7 +56,8 @@
                                         <div class="col-md-4">
                                             <label class="form-label">First Name <span
                                                     class="text-danger">*</span></label>
-                                            <input wire:model="firstName" type="text" class="form-control">
+                                            <input wire:model="firstName" type="text" class="form-control"
+                                                placeholder="First Name">
                                             @error('firstName')
                                                 <small class="text-danger">{{ $message }}</small>
                                             @enderror
@@ -64,30 +65,35 @@
                                         <div class="col-md-4">
                                             <label class="form-label">Last Name <span
                                                     class="text-danger">*</span></label>
-                                            <input wire:model="lastName" type="text" class="form-control">
+                                            <input wire:model="lastName" type="text" class="form-control"
+                                                placeholder="Last Name">
                                             @error('lastName')
                                                 <small class="text-danger">{{ $message }}</small>
                                             @enderror
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Email <span class="text-danger">*</span></label>
-                                            <input wire:model="email" type="email" class="form-control">
+                                            <input wire:model="email" type="email" class="form-control"
+                                                placeholder="name@example.com">
                                             @error('email')
                                                 <small class="text-danger">{{ $message }}</small>
                                             @enderror
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Contact Number</label>
-                                            <input wire:model="contactNumber" type="text" class="form-control">
+                                            <input wire:model="contactNumber" type="text" class="form-control"
+                                                placeholder="e.g. 09123456789">
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">School ID</label>
                                             <input wire:model="schoolId" type="text" class="form-control"
+                                                placeholder="Enter School ID"
                                                 {{ $userType === 'External' ? 'disabled' : '' }}>
                                         </div>
                                         <div class="col-md-12">
                                             <label class="form-label">Organization</label>
-                                            <input wire:model="organizationName" type="text" class="form-control">
+                                            <input wire:model="organizationName" type="text" class="form-control"
+                                                placeholder="e.g. Student Council">
                                         </div>
                                     </div>
                                 </div>
@@ -103,26 +109,16 @@
                                         <div class="col-md-6">
                                             <label class="form-label">Event Title <span
                                                     class="text-danger">*</span></label>
-                                            <input wire:model="eventTitle" type="text" class="form-control">
+                                            <input wire:model="eventTitle" type="text" class="form-control"
+                                                placeholder="e.g. Annual General Assembly">
                                             @error('eventTitle')
-                                                <small class="text-danger">{{ $message }}</small>
-                                            @enderror
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Purpose <span class="text-danger">*</span></label>
-                                            <select wire:model="purposeId" class="form-select">
-                                                <option value="">Select purpose</option>
-                                                @foreach ($purposes as $p)
-                                                    <option value="{{ $p->purpose_id }}">{{ $p->purpose_name }}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('purposeId')
                                                 <small class="text-danger">{{ $message }}</small>
                                             @enderror
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label">Event Details</label>
-                                            <textarea wire:model="eventDetails" class="form-control" rows="2"></textarea>
+                                            <textarea wire:model="eventDetails" class="form-control" rows="2"
+                                                placeholder="Describe the purpose and flow of the event..."></textarea>
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label">Participants <span
@@ -153,7 +149,8 @@
                                         <div class="col-md-6">
                                             <label class="form-label">Additional Requests</label>
                                             <input wire:model="additionalRequests" type="text"
-                                                class="form-control">
+                                                class="form-control"
+                                                placeholder="e.g. Need extra tables, early access">
                                         </div>
                                     </div>
                                 </div>
@@ -164,44 +161,87 @@
                         <div class="row mb-3">
                             {{-- Resources --}}
                             <div class="col-md-6 mb-3 mb-md-0 d-flex">
-                                <div class="card w-100">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="card w-100" style="overflow: visible;">
+                                    <div
+                                        class="card-header d-flex justify-content-between align-items-center rounded-top">
                                         <strong>Resources</strong>
-                                        <div class="dropdown" x-data="{ openMenu: false }"
-                                            x-on:click.away="openMenu = false">
+                                        <div class="dropdown">
                                             <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
-                                                type="button" x-on:click="openMenu = !openMenu">
+                                                type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i class="bi bi-plus"></i> Add Resource
                                             </button>
-                                            <ul class="dropdown-menu dropdown-menu-end" :class="{ 'show': openMenu }"
-                                                style="position: absolute;">
+                                            <ul class="dropdown-menu dropdown-menu-end shadow">
                                                 <li><a class="dropdown-item" href="#"
-                                                        x-on:click.prevent="openModal = 'facilityModal'; openMenu = false">Facility</a>
+                                                        x-on:click.prevent="openModal = 'facilityModal'">Facility</a>
                                                 </li>
                                                 <li><a class="dropdown-item" href="#"
-                                                        x-on:click.prevent="openModal = 'equipmentModal'; openMenu = false">Equipment</a>
+                                                        x-on:click.prevent="openModal = 'equipmentModal'">Equipment</a>
                                                 </li>
                                             </ul>
                                         </div>
                                     </div>
                                     {{-- The absolute positioning trick: fills the remaining height of the card --}}
-                                    <div class="card-body position-relative p-0">
-                                        <div class="position-absolute w-100 h-100 overflow-auto p-3">
+                                    <div class="card-body p-0 d-flex flex-column" style="max-height: 270px;">
+                                        <div class="overflow-auto p-3 flex-grow-1">
                                             @forelse ($selectedItems as $i)
                                                 <div
                                                     class="d-flex justify-content-between align-items-center border-bottom py-2">
-                                                    <div>
-                                                        <strong>{{ $i['name'] }}</strong>
-                                                        <span
-                                                            class="badge bg-primary ms-2">{{ ucfirst($i['type']) }}</span>
+                                                    <div class="d-flex align-items-center gap-3 flex-grow-1"
+                                                        style="min-width: 0;">
+
+                                                        {{-- Image, Icon, or Placeholder --}}
+                                                        @if (!empty($i['image']) && $i['image'] !== 'null' && $i['image'] !== 'undefined')
+                                                            <img src="{{ $i['image'] }}" alt="{{ $i['name'] }}"
+                                                                class="flex-shrink-0"
+                                                                style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
+                                                        @elseif ($i['type'] === 'service')
+                                                            <div class="d-flex align-items-center justify-content-center bg-light rounded text-secondary flex-shrink-0"
+                                                                style="width: 50px; height: 50px; font-size: 1.5rem;">
+                                                                <i class="fa-solid fa-screwdriver-wrench"></i>
+                                                            </div>
+                                                        @elseif ($i['type'] === 'facility')
+                                                            <div class="d-flex align-items-center justify-content-center bg-light rounded text-secondary flex-shrink-0"
+                                                                style="width: 50px; height: 50px; font-size: 1.5rem;">
+                                                                <i class="fa-solid fa-building"></i>
+                                                            </div>
+                                                        @else
+                                                            {{-- Fallback for equipment with no valid image --}}
+                                                            <div class="d-flex align-items-center justify-content-center bg-light rounded text-secondary flex-shrink-0"
+                                                                style="width: 50px; height: 50px; font-size: 1.5rem;">
+                                                                <i class="fa-solid fa-cube"></i>
+                                                            </div>
+                                                        @endif
+
+                                                        {{-- Details --}}
+                                                        <div style="min-width: 0;">
+                                                            <h6 class="mb-1 fw-semibold text-truncate">
+                                                                {{ $i['name'] }}</h6>
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <span
+                                                                    class="badge me-1 {{ $i['type'] === 'equipment' ? 'bg-warning-subtle text-warning-emphasis' : 'bg-info-subtle text-info-emphasis' }}">
+                                                                    {{ ucfirst($i['type']) }}
+                                                                </span>
+                                                                @if ($i['type'] === 'equipment')
+                                                                    <span class="badge bg-secondary">Qty:
+                                                                        {{ $i['quantity'] ?? 1 }}</span>
+                                                                @endif
+                                                                <span class="text-secondary small text-nowrap">
+                                                                    ₱{{ number_format($i['base_fee'] ?? 0, 2) }}{{ ($i['rate_type'] ?? '') === 'Per Hour' ? '/hr' : '/event' }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <button type="button" class="btn btn-sm btn-danger"
-                                                        wire:click="removeItem('{{ $i['type'] }}', {{ $i[$i['type'] . '_id'] }})">
-                                                        Remove
+
+                                                    {{-- Trash Button --}}
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-light text-secondary rounded-circle flex-shrink-0"
+                                                        wire:click="removeItem('{{ $i['type'] }}', {{ $i[$i['type'] . '_id'] }})"
+                                                        title="Remove">
+                                                        <i class="fa-solid fa-trash-can"></i>
                                                     </button>
                                                 </div>
                                             @empty
-                                                <div class="text-muted">No resources added yet.</div>
+                                                <div class="text-muted text-center py-4">No resources added yet.</div>
                                             @endforelse
                                         </div>
                                     </div>
@@ -234,7 +274,6 @@
                                 </div>
                             </div>
                         </div>
-
                         {{-- Schedule + Initial Status (2-col) --}}
                         <div class="row mb-3">
                             {{-- Schedule --}}
@@ -249,8 +288,18 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Start Time</label>
-                                            <input wire:model.live="startTime" type="time" class="form-control"
+                                            <select wire:model.live="startTime" class="form-select"
                                                 {{ $allDay ? 'disabled' : '' }}>
+                                                @if ($allDay)
+                                                    <option value="00:00">12:00 AM</option>
+                                                @else
+                                                    <option value="">Select Time</option>
+                                                    @foreach ($this->timeSlots as $value => $label)
+                                                        <option value="{{ $value }}">{{ $label }}
+                                                        </option>
+                                                    @endforeach
+                                                @endif
+                                            </select>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">End Date <span
@@ -259,8 +308,24 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">End Time</label>
-                                            <input wire:model.live="endTime" type="time" class="form-control"
+                                            <select wire:model.live="endTime" class="form-select"
                                                 {{ $allDay ? 'disabled' : '' }}>
+                                                @if ($allDay)
+                                                    <option value="00:00">12:00 AM</option>
+                                                @else
+                                                    <option value="">Select Time</option>
+                                                    @foreach ($this->timeSlots as $value => $label)
+                                                        {{-- Only show times that are strictly after the start time if the dates match --}}
+                                                        @if ($value > $startTime || $startDate !== $endDate)
+                                                            <option value="{{ $value }}">{{ $label }}
+                                                            </option>
+                                                        @endif
+                                                    @endforeach
+                                                @endif
+                                            </select>
+                                            @error('endTime')
+                                                <small class="text-danger">{{ $message }}</small>
+                                            @enderror
                                         </div>
                                         <div class="col-12">
                                             <div class="form-check form-switch">
@@ -270,6 +335,7 @@
                                             </div>
                                         </div>
                                         <div class="col-12">
+                                            {{-- Buttons and availability status remain the same --}}
                                             <button type="button" class="btn btn-outline-secondary"
                                                 wire:click="checkAvailability" wire:loading.attr="disabled">
                                                 <span wire:loading.remove wire:target="checkAvailability">Check
@@ -279,11 +345,14 @@
                                                 </span>
                                             </button>
                                             @if ($availabilityResult === 'available')
-                                                <span class="text-success ms-2"><i
+                                                <span class="text-success ms-2 fw-semibold"><i
                                                         class="bi bi-check-circle-fill"></i> Available</span>
+                                            @elseif ($availabilityResult === 'warning')
+                                                <span class="text-warning ms-2 fw-semibold"><i
+                                                        class="bi bi-exclamation-triangle-fill"></i> Warning</span>
                                             @elseif ($availabilityResult === 'conflict')
-                                                <span class="text-danger ms-2"><i class="bi bi-x-circle-fill"></i>
-                                                    Conflict</span>
+                                                <span class="text-danger ms-2 fw-semibold"><i
+                                                        class="bi bi-x-circle-fill"></i> Conflict</span>
                                             @endif
                                         </div>
                                     </div>
@@ -297,10 +366,12 @@
                                     <div class="card-body">
                                         <select wire:model.live="statusId" class="form-select mb-2">
                                             <option value="">Select workflow...</option>
-                                            @foreach ($statuses as $st)
+                                            @forelse ($statuses as $st)
                                                 <option value="{{ $st['status_id'] }}">{{ $st['status_name'] }}
                                                 </option>
-                                            @endforeach
+                                            @empty
+                                                <option value="" disabled>No workflows available</option>
+                                            @endforelse
                                         </select>
 
                                         @error('statusId')
@@ -592,7 +663,9 @@
 <script>
     document.addEventListener('livewire:init', () => {
         // This hook runs exactly when the component is ready
-        Livewire.hook('component.init', ({ component }) => {
+        Livewire.hook('component.init', ({
+            component
+        }) => {
             // Bridge admin ID
             if (window.Admin?.admin_id) {
                 component.$wire.set('adminId', window.Admin.admin_id);

@@ -168,7 +168,7 @@ class RequisitionCreationService
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
             'start_time' => $allDay ? '00:00:00' : $validated['start_time'],
-            'end_time' => $allDay ? '23:59:59' : $validated['end_time'],
+            'end_time' => $allDay ? '00:00:00' : $validated['end_time'],
             'all_day' => $allDay,
             'cleanup_hours' => $validated['cleanup_hours'] ?? 4,
             'event_title' => $validated['event_title'],
@@ -213,6 +213,7 @@ class RequisitionCreationService
             'start_time' => $data['start_time'],
             'end_time' => $data['end_time'],
             'all_day' => $data['all_day'],
+            'cleanup_hours' => $data['cleanup_hours'],
             'items' => $items,
         ]);
 

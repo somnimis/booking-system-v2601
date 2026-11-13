@@ -1,5 +1,5 @@
 <div class="container main-content mb-5" @include('livewire.partials.reservation-wrapper')>
-    
+
     <div x-on:open-terms-modal.window="openModal = 'termsModal'" x-show="false"></div>
 
     <form wire:submit.prevent="submit">
@@ -88,6 +88,10 @@
                                                 class="badge me-1 {{ $item['type'] === 'equipment' ? 'bg-warning-subtle text-warning-emphasis' : 'bg-info-subtle text-info-emphasis' }}">
                                                 {{ ucfirst($item['type']) }}
                                             </span>
+                                            @if ($item['type'] === 'equipment')
+                                                <span class="badge bg-secondary me-1">Quantity:
+                                                    {{ $item['quantity'] ?? 1 }}</span>
+                                            @endif
                                             <span class="text-secondary small">
                                                 ₱{{ number_format($item['base_fee'], 2) }}{{ $item['rate_type'] === 'Per Hour' ? '/hr' : '/event' }}
                                             </span>
@@ -117,7 +121,6 @@
                     <div class="form-section-card h-100 d-flex flex-column" style="min-height: 200px;">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="mb-0">Step 2: Booking Schedule</h5>
-
                             <a href="{{ url('/events-calendar') }}"
                                 class="calendar-link text-decoration-none text-muted" title="View Events Calendar">
                                 <i class="fa-regular fa-calendar fa-lg"></i>
@@ -140,10 +143,14 @@
                                     <select wire:model.live="startTime"
                                         class="form-select mb-1 @error('startTime') is-invalid @enderror"
                                         {{ $allDay ? 'disabled' : '' }}>
-                                        <option value="">Select Time</option>
-                                        @foreach ($this->timeSlots as $value => $label)
-                                            <option value="{{ $value }}">{{ $label }}</option>
-                                        @endforeach
+                                        @if ($allDay)
+                                            <option value="00:00">12:00 AM</option>
+                                        @else
+                                            <option value="">Select Time</option>
+                                            @foreach ($this->timeSlots as $value => $label)
+                                                <option value="{{ $value }}">{{ $label }}</option>
+                                            @endforeach
+                                        @endif
                                     </select>
                                     @error('startTime')
                                         <span class="text-danger small d-block mb-2">{{ $message }}</span>
@@ -165,10 +172,46 @@
                                     <select wire:model.live="endTime"
                                         class="form-select mb-1 @error('endTime') is-invalid @enderror"
                                         {{ $allDay ? 'disabled' : '' }}>
-                                        <option value="">Select Time</option>
-                                        @foreach ($this->timeSlots as $value => $label)
-                                            <option value="{{ $value }}">{{ $label }}</option>
-                                        @endforeach
+                                        @if ($allDay)
+                                            <option value="00:00">12:00 AM</option>
+                                        @else
+                                            <option value="">Select Time</option>
+                                            @foreach ($this->timeSlots as $value => $label)
+                                                {{-- Only show times that are strictly after the start time if the dates match --}}
+                                                @if ($value > $startTime || $startDate !== $endDate)
+                                                    <option value="{{ $value }}">{{ $label }}</option>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    @error('endTime')
+                                        <span class="text-danger small d-block mb-2">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">End Date</label>
+                                    <input wire:model.live="endDate" type="date"
+                                        class="form-control mb-1 @error('endDate') is-invalid @enderror" />
+                                    @error('endDate')
+                                        <span class="text-danger small d-block mb-2">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">End Time</label>
+                                    <select wire:model.live="endTime"
+                                        class="form-select mb-1 @error('endTime') is-invalid @enderror"
+                                        {{ $allDay ? 'disabled' : '' }}>
+                                        @if ($allDay)
+                                            <option value="00:00">12:00 AM</option>
+                                        @else
+                                            <option value="">Select Time</option>
+                                            @foreach ($this->timeSlots as $value => $label)
+                                                <option value="{{ $value }}">{{ $label }}</option>
+                                            @endforeach
+                                        @endif
                                     </select>
                                     @error('endTime')
                                         <span class="text-danger small d-block mb-2">{{ $message }}</span>
@@ -196,12 +239,14 @@
                             </button>
 
                             @if ($availabilityResult === 'available')
-                                <span class="text-success fw-bold small ms-2"><i
-                                        class="bi bi-check-circle-fill me-1"></i>
+                                <span class="text-success ms-2 fw-semibold"><i class="bi bi-check-circle-fill"></i>
                                     Available</span>
-                            @elseif($availabilityResult === 'conflict')
-                                <span class="text-danger fw-bold small ms-2"><i class="bi bi-x-circle-fill me-1"></i>
-                                    Conflict!</span>
+                            @elseif ($availabilityResult === 'warning')
+                                <span class="text-warning ms-2 fw-semibold"><i
+                                        class="bi bi-exclamation-triangle-fill"></i> Warning</span>
+                            @elseif ($availabilityResult === 'conflict')
+                                <span class="text-danger ms-2 fw-semibold"><i class="bi bi-x-circle-fill"></i>
+                                    Conflict</span>
                             @endif
                         </div>
                     </div>

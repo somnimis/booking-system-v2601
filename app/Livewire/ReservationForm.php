@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use App\Services\CheckAvailabilityService;
 use App\Services\FeeCalculatorService;
@@ -20,8 +21,13 @@ use Carbon\Carbon;
 class ReservationForm extends Component
 {
     use WithFileUploads;
+    use WithPagination;
 
     public $currentStep = 1;
+
+    // Pagination state
+    public $facilitiesPage = 1;
+    public $equipmentPage = 1;
 
     // --- Schedule ---
     public $startDate;
@@ -55,6 +61,10 @@ class ReservationForm extends Component
     public $selectedItems = [];
     public $selectedServices = [];
 
+    // --- Workflow (used by admin child view; initialized here so it's never undefined) ---
+    public $statuses = [];
+    public $statusId = null;
+
     // --- Search ---
     public $facilitySearch = '';
     public $equipmentSearch = '';
@@ -85,18 +95,13 @@ class ReservationForm extends Component
         return true;
     }
 
-    public function getFilteredFacilitiesProperty()
+    public function getPaginatedFacilitiesProperty()
     {
-        $query = Facility::whereNull('parent_facility_id')->with(['images', 'children.images']);
+        $query = Facility::with(['images', 'parentFacility']);
 
         if ($this->facilitySearch) {
             $search = strtolower($this->facilitySearch);
-            $query->where(function ($q) use ($search) {
-                $q->whereRaw('LOWER(facility_name) LIKE ?', ["%{$search}%"])
-                    ->orWhereHas('children', function ($q2) use ($search) {
-                        $q2->whereRaw('LOWER(facility_name) LIKE ?', ["%{$search}%"]);
-                    });
-            });
+            $query->whereRaw('LOWER(facility_name) LIKE ?', ["%{$search}%"]);
         }
 
         if ($this->facilityCategoryFilter) {
@@ -110,12 +115,12 @@ class ReservationForm extends Component
             }
         }
 
-        return $query->get();
+        return $query->paginate(15, ['*'], 'facilitiesPage');
     }
 
-    public function getFilteredEquipmentProperty()
+    public function getPaginatedEquipmentProperty()
     {
-        $query = Equipment::with('images');
+        $query = Equipment::with(['images', 'items']);
 
         if ($this->equipmentSearch) {
             $search = strtolower($this->equipmentSearch);
@@ -129,7 +134,24 @@ class ReservationForm extends Component
             }
         }
 
-        return $query->get();
+        return $query->paginate(15, ['*'], 'equipmentPage');
+    }
+
+    public function updatedFacilitySearch()
+    {
+        $this->resetPage('facilitiesPage');
+    }
+    public function updatedFacilityCategoryFilter()
+    {
+        $this->resetPage('facilitiesPage');
+    }
+    public function updatedEquipmentSearch()
+    {
+        $this->resetPage('equipmentPage');
+    }
+    public function updatedEquipmentCategoryFilter()
+    {
+        $this->resetPage('equipmentPage');
     }
 
     public function getTimeSlotsProperty()
@@ -166,28 +188,94 @@ class ReservationForm extends Component
         }
     }
 
-    public function updatedEndDate()
-    {
-        if ($this->startDate && $this->endDate) {
-            $start = Carbon::parse($this->startDate);
-            $end = Carbon::parse($this->endDate);
-            if ($start->diffInHours($end) >= 24 || $start->diffInDays($end) >= 1) {
-                $this->allDay = true;
-            }
-        }
-    }
-
+    /**
+     * Handle the All Day toggle.
+     * ON: If dates match, push end date to the next day. Set times to 00:00.
+     * OFF: If end date is exactly one day after start, pull it back. Reset times.
+     */
     public function updatedAllDay($value)
     {
         if ($value) {
+            // Toggled ON: If dates match, push end date to the next day
+            if ($this->startDate && $this->endDate === $this->startDate) {
+                $this->endDate = Carbon::parse($this->startDate)->addDay()->format('Y-m-d');
+            }
+            // Set times to 00:00 for UI consistency
+            $this->startTime = '00:00';
+            $this->endTime = '00:00';
+        } else {
+            // Toggled OFF: If the end date is exactly one day after the start date, reset it back to match
+            if ($this->startDate && $this->endDate) {
+                $expectedNextDay = Carbon::parse($this->startDate)->addDay()->format('Y-m-d');
+                if ($this->endDate === $expectedNextDay) {
+                    $this->endDate = $this->startDate;
+                }
+            }
+            // Reset times so user can pick a new time
             $this->startTime = null;
             $this->endTime = null;
         }
     }
-
-    public function addItem($type, $id, $name, $fee, $rateType, $image = null)
+    
+    public function addItem($type, $id, $name, $fee, $rateType, $image = null, $quantity = 1)
     {
         $idField = $type . '_id';
+
+        // Add fallback logic here for safety
+        if ($type === 'facility') {
+            $model = Facility::with('images')->find($id);
+            if ($model && !$image) {
+                $img = $model->images->firstWhere('image_type', 'Primary') ?? $model->images->first();
+                $image = $img ? $img->image_url : null;
+            }
+        } elseif ($type === 'equipment') {
+            $model = Equipment::with(['items', 'images'])->find($id);
+            if ($model && !$image) {
+                // Prefer the physical item's image
+                $image = $model->items->where('status_id', 1)->whereIn('condition_id', [1, 2, 3])->first()?->image_url;
+                // Fallback to the equipment image with sort_order = 1
+                if (!$image) {
+                    $img = $model->images->firstWhere('sort_order', 1) ?? $model->images->first();
+                    $image = $img ? $img->image_url : null;
+                }
+            }
+        }
+
+
+        // Equipment: replace qty if already in cart, otherwise append
+        if ($type === 'equipment') {
+            $index = collect($this->selectedItems)->search(
+                fn($item) => ($item['type'] ?? null) === 'equipment'
+                    && (int) ($item['equipment_id'] ?? 0) === (int) $id
+            );
+
+            if ($index !== false) {
+                $this->selectedItems[$index]['quantity'] = max(1, (int) $quantity);
+                $this->selectedItems = array_values($this->selectedItems);
+                if ($this->usesSession()) {
+                    Session::put('selected_items', $this->selectedItems);
+                }
+                $this->dispatch('toast', message: 'Equipment quantity updated.', type: 'success');
+                return;
+            }
+
+            $this->selectedItems[] = [
+                'type' => 'equipment',
+                $idField => $id,
+                'name' => $name,
+                'base_fee' => $fee,
+                'rate_type' => $rateType,
+                'quantity' => max(1, (int) $quantity),
+                'image' => $image,
+            ];
+            if ($this->usesSession()) {
+                Session::put('selected_items', $this->selectedItems);
+            }
+            $this->dispatch('toast', message: 'Equipment added.', type: 'success');
+            return;
+        }
+
+        // Facilities / services: original single-add behavior
         $exists = collect($this->selectedItems)->contains(
             fn($item) => isset($item[$idField]) && $item[$idField] == $id && $item['type'] === $type
         );
@@ -256,15 +344,22 @@ class ReservationForm extends Component
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
             'start_time' => $this->allDay ? '00:00:00' : $this->startTime,
-            'end_time' => $this->allDay ? '23:59:59' : $this->endTime,
+            'end_time' => $this->allDay ? '00:00:00' : $this->endTime,
             'all_day' => $this->allDay,
+            'cleanup_hours' => $this->cleanupHours,
             'items' => $this->selectedItems,
         ]);
 
-        if ($result['available']) {
+        if ($result['available'] && empty($result['soft_conflicts'])) {
             $this->availabilityResult = 'available';
             $this->conflictHtml = null;
             $this->dispatch('toast', message: 'Time slot is available.', type: 'success');
+        } elseif ($result['available'] && !empty($result['soft_conflicts'])) {
+            // Soft conflict only (services) — modal opens, submit still allowed
+            $this->availabilityResult = 'warning';
+            $this->conflictHtml = $checker->formatConflictsToHtml($result['soft_conflicts']);
+            $this->dispatch('open-conflict-modal');
+            $this->dispatch('toast', message: 'Service warning — review before submitting.', type: 'warning');
         } else {
             $this->availabilityResult = 'conflict';
             $allConflicts = array_merge($result['hard_conflicts'], $result['soft_conflicts']);
@@ -295,10 +390,30 @@ class ReservationForm extends Component
                 'startDate' => 'required|date',
                 'endDate' => 'required|date|after_or_equal:startDate',
                 'startTime' => $this->allDay ? 'nullable' : 'required',
-                'endTime' => $this->allDay ? 'nullable' : 'required|after:startTime',
+                'endTime' => $this->allDay ? 'nullable' : 'required',
             ]);
+
+            // Strict blocker: Start and End cannot be identical
+            if ($this->startDate === $this->endDate && $this->startTime === $this->endTime) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'endTime' => 'The start and end times cannot be identical. Please select a valid duration.',
+                ]);
+            }
+
+            // Custom validation: End DateTime must be strictly AFTER Start DateTime
+            if ($this->startDate && $this->endDate && !$this->allDay) {
+                $start = Carbon::parse("{$this->startDate} {$this->startTime}");
+                $end = Carbon::parse("{$this->endDate} {$this->endTime}");
+
+                if ($end <= $start) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'endTime' => 'The end date and time must be after the start date and time.',
+                    ]);
+                }
+            }
         } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->dispatch('toast', message: 'Please complete the schedule fields.', type: 'error');
+            // This dispatches the exact error message to your toast
+            $this->dispatch('toast', message: $e->validator->errors()->first(), type: 'error');
             throw $e;
         }
     }
@@ -334,7 +449,7 @@ class ReservationForm extends Component
         $facilities = [];
         $equipment = [];
         $services = [];
-        
+
         foreach ($this->selectedItems as $item) {
             if ($item['type'] === 'facility') {
                 $facilities[] = (object) [
@@ -370,7 +485,7 @@ class ReservationForm extends Component
         $tempForm->start_date = $this->startDate;
         $tempForm->end_date = $this->endDate;
         $tempForm->start_time = $this->allDay ? '00:00:00' : ($this->startTime ?? '00:00:00');
-        $tempForm->end_time = $this->allDay ? '23:59:59' : ($this->endTime ?? '23:59:59');
+        $tempForm->end_time = $this->allDay ? '00:00:00' : ($this->endTime ?? '00:00:00');
         $tempForm->all_day = $this->allDay;
         $tempForm->is_late = false;
         $tempForm->late_penalty_fee = 0;
@@ -382,10 +497,10 @@ class ReservationForm extends Component
 
         $feeSummary = $feeCalculator->getFeeSummary($tempForm);
 
-        return view('livewire.admin-reservation-form', [
+        return view($this->viewName(), [
             'feeBreakdown' => $feeSummary,
-            'facilities' => $this->filteredFacilities,
-            'equipment' => $this->filteredEquipment,
+            'facilities' => $this->paginatedFacilities,
+            'equipment' => $this->paginatedEquipment,
             'services' => ExtraService::all(),
             'purposes' => RequisitionPurpose::all(),
             'facilityCategories' => FacilityCategory::with('subcategories')->get(),
@@ -433,7 +548,7 @@ class ReservationForm extends Component
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
             'start_time' => $this->allDay ? '00:00:00' : $this->startTime,
-            'end_time' => $this->allDay ? '23:59:59' : $this->endTime,
+            'end_time' => $this->allDay ? '00:00:00' : $this->endTime,
             'all_day' => $this->allDay,
             'cleanup_hours' => $this->cleanupHours,
             'event_documents_url' => $documentUrl,

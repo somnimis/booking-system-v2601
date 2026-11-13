@@ -49,29 +49,28 @@ class AdminReservationForm extends ReservationForm
      * Admin override: resolve fee/rate server-side from the model by ID,
      * then delegate to parent::addItem() so cart logic stays single-sourced.
      */
-    public function addItem($type, $id, $name = null, $fee = null, $rateType = null, $image = null)
+    public function addItem($type, $id, $name = null, $fee = null, $rateType = null, $image = null, $quantity = 1)
     {
         if ($type === 'facility') {
-            $model = Facility::find($id);
+            $model = Facility::with('images')->find($id);
             if (!$model)
                 return;
             $name = $model->facility_name;
             $fee = $model->base_fee ?? 0;
             $rateType = $model->rate_type ?? 'Per Event';
-            $image = null;
         } elseif ($type === 'equipment') {
-            $model = Equipment::find($id);
+            $model = Equipment::with(['items', 'images'])->find($id);
             if (!$model)
                 return;
             $name = $model->equipment_name;
             $fee = $model->base_fee ?? 0;
             $rateType = $model->rate_type ?? 'Per Event';
-            $image = null;
         } else {
             return; // services flow through selectedServices
         }
 
-        parent::addItem($type, $id, $name, $fee, $rateType, $image);
+        // Pass $image as-is. The parent method's fallback logic will handle it.
+        parent::addItem($type, $id, $name, $fee, $rateType, $image, $quantity);
     }
 
     protected function usesSession(): bool
@@ -149,7 +148,7 @@ class AdminReservationForm extends ReservationForm
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
             'start_time' => $this->allDay ? '00:00' : $this->startTime,
-            'end_time' => $this->allDay ? '23:59' : $this->endTime,
+            'end_time' => $this->allDay ? '00:00' : $this->endTime,
             'all_day' => (bool) $this->allDay,
             'status_id' => (int) $this->statusId,
             'items' => $items,
