@@ -15,6 +15,5 @@ class CompletedTransaction extends Model
         'request_id',
         'official_receipt_no',
         'official_receipt_url',
-        'official_receipt_public_id'
     ];
 }

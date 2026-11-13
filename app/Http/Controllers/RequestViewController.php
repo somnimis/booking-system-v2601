@@ -143,16 +143,13 @@ class RequestViewController extends Controller
                     'documents' => [
                         'formal_letter' => [
                             'url' => $form->event_documents_url,
-                            'public_id' => $form->event_documents_public_id,
                         ],
                         'proof_of_payment' => [
                             'url' => $form->proof_of_payment_url,
-                            'public_id' => $form->proof_of_payment_public_id,
                         ],
                         'official_receipt' => [
                             'number' => $form->official_receipt_num,
                             'url' => null,
-                            'public_id' => null,
                         ],
                     ],
                     'approval_info' => [

@@ -771,7 +771,6 @@
                         },
                         body: JSON.stringify({
                             image_url: imageUrl,
-                            cloudinary_public_id: publicId,
                             description: 'Facility photo'
                         })
                     });

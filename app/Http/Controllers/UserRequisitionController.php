@@ -91,7 +91,6 @@ class UserRequisitionController extends Controller
                 'request_id' => $requestId,
                 'official_receipt_no' => null,
                 'official_receipt_url' => null,
-                'official_receipt_public_id' => null
             ]);
 
             DB::commit();
@@ -144,7 +143,6 @@ class UserRequisitionController extends Controller
 
             DB::transaction(function () use ($form, $path) {
                 $form->proof_of_payment_url = '/storage/' . $path;
-                $form->proof_of_payment_public_id = $path; // local path acts as identifier
                 $form->status_id = FormStatus::where('status_name', 'Verifying Payment')->value('status_id');
                 $form->save();
             });

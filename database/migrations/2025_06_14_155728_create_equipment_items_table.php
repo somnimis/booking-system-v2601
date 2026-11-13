@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -16,8 +15,7 @@ return new class extends Migration
             $table->unsignedBigInteger('equipment_id');
             $table->string('item_name', 50);
             $table->string('brand', 80)->default('Not applicable.');
-            $table->string('image_url')->default('https://res.cloudinary.com/dn98ntlkd/image/upload/v1750895337/oxvsxogzu9koqhctnf7s.webp');
-            $table->string('cloudinary_public_id')->default('oxvsxogzu9koqhctnf7s');
+            $table->string('image_url')->default('/assets/placeholder-image.png')->nullable();
             $table->unsignedTinyInteger('status_id');
             $table->unsignedTinyInteger('condition_id');
             $table->string('barcode_number', 20)->unique()->nullable();
@@ -34,7 +32,7 @@ return new class extends Migration
             $table->foreign('created_by')->references('admin_id')->on('admins')->onDelete('restrict');
             $table->foreign('updated_by')->references('admin_id')->on('admins')->onDelete('set null');
             $table->foreign('deleted_by')->references('admin_id')->on('admins')->onDelete('set null');
-            
+
         });
     }
 

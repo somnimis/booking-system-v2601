@@ -36,10 +36,7 @@ return new class extends Migration {
 
             // User uploads
             $table->string('event_documents_url')->nullable();
-            $table->string('event_documents_public_id')->nullable();
             $table->string('proof_of_payment_url')->nullable();
-            $table->string('proof_of_payment_public_id')->nullable();
-            $table->string('upload_token', 100)->nullable();
 
             // booking schedule 
             $table->date('start_date')->index();
@@ -59,6 +56,11 @@ return new class extends Migration {
             $table->decimal('approved_fee', 10, 2)->nullable(); // base fee + additionals approved by admin after review
 
             // finalize form
+            $table->boolean('is_admin_created')->default(false);
+            $table->foreignId('created_by')
+                ->nullable()
+                ->constrained('admins', 'admin_id')
+                ->nullOnDelete();
             $table->boolean('is_finalized')->default(false);
             $table->dateTime('finalized_at')->nullable();
             $table->unsignedBigInteger('finalized_by')->nullable();

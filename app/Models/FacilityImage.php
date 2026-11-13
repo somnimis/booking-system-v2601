@@ -15,12 +15,21 @@ class FacilityImage extends Model
     protected $fillable = [
         'facility_id',
         'image_url',
-        'cloudinary_public_id',
         'description',
         'sort_order',
-        'image_type' 
+        'image_type'
     ];
 
+    public function getImageUrlAttribute($value)
+    {
+        // If it's already a full URL (like an old Cloudinary link), return it as-is.
+        if (str_starts_with($value, 'http')) {
+            return $value;
+        }
+
+        // Otherwise, prepend the app URL to the relative path
+        return asset($value);
+    }
 
     public function facility()
     {

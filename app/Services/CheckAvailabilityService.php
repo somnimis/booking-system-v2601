@@ -15,7 +15,6 @@ use Carbon\Carbon;
 class CheckAvailabilityService
 {
     private const ACTIVE_STATUSES = ['Pending Approval', 'Awaiting Payment', 'Reserved'];
-    private const EXCLUDED_STATUSES = ['Completed', 'Rejected', 'Cancelled'];
 
     /**
      * Single source of truth for availability checks (public + admin).
@@ -238,22 +237,22 @@ class CheckAvailabilityService
             $q->where('event_services.service_id', $serviceId);
         });
 
-        $calendarQuery->where(function ($dateQuery) use ($startDate, $endDate, $startTime, $endTime, $allDay) {
-            $dateQuery->whereDate('start_date', '<=', $endDate)
-                ->whereDate('end_date', '>=', $startDate);
+        // Date-overlap narrowing only — time filtering happens in PHP (DB-dialect-agnostic).
+        $calendarQuery->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate);
 
-            $dateQuery->where(function ($timeQuery) use ($startTime, $endTime) {
-                $timeQuery->where('all_day', true);
-
-                $timeQuery->orWhere(function ($specificTime) use ($startTime, $endTime) {
-                    $specificTime->where('all_day', false)
-                        ->whereRaw('TIME(start_time) < ?', [$endTime])
-                        ->whereRaw('TIME(end_time) > ?', [$startTime]);
-                });
-            });
-        });
+        $reqStart = Carbon::parse("$startDate $startTime");
+        $reqEnd = Carbon::parse("$endDate $endTime");
 
         foreach ($calendarQuery->get() as $event) {
+            if (!$event->all_day && !$allDay) {
+                $evStart = Carbon::parse("{$event->start_date} {$event->start_time}");
+                $evEnd = Carbon::parse("{$event->end_date} {$event->end_time}");
+                if (!($reqStart < $evEnd && $reqEnd > $evStart)) {
+                    continue;
+                }
+            }
+
             $conflicts[] = [
                 'type' => 'service',
                 'id' => $serviceId,
@@ -382,108 +381,83 @@ class CheckAvailabilityService
             $q->where('event_venues.facility_id', $facilityId);
         });
 
-        // Date range must overlap
-        $query->where(function ($dateQuery) use ($startDate, $endDate, $startTime, $endTime, $allDay) {
-            // Date overlap first
-            $dateQuery->whereDate('start_date', '<=', $endDate)
-                ->whereDate('end_date', '>=', $startDate);
+        // Date-overlap narrowing only — time filtering happens in PHP (DB-dialect-agnostic).
+        $query->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate);
 
-            // Then check time overlap for non-all-day events
-            $dateQuery->where(function ($timeQuery) use ($startTime, $endTime, $allDay) {
-                // If the calendar event is all-day, it ALWAYS conflicts with any time on that date
-                $timeQuery->where('all_day', true);
+        $reqStart = Carbon::parse("$startDate $startTime");
+        $reqEnd = Carbon::parse("$endDate $endTime");
 
-                // If the calendar event has specific times, check overlap
-                $timeQuery->orWhere(function ($specificTime) use ($startTime, $endTime) {
-                    $specificTime->where('all_day', false)
-                        ->whereRaw('TIME(start_time) < ?', [$endTime])
-                        ->whereRaw('TIME(end_time) > ?', [$startTime]);
-                });
-            });
-        });
+        return $query->get()
+            ->filter(function ($event) use ($allDay, $reqStart, $reqEnd) {
+                // All-day on either side always conflicts.
+                if ($event->all_day || $allDay) {
+                    return true;
+                }
 
-        return $query->get()->map(function ($event) {
-            return [
-                'type' => 'facility',
-                'id' => $event->venues->first()->facility_id ?? null,
-                'name' => $event->venues->first()->facility->facility_name ?? 'Unknown',
-                'source' => 'calendar_event',
-                'status' => null,
-                'request_id' => null,
-                'event_id' => $event->event_id,
-                'has_facilities' => true,
-                'needs_grace_period' => true,
-                'conflict_reason' => $event->all_day
-                    ? 'This facility is booked for an all-day school event'
-                    : 'This facility is booked for a school event during this time',
-                'schedule' => [
-                    'start_date' => $event->start_date,
-                    'end_date' => $event->end_date,
-                    'start_time' => $event->start_time,
-                    'end_time' => $event->end_time,
-                    'all_day' => $event->all_day,
-                ]
-            ];
-        })->toArray();
+                $evStart = Carbon::parse("{$event->start_date} {$event->start_time}");
+                $evEnd = Carbon::parse("{$event->end_date} {$event->end_time}");
+
+                return $reqStart < $evEnd && $reqEnd > $evStart;
+            })
+            ->map(function ($event) {
+                return [
+                    'type' => 'facility',
+                    'id' => $event->venues->first()->facility_id ?? null,
+                    'name' => $event->venues->first()->facility->facility_name ?? 'Unknown',
+                    'source' => 'calendar_event',
+                    'status' => null,
+                    'request_id' => null,
+                    'event_id' => $event->event_id,
+                    'has_facilities' => true,
+                    'needs_grace_period' => true,
+                    'conflict_reason' => $event->all_day
+                        ? 'This facility is booked for an all-day school event'
+                        : 'This facility is booked for a school event during this time',
+                    'schedule' => [
+                        'start_date' => $event->start_date,
+                        'end_date' => $event->end_date,
+                        'start_time' => $event->start_time,
+                        'end_time' => $event->end_time,
+                        'all_day' => $event->all_day,
+                    ],
+                ];
+            })
+            ->values()
+            ->toArray();
     }
 
     /**
-     * Check equipment conflicts in calendar events
+     * Sum of equipment quantity already booked via calendar events
+     * for the given window. Time filtering is PHP-side (DB-dialect-agnostic).
      */
-    private function checkCalendarEquipmentConflicts($equipmentId, $startDate, $endDate, $startTime, $endTime, $allDay)
+    private function getCalendarEquipmentBookedQuantity($equipmentId, $startDate, $endDate, $startTime, $endTime, $allDay): int
     {
         $query = CalendarEvent::whereHas('equipment', function ($q) use ($equipmentId) {
             $q->where('event_equipment.equipment_id', $equipmentId);
         });
 
-        // Date range must overlap
-        $query->where(function ($dateQuery) use ($startDate, $endDate, $startTime, $endTime, $allDay) {
-            // Date overlap first
-            $dateQuery->whereDate('start_date', '<=', $endDate)
-                ->whereDate('end_date', '>=', $startDate);
+        // Date-overlap narrowing only.
+        $query->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate);
 
-            // Then check time overlap for non-all-day events
-            $dateQuery->where(function ($timeQuery) use ($startTime, $endTime, $allDay) {
-                // If the calendar event is all-day, it ALWAYS conflicts with any time on that date
-                $timeQuery->where('all_day', true);
+        $reqStart = Carbon::parse("$startDate $startTime");
+        $reqEnd = Carbon::parse("$endDate $endTime");
 
-                // If the calendar event has specific times, check overlap
-                $timeQuery->orWhere(function ($specificTime) use ($startTime, $endTime) {
-                    $specificTime->where('all_day', false)
-                        ->whereRaw('TIME(start_time) < ?', [$endTime])
-                        ->whereRaw('TIME(end_time) > ?', [$startTime]);
-                });
+        return $query->with('equipment')->get()
+            ->filter(function ($event) use ($allDay, $reqStart, $reqEnd) {
+                if ($event->all_day || $allDay) {
+                    return true;
+                }
+                $evStart = Carbon::parse("{$event->start_date} {$event->start_time}");
+                $evEnd = Carbon::parse("{$event->end_date} {$event->end_time}");
+                return $reqStart < $evEnd && $reqEnd > $evStart;
+            })
+            ->sum(function ($event) use ($equipmentId) {
+                $pivot = $event->equipment->firstWhere('equipment_id', $equipmentId);
+                return $pivot ? (int) $pivot->pivot->quantity : 0;
             });
-        });
-
-        return $query->get()->map(function ($event) use ($equipmentId) {
-            // Get the quantity from the pivot table
-            $pivot = $event->equipment->firstWhere('equipment_id', $equipmentId);
-            $quantity = $pivot ? $pivot->pivot->quantity : 1;
-
-            return [
-                'type' => 'equipment',
-                'id' => $equipmentId,
-                'name' => $pivot ? $pivot->equipment_name : 'Unknown Equipment',
-                'source' => 'calendar_event',
-                'status' => null,
-                'request_id' => null,
-                'event_id' => $event->event_id,
-                'quantity' => $quantity,
-                'conflict_reason' => $event->all_day
-                    ? 'This equipment is booked for an all-day school event'
-                    : 'This equipment is booked for a school event during this time',
-                'schedule' => [
-                    'start_date' => $event->start_date,
-                    'end_date' => $event->end_date,
-                    'start_time' => $event->start_time,
-                    'end_time' => $event->end_time,
-                    'all_day' => $event->all_day,
-                ]
-            ];
-        })->toArray();
     }
-
     /**
      * Check equipment availability including requisition forms and calendar events
      */
@@ -496,7 +470,7 @@ class CheckAvailabilityService
 
         $existingBookings = 0;
 
-        // 1. Check requisition forms
+        // 1. Requisition forms
         $requisitionQuery = RequestedEquipment::where('equipment_id', $equipmentId)
             ->whereHas('requisitionForm', function ($q) use ($startDate, $endDate, $currentRequestId, $allDay) {
                 $q->whereIn('status_id', function ($sq) {
@@ -514,218 +488,19 @@ class CheckAvailabilityService
 
         $existingBookings += $requisitionQuery->sum('quantity');
 
-        // 2. Check calendar events
-        $calendarQuery = CalendarEvent::whereHas('equipment', function ($q) use ($equipmentId) {
-            $q->where('event_equipment.equipment_id', $equipmentId);
-        });
-
-        $this->addDateOverlapCondition($calendarQuery, $startDate, $endDate, null, null, $allDay, false);
-
-        $calendarBookings = $calendarQuery->get()->sum(function ($event) use ($equipmentId) {
-            $pivot = $event->equipment->firstWhere('equipment_id', $equipmentId);
-            return $pivot ? $pivot->pivot->quantity : 0;
-        });
-
-        $existingBookings += $calendarBookings;
+        // 2. Calendar events (equipment is date-granular; times are no-ops)
+        $existingBookings += $this->getCalendarEquipmentBookedQuantity(
+            $equipmentId,
+            $startDate,
+            $endDate,
+            '00:00:00',
+            '23:59:59',
+            $allDay
+        );
 
         return max(0, $totalAvailable - $existingBookings);
     }
 
-    /**
-     * Get all overlapping requests and events for a form
-     */
-    public function getOverlappingRequests($currentForm): array
-    {
-        try {
-            $currentFacilityIds = $currentForm->requestedFacilities->pluck('facility_id')->toArray();
-            $currentEquipmentIds = $currentForm->requestedEquipment->pluck('equipment_id')->toArray();
-
-            if (empty($currentFacilityIds) && empty($currentEquipmentIds)) {
-                return [];
-            }
-
-            $overlaps = [];
-
-            // Check facility overlaps
-            if (!empty($currentFacilityIds)) {
-                $overlaps = array_merge($overlaps, $this->getFacilityOverlaps($currentForm, $currentFacilityIds));
-            }
-
-            // Check equipment overlaps
-            if (!empty($currentEquipmentIds)) {
-                $overlaps = array_merge($overlaps, $this->getEquipmentOverlaps($currentForm, $currentEquipmentIds));
-            }
-
-            return $overlaps;
-        } catch (\Exception $e) {
-            Log::error('Error finding overlapping requests', [
-                'request_id' => $currentForm->request_id,
-                'error' => $e->getMessage()
-            ]);
-            return [];
-        }
-    }
-
-    /**
-     * Get facility overlaps from both requisitions and calendar events
-     */
-    private function getFacilityOverlaps($currentForm, array $facilityIds): array
-    {
-        $overlaps = [];
-
-        // Requisition forms
-        $requisitionOverlaps = RequisitionForm::where('request_id', '!=', $currentForm->request_id)
-            ->whereNotIn('status_id', function ($q) {
-                $q->select('status_id')->from('form_statuses')->whereIn('status_name', self::EXCLUDED_STATUSES);
-            })
-            ->whereHas('requestedFacilities', function ($q) use ($facilityIds) {
-                $q->whereIn('facility_id', $facilityIds);
-            })
-            ->where(function ($dateQ) use ($currentForm) {
-                $this->addScheduleOverlapCondition($dateQ, $currentForm);
-            })
-            ->with(['formStatus', 'requestedFacilities.facility', 'requestedEquipment.equipment'])
-            ->get();
-
-        foreach ($requisitionOverlaps as $form) {
-            $hasFacilities = $this->hasFacilities($form);
-            $overlaps[] = $this->formatOverlappingForm($form, $currentForm, 'requisition', $hasFacilities);
-        }
-
-        // Calendar events
-        $calendarOverlaps = CalendarEvent::whereHas('venues', function ($q) use ($facilityIds) {
-            $q->whereIn('event_venues.facility_id', $facilityIds);
-        })
-            ->where(function ($dateQ) use ($currentForm) {
-                $this->addScheduleOverlapCondition($dateQ, $currentForm);
-            })
-            ->with('venues.facility')
-            ->get();
-
-        foreach ($calendarOverlaps as $event) {
-            $overlaps[] = $this->formatOverlappingEvent($event, $currentForm);
-        }
-
-        return $overlaps;
-    }
-
-    /**
-     * Get equipment overlaps from both requisitions and calendar events
-     */
-    private function getEquipmentOverlaps($currentForm, array $equipmentIds): array
-    {
-        $overlaps = [];
-
-        // Requisition forms
-        $requisitionOverlaps = RequisitionForm::where('request_id', '!=', $currentForm->request_id)
-            ->whereNotIn('status_id', function ($q) {
-                $q->select('status_id')->from('form_statuses')->whereIn('status_name', self::EXCLUDED_STATUSES);
-            })
-            ->whereHas('requestedEquipment', function ($q) use ($equipmentIds) {
-                $q->whereIn('equipment_id', $equipmentIds);
-            })
-            ->where(function ($dateQ) use ($currentForm) {
-                $this->addScheduleOverlapCondition($dateQ, $currentForm);
-            })
-            ->with(['formStatus', 'requestedFacilities.facility', 'requestedEquipment.equipment'])
-            ->get();
-
-        foreach ($requisitionOverlaps as $form) {
-            $hasFacilities = $this->hasFacilities($form);
-            $overlaps[] = $this->formatOverlappingForm($form, $currentForm, 'requisition', $hasFacilities);
-        }
-
-        // Calendar events - NEW
-        $calendarOverlaps = CalendarEvent::whereHas('equipment', function ($q) use ($equipmentIds) {
-            $q->whereIn('event_equipment.equipment_id', $equipmentIds);
-        })
-            ->where(function ($dateQ) use ($currentForm) {
-                $this->addScheduleOverlapCondition($dateQ, $currentForm);
-            })
-            ->with('equipment')
-            ->get();
-
-        foreach ($calendarOverlaps as $event) {
-            $overlaps[] = $this->formatOverlappingEvent($event, $currentForm);
-        }
-
-        return $overlaps;
-    }
-
-    /**
-     * Format overlapping form for response
-     */
-    private function formatOverlappingForm($form, $currentForm, $source, $hasFacilities): array
-    {
-        $needsGracePeriod = $hasFacilities && $this->hasFacilities($currentForm);
-        $conflictReason = $this->determineConflictReason($form, $currentForm->start_date, $currentForm->start_time, $needsGracePeriod);
-
-        return [
-            'source' => $source,
-            'request_id' => $form->request_id,
-            'requester_name' => $form->first_name . ' ' . $form->last_name,
-            'status' => $form->formStatus->status_name,
-            'has_facilities' => $hasFacilities,
-            'needs_grace_period' => $needsGracePeriod,
-            'conflict_reason' => $conflictReason,
-            'schedule' => $this->formatSchedule($form),
-            'overlap_severity' => $this->calculateOverlapSeverity($currentForm, $form),
-            'shared_facilities' => $form->requestedFacilities
-                ->whereIn('facility_id', $currentForm->requestedFacilities->pluck('facility_id'))
-                ->pluck('facility.facility_name')
-                ->unique()
-                ->values()
-                ->toArray(),
-            'shared_equipment' => $form->requestedEquipment
-                ->whereIn('equipment_id', $currentForm->requestedEquipment->pluck('equipment_id'))
-                ->groupBy('equipment.equipment_name')
-                ->map(fn($group) => $group->first()->equipment->equipment_name . ' (×' . $group->sum('quantity') . ')')
-                ->values()
-                ->toArray()
-        ];
-    }
-
-    /**
-     * Format overlapping calendar event for response
-     */
-    private function formatOverlappingEvent($event, $currentForm): array
-    {
-        return [
-            'source' => 'calendar_event',
-            'event_id' => $event->event_id,
-            'event_name' => $event->event_name,
-            'status' => null,
-            'has_facilities' => true,
-            'needs_grace_period' => true,
-            'conflict_reason' => 'This is a scheduled school event',
-            'schedule' => $this->formatSchedule($event),
-            'overlap_severity' => 'high',
-            'shared_facilities' => $event->venues->pluck('facility.facility_name')->toArray(),
-            'shared_equipment' => $event->equipment->pluck('equipment_name')->toArray()
-        ];
-    }
-
-    /**
-     * Format schedule from either form or event
-     */
-    private function formatSchedule($item): array
-    {
-        $allDay = $item->all_day ?? false;
-
-        return [
-            'start_date' => $item->start_date,
-            'end_date' => $item->end_date,
-            'start_time' => $item->start_time ?? null,
-            'end_time' => $item->end_time ?? null,
-            'all_day' => $allDay,
-            'formatted_start' => $allDay
-                ? date('M j, Y', strtotime($item->start_date)) . ' (All Day)'
-                : date('M j, Y', strtotime($item->start_date)) . ' ' . date('g:i A', strtotime($item->start_time)),
-            'formatted_end' => $allDay
-                ? date('M j, Y', strtotime($item->end_date)) . ' (All Day)'
-                : date('M j, Y', strtotime($item->end_date)) . ' ' . date('g:i A', strtotime($item->end_time)),
-        ];
-    }
 
     /**
      * Add date overlap condition to query.
@@ -752,31 +527,6 @@ class CheckAvailabilityService
     }
 
     /**
-     * Add schedule overlap condition to query (existing method)
-     */
-    private function addScheduleOverlapCondition($query, $currentForm): void
-    {
-        if ($currentForm->all_day) {
-            $query->where('start_date', '<=', $currentForm->end_date)
-                ->where('end_date', '>=', $currentForm->start_date);
-        } else {
-            $query->where(function ($q) use ($currentForm) {
-                $q->where('start_date', '<=', $currentForm->end_date)
-                    ->where('end_date', '>=', $currentForm->start_date)
-                    ->where(function ($timeQ) use ($currentForm) {
-                        $timeQ->where('start_time', '<', $currentForm->end_time)
-                            ->where('end_time', '>', $currentForm->start_time);
-                    })
-                    ->orWhere(function ($allDayQ) use ($currentForm) {
-                        $allDayQ->where('all_day', true)
-                            ->where('start_date', '<=', $currentForm->end_date)
-                            ->where('end_date', '>=', $currentForm->start_date);
-                    });
-            });
-        }
-    }
-
-    /**
      * Determine conflict reason for display
      */
     private function determineConflictReason($existingItem, $newStartDate, $newStartTime, $needsGracePeriod): string
@@ -799,28 +549,6 @@ class CheckAvailabilityService
         return "This time slot conflicts with an existing booking";
     }
 
-    /**
-     * Calculate overlap severity between two forms
-     */
-    private function calculateOverlapSeverity($form1, $form2): string
-    {
-        $datesOverlap = !($form1->end_date < $form2->start_date || $form1->start_date > $form2->end_date);
-
-        if (!$datesOverlap) {
-            return 'none';
-        }
-
-        if ($form1->start_date === $form2->start_date && $form1->end_date === $form2->end_date) {
-            if ($form1->all_day || $form2->all_day) {
-                return 'high';
-            } else {
-                $timeOverlap = !($form1->end_time <= $form2->start_time || $form1->start_time >= $form2->end_time);
-                return $timeOverlap ? 'high' : 'medium';
-            }
-        }
-
-        return 'medium';
-    }
     /**
      * Compile conflicts into a Blade-rendered HTML string.
      * Strictly server-side formatting to keep the frontend dumb.

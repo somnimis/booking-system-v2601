@@ -15,7 +15,6 @@ return new class extends Migration {
             $table->unsignedBigInteger('request_id');
             $table->string('official_receipt_no', 50)->nullable();
             $table->string('official_receipt_url')->nullable();
-            $table->string('official_receipt_public_id')->nullable();
             $table->timestamps();
 
             // foreign keys

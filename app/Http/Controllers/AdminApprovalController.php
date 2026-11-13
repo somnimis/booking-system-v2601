@@ -144,7 +144,6 @@ class AdminApprovalController extends Controller
                 'request_id' => $requestId,
                 'official_receipt_no' => null,
                 'official_receipt_url' => null,
-                'official_receipt_public_id' => null
             ]);
 
             DB::commit();
@@ -197,7 +196,6 @@ class AdminApprovalController extends Controller
                 'request_id' => $requestId,
                 'official_receipt_no' => null,
                 'official_receipt_url' => null,
-                'official_receipt_public_id' => null
             ]);
 
             DB::commit();
@@ -241,7 +239,6 @@ class AdminApprovalController extends Controller
                 'request_id' => $requestId,
                 'official_receipt_no' => null,
                 'official_receipt_url' => null,
-                'official_receipt_public_id' => null
             ]);
 
             DB::commit();
@@ -372,7 +369,6 @@ class AdminApprovalController extends Controller
                         'request_id' => $requestId,
                         'official_receipt_no' => $form->official_receipt_no,
                         'official_receipt_url' => $form->official_receipt_url,
-                        'official_receipt_public_id' => $form->official_receipt_public_id
                     ]);
                 }
             }

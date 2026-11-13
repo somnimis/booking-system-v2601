@@ -10,6 +10,9 @@ class FormStatus extends Model
     protected $primaryKey = "status_id";
     public $timestamps = false;
 
+    public const PENDING_APPROVAL = 'Pending Approval';
+    public const RESERVED = 'Reserved';
+
     protected $fillable = [
         'status_id',
         'status_name',

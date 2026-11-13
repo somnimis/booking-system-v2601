@@ -35,6 +35,8 @@ class RequisitionForm extends Model
         'is_late',
         'late_penalty_fee',
         'returned_at',
+        'is_admin_created',
+        'created_by',
         'is_finalized',
         'finalized_at',
         'finalized_by',
@@ -48,10 +50,7 @@ class RequisitionForm extends Model
         'event_details',
         'access_code',
         'event_documents_url',
-        'event_documents_public_id',
         'proof_of_payment_url',
-        'proof_of_payment_public_id',
-        'upload_token',
         'official_receipt_num',
         'control_num',
     ];
@@ -63,6 +62,7 @@ class RequisitionForm extends Model
         'end_time' => 'string',
         'all_day' => 'boolean',
         'returned_at' => 'datetime',
+        'is_admin_created' => 'boolean',
         'finalized_at' => 'datetime',
         'closed_at' => 'datetime',
         'date_endorsed' => 'datetime',
@@ -120,6 +120,11 @@ class RequisitionForm extends Model
     public function notifications()
     {
         return $this->hasMany(Notification::class, 'request_id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(Admin::class, 'created_by', 'admin_id');
     }
     public function status()
     {

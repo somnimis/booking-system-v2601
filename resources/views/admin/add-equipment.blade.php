@@ -756,7 +756,6 @@
                         },
                         body: JSON.stringify({
                             image_url: imageUrl,
-                            cloudinary_public_id: publicId,
                             description: 'Equipment photo'
                         })
                     });
@@ -785,7 +784,6 @@
 
                     // Use FormData instead of JSON for Cloudinary deletion
                     const formData = new FormData();
-                    formData.append('public_id', publicId);
 
                     const response = await fetch(`/api/admin/cloudinary/delete`, {
                         method: 'POST',
@@ -834,7 +832,6 @@
                                 'Authorization': `Bearer ${token}`,
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({ public_id: cloudinaryPublicId })
                         });
                         //       showToast('Image deleted from storage', 'success'); //
                     }
@@ -1110,12 +1107,6 @@
                         // If editing an existing item, mark the current photo for deletion
                         if (currentEditingItemId) {
                             const existingItem = equipmentItems.find(i => i.item_id === currentEditingItemId);
-                            if (existingItem && existingItem.cloudinary_public_id !== 'oxvsxogzu9koqhctnf7s') {
-                                pendingItemPhotoChanges.set(currentEditingItemId, {
-                                    action: 'delete',
-                                    publicId: existingItem.cloudinary_public_id
-                                });
-                            }
                         }
                     });
                 }
@@ -1340,7 +1331,6 @@
                                 barcode_number: barcode,
                                 item_notes: notes,
                                 image_url: imageUrl,
-                                cloudinary_public_id: publicId
                             };
 
                             // Handle photo changes
@@ -1375,7 +1365,6 @@
                                 const existingItem = equipmentItems.find(i => i.item_id === currentEditingItemId);
                                 if (existingItem) {
                                     tempItem.image_url = existingItem.image_url;
-                                    tempItem.cloudinary_public_id = existingItem.cloudinary_public_id;
                                 }
 
                                 // Mark for update (no photo change)

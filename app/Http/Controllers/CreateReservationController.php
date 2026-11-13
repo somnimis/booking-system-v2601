@@ -8,35 +8,27 @@ use App\Models\ExtraService;
 use App\Models\Equipment;
 use App\Models\RequisitionPurpose;
 use App\Models\FormStatus;
-use App\Models\RequisitionForm;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Models\EquipmentItem;
 use App\Services\FeeCalculatorService;
 use App\Services\CheckAvailabilityService;
 use App\Services\NotificationService;
 use App\Services\AccessCodeService;
+use App\Services\RequisitionCreationService;
 use App\Services\ReceiptService;
-use Illuminate\Support\Facades\DB;
-use App\Models\RequestedFacility;
-use App\Models\RequestedEquipment;
-use App\Models\RequestedService;
-use App\Models\RequisitionComment;
+use App\Exceptions\BookingConflictException;
 
 class CreateReservationController extends Controller
 {
 
-    protected $feeCalculator;
-    protected $availabilityChecker;
-    protected $notificationService;
-    protected $receiptService;
-
-    public function __construct(FeeCalculatorService $feeCalculator, CheckAvailabilityService $availabilityChecker, NotificationService $notificationService, ReceiptService $receiptService)
-    {
-        $this->feeCalculator = $feeCalculator;
-        $this->availabilityChecker = $availabilityChecker;
-        $this->notificationService = $notificationService;
-        $this->receiptService = $receiptService;
+    public function __construct(
+        protected FeeCalculatorService $feeCalculator,
+        protected CheckAvailabilityService $availabilityChecker,
+        protected NotificationService $notificationService,
+        protected ReceiptService $receiptService,
+        protected RequisitionCreationService $creationService,
+        protected AccessCodeService $accessCodeService
+    ) {
     }
 
     /**
@@ -45,110 +37,16 @@ class CreateReservationController extends Controller
     public function createReservation(Request $request)
     {
         try {
-            Log::debug('Creating admin reservation', $request->all());
+            $data = $this->validateReservationRequest($request);
+            $adminId = auth()->id();
 
-            DB::beginTransaction();
-
-            // Validate request
-            $validatedData = $this->validateReservationRequest($request);
-
-            // Generate unique access code
-            $accessCodeService = app(AccessCodeService::class);
-            $validatedData['access_code'] = $accessCodeService->generateUniqueAccessCode();
-
-            // Check for facility conflicts
-            $conflictItems = [];
-
-            foreach ($validatedData['facilities'] as $facility) {
-                $facilityConflicts = $this->availabilityChecker->checkFacilityAvailability(
-                    $facility['facility_id'],
-                    $validatedData['start_date'],
-                    $validatedData['end_date'],
-                    $validatedData['start_time'] ?? '00:00:00',
-                    $validatedData['end_time'] ?? '23:59:59',
-                    $validatedData['all_day']
-                );
-
-                if (!empty($facilityConflicts)) {
-                    $conflictItems = array_merge($conflictItems, $facilityConflicts);
-                }
-            }
-
-            // Check for equipment conflicts
-            if (!empty($validatedData['equipment'])) {
-                foreach ($validatedData['equipment'] as $equipment) {
-                    $availableCount = $this->availabilityChecker->checkEquipmentAvailability(
-                        $equipment['equipment_id'],
-                        $validatedData['start_date'],
-                        $validatedData['end_date'],
-                        $validatedData['all_day']
-                    );
-
-                    if ($availableCount < $equipment['quantity']) {
-                        $equipmentName = EquipmentItem::find($equipment['equipment_id'])->equipment_name ?? 'Unknown';
-                        $conflictItems[] = [
-                            'type' => 'equipment',
-                            'id' => $equipment['equipment_id'],
-                            'name' => $equipmentName,
-                            'source' => 'requisition',
-                            'status' => null,
-                            'message' => "Only {$availableCount} available, requested {$equipment['quantity']}"
-                        ];
-                    }
-                }
-            }
-
-            // If conflicts exist, return them
-            if (!empty($conflictItems)) {
-                DB::rollBack();
+            if (!$adminId) {
                 return response()->json([
-                    'error' => 'Scheduling conflicts detected',
-                    'conflict_items' => $conflictItems
-                ], 409);
+                    'error' => 'Admin not authenticated',
+                ], 401);
             }
 
-            // Create the reservation
-            $requisitionForm = $this->createRequisitionForm($validatedData);
-
-            // Add related items
-            $this->addFacilities($requisitionForm->request_id, $validatedData['facilities']);
-            $this->addEquipment($requisitionForm->request_id, $validatedData['equipment'] ?? []);
-            $this->addServices($requisitionForm->request_id, $validatedData['services'] ?? []);
-
-            // Add comment record
-            $this->addCommentRecord($requisitionForm->request_id);
-
-            // Create approval chain records
-            try {
-                $approvalChainService = app(\App\Services\ApprovalChainService::class);
-                $approvalChainService->createApprovalChain($requisitionForm);
-                Log::info('Approval chain created for requisition', [
-                    'request_id' => $requisitionForm->request_id
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Failed to create approval chain', [
-                    'request_id' => $requisitionForm->request_id,
-                    'error' => $e->getMessage()
-                ]);
-                // Don't rollback - approval chain failure shouldn't prevent reservation creation
-            }
-
-            DB::commit();
-
-            // Send confirmation email
-            try {
-                $notificationService = app(NotificationService::class);
-                $notificationService->sendConfirmationEmail($requisitionForm);
-            } catch (\Exception $e) {
-                Log::error('Failed to send confirmation email: ' . $e->getMessage());
-            }
-
-            // Send approval request emails
-            try {
-                $this->notificationService->sendAdminApprovalEmails($requisitionForm);
-            } catch (\Exception $e) {
-                Log::error('Failed to send admin approval emails: ' . $e->getMessage());
-            }
+            $requisitionForm = $this->creationService->createFromPayload($data, $adminId);
 
             return response()->json([
                 'message' => 'Reservation created successfully',
@@ -156,16 +54,23 @@ class CreateReservationController extends Controller
                 'access_code' => $requisitionForm->access_code,
                 'all_day' => $requisitionForm->all_day,
             ], 201);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
-            DB::rollBack();
             return response()->json([
                 'error' => 'Validation failed',
                 'details' => $e->errors(),
             ], 422);
+        } catch (BookingConflictException $e) {
+            return response()->json([
+                'error' => 'Scheduling conflicts detected',
+                'conflict_items' => $e->getConflictItems(),
+                'conflict_html' => $this->availabilityChecker->formatConflictsToHtml($e->getConflictItems()),
+            ], 409);
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to create reservation: ' . $e->getMessage());
+            Log::error('Failed to create reservation', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             return response()->json([
                 'error' => 'Failed to create reservation',
                 'details' => $e->getMessage(),
@@ -178,18 +83,7 @@ class CreateReservationController extends Controller
      */
     private function validateReservationRequest(Request $request): array
     {
-        $rules = $this->buildValidationRules($request);
-
-        return $request->validate($rules);
-    }
-
-    /**
-     * Build validation rules dynamically based on all_day flag
-     */
-    private function buildValidationRules(Request $request): array
-    {
         $rules = [
-            // User details
             'user_type' => 'required|in:Internal,External',
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
@@ -197,38 +91,27 @@ class CreateReservationController extends Controller
             'school_id' => 'nullable|string|max:20',
             'organization_name' => 'nullable|string|max:100',
             'contact_number' => ['nullable', 'regex:/^\d{1,15}$/', 'max:15'],
-
-            // Form details
             'purpose_id' => 'required|exists:requisition_purposes,purpose_id',
             'num_participants' => 'required|integer|min:1',
             'num_tables' => 'required|integer|min:0',
             'num_chairs' => 'required|integer|min:0',
             'num_microphones' => 'required|integer|min:0',
             'additional_requests' => 'nullable|string|max:250',
-
-            // Event details
             'event_title' => 'nullable|string|max:100',
-            'event_details' => 'nullable|string|max:100',
-
-            // Schedule
+            'event_details' => 'nullable|string|max:500',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'all_day' => 'required|boolean',
-
-            // Requested items
+            'status_id' => 'required|exists:form_statuses,status_id',
             'facilities' => 'required|array|min:1',
             'facilities.*.facility_id' => 'required|exists:facilities,facility_id',
             'equipment' => 'array',
             'equipment.*.equipment_id' => 'required|exists:equipment,equipment_id',
             'equipment.*.quantity' => 'required|integer|min:1',
-            'services' => 'array', // ADDED
-            'services.*.service_id' => 'required|exists:extra_services,service_id', // ADDED
-
-            // Status
-            'status_id' => 'required|exists:form_statuses,status_id',
+            'services' => 'array',
+            'services.*.service_id' => 'required|exists:extra_services,service_id',
         ];
 
-        // Add time rules conditionally
         if (!$request->all_day) {
             $rules['start_time'] = 'required|date_format:H:i';
             $rules['end_time'] = 'required|date_format:H:i|after:start_time';
@@ -237,142 +120,51 @@ class CreateReservationController extends Controller
             $rules['end_time'] = 'nullable';
         }
 
-        return $rules;
-    }
+        $v = $request->validate($rules);
+        $allDay = (bool) $v['all_day'];
 
-    /**
-     * Add service records
-     */
-    private function addServices(int $requestId, array $services): void
-    {
-        foreach ($services as $service) {
-            RequestedService::create([
-                'request_id' => $requestId,
-                'service_id' => $service['service_id'],
-                'is_waived' => false,
-            ]);
+        // Build common `items[]` shape
+        $items = [];
+        foreach ($v['facilities'] as $f) {
+            $items[] = ['type' => 'facility', 'facility_id' => $f['facility_id']];
         }
-    }
-
-    /**
-     * Create the main requisition form record
-     */
-    private function createRequisitionForm(array $data): RequisitionForm
-    {
-        return RequisitionForm::create([
-            // User details
-            'user_type' => $data['user_type'],
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-            'email' => $data['email'],
-            'school_id' => $data['school_id'] ?? null,
-            'organization_name' => $data['organization_name'] ?? null,
-            'contact_number' => $data['contact_number'] ?? null,
-
-            // Form details
-            'purpose_id' => $data['purpose_id'],
-            'num_participants' => $data['num_participants'],
-            'num_tables' => $data['num_tables'] ?? 0,
-            'num_chairs' => $data['num_chairs'] ?? 0,
-            'num_microphones' => $data['num_microphones'] ?? 0,
-            'access_code' => $data['access_code'],
-            'additional_requests' => $data['additional_requests'] ?? null,
-
-            // Event details
-            'event_title' => $data['event_title'] ?? 'Admin Reservation',
-            'event_details' => $data['event_details'] ?? null,
-
-            // Schedule
-            'start_date' => $data['start_date'],
-            'end_date' => $data['end_date'],
-            'start_time' => $this->formatStartTime($data),
-            'end_time' => $this->formatEndTime($data),
-            'all_day' => $data['all_day'],
-
-            // Status
-            'status_id' => $data['status_id'],
-            'is_finalized' => true,
-            'finalized_at' => now(),
-            'finalized_by' => auth()->id(),
-        ]);
-    }
-
-
-
-    /**
-     * Format start time based on all_day flag
-     */
-    private function formatStartTime(array $data): string
-    {
-        if ($data['all_day']) {
-            return '00:00:00';
+        foreach ($v['equipment'] ?? [] as $e) {
+            $items[] = [
+                'type' => 'equipment',
+                'equipment_id' => $e['equipment_id'],
+                'quantity' => $e['quantity'],
+            ];
         }
-        return $data['start_time'] ?? '00:00:00';
-    }
-
-    /**
-     * Format end time based on all_day flag
-     */
-    private function formatEndTime(array $data): string
-    {
-        if ($data['all_day']) {
-            return '23:59:59';
-        }
-        return $data['end_time'] ?? '23:59:59';
-    }
-
-    /**
-     * Add facility records
-     */
-    private function addFacilities(int $requestId, array $facilities): void
-    {
-        foreach ($facilities as $facility) {
-            RequestedFacility::create([
-                'request_id' => $requestId,
-                'facility_id' => $facility['facility_id'],
-                'is_waived' => false,
-            ]);
-        }
-    }
-
-    /**
-     * Add equipment records
-     */
-    private function addEquipment(int $requestId, array $equipment): void
-    {
-        foreach ($equipment as $item) {
-            RequestedEquipment::create([
-                'request_id' => $requestId,
-                'equipment_id' => $item['equipment_id'],
-                'quantity' => $item['quantity'],
-                'is_waived' => false,
-            ]);
-        }
-    }
-
-
-    /**
-     * Add comment record
-     */
-    private function addCommentRecord(int $requestId): void
-    {
-        // Get the authenticated admin's ID
-        $adminId = auth()->id();
-
-        if (!$adminId) {
-            Log::error('Cannot add comment: admin_id is null', [
-                'request_id' => $requestId,
-                'auth_check' => auth()->check(),
-                'user' => auth()->user()
-            ]);
-            throw new \Exception('Admin not authenticated');
+        foreach ($v['services'] ?? [] as $s) {
+            $items[] = ['type' => 'service', 'service_id' => $s['service_id']];
         }
 
-        RequisitionComment::create([
-            'request_id' => $requestId,
-            'admin_id' => $adminId, // Use the variable, not calling auth() again
-            'comment' => 'Admin created this reservation manually',
-        ]);
+        return [
+            'user_type' => $v['user_type'],
+            'first_name' => $v['first_name'],
+            'last_name' => $v['last_name'],
+            'email' => $v['email'],
+            'school_id' => $v['school_id'] ?? null,
+            'organization_name' => $v['organization_name'] ?? null,
+            'contact_number' => $v['contact_number'] ?? null,
+            'num_participants' => $v['num_participants'],
+            'purpose_id' => $v['purpose_id'],
+            'additional_requests' => $v['additional_requests'] ?? null,
+            'start_date' => $v['start_date'],
+            'end_date' => $v['end_date'],
+            'start_time' => $allDay ? '00:00:00' : $v['start_time'],
+            'end_time' => $allDay ? '23:59:59' : $v['end_time'],
+            'all_day' => $allDay,
+            'cleanup_hours' => $v['cleanup_hours'] ?? 4,
+            'event_title' => $v['event_title'] ?? 'Admin Reservation',
+            'event_details' => $v['event_details'] ?? null,
+            'num_tables' => $v['num_tables'] ?? 0,
+            'num_chairs' => $v['num_chairs'] ?? 0,
+            'num_microphones' => $v['num_microphones'] ?? 0,
+            'event_documents_url' => $v['event_documents_url'] ?? null,
+            'status_id' => $v['status_id'],
+            'items' => $items,
+        ];
     }
 
 
@@ -399,7 +191,7 @@ class CreateReservationController extends Controller
                 'statuses' => FormStatus::whereNotIn('status_name', ['Returned', 'Late Return', 'Completed', 'Rejected', 'Cancelled'])
                     ->select(['status_id', 'status_name', 'color_code'])
                     ->get(),
-                'access_code' => $this->generateUniqueAccessCode()
+                'access_code' => $this->accessCodeService->generateUniqueAccessCode()
             ];
 
             return response()->json([
@@ -560,19 +352,4 @@ class CreateReservationController extends Controller
         }
     }
 
-    /**
-     * Generate a unique access code
-     */
-    private function generateUniqueAccessCode()
-    {
-        do {
-            $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            $code = '';
-            for ($i = 0; $i < 10; $i++) {
-                $code .= $characters[random_int(0, strlen($characters) - 1)];
-            }
-        } while (RequisitionForm::where('access_code', $code)->exists());
-
-        return $code;
-    }
 }

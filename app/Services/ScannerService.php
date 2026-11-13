@@ -210,7 +210,6 @@ public function getActiveTransaction(int $itemId)
                 'condition_id' => $item->condition_id,
                 'condition_name' => $item->condition->condition_name,
                 'image_url' => $item->image_url,
-                'cloudinary_public_id' => $item->cloudinary_public_id,
                 'item_notes' => $item->item_notes,
                 'equipment_details' => [
                     'equipment_id' => $item->equipment->equipment_id,

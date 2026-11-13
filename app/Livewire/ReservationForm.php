@@ -59,17 +59,30 @@ class ReservationForm extends Component
     public $facilitySearch = '';
     public $equipmentSearch = '';
 
-    // --- Category Filters --- 
+    // --- Category Filters ---
     public $facilityCategoryFilter = '';
     public $equipmentCategoryFilter = '';
 
     public function mount()
     {
+        if (!$this->usesSession()) {
+            return;
+        }
+
         $this->selectedItems = Session::get('selected_items', []);
         $this->selectedServices = collect($this->selectedItems)
             ->where('type', 'service')
             ->pluck('service_id')
             ->toArray();
+    }
+
+    /**
+     * Whether this form persists its cart to the session.
+     * Public uses session; admin subclasses override to false.
+     */
+    protected function usesSession(): bool
+    {
+        return true;
     }
 
     public function getFilteredFacilitiesProperty()
@@ -87,7 +100,6 @@ class ReservationForm extends Component
         }
 
         if ($this->facilityCategoryFilter) {
-            // Assuming filter format is 'category:id' or 'subcategory:id'
             $parts = explode(':', $this->facilityCategoryFilter);
             if (count($parts) === 2) {
                 if ($parts[0] === 'category') {
@@ -120,7 +132,6 @@ class ReservationForm extends Component
         return $query->get();
     }
 
-    // Generate time slots in 12-hour format (e.g. 08:00 AM)
     public function getTimeSlotsProperty()
     {
         $times = [];
@@ -128,15 +139,15 @@ class ReservationForm extends Component
             foreach (['00', '30'] as $m) {
                 $time = sprintf('%02d:%s', $h, $m);
                 $displayHour = $h % 12;
-                if ($displayHour === 0)
-                    $displayHour = 12; // 0 becomes 12
+                if ($displayHour === 0) {
+                    $displayHour = 12;
+                }
                 $times[$time] = $displayHour . ':' . $m . ' ' . ($h >= 12 ? 'PM' : 'AM');
             }
         }
         return $times;
     }
 
-    // Auto-adjust End Date to match Start Date if empty or in the past
     public function updatedStartDate($value)
     {
         if ($value) {
@@ -146,7 +157,6 @@ class ReservationForm extends Component
         }
     }
 
-    // Auto-adjust End Time to at least 1 hour after Start Time
     public function updatedStartTime($value)
     {
         if ($value) {
@@ -190,9 +200,11 @@ class ReservationForm extends Component
                 'base_fee' => $fee,
                 'rate_type' => $rateType,
                 'quantity' => 1,
-                'image' => $image, // Restored image property
+                'image' => $image,
             ];
-            Session::put('selected_items', $this->selectedItems);
+            if ($this->usesSession()) {
+                Session::put('selected_items', $this->selectedItems);
+            }
             $this->dispatch('toast', message: ucfirst($type) . ' added.', type: 'success');
         }
     }
@@ -204,7 +216,9 @@ class ReservationForm extends Component
             return isset($item[$idField]) && $item[$idField] == $id && $item['type'] === $type;
         })->values()->toArray();
 
-        Session::put('selected_items', $this->selectedItems);
+        if ($this->usesSession()) {
+            Session::put('selected_items', $this->selectedItems);
+        }
         $this->dispatch('toast', message: ucfirst($type) . ' removed.', type: 'success');
     }
 
@@ -229,7 +243,9 @@ class ReservationForm extends Component
                 ];
             }
         }
-        Session::put('selected_items', $this->selectedItems);
+        if ($this->usesSession()) {
+            Session::put('selected_items', $this->selectedItems);
+        }
     }
 
     public function checkAvailability(CheckAvailabilityService $checker)
@@ -272,7 +288,7 @@ class ReservationForm extends Component
         $this->currentStep = 1;
     }
 
-    private function validateSchedule()
+    protected function validateSchedule()
     {
         try {
             $this->validate([
@@ -287,7 +303,7 @@ class ReservationForm extends Component
         }
     }
 
-    private function validateDetails()
+    protected function validateDetails()
     {
         try {
             $this->validate([
@@ -314,13 +330,11 @@ class ReservationForm extends Component
 
     public function render(FeeCalculatorService $feeCalculator)
     {
-        // Keep session alive by refreshing the page data
-        Session::put('request_info', Session::get('request_info'));
-
+        // Reuse parent logic for fee calculation
         $facilities = [];
         $equipment = [];
         $services = [];
-
+        
         foreach ($this->selectedItems as $item) {
             if ($item['type'] === 'facility') {
                 $facilities[] = (object) [
@@ -368,19 +382,31 @@ class ReservationForm extends Component
 
         $feeSummary = $feeCalculator->getFeeSummary($tempForm);
 
-        return view('livewire.reservation-form', [
+        return view('livewire.admin-reservation-form', [
+            'feeBreakdown' => $feeSummary,
             'facilities' => $this->filteredFacilities,
             'equipment' => $this->filteredEquipment,
             'services' => ExtraService::all(),
             'purposes' => RequisitionPurpose::all(),
-            'feeBreakdown' => $feeSummary,
             'facilityCategories' => FacilityCategory::with('subcategories')->get(),
             'equipmentCategories' => EquipmentCategory::all(),
         ]);
     }
 
-    private function syncToSession()
+    /**
+     * View rendered by this component. Admin subclass overrides.
+     */
+    protected function viewName(): string
     {
+        return 'livewire.reservation-form';
+    }
+
+    protected function syncToSession()
+    {
+        if (!$this->usesSession()) {
+            return;
+        }
+
         $documentUrl = null;
         $documentPublicId = null;
 
@@ -411,7 +437,6 @@ class ReservationForm extends Component
             'all_day' => $this->allDay,
             'cleanup_hours' => $this->cleanupHours,
             'event_documents_url' => $documentUrl,
-            'event_documents_public_id' => $documentPublicId,
         ]);
     }
 }

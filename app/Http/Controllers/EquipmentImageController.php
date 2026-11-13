@@ -14,7 +14,7 @@ class EquipmentImageController extends Controller
         try {
             $images = EquipmentImage::where('equipment_id', $equipmentId)
                 ->orderBy('sort_order')
-                ->get(['image_id', 'equipment_id', 'image_url', 'cloudinary_public_id', 'description', 'is_primary', 'sort_order']);
+                ->get(['image_id', 'equipment_id', 'image_url', 'description', 'is_primary', 'sort_order']);
 
             return response()->json([
                 'data' => $images

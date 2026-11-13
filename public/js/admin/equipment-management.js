@@ -228,7 +228,6 @@ window.EquipmentManagement = {
                 },
                 body: JSON.stringify({
                     image_url: imageUrl,
-                    cloudinary_public_id: publicId,
                     description: 'Equipment photo'
                 })
             });
@@ -256,7 +255,6 @@ window.EquipmentManagement = {
             const token = localStorage.getItem('adminToken');
 
             const formData = new FormData();
-            formData.append('public_id', publicId);
 
             const response = await fetch(`/api/admin/cloudinary/delete`, {
                 method: 'POST',

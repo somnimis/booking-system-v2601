@@ -27,15 +27,12 @@ class Admin extends Authenticatable
 
     protected $fillable = [
         'photo_url',
-        'photo_public_id',
         'wallpaper_url',
-        'wallpaper_public_id',
         'first_name',
         'last_name',
         'middle_name',
         'title',
         'signature_url',
-        'signature_public_id',
         'role_id',
         'school_id',
         'email',
@@ -67,23 +64,35 @@ class Admin extends Authenticatable
         return $this->belongsTo(LookupTables\AdminRole::class, 'role_id', 'role_id');
     }
 
-    // Accessors for local file paths
+    // Accessor for photo URL (handles local storage vs external/cloud)
     public function getPhotoUrlAttribute($value)
     {
-        if ($value && !filter_var($value, FILTER_VALIDATE_URL)) {
-            return asset('storage/' . $value);
+        if (!$value) {
+            return asset('assets/avatar-placeholder.png');
         }
-        return $value ?: asset('storage/defaults/admin-photo.png');
+
+        // If it's a full URL (Cloudinary, external), return as-is.
+        if (str_starts_with($value, 'http')) {
+            return $value;
+        }
+
+        // Otherwise, it's a relative path in the storage directory
+        return asset('storage/' . $value);
     }
 
+    // Accessor for wallpaper URL
     public function getWallpaperUrlAttribute($value)
     {
-        if ($value && !filter_var($value, FILTER_VALIDATE_URL)) {
-            return asset('storage/' . $value);
+        if (!$value) {
+            return asset('assets/avatar-placeholder.png'); 
         }
-        return $value ?: asset('storage/defaults/wallpaper.png');
-    }
 
+        if (str_starts_with($value, 'http')) {
+            return $value;
+        }
+
+        return asset('storage/' . $value);
+    }
 
     // ----- Department Assignments ----- //
 

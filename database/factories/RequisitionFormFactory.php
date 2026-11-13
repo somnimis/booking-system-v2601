@@ -30,7 +30,6 @@ class RequisitionFormFactory extends Factory
             
             // Formal letter details
             'event_documents_url' => $this->faker->url(),
-            'event_documents_public_id' => $this->faker->uuid(),
     
             
             'status_id' => \App\Models\FormStatus::inRandomOrder()->value('status_id') ?? 1,
@@ -54,7 +53,6 @@ class RequisitionFormFactory extends Factory
             // Official receipt details
             'official_receipt_no' => $this->faker->optional()->regexify('[A-Z0-9]{10}'),
             'official_receipt_url' => $this->faker->optional()->url(),
-            'official_receipt_public_id' => $this->faker->optional()->uuid(),
             
             // Fee details
             'tentative_fee' => $this->faker->optional()->randomFloat(2, 100, 1000),

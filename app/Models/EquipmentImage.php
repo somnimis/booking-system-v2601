@@ -18,22 +18,19 @@ class EquipmentImage extends Model
         'description',
         'sort_order',
         'image_url',
-        'cloudinary_public_id',
         'image_type'
     ];
 
-    /* Migration format:
-    Columns:
-        image_id bigint UN AI PK 
-        equipment_id bigint UN 
-        image_url varchar(255) 
-        cloudinary_public_id varchar(255) 
-        description varchar(80) 
-        sort_order int 
-        image_type enum('Primary','Secondary') 
-        created_at timestamp 
-        updated_at timestamp
-    */
+    public function getImageUrlAttribute($value)
+{
+    // If it's already a full URL (like an old Cloudinary link), return it as-is.
+    if (str_starts_with($value, 'http')) {
+        return $value;
+    }
+    
+    // Otherwise, prepend the app URL to the relative path
+    return asset($value);
+}
 
     public function equipment()
     {

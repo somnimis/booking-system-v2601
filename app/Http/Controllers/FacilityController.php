@@ -573,14 +573,13 @@ class FacilityController extends Controller
         \Log::info('Starting facility deletion', [
             'facility_id' => $facilityId,
             'image_count' => $facility->images->count(),
-            'all_images' => $facility->images->pluck('cloudinary_public_id')
+            'all_images' => $facility->images->pluck('image_url')
         ]);
 
         // Delete images from Cloudinary and DB
         foreach ($facility->images as $image) {
             \Log::info('Processing image for deletion', [
                 'image_id' => $image->image_id,
-                'cloudinary_public_id' => $image->cloudinary_public_id
             ]);
 
             // Only delete from Cloudinary if it's a real Cloudinary image (not the default placeholder)

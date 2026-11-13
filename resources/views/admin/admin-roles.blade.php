@@ -1149,7 +1149,6 @@
                     department_ids: deptIds,
                     department_roles: deptRoles,
                     photo_url: 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png',
-                    photo_public_id: 'ksdmh4mmpxdtjogdgjmm'
                 };
 
                 const submitBtn = this.querySelector('button[type="submit"]');

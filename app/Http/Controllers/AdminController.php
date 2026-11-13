@@ -122,7 +122,6 @@ class AdminController extends Controller
                 'role_id' => $admin->role_id,
                 'role' => $admin->role,
                 'signature_url' => $admin->signature_url,
-                'signature_public_id' => $admin->signature_public_id,
                 'departments' => $admin->departments,
                 // Explicitly include just the IDs for easy frontend use
                 'department_ids' => $admin->departments->pluck('department_id'),
@@ -166,15 +165,11 @@ class AdminController extends Controller
             'department_roles' => 'nullable|array',
             'department_roles.*' => 'exists:department_roles,role_id',
             'photo_url' => 'nullable|string',
-            'photo_public_id' => 'nullable|string',
             'wallpaper_url' => 'nullable|string',
-            'wallpaper_public_id' => 'nullable|string',
             'signature_url' => 'nullable|string',
-            'signature_public_id' => 'nullable|string',
         ]);
 
         $validated['photo_url'] = $validated['photo_url'] ?? 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1751033911/ksdmh4mmpxdtjogdgjmm.png';
-        $validated['photo_public_id'] = $validated['photo_public_id'] ?? 'ksdmh4mmpxdtjogdgjmm';
         $validated['hashed_password'] = bcrypt($validated['password']);
         unset($validated['password']);
 
@@ -260,7 +255,6 @@ class AdminController extends Controller
             'department_roles' => 'nullable|array',
             'department_roles.*' => 'exists:department_roles,role_id',
             'signature_url' => 'nullable|string',
-            'signature_public_id' => 'nullable|string',
         ]);
 
         if (!empty($validated['password'])) {
@@ -402,19 +396,16 @@ class AdminController extends Controller
                     'folder' => 'admin-photos',
                     'disk' => 'public',
                     'field' => 'photo_url',
-                    'public_id_field' => 'photo_public_id',
                 ],
                 'wallpaper' => [
                     'folder' => 'admin-wallpapers',
                     'disk' => 'public',
                     'field' => 'wallpaper_url',
-                    'public_id_field' => 'wallpaper_public_id',
                 ],
                 'signature' => [
                     'folder' => 'admin-signatures',
                     'disk' => 'public',
                     'field' => 'signature_url',
-                    'public_id_field' => 'signature_public_id',
                 ]
             ][$type];
 
@@ -435,7 +426,6 @@ class AdminController extends Controller
             // Update admin record with new path
             $updateData = [
                 $paths['field'] => $storedPath,
-                $paths['public_id_field'] => null
             ];
 
             $admin->update($updateData);
@@ -479,7 +469,6 @@ class AdminController extends Controller
             return response()->json([
                 'message' => ucfirst($type) . ' updated successfully',
                 $type . '_url' => $publicUrl,
-                $type . '_public_id' => null
             ]);
 
         } catch (\Exception $e) {
@@ -495,11 +484,8 @@ class AdminController extends Controller
         try {
             $validated = $request->validate([
                 'photo_url' => 'nullable|string',
-                'photo_public_id' => 'nullable|string',
                 'wallpaper_url' => 'nullable|string',
-                'wallpaper_public_id' => 'nullable|string',
                 'signature_url' => 'nullable|string',
-                'signature_public_id' => 'nullable|string',
                 'type' => 'required|in:photo,wallpaper,signature'
             ]);
 
@@ -509,13 +495,10 @@ class AdminController extends Controller
             $updateData = [];
             if ($type === 'photo') {
                 $updateData['photo_url'] = $validated['photo_url'];
-                $updateData['photo_public_id'] = null;
             } else if ($type === 'wallpaper') {
                 $updateData['wallpaper_url'] = $validated['wallpaper_url'];
-                $updateData['wallpaper_public_id'] = null;
             } else { // signature
                 $updateData['signature_url'] = $validated['signature_url'];
-                $updateData['signature_public_id'] = null;
             }
 
             $admin->update($updateData);
@@ -581,66 +564,6 @@ class AdminController extends Controller
 
             return response()->json([
                 'message' => 'Failed to delete image',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function deleteCloudinaryImage(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'public_id' => 'required|string',
-                'type' => 'required|in:photo,wallpaper,signature' // UPDATED
-            ]);
-
-            $publicId = $validated['public_id'];
-            $type = $validated['type'];
-
-            // Skip deletion for default images
-            $defaultIds = ['ksdmh4mmpxdtjogdgjmm', 'verzp7lqedwsfn3hz8xf'];
-            if (in_array($publicId, $defaultIds)) {
-                return response()->json([
-                    'message' => 'Default image preserved',
-                    'deleted' => false
-                ]);
-            }
-
-            \Log::info("Attempting to delete {$type} from Cloudinary", [
-                'admin_id' => $request->user()->admin_id,
-                'public_id' => $publicId
-            ]);
-
-            // Use Cloudinary API directly
-            $cloudinary = new \Cloudinary\Cloudinary(env('CLOUDINARY_URL'));
-            $api = $cloudinary->adminApi();
-
-            // For simple image deletion, use the upload API destroy method
-            $result = $cloudinary->uploadApi()->destroy($publicId, [
-                'invalidate' => true
-            ]);
-
-            \Log::info("Cloudinary deletion result for {$publicId}:", ['result' => $result]);
-
-            if ($result->getArrayCopy()['result'] === 'ok') {
-                return response()->json([
-                    'message' => 'Image deleted successfully from Cloudinary',
-                    'deleted' => true,
-                    'result' => $result->getArrayCopy()
-                ]);
-            } else {
-                throw new \Exception('Cloudinary deletion failed');
-            }
-
-        } catch (\Exception $e) {
-            \Log::error('Error deleting Cloudinary image: ' . $e->getMessage(), [
-                'public_id' => $validated['public_id'] ?? 'unknown',
-                'type' => $validated['type'] ?? 'unknown',
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to delete image from Cloudinary',
                 'error' => $e->getMessage()
             ], 500);
         }

@@ -19,6 +19,7 @@ use App\Services\FeeCalculatorService;
 use App\Services\NotificationService;
 use App\Services\CheckAvailabilityService;
 use App\Services\ApprovalChainService;
+use App\Services\RequisitionCreationService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
@@ -75,7 +76,8 @@ class RequisitionFormController extends Controller
         CheckAvailabilityService $availabilityChecker,
         AccessCodeService $accessCodeService,
         RequisitionFormatterService $formatter,
-        ScheduleFormatterService $scheduleFormatter
+        ScheduleFormatterService $scheduleFormatter,
+        protected RequisitionCreationService $creationService
     ) {
         $this->feeCalculator = $feeCalculator;
         $this->availabilityChecker = $availabilityChecker;
@@ -817,7 +819,6 @@ class RequisitionFormController extends Controller
             $tempUploads = session('temp_uploads', []);
             $tempUploads[$field] = [
                 'url' => $upload->getSecurePath(),
-                'public_id' => $upload->getPublicId(),
                 'token' => $uploadToken,
                 'type' => $field === 'event_documents_url' ? 'Letter' : 'Setup',
             ];
@@ -850,86 +851,25 @@ class RequisitionFormController extends Controller
      */
     public function submitForm(RequisitionSubmitRequest $request)
     {
-        Log::info('Submit form started', [
-            'email' => $request->email,
-            'items_count' => count(session('selected_items', [])),
-        ]);
-
-        DB::beginTransaction();
-
         try {
-            $this->saveRequestInfoToSession($request);
-
-            $selectedItems = $this->getValidatedSelectedItems();
-            $this->validateSubmissionPrerequisites($selectedItems);
-            $this->validateAvailability($selectedItems, $request);
-
-            // 1. Create the form WITHOUT tentative_fee — it will be set in step 4.
-            $requisitionForm = $this->createRequisition($request, $selectedItems);
-
-            // 2. Persist children.
-            $this->saveRequisitionItems($requisitionForm, $selectedItems);
-            $this->saveCartServices($requisitionForm, $selectedItems);
-
-            // 3. Reload relationships so FeeCalculatorService reads from DB, not session.
-            $requisitionForm->load([
-                'requestedFacilities.facility',
-                'requestedEquipment.equipment',
-                'requestedServices.service',
-            ]);
-
-            // 4. Calculate and persist the authoritative tentative fee.
-            //    `approved_fee` is seeded with the same value so admins have a
-            //    starting point to mutate (fees/discounts/waivers) pre-finalization.
-            $tentativeFee = $this->feeCalculator->calculateBaseFee($requisitionForm);
-
-            $requisitionForm->update([
-                'tentative_fee' => round($tentativeFee, 2),
-                'approved_fee' => round($tentativeFee, 2),
-            ]);
-
-            // 5. Build the approval chain.
-            $this->approvalChainService->createApprovalChain($requisitionForm);
-
-            DB::commit();
-
-            $this->sendNotifications($requisitionForm);
-            $this->clearSubmissionSession();
-
-            Log::info('Submit form completed', [
-                'request_id' => $requisitionForm->request_id,
-                'tentative_fee' => $requisitionForm->tentative_fee,
-            ]);
+            $requisitionForm = $this->creationService->createFromSession($request);
 
             return $this->jsonResponse(true, 'Requisition submitted successfully!', [
                 'access_code' => $requisitionForm->access_code,
                 'request_id' => $requisitionForm->request_id,
             ]);
         } catch (BookingConflictException $e) {
-            DB::rollBack();
-
-            $conflicts = $e->getConflictItems();
-            $conflictHtml = $this->availabilityChecker->formatConflictsToHtml($conflicts);
-
-            // 409 Conflict — the frontend uses this status + payload shape to
-            // trigger showConflictModal() instead of a plain error toast.
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
                 'data' => [
                     'available' => false,
-                    'conflict_items' => $conflicts,
-                    'conflict_html' => $conflictHtml,
+                    'conflict_items' => $e->getConflictItems(),
+                    'conflict_html' => $this->availabilityChecker->formatConflictsToHtml($e->getConflictItems()),
                 ],
             ], 409);
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Submit form failed', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            Log::error('Submit form failed', ['error' => $e->getMessage()]);
             return $this->jsonResponse(false, 'Submission failed: ' . $e->getMessage(), [], 500);
         }
     }
@@ -1082,7 +1022,6 @@ class RequisitionFormController extends Controller
             'num_microphones' => $request->num_microphones ?? 0,
             'additional_requests' => $request->additional_requests,
             'event_documents_url' => $request->event_documents_url ?? null,
-            'event_documents_public_id' => $request->event_documents_public_id ?? null,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'start_time' => $request->all_day ? '00:00:00' : $request->start_time,

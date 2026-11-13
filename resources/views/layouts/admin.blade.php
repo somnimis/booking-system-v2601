@@ -18,6 +18,8 @@
     <link rel="stylesheet" href="{{ asset('css/admin/global-styles.css') . '?v=' . $cssCacheVersion }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
 
+    @livewireStyles
+
     <!-- Inject authenticated admin data directly from server - this works because auth:sanctum middleware protects the route -->
     @auth('sanctum')
         <script>
@@ -288,14 +290,14 @@
             </div>
 
             <div id="transactions-section" style="display: none;">
-                <div class="nav-section-title">Transactions</div>
+                <div class="nav-section-title">Archives</div>
             </div>
 
             <div id="archive-nav-item" style="display: none;">
-                <a class="nav-link {{ Request::is('admin/archives') ? 'active' : '' }}"
-                    href="{{ url('/admin/archives') }}">
+                <a class="nav-link {{ Request::is('admin/transactions') ? 'active' : '' }}"
+                    href="{{ url('/admin/transactions') }}">
                     <i class="fa-solid fa-cart-shopping"></i>
-                    <span>Requisitions</span>
+                    <span>Transactions</span>
                 </a>
             </div>
 
@@ -724,6 +726,7 @@
             }
         });
     </script>
+    @livewireScripts
 </body>
 
 </html>

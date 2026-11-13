@@ -33,7 +33,6 @@ class RequisitionSubmitRequest extends FormRequest
             'start_date' => 'required|date_format:Y-m-d',
             'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
             'event_documents_url' => 'nullable|url',
-            'event_documents_public_id' => 'nullable|string|max:255',
         ];
 
         if (!$this->all_day) {

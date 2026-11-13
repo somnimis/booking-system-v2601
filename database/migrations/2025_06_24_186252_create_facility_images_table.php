@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -14,11 +13,10 @@ return new class extends Migration
         Schema::create('facility_images', function (Blueprint $table) {
             $table->id('image_id');
             $table->unsignedBigInteger('facility_id');
-            $table->string('image_url')->default('https://res.cloudinary.com/dn98ntlkd/image/upload/v1750895337/oxvsxogzu9koqhctnf7s.webp')->nullable();
-            $table->string('cloudinary_public_id')->default('oxvsxogzu9koqhctnf7s')->nullable();
+            $table->string('image_url')->default('/assets/placeholder-image.png')->nullable();
             $table->string('description', 80)->nullable();
             $table->integer('sort_order')->default(0);
-            $table->enum('image_type', ['Primary','Secondary']);
+            $table->enum('image_type', ['Primary', 'Secondary']);
             $table->timestamps();
 
             // Foreign Keys

@@ -18,7 +18,6 @@ class EquipmentItem extends Model
         'equipment_id',
         'item_name',
         'image_url',
-        'cloudinary_public_id',
         'status_id',
         'condition_id',
         'barcode_number',

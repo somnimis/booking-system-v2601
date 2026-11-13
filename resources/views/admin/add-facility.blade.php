@@ -800,7 +800,6 @@
                         },
                         body: JSON.stringify({
                             image_url: imageUrl,
-                            cloudinary_public_id: publicId,
                             description: 'Facility photo'
                         })
                     });
@@ -1089,7 +1088,7 @@
                         for (const upload of window.pendingImageUploads) {
                             try {
                                 const cloudinaryData = await uploadToCloudinary(upload.file, window.newFacilityId);
-                                await saveImageToDatabase(window.newFacilityId, cloudinaryData.secure_url, cloudinaryData.public_id);
+                                await saveImageToDatabase(window.newFacilityId);
                             } catch (error) {
                                 console.error('Error uploading facility image:', {
                                     facilityId: window.newFacilityId,

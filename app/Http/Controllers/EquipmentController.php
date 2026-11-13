@@ -643,7 +643,6 @@ class EquipmentController extends Controller
                 'barcode_number' => 'nullable|string|max:20',
                 'item_notes' => 'nullable|string|max:100',
                 'image_url' => 'nullable|url',
-                'cloudinary_public_id' => 'nullable|string'
             ]);
 
             // Log authentication details for debugging
@@ -661,7 +660,6 @@ class EquipmentController extends Controller
                 'barcode_number' => $validatedData['barcode_number'] ?? null,
                 'item_notes' => $validatedData['item_notes'] ?? 'No notes provided for this asset.',
                 'image_url' => $validatedData['image_url'] ?? 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1750895337/oxvsxogzu9koqhctnf7s.webp',
-                'cloudinary_public_id' => $validatedData['cloudinary_public_id'] ?? 'oxvsxogzu9koqhctnf7s',
                 'status_id' => 1,
                 'created_by' => $admin->admin_id // Use authenticated admin's ID
             ]);
@@ -695,7 +693,6 @@ class EquipmentController extends Controller
                 'barcode_number' => 'nullable|string|max:20',
                 'item_notes' => 'nullable|string|max:100',
                 'image_url' => 'nullable|url',
-                'cloudinary_public_id' => 'nullable|string'
             ]);
 
 
@@ -709,7 +706,6 @@ class EquipmentController extends Controller
                 'barcode_number' => $validated['barcode_number'] ?? null,
                 'item_notes' => $validated['item_notes'] ?? $item->item_notes,
                 'image_url' => $validated['image_url'] ?? $item->image_url,
-                'cloudinary_public_id' => $validated['cloudinary_public_id'] ?? $item->cloudinary_public_id,
                 'updated_by' => auth()->id()
             ]);
 
@@ -747,12 +743,6 @@ class EquipmentController extends Controller
                 ->firstOrFail();
 
 
-
-
-
-            // Store public ID before deletion
-            $publicId = $item->cloudinary_public_id;
-
             // Delete the database record
             $item->delete();
 
@@ -760,7 +750,6 @@ class EquipmentController extends Controller
                 'item_id' => $itemId,
                 'equipment_id' => $equipmentId,
                 'admin_id' => auth()->id(),
-                'cloudinary_public_id' => $publicId
             ]);
 
             return response()->json([

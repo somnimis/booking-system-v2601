@@ -642,7 +642,7 @@ class ReservationListingsController extends Controller
         return response()->json($forms);
     }
 
-    public function getArchivedRequisitions()
+    public function getCompletedTransactions()
     {
         try {
             // Get status IDs to exclude
