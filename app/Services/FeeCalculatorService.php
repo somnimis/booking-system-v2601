@@ -235,15 +235,23 @@ class FeeCalculatorService
     private function getDurationDetails($form): array
     {
         if ($form->all_day) {
-            $start = Carbon::parse($form->start_date);
-            $end   = Carbon::parse($form->end_date);
-            $days  = $start->diffInDays($end) + 1;
-            $hours = $days * 8;
-            $text  = $days === 1 ? '1 day (All Day)' : $days . ' days (All Day)';
+            $start = Carbon::parse($form->start_date)->startOfDay();
+            $end   = Carbon::parse($form->end_date)->startOfDay();
+            
+            // Since we now push the endDate to the next day (e.g. Nov 20 to Nov 21),
+            // the difference is 1 day. If they just want 1 day, we treat it as 1 full day.
+            // If they span 3 days, it's 3 days.
+            $days  = max(1, $start->diffInDays($end));
+            $hours = $days * 24;
+            $text  = $days === 1 ? '24 hours (All Day)' : ($days * 24) . ' hours (' . $days . ' days)';
         } else {
             $startDateTime = Carbon::parse($form->start_date . ' ' . $form->start_time);
             $endDateTime   = Carbon::parse($form->end_date . ' ' . $form->end_time);
-            $hours = max(1, $startDateTime->diffInHours($endDateTime));
+            
+            // Calculate exact minutes and round UP to the nearest hour
+            // (e.g., 1h 15m becomes 2 hours) to prevent underbilling.
+            $minutes = $startDateTime->diffInMinutes($endDateTime);
+            $hours = max(1, ceil($minutes / 60));
             $text  = $hours === 1 ? '1 hour' : $hours . ' hours';
         }
 
