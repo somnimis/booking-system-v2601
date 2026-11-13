@@ -190,35 +190,6 @@
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label">End Date</label>
-                                    <input wire:model.live="endDate" type="date"
-                                        class="form-control mb-1 @error('endDate') is-invalid @enderror" />
-                                    @error('endDate')
-                                        <span class="text-danger small d-block mb-2">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">End Time</label>
-                                    <select wire:model.live="endTime"
-                                        class="form-select mb-1 @error('endTime') is-invalid @enderror"
-                                        {{ $allDay ? 'disabled' : '' }}>
-                                        @if ($allDay)
-                                            <option value="00:00">12:00 AM</option>
-                                        @else
-                                            <option value="">Select Time</option>
-                                            @foreach ($this->timeSlots as $value => $label)
-                                                <option value="{{ $value }}">{{ $label }}</option>
-                                            @endforeach
-                                        @endif
-                                    </select>
-                                    @error('endTime')
-                                        <span class="text-danger small d-block mb-2">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
                             <!-- All Day Toggle Pill -->
                             <div class="form-check form-switch mt-3 mb-3 ms-3">
                                 <input class="form-check-input" type="checkbox" role="switch"
