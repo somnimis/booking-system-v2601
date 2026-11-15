@@ -12,17 +12,16 @@ class Facility extends Model
     protected $primaryKey = 'facility_id';
     protected $fillable = [
         'parent_facility_id',
+        'facility_role',
         'facility_name',
         'description',
         'floor_level',
         'facility_code',
         'total_levels',
         'category_id',
-        'managed_by',
         'subcategory_id',
         'location_note',
         'capacity',
-        'department_id',
         'location_type',
         'base_fee',
         'rate_type',
@@ -32,22 +31,32 @@ class Facility extends Model
 
     // SCOPES //
 
+    public function scopeContainers($query)
+    {
+        return $query->where('facility_role', 'Container');
+    }
+
     public function scopeVenues($query)
     {
-        return $query->whereIn('category_id', [1, 4, 5])
-            ->orWhereNull('parent_facility_id');
+        return $query->where('facility_role', 'Venue');
     }
 
     public function scopeRooms($query)
     {
-        return $query->whereIn('category_id', [2, 3])
-            ->orWhereNotNull('parent_facility_id');
+        return $query->where('facility_role', 'Room');
     }
 
-    public function scopeByBuilding($query, $buildingId)
+    public function scopeByDepartment($query, $departmentId)
     {
-        return $query->where('parent_facility_id', $buildingId);
+        return $query->whereHas('departments', function ($q) use ($departmentId) {
+            $q->where('departments.department_id', $departmentId);
+        });
     }
+    public function scopeBySubcategory($query, $subcategoryId)
+    {
+        return $query->where('subcategory_id', $subcategoryId);
+    }
+
 
     // Relationships
     public function events()
@@ -56,19 +65,7 @@ class Facility extends Model
             ->withTimestamps()
             ->using(EventVenue::class);
     }
-    public function manager()
-    {
-        return $this->belongsTo(Department::class, 'managed_by', 'department_id');
-    }
-    public function admins()
-    {
-        return $this->belongsToMany(Admin::class, 'admin_facilities', 'facility_id', 'admin_id')
-            ->withTimestamps();
-    }
-    public function amenities()
-    {
-        return $this->hasMany(FacilityAmenity::class, 'facility_id', 'facility_id');
-    }
+
     public function category()
     {
         return $this->belongsTo(LookupTables\FacilityCategory::class, 'category_id', 'category_id');
@@ -81,10 +78,7 @@ class Facility extends Model
     {
         return $this->belongsTo(LookupTables\AvailabilityStatus::class, 'status_id', 'status_id');
     }
-    public function department()
-    {
-        return $this->belongsTo(Department::class, 'department_id', 'department_id');
-    }
+
     public function departments()
     {
         return $this->belongsToMany(Department::class, 'department_facilities', 'facility_id', 'department_id')
@@ -116,21 +110,9 @@ class Facility extends Model
     {
         return $this->hasMany(Facility::class, 'parent_facility_id', 'facility_id');
     }
-    public function children()
-    {
-        return $this->hasMany(Facility::class, 'parent_facility_id', 'facility_id');
-    }
     public function systemLogs()
     {
         return $this->hasMany(\App\Models\SystemLog::class, 'facility_id');
     }
-    // Scopes
-    public function scopeByDepartment($query, $departmentId)
-    {
-        return $query->where('department_id', $departmentId);
-    }
-    public function scopeBySubcategory($query, $subcategoryId)
-    {
-        return $query->where('subcategory_id', $subcategoryId);
-    }
+
 }

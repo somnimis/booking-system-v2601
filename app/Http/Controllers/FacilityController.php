@@ -7,9 +7,10 @@ use App\Models\Facility;
 use App\Models\Department;
 use App\Models\LookupTables\AvailabilityStatus;
 use Illuminate\Http\Request;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+
 
 class FacilityController extends Controller
 {
@@ -76,11 +77,47 @@ class FacilityController extends Controller
         ]);
     }
 
+    /**
+     * Lightweight conflict check used by the Add Facility UI when creating a new room tab.
+     * Ensures the proposed facility_name and facility_code are not already taken in the DB.
+     * Case-insensitive; empty facility_code is allowed and skipped.
+     */
+    public function checkConflict(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'facility_name' => 'required|string|max:50',
+            'facility_code' => 'nullable|string|max:20',
+        ]);
+
+        $conflicts = [];
+
+        $nameTaken = Facility::whereRaw('LOWER(facility_name) = ?', [mb_strtolower($validated['facility_name'])])
+            ->exists();
+
+        if ($nameTaken) {
+            $conflicts['name'] = 'Facility name is already taken.';
+        }
+
+        $code = trim($validated['facility_code'] ?? '');
+        if ($code !== '') {
+            $codeTaken = Facility::whereRaw('LOWER(facility_code) = ?', [mb_strtolower($code)])->exists();
+            if ($codeTaken) {
+                $conflicts['code'] = 'Facility code is already taken.';
+            }
+        }
+
+        return response()->json([
+            'available' => empty($conflicts),
+            'conflicts' => $conflicts,
+        ]);
+    }
+
     public function getFacilitiesForDropdown(Request $request)
     {
         $search = $request->input('search');
         $parentFacilityId = $request->input('parent_facility_id');
         $filter = $request->input('filter');
+        $role = $request->input('role'); // 'container' → only top-level facilities
 
         $query = Facility::select(
             'facility_id',
@@ -99,6 +136,10 @@ class FacilityController extends Controller
         $query->when($parentFacilityId, function ($query) use ($parentFacilityId) {
             $query->where('parent_facility_id', $parentFacilityId);
         });
+
+        if ($role === 'container') {
+            $query->where('facility_role', 'Container');
+        }
 
         if ($filter) {
             [$type, $id] = explode(':', $filter);
@@ -310,7 +351,22 @@ class FacilityController extends Controller
     {
         try {
             $data = $request->validate([
-                'facility_name' => 'required|string|max:50',
+                'facility_name' => [
+                    'required', 'string', 'max:50',
+                    function ($attribute, $value, $fail) {
+                        if (\App\Models\Facility::whereRaw('LOWER(facility_name) = ?', [mb_strtolower($value)])->exists()) {
+                            $fail('Facility name is already taken.');
+                        }
+                    }
+                ],
+                'facility_code' => [
+                    'nullable', 'string', 'max:20',
+                    function ($attribute, $value, $fail) {
+                        if ($value && \App\Models\Facility::whereRaw('LOWER(facility_code) = ?', [mb_strtolower($value)])->exists()) {
+                            $fail('Facility code is already taken.');
+                        }
+                    }
+                ],
                 'description' => 'nullable|string|max:250',
                 'location_note' => 'nullable|string|max:200',
                 'capacity' => 'required|integer|min:1',
@@ -324,37 +380,69 @@ class FacilityController extends Controller
                 'status_id' => 'required|exists:availability_statuses,status_id',
                 'parent_facility_id' => 'nullable|exists:facilities,facility_id',
                 'floor_level' => 'nullable|integer|min:1',
-                'facility_code' => 'nullable|string|max:20',
                 'total_levels' => 'nullable|integer|min:1',
-                'created_by' => 'required|exists:admins,admin_id' // Add this validation
+                'facility_role' => 'required|in:Venue,Container,Room',
+                'created_by' => 'required|exists:admins,admin_id',
             ]);
 
-            $facility = Facility::create([
-                'facility_name' => $data['facility_name'],
-                'description' => $data['description'],
-                'location_note' => $data['location_note'],
-                'capacity' => $data['capacity'],
-                'category_id' => $data['category_id'],
-                'subcategory_id' => $data['subcategory_id'] ?? null,
-                'department_id' => $data['departments'][0], // Keep first department for backward compatibility
-                'location_type' => $data['location_type'],
-                'base_fee' => $data['base_fee'],
-                'rate_type' => $data['rate_type'],
-                'status_id' => $data['status_id'],
-                'parent_facility_id' => $data['parent_facility_id'] ?? null,
-                'floor_level' => $data['floor_level'] ?? null,
-                'facility_code' => $data['facility_code'] ?? null,
-                'total_levels' => $data['total_levels'] ?? null,
-                'created_by' => $data['created_by'] // Use the created_by from request
-            ]);
+            // Enforce hierarchy rules based on facility_role
+            $parentId = null;
 
-            // Attach all selected departments to the pivot table
-            $facility->departments()->attach($data['departments']);
+            if ($data['facility_role'] === 'Room') {
+                if (empty($data['parent_facility_id'])) {
+                    return response()->json([
+                        'message' => 'A parent container building is required when creating a Room.',
+                    ], 422);
+                }
+
+                $parent = Facility::find($data['parent_facility_id']);
+                if (!$parent || $parent->facility_role !== 'Container') {
+                    return response()->json([
+                        'message' => 'The selected parent facility must be a Container building.',
+                    ], 422);
+                }
+
+                $parentId = $parent->facility_id;
+            }
+
+            // Room cannot be a parent; only Rooms can have a parent
+            if ($data['facility_role'] !== 'Room' && !empty($data['parent_facility_id'])) {
+                return response()->json([
+                    'message' => 'Only Rooms can have a parent facility.',
+                ], 422);
+            }
+
+            $facility = \DB::transaction(function () use ($data, $parentId) {
+                $facility = Facility::create([
+                    'facility_name' => $data['facility_name'],
+                    'facility_role' => $data['facility_role'],
+                    'description' => $data['description'] ?? null,
+                    'location_note' => $data['location_note'] ?? null,
+                    'capacity' => $data['capacity'],
+                    'category_id' => $data['category_id'],
+                    'subcategory_id' => $data['subcategory_id'] ?? null,
+                    'department_id' => $data['departments'][0],
+                    'location_type' => $data['location_type'],
+                    'base_fee' => $data['base_fee'],
+                    'rate_type' => $data['rate_type'],
+                    'status_id' => $data['status_id'],
+                    'parent_facility_id' => $parentId,
+                    'floor_level' => $data['floor_level'] ?? null,
+                    'facility_code' => $data['facility_code'] ?? null,
+                    'total_levels' => $data['total_levels'] ?? null,
+                    'created_by' => $data['created_by'],
+                ]);
+
+                $facility->departments()->attach($data['departments']);
+
+                return $facility;
+            });
 
             \Log::info('Facility created successfully', [
                 'facility_id' => $facility->facility_id,
                 'created_by' => $data['created_by'],
-                'departments' => $data['departments']
+                'departments' => $data['departments'],
+                'facility_role' => $data['facility_role'],
             ]);
 
             return response()->json([
@@ -362,24 +450,209 @@ class FacilityController extends Controller
                 'data' => [
                     'facility_id' => $facility->facility_id,
                     'facility_name' => $facility->facility_name,
-                    'departments' => $facility->departments
-                ]
+                    'facility_role' => $facility->facility_role,
+                    'departments' => $facility->departments,
+                ],
             ], 201);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             \Log::error('Error creating facility', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_data' => $request->except(['password', 'token'])
+                'request_data' => $request->except(['password', 'token']),
             ]);
 
             return response()->json([
                 'message' => 'Failed to create facility',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
 
+        /**
+     * Batch-create a Container facility plus its Rooms in a single transaction.
+     * The Main facility is always a Container here (only Container allows rooms).
+     * Each room inherits departments from the container unless explicitly provided.
+     */
+    public function batchStore(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'facility'   => 'required|array',
+                'facility.*' => 'required',
+                'rooms'      => 'present|array',
+                'rooms.*.facility_name' => 'required|string|max:50',
+                'rooms.*.facility_code' => 'nullable|string|max:20',
+            ]);
+
+            $facilityData = $validated['facility'];
+            $roomsData    = $validated['rooms'] ?? [];
+
+            // ---- Validate main facility payload (reuses the same rules as store) ----
+            $main = \Validator::make($facilityData, [
+                'facility_name' => [
+                    'required', 'string', 'max:50',
+                    function ($attribute, $value, $fail) {
+                        if (Facility::whereRaw('LOWER(facility_name) = ?', [mb_strtolower($value)])->exists()) {
+                            $fail('Facility name is already taken.');
+                        }
+                    }
+                ],
+                'facility_code' => [
+                    'nullable', 'string', 'max:20',
+                    function ($attribute, $value, $fail) {
+                        if ($value && Facility::whereRaw('LOWER(facility_code) = ?', [mb_strtolower($value)])->exists()) {
+                            $fail('Facility code is already taken.');
+                        }
+                    }
+                ],
+                'description'    => 'nullable|string|max:250',
+                'location_note'  => 'nullable|string|max:200',
+                'capacity'       => 'required|integer|min:1',
+                'category_id'    => 'required|exists:facility_categories,category_id',
+                'subcategory_id' => 'nullable|exists:facility_subcategories,subcategory_id',
+                'departments'    => 'required|array|min:1',
+                'departments.*'  => 'exists:departments,department_id',
+                'location_type'  => 'required|in:Indoors,Outdoors',
+                'base_fee'       => 'required|numeric|min:0',
+                'rate_type'      => 'required|in:Per Hour,Per Event',
+                'status_id'      => 'required|exists:availability_statuses,status_id',
+                'floor_level'    => 'nullable|integer|min:1',
+                'total_levels'   => 'nullable|integer|min:1',
+                'facility_role'  => 'required|in:Container',
+                'created_by'     => 'required|exists:admins,admin_id',
+            ])->validate();
+
+            // ---- Validate each room ----
+            $roomRules = [
+                'facility_name' => [
+                    'required', 'string', 'max:50',
+                    function ($attribute, $value, $fail) {
+                        if (Facility::whereRaw('LOWER(facility_name) = ?', [mb_strtolower($value)])->exists()) {
+                            $fail('Facility name is already taken.');
+                        }
+                    }
+                ],
+                'facility_code' => [
+                    'nullable', 'string', 'max:20',
+                    function ($attribute, $value, $fail) {
+                        if ($value && Facility::whereRaw('LOWER(facility_code) = ?', [mb_strtolower($value)])->exists()) {
+                            $fail('Facility code is already taken.');
+                        }
+                    }
+                ],
+                'description'     => 'nullable|string|max:250',
+                'location_note'   => 'nullable|string|max:200',
+                'capacity'        => 'required|integer|min:1',
+                'category_id'     => 'required|exists:facility_categories,category_id',
+                'subcategory_id'  => 'nullable|exists:facility_subcategories,subcategory_id',
+                'departments'     => 'nullable|array',
+                'departments.*'   => 'exists:departments,department_id',
+                'location_type'   => 'required|in:Indoors,Outdoors',
+                'base_fee'        => 'required|numeric|min:0',
+                'rate_type'       => 'required|in:Per Hour,Per Event',
+                'status_id'       => 'required|exists:availability_statuses,status_id',
+                'floor_level'     => 'nullable|integer|min:1',
+                'total_levels'    => 'nullable|integer|min:1',
+            ];
+            $validatedRooms = [];
+            foreach ($roomsData as $index => $room) {
+                $validatedRooms[$index] = \Validator::make($room, $roomRules)->validate();
+            }
+
+            // ---- Atomic write ----
+            $result = \DB::transaction(function () use ($main, $validatedRooms) {
+                $container = Facility::create([
+                    'facility_name'      => $main['facility_name'],
+                    'facility_role'      => 'Container',
+                    'description'        => $main['description'] ?? null,
+                    'location_note'      => $main['location_note'] ?? null,
+                    'capacity'           => $main['capacity'],
+                    'category_id'        => $main['category_id'],
+                    'subcategory_id'     => $main['subcategory_id'] ?? null,
+                    'location_type'      => $main['location_type'],
+                    'base_fee'           => $main['base_fee'],
+                    'rate_type'          => $main['rate_type'],
+                    'status_id'          => $main['status_id'],
+                    'parent_facility_id' => null,
+                    'floor_level'        => $main['floor_level'] ?? null,
+                    'facility_code'      => $main['facility_code'] ?? null,
+                    'total_levels'       => $main['total_levels'] ?? null,
+                    'created_by'         => $main['created_by'],
+                ]);
+
+                $container->departments()->attach($main['departments']);
+
+                $createdRooms = [];
+                foreach ($validatedRooms as $room) {
+                    $roomDepartments = !empty($room['departments'])
+                        ? $room['departments']
+                        : $main['departments']; // inherit from container
+
+                    $createdRoom = Facility::create([
+                        'facility_name'      => $room['facility_name'],
+                        'facility_role'      => 'Room',
+                        'description'        => $room['description'] ?? null,
+                        'location_note'      => $room['location_note'] ?? null,
+                        'capacity'           => $room['capacity'],
+                        'category_id'        => $room['category_id'],
+                        'subcategory_id'     => $room['subcategory_id'] ?? null,
+                        'location_type'      => $room['location_type'],
+                        'base_fee'           => $room['base_fee'],
+                        'rate_type'          => $room['rate_type'],
+                        'status_id'          => $room['status_id'],
+                        'parent_facility_id' => $container->facility_id,
+                        'floor_level'        => $room['floor_level'] ?? null,
+                        'facility_code'      => $room['facility_code'] ?? null,
+                        'total_levels'       => $room['total_levels'] ?? null,
+                        'created_by'         => $main['created_by'],
+                    ]);
+
+                    $createdRoom->departments()->attach($roomDepartments);
+
+                    $createdRooms[] = [
+                        'facility_id'   => $createdRoom->facility_id,
+                        'facility_name' => $createdRoom->facility_name,
+                    ];
+                }
+
+                return ['container' => $container, 'rooms' => $createdRooms];
+            });
+
+            \Log::info('Batch facility creation succeeded', [
+                'container_id' => $result['container']->facility_id,
+                'room_count'   => count($result['rooms']),
+                'created_by'   => $main['created_by'],
+            ]);
+
+            return response()->json([
+                'message' => 'Facility and rooms created successfully!',
+                'data'    => [
+                    'facility_id'   => $result['container']->facility_id,
+                    'facility_name' => $result['container']->facility_name,
+                    'facility_role' => 'Container',
+                    'rooms'         => $result['rooms'],
+                    'departments'   => $result['container']->departments,
+                ],
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Error in batch facility creation', [
+                'error'        => $e->getMessage(),
+                'trace'        => $e->getTraceAsString(),
+                'request_data' => $request->except(['password', 'token']),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to create facility batch',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
 
     // ----- Edit - Show edit form ----- //
     public function edit(Request $request)
@@ -399,7 +672,22 @@ class FacilityController extends Controller
         $facility = Facility::findOrFail($id);
 
         $data = $request->validate([
-            'facility_name' => 'required|string|max:50',
+            'facility_name' => [
+                'required', 'string', 'max:50',
+                function ($attribute, $value, $fail) use ($id) {
+                    if (Facility::whereRaw('LOWER(facility_name) = ?', [mb_strtolower($value)])->where('facility_id', '!=', $id)->exists()) {
+                        $fail('Facility name is already taken.');
+                    }
+                }
+            ],
+            'facility_code' => [
+                'nullable', 'string', 'max:20',
+                function ($attribute, $value, $fail) use ($id) {
+                    if ($value && Facility::whereRaw('LOWER(facility_code) = ?', [mb_strtolower($value)])->where('facility_id', '!=', $id)->exists()) {
+                        $fail('Facility code is already taken.');
+                    }
+                }
+            ],
             'description' => 'nullable|string|max:250',
             'location_note' => 'nullable|string|max:200',
             'capacity' => 'required|integer|min:1',
@@ -413,43 +701,65 @@ class FacilityController extends Controller
             'status_id' => 'required|exists:availability_statuses,status_id',
             'parent_facility_id' => 'nullable|exists:facilities,facility_id',
             'floor_level' => 'nullable|integer|min:1',
-            'facility_code' => 'nullable|string|max:20',
             'total_levels' => 'nullable|integer|min:1',
+            'facility_role' => 'required|in:Venue,Container,Room',
         ]);
+        $parentId = null;
+
+        if ($data['facility_role'] === 'Room') {
+            if (empty($data['parent_facility_id'])) {
+                return response()->json([
+                    'message' => 'A parent container building is required when creating a Room.',
+                ], 422);
+            }
+
+            $parent = Facility::find($data['parent_facility_id']);
+            if (!$parent || $parent->facility_role !== 'Container' || $parent->facility_id == $facility->facility_id) {
+                return response()->json([
+                    'message' => 'The selected parent facility must be a Container building and cannot be itself.',
+                ], 422);
+            }
+
+            $parentId = $parent->facility_id;
+        }
+
+        if ($data['facility_role'] !== 'Room' && !empty($data['parent_facility_id'])) {
+            return response()->json([
+                'message' => 'Only Rooms can have a parent facility.',
+            ], 422);
+        }
 
         $user = auth()->user();
 
         $facility->update([
             'facility_name' => $data['facility_name'],
-            'description' => $data['description'],
-            'location_note' => $data['location_note'],
+            'facility_role' => $data['facility_role'],
+            'description' => $data['description'] ?? null,
+            'location_note' => $data['location_note'] ?? null,
             'capacity' => $data['capacity'],
             'category_id' => $data['category_id'],
             'subcategory_id' => $data['subcategory_id'] ?? null,
-            'department_id' => $data['departments'][0], // Keep first department for backward compatibility
+            'department_id' => $data['departments'][0],
             'location_type' => $data['location_type'],
             'base_fee' => $data['base_fee'],
             'rate_type' => $data['rate_type'],
             'status_id' => $data['status_id'],
-            'parent_facility_id' => $data['parent_facility_id'] ?? null,
+            'parent_facility_id' => $parentId,
             'floor_level' => $data['floor_level'] ?? null,
             'facility_code' => $data['facility_code'] ?? null,
             'total_levels' => $data['total_levels'] ?? null,
             'updated_by' => $user->admin_id,
         ]);
 
-        // Sync departments - this will add new and remove old ones automatically
         $facility->departments()->sync($data['departments']);
 
-        // Return JSON response for API calls
         if ($request->wantsJson() || $request->is('api/*')) {
             return response()->json([
                 'message' => 'Facility updated successfully!',
-                'data' => $facility->fresh(['departments'])
+                'data' => $facility->fresh(['departments']),
             ]);
         }
 
-        // Return redirect for web requests
         return redirect()->route('admin.manage-facilities')
             ->with('success', 'Facility updated successfully!');
     }
@@ -565,155 +875,23 @@ class FacilityController extends Controller
 
         $user = auth()->user();
 
-        // Track who deleted it
-        $facility->update([
-            'deleted_by' => $user->admin_id,
-        ]);
+        $facility->update(['deleted_by' => $user->admin_id]);
 
-        \Log::info('Starting facility deletion', [
-            'facility_id' => $facilityId,
-            'image_count' => $facility->images->count(),
-            'all_images' => $facility->images->pluck('image_url')
-        ]);
-
-        // Delete images from Cloudinary and DB
         foreach ($facility->images as $image) {
-            \Log::info('Processing image for deletion', [
-                'image_id' => $image->image_id,
-            ]);
-
-            // Only delete from Cloudinary if it's a real Cloudinary image (not the default placeholder)
-            if (!empty($image->cloudinary_public_id) && $image->cloudinary_public_id !== 'oxvsxogzu9koqhctnf7s') {
-                try {
-                    \Log::info('Attempting Cloudinary deletion', [
-                        'public_id' => $image->cloudinary_public_id
-                    ]);
-
-                    // Use the public ID AS-IS from the database (it already includes the full path)
-                    $result = Cloudinary::uploadApi()->destroy($image->cloudinary_public_id);
-
-                    \Log::info('Cloudinary deletion successful', [
-                        'public_id' => $image->cloudinary_public_id,
-                        'result' => $result['result']
-                    ]);
-
-                } catch (\Exception $e) {
-                    \Log::error("Failed to delete Cloudinary image", [
-                        'public_id' => $image->cloudinary_public_id,
-                        'error' => $e->getMessage(),
-                        'facility_id' => $facilityId
-                    ]);
-                }
-            } else {
-                \Log::info('Skipping Cloudinary deletion - default placeholder or empty public_id', [
-                    'public_id' => $image->cloudinary_public_id
-                ]);
+            $relativePath = str_replace('/storage/', '', $image->image_url);
+            if (!empty($relativePath) && !str_contains($relativePath, 'placeholder-image')) {
+                Storage::disk('public')->delete($relativePath);
             }
-
-            // Delete image record from DB
             $image->delete();
-            \Log::info('Database image record deleted', ['image_id' => $image->image_id]);
         }
 
-        // Delete the facility
         $facility->delete();
 
-        \Log::info('Facility deletion completed', ['facility_id' => $facilityId]);
-
         return response()->json([
-            'message' => 'Facility and associated Cloudinary images deleted successfully!',
-            'facility_id' => $facilityId
+            'message' => 'Facility and associated images deleted successfully!',
+            'facility_id' => $facilityId,
         ], 200);
     }
-
-    public function testCloudinaryDelete(Request $request)
-    {
-        $publicId = $request->query('public_id');
-
-        if (!$publicId) {
-            return response()->json([
-                'success' => false,
-                'error' => 'No public_id provided'
-            ], 400);
-        }
-
-        try {
-            \Log::info('Testing Cloudinary deletion', ['public_id' => $publicId]);
-
-            // Use the correct Cloudinary destruction method with error handling
-            $result = Cloudinary::uploadApi()->destroy($publicId);
-
-            \Log::info('Cloudinary test deletion response', [
-                'public_id' => $publicId,
-                'result' => $result,
-                'result_type' => gettype($result)
-            ]);
-
-            // Check if result is valid
-            if (!$result || !is_array($result)) {
-                throw new \Exception('Invalid response from Cloudinary: ' . json_encode($result));
-            }
-
-            // Check the actual result status
-            $success = isset($result['result']) && $result['result'] === 'ok';
-
-            return response()->json([
-                'success' => $success,
-                'result' => $result,
-                'public_id_used' => $publicId,
-                'message' => $success ? 'Deletion successful' : 'Deletion may have failed'
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Cloudinary test deletion failed', [
-                'public_id' => $publicId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-                'public_id_used' => $publicId
-            ], 500);
-        }
-    }
-
-    public function checkCloudinaryConfig()
-    {
-        try {
-            // Check if Cloudinary configuration is loaded
-            $cloudName = config('cloudinary.cloud_name');
-            $apiKey = config('cloudinary.api_key');
-            $apiSecret = config('cloudinary.api_secret');
-
-            \Log::info('Cloudinary Configuration Check', [
-                'cloud_name' => $cloudName ? 'SET' : 'MISSING',
-                'api_key' => $apiKey ? 'SET' : 'MISSING',
-                'api_secret' => $apiSecret ? 'SET' : 'MISSING',
-            ]);
-
-            return response()->json([
-                'cloud_name_set' => !empty($cloudName),
-                'api_key_set' => !empty($apiKey),
-                'api_secret_set' => !empty($apiSecret),
-                'cloudinary_url_set' => !empty(env('CLOUDINARY_URL')),
-                'config' => [
-                    'cloud_name' => $cloudName,
-                    'api_key' => $apiKey ? '***' . substr($apiKey, -4) : null,
-                    'api_secret' => $apiSecret ? '***' . substr($apiSecret, -4) : null,
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-
 
 
     // ----- Show - View single facility (optional) ----- //
@@ -744,129 +922,117 @@ class FacilityController extends Controller
     // ----- Upload Facility Image ----- //
     public function uploadImage(Request $request, $facilityId): JsonResponse
     {
-        // Validate the uploaded image and data
         $validated = $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'description' => 'nullable|string|max:255',
-            'type_id' => 'sometimes|exists:image_types,type_id'
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
+            'description' => 'nullable|string|max:80',
+            'image_type' => 'required|in:Primary,Secondary',
+            'sort_order' => 'nullable|integer|min:0',
         ]);
 
-        // Find the facility
         $facility = Facility::findOrFail($facilityId);
 
+        // If this will be Primary, or the facility has no images yet, demote any current primary
+        $existingCount = $facility->images()->count();
+        $isPrimary = $validated['image_type'] === 'Primary' || $existingCount === 0;
 
-        // Upload to Cloudinary
-        $uploaded = Cloudinary::upload(
-            $request->file('image')->getRealPath(),
-            ['upload_preset' => 'facility-photos']
-        );
+        if ($isPrimary) {
+            $facility->images()->update(['image_type' => 'Secondary']);
+        }
 
-        $imageUrl = $uploaded->getSecurePath();
-        $publicId = $uploaded->getPublicId();
+        // Store on public disk
+        $path = $request->file('image')->store("facility-photos/{$facility->facility_id}", 'public');
+        $imageUrl = '/storage/' . $path;
 
-        // Determine image type if not provided
-        $imageType = $validated['type_id'] ?? ($facility->images()->count() == 0 ? 1 : 2);
-
-        // Create the image record
-        $facility->images()->create([
+        $image = $facility->images()->create([
             'image_url' => $imageUrl,
-            'type_id' => $imageType,
-            'cloudinary_public_id' => $publicId,
-            'description' => $validated['description'],
-            'sort_order' => $facility->images()->count() + 1
+            'image_type' => $isPrimary ? 'Primary' : 'Secondary',
+            'description' => $validated['description'] ?? 'Facility photo',
+            'sort_order' => $validated['sort_order'] ?? $existingCount,
         ]);
 
         return response()->json([
             'message' => 'Image uploaded successfully',
-            'type_id' => $imageType,
-            'image_url' => $imageUrl,
-            'public_id' => $publicId
+            'image_id' => $image->image_id,
+            'image_url' => $image->image_url,
+            'image_type' => $image->image_type,
+            'sort_order' => $image->sort_order,
         ]);
     }
 
-    public function saveImageReference(Request $request, $facilityId): JsonResponse
+    public function reorderImages(Request $request, $facilityId): JsonResponse
     {
-        try {
-            $validated = $request->validate([
-                'image_url' => 'required|url',
-                'cloudinary_public_id' => 'required|string',
-                'description' => 'nullable|string|max:255'
-            ]);
+        $validated = $request->validate([
+            'images' => 'required|array|min:1',
+            'images.*.image_id' => 'required|integer|exists:facility_images,image_id',
+            'images.*.sort_order' => 'required|integer|min:0',
+            'images.*.image_type' => 'required|in:Primary,Secondary',
+        ]);
 
-            $facility = Facility::findOrFail($facilityId);
+        $facility = Facility::findOrFail($facilityId);
 
-            // Determine image type (first image = primary, others = secondary)
-            $imageType = $facility->images()->count() == 0 ? 'Primary' : 'Secondary';
+        // Ensure exactly one Primary
+        $primaryCount = collect($validated['images'])
+            ->where('image_type', 'Primary')
+            ->count();
 
-            // Create the image record
-            $image = $facility->images()->create([
-                'image_url' => $validated['image_url'],
-                'image_type' => $imageType,
-                'cloudinary_public_id' => $validated['cloudinary_public_id'],
-                'description' => $validated['description'] ?? 'Facility photo',
-                'sort_order' => $facility->images()->count() + 1
-            ]);
-
-            \Log::info('Image reference saved successfully', [
-                'facility' => $facilityId,
-                'image_id' => $image->image_id,
-                'public_id' => $validated['cloudinary_public_id']
-            ]);
-
-            return response()->json([
-                'message' => 'Image reference saved successfully',
-                'image_id' => $image->image_id,
-                'type' => $imageType
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Error saving image reference', [
-                'error' => $e->getMessage(),
-                'facilityId' => $facilityId,
-                'request_data' => $request->all()
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to save image reference: ' . $e->getMessage()
-            ], 500);
+        if ($primaryCount === 0) {
+            $validated['images'][0]['image_type'] = 'Primary';
+        } elseif ($primaryCount > 1) {
+            $firstPrimarySeen = false;
+            foreach ($validated['images'] as &$row) {
+                if ($row['image_type'] === 'Primary') {
+                    if ($firstPrimarySeen) {
+                        $row['image_type'] = 'Secondary';
+                    } else {
+                        $firstPrimarySeen = true;
+                    }
+                }
+            }
+            unset($row);
         }
+
+        \DB::transaction(function () use ($facility, $validated) {
+            foreach ($validated['images'] as $row) {
+                $facility->images()
+                    ->where('image_id', $row['image_id'])
+                    ->update([
+                        'sort_order' => $row['sort_order'],
+                        'image_type' => $row['image_type'],
+                    ]);
+            }
+        });
+
+        return response()->json([
+            'message' => 'Images reordered successfully',
+            'images' => $facility->images()->orderBy('sort_order')->get(),
+        ]);
     }
 
     // ----- Delete Facility Image ----- //
     public function deleteImage($facilityId, $imageId): JsonResponse
     {
-        \Log::info('Attempting to delete facility image', [
-            'facilityId' => $facilityId,
-            'imageId' => $imageId
-        ]);
-
         try {
-            // Find the facility
             $facility = Facility::findOrFail($facilityId);
-
-            // Find the image
             $image = $facility->images()->findOrFail($imageId);
 
-            // Store public ID before deletion
-            $publicId = $image->cloudinary_public_id;
+            // Delete file from storage, unless it's the default placeholder
+            $relativePath = str_replace('/storage/', '', $image->image_url);
+            if (!empty($relativePath) && !str_contains($relativePath, 'placeholder-image')) {
+                Storage::disk('public')->delete($relativePath);
+            }
 
-            // Delete DB record first
+            $wasPrimary = $image->image_type === 'Primary';
             $image->delete();
 
-            // Delete from Cloudinary if public ID exists (skip default placeholder)
-            if ($publicId && $publicId !== 'oxvsxogzu9koqhctnf7s') {
-                try {
-                    Cloudinary::destroy($publicId);
-                } catch (\Exception $cloudinaryError) {
-                    \Log::error('Cloudinary delete failed but continuing', [
-                        'error' => $cloudinaryError->getMessage(),
-                        'public_id' => $publicId
-                    ]);
-                    // Continue even if Cloudinary delete fails
+            // If we deleted the primary, promote the next one
+            if ($wasPrimary) {
+                $nextId = $facility->images()->orderBy('sort_order')->value('image_id');
+                if ($nextId) {
+                    \App\Models\FacilityImage::where('image_id', $nextId)
+                        ->update(['image_type' => 'Primary']);
                 }
             }
 
-            // Reorder remaining images
             $this->reorderImageRecords($facility);
 
             return response()->json(['message' => 'Image deleted successfully']);
@@ -877,10 +1043,10 @@ class FacilityController extends Controller
             \Log::error('Error in deleteImage', [
                 'error' => $e->getMessage(),
                 'facilityId' => $facilityId,
-                'imageId' => $imageId
+                'imageId' => $imageId,
             ]);
             return response()->json([
-                'message' => 'Failed to delete image: ' . $e->getMessage()
+                'message' => 'Failed to delete image: ' . $e->getMessage(),
             ], 500);
         }
     }

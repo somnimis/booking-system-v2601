@@ -1,0 +1,345 @@
+
+    /* ── Facility Role Radio styling: gray default, dark navy active ── */
+    .type-option {
+        border: 1px solid #dbdfe3 !important;
+        background-color: #fff !important;
+    }
+
+    .type-option:hover,
+    .btn-check:checked+.type-option {
+        border-color: #c4d5e4 !important;
+        background-color: #f1f5fa !important;
+        box-shadow: 0 2px 6px rgba(1, 61, 111, 0.17) !important;
+    }
+
+    .btn-check:focus+.type-option {
+        box-shadow: 0 2px 6px rgba(1, 62, 111, 0.20) !important;
+        outline: none !important;
+    }
+
+    /* Horizontal-scroll tab strip */
+    .facility-tab-strip {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
+    }
+
+    .facility-tab-strip::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .facility-tab-strip::-webkit-scrollbar-thumb {
+        background-color: var(--text-light, #9aaac5);
+        border-radius: 3px;
+    }
+
+    .facility-tab-strip .nav-item {
+        flex-shrink: 0;
+    }
+
+    .facility-tab-strip-wrapper {
+        position: relative;
+    }
+
+    .facility-tab-strip {
+        padding-right: 140px;
+        /* reserve space so tabs don't hide under the pinned button */
+    }
+
+    .facility-tab-add-btn {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        padding-left: 0.5rem;
+        background: #fff;
+        /* match strip background so tabs scrolling under it are hidden */
+        z-index: 2;
+    }
+
+    .facility-tab-add-btn .btn {
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-top-left-radius: 0.375rem;
+        border-top-right-radius: 0.375rem;
+        margin-bottom: 0;
+    }
+
+    /* subtle fade to soften the cut-off as tabs scroll under the button */
+    .facility-tab-add-btn::before {
+        content: "";
+        position: absolute;
+        left: -1rem;
+        top: 0;
+        bottom: 0;
+        width: 1rem;
+        background: linear-gradient(to right, rgba(255, 255, 255, 0), #fff);
+        pointer-events: none;
+    }
+
+    /* ── Tab styling: gray default, dark navy active ── */
+
+
+    .nav-tabs {
+        gap: 6px;
+    }
+
+    .nav-tabs .nav-link {
+        color: #6c757d;
+        border-color: #dbdfe3 !important;
+        border-bottom: none !important;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #013E6F;
+        ;
+        border-color: transparent;
+        background: #f8f9fa;
+    }
+
+    .nav-tabs .nav-link.active {
+        background-color: #013E6F;
+        color: #fff;
+        border-color: transparent !important;
+    }
+
+    .nav-tabs .nav-link .facility-tab-close {
+        color: #dbdfe3 !important;
+    }
+
+    .nav-tabs .nav-link.active .facility-tab-close {
+        color: #dbdfe3 !important;
+    }
+
+    .nav-tabs .nav-link .facility-tab-close:hover {
+        color: #dc3545 !important;
+    }
+
+    label.required::after {
+        content: " *";
+        color: red;
+        font-weight: bold;
+        margin-left: 4px;
+    }
+
+    #photosPreview {
+        min-height: 110px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .photo-preview {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid #dee2e6;
+        background: #f8f9fa;
+    }
+
+    .photo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .photo-preview .primary-star {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 0.7rem;
+        cursor: default;
+        background: #6c757d;
+        opacity: 0.55;
+        transition: all 0.2s ease;
+    }
+
+    .photo-preview .primary-star.is-primary {
+        background: #0d6efd;
+        opacity: 1;
+    }
+
+    .photo-preview .primary-star:not(.is-primary):hover {
+        background: #0d6efd;
+        opacity: 1;
+        cursor: pointer;
+    }
+
+    .photo-preview .photo-actions {
+        position: absolute;
+        bottom: 2px;
+        left: 2px;
+        right: 2px;
+        display: flex;
+        justify-content: space-between;
+        gap: 2px;
+    }
+
+    .photo-preview .photo-actions button {
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        border: none;
+        border-radius: 3px;
+        width: 24px;
+        height: 24px;
+        font-size: 0.7rem;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+
+    .photo-preview .photo-actions button:hover {
+        background: rgba(0, 0, 0, 0.85);
+    }
+
+    .dropzone {
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .form-control,
+    .form-select {
+        padding: 0.5rem 0.75rem;
+    }
+
+    textarea.form-control {
+        min-height: 100px;
+    }
+
+    .type-option {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        height: 100%;
+    }
+
+    .type-option:hover {
+        border-color: #0d6efd;
+        background: #f8f9ff;
+    }
+
+    .btn-check:checked+.type-option {
+        border-color: #0d6efd;
+        background: #e7f0ff;
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+    }
+
+    .type-option .type-title {
+        font-weight: 600;
+        color: #1e2d4a;
+        margin-bottom: 0.15rem;
+    }
+
+    .type-option .type-help {
+        font-size: 0.78rem;
+        color: #6b7a99;
+        line-height: 1.3;
+    }
+
+    .facility-tab-close {
+        background: transparent;
+        border: none;
+        color: inherit;
+        margin-left: 6px;
+        padding: 0 2px;
+        font-size: 0.85rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .facility-tab-close:hover {
+        color: #dc3545;
+    }
+
+    .locked-field {
+        background-color: #f8f9fa !important;
+        color: #6c757d;
+    }
+
+    .input-group>.form-control:not(:last-child),
+    .input-group>.form-select:not(:last-child) {
+        border-top-right-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+        margin-right: 0.35rem;
+    }
+
+    .input-group>.btn {
+        border-radius: 0.375rem !important;
+    }
+
+    .input-group>.btn.btn-success {
+        margin-right: 0.35rem;
+    }
+
+    /* Multi-select department checkbox container */
+.department-checkboxes {
+max-height: 160px;
+overflow-y: auto;
+border: 1px solid #dee2e6;
+border-radius: 0.375rem;
+padding: 0.5rem 0.75rem;
+background: #fff;
+}
+
+.department-checkboxes .form-check {
+margin-bottom: 0.25rem;
+}
+
+.department-checkboxes .form-check:last-child {
+margin-bottom: 0;
+}
+
+.department-checkboxes-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 120px; /* matches the container's usable height */
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+.department-checkboxes .form-check-input:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    padding: 0.4rem 0.25rem;
+    border-bottom: 1px solid #f1f3f5;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.status-item:last-child {
+    border-bottom: none;
+}
+
+.status-item .form-check-input:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.status-item.is-active {
+    background-color: #f1f5fa;
+}

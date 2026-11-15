@@ -81,6 +81,7 @@ Route::get('/equipment', [EquipmentController::class, 'publicIndex']);
 Route::get('/facilities', [FacilityController::class, 'publicIndex']);
 Route::get('/parent-facilities', [FacilityController::class, 'publicParentFacilities']);
 Route::get('/facility-details/{id}', [FacilityController::class, 'getFacilityDetails']);
+Route::post('/facilities/check-conflict', [FacilityController::class, 'checkConflict']);
 Route::get('/equipment-details/{id}', [EquipmentController::class, 'getEquipmentDetails']);
 
 // Public catalog endpoints
@@ -311,25 +312,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('admin/manage-facilities/section', [ManageFacilitiesController::class, 'section']);
     Route::get('admin/facilities/{buildingId}/children', [ManageFacilitiesController::class, 'children']);
     Route::post('admin/add-facility', [FacilityController::class, 'store']);
+    Route::post('admin/add-facilities-batch', [FacilityController::class, 'batchStore']);
     Route::put('admin/facilities/{facilityId}', [FacilityController::class, 'update']);
     Route::delete('/admin/facilities/{facilityId}', [FacilityController::class, 'destroy']);
     Route::get('facilities/get-categories', [FacilityController::class, 'create']);
 
-    // Facility Images
-    Route::post('/admin/upload', [FacilityController::class, 'uploadImage']);
-    Route::post('/admin/bulk-upload', [FacilityController::class, 'uploadMultipleImages']);
+    // Facility Images (facility-scoped, local storage)
+    Route::post('/admin/facilities/{facilityId}/images', [FacilityController::class, 'uploadImage']);
     Route::delete('/admin/facilities/{facilityId}/images/{imageId}', [FacilityController::class, 'deleteImage']);
-    Route::post('/admin/reorder', [FacilityController::class, 'reorderImages']);
-    Route::post('/admin/facilities/{facilityId}/images/save', [FacilityController::class, 'saveImageReference']);
-
-    // ---------------- Admin-Facility assignment routes ---------------- //
-    Route::prefix('admin-facilities')->group(function () {
-        Route::post('/', [AdminFacilityController::class, 'store']);
-        Route::post('/batch', [AdminFacilityController::class, 'storeMultiple']);
-        Route::get('/admin/{adminId}', [AdminFacilityController::class, 'getAdminFacilities']);
-        Route::get('/facility/{facilityId}', [AdminFacilityController::class, 'getFacilityAdmins']);
-        Route::delete('/{id}', [AdminFacilityController::class, 'destroy']);
-    });
+    Route::post('/admin/facilities/{facilityId}/images/reorder', [FacilityController::class, 'reorderImages']);
 
     // ====================================================================
     // 1. REQUISITION LISTS & SEARCH

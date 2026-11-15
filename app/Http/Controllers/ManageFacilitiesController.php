@@ -42,29 +42,27 @@ class ManageFacilitiesController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Facility::with(['category', 'subcategory', 'status', 'images', 'childFacilities'])
-                ->whereNull('parent_facility_id');
+            // Apply filters per-query so each role gets the same conditions
+            $venuesQuery = Facility::with(['category', 'subcategory', 'status', 'images', 'parentFacility'])
+                ->where('facility_role', 'Venue');
+            $this->applyFilters($venuesQuery, $request);
 
-            $this->applyFilters($query, $request);
+            $containersQuery = Facility::with(['category', 'subcategory', 'status', 'images', 'parentFacility', 'childFacilities'])
+                ->where('facility_role', 'Container');
+            $this->applyFilters($containersQuery, $request);
 
-            // Cap each section independently. Venues = no children; Buildings = has children.
-            // Also return total counts so the blade can show "X of Y" or "Load more" if desired.
-            $venuesQuery = (clone $query)->whereDoesntHave('childFacilities');
-            $buildingsQuery = (clone $query)->whereHas('childFacilities');
+            $roomsQuery = Facility::with(['category', 'subcategory', 'status', 'images', 'parentFacility'])
+                ->where('facility_role', 'Room');
+            $this->applyFilters($roomsQuery, $request);
 
-            $venuesTotal = (clone $venuesQuery)->count();
-            $buildingsTotal = (clone $buildingsQuery)->count();
+            $venues = $venuesQuery->orderBy('facility_name')
+                ->paginate(self::ACCORDION_LIMIT, ['*'], 'venues_page');
+            $containers = $containersQuery->orderBy('facility_name')
+                ->paginate(self::ACCORDION_LIMIT, ['*'], 'containers_page');
+            $rooms = $roomsQuery->orderBy('facility_name')
+                ->paginate(self::ACCORDION_LIMIT, ['*'], 'rooms_page');
 
-            /** @var \Illuminate\Database\Eloquent\Collection<int, Facility> $venueModels */
-            $venueModels = $venuesQuery->orderBy('facility_name')->limit(self::ACCORDION_LIMIT)->get();
-
-            /** @var \Illuminate\Database\Eloquent\Collection<int, Facility> $buildingModels */
-            $buildingModels = $buildingsQuery->orderBy('facility_name')->limit(self::ACCORDION_LIMIT)->get();
-
-            $venues = $venueModels->map(fn($f) => $this->formatFacility($f))->values()->all();
-            $buildings = $buildingModels->map(fn($f) => $this->formatFacility($f))->values()->all();
-
-            // Filter metadata (statuses + categories with nested subcategories)
+            // Filter metadata
             $statuses = \DB::table('availability_statuses')
                 ->select('status_id', 'status_name')
                 ->orderBy('status_name')
@@ -85,10 +83,14 @@ class ManageFacilitiesController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'venues' => $venues,
-                    'buildings' => $buildings,
-                    'venues_total' => $venuesTotal,
-                    'buildings_total' => $buildingsTotal,
+                    'venues' => $venues->getCollection()->map(fn($f) => $this->formatFacility($f))->values()->all(),
+                    'containers' => $containers->getCollection()->map(fn($f) => $this->formatFacility($f))->values()->all(),
+                    'rooms' => $rooms->getCollection()->map(fn($f) => $this->formatFacility($f))->values()->all(),
+                ],
+                'pagination' => [
+                    'venues' => ['current_page' => $venues->currentPage(), 'last_page' => $venues->lastPage()],
+                    'containers' => ['current_page' => $containers->currentPage(), 'last_page' => $containers->lastPage()],
+                    'rooms' => ['current_page' => $rooms->currentPage(), 'last_page' => $rooms->lastPage()],
                 ],
                 'filters' => [
                     'statuses' => $statuses,
@@ -96,15 +98,8 @@ class ManageFacilitiesController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            \Log::error('ManageFacilitiesController@index failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch facilities data',
-            ], 500);
+            \Log::error('ManageFacilitiesController@index failed', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Failed to fetch facilities data'], 500);
         }
     }
 
@@ -120,31 +115,28 @@ class ManageFacilitiesController extends Controller
     public function section(Request $request): JsonResponse
     {
         try {
-            $section = $request->query('section');
-            if (!in_array($section, ['venues', 'buildings'], true)) {
+            $section = $request->query('section'); // 'venues', 'containers', 'rooms'
+            if (!in_array($section, ['venues', 'containers', 'rooms'], true)) {
                 return response()->json(['success' => false, 'message' => 'Invalid section'], 422);
             }
 
-            $query = Facility::with(['category', 'subcategory', 'status', 'images', 'childFacilities'])
-                ->whereNull('parent_facility_id');
+            $roleMap = [
+                'venues' => 'Venue',
+                'containers' => 'Container',
+                'rooms' => 'Room'
+            ];
+
+            $query = Facility::with(['category', 'subcategory', 'status', 'images', 'parentFacility', 'childFacilities'])
+                ->where('facility_role', $roleMap[$section]);
 
             $this->applyFilters($query, $request);
-
-            if ($section === 'venues') {
-                $query->whereDoesntHave('childFacilities');
-            } else {
-                $query->whereHas('childFacilities');
-            }
 
             $paginated = $query->orderBy('facility_name')
                 ->paginate(self::ACCORDION_LIMIT);
 
-            /** @var \Illuminate\Database\Eloquent\Collection<int, Facility> $rows */
-            $rows = $paginated->getCollection();
-
             return response()->json([
                 'success' => true,
-                'data' => $rows->map(fn($f) => $this->formatFacility($f))->values()->all(),
+                'data' => $paginated->getCollection()->map(fn($f) => $this->formatFacility($f))->values()->all(),
                 'pagination' => [
                     'current_page' => $paginated->currentPage(),
                     'last_page' => $paginated->lastPage(),
@@ -152,9 +144,7 @@ class ManageFacilitiesController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            \Log::error('ManageFacilitiesController@section failed', [
-                'error' => $e->getMessage(),
-            ]);
+            \Log::error('ManageFacilitiesController@section failed', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Failed to load section'], 500);
         }
     }
@@ -269,30 +259,30 @@ class ManageFacilitiesController extends Controller
      */
     private function formatFacility(Facility $facility): array
     {
-        $primary = $facility->images
-            ->firstWhere('image_type', 'Primary')
+        $primary = $facility->images->firstWhere('image_type', 'Primary')
             ?? $facility->images->sortBy('sort_order')->first();
 
-        $childrenCount = $facility->childFacilities->count();
-        $isBuilding = $facility->parent_facility_id === null && $childrenCount > 0;
-
-        if ($facility->parent_facility_id !== null) {
-            $buildingType = 'room';
-        } elseif ($isBuilding) {
-            $buildingType = 'building';
-        } else {
-            $buildingType = 'venue';
+        // NEW: Inherit container image if it's a room and has no image
+        $primaryImageUrl = $primary?->image_url;
+        if (!$primaryImageUrl && $facility->facility_role === 'Room' && $facility->parentFacility) {
+            $parentPrimary = $facility->parentFacility->images->firstWhere('image_type', 'Primary')
+                ?? $facility->parentFacility->images->sortBy('sort_order')->first();
+            $primaryImageUrl = $parentPrimary?->image_url;
         }
+
+        $childrenCount = $facility->childFacilities->count();
+        $buildingType = strtolower($facility->facility_role);
 
         return [
             'facility_id' => $facility->facility_id,
             'parent_facility_id' => $facility->parent_facility_id,
+            'parent_facility_name' => $facility->parentFacility?->facility_name, // Added for Rooms tab
             'facility_name' => $facility->facility_name,
             'facility_code' => $facility->facility_code,
             'description' => $facility->description,
             'capacity' => $facility->capacity,
-            'base_fee' => $isBuilding ? null : $facility->base_fee,
-            'rate_type' => $isBuilding ? null : $facility->rate_type,
+            'base_fee' => $facility->facility_role === 'Container' ? null : $facility->base_fee,
+            'rate_type' => $facility->facility_role === 'Container' ? null : $facility->rate_type,
             'building_type' => $buildingType,
             'children_count' => $childrenCount,
 
@@ -304,7 +294,7 @@ class ManageFacilitiesController extends Controller
             'status_name' => $facility->status?->status_name,
             'status_color_code' => $facility->status?->color_code,
 
-            'primary_image_url' => $primary?->image_url,
+            'primary_image_url' => $primaryImageUrl,
         ];
     }
 }

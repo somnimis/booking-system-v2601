@@ -3,11 +3,9 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('facilities', function (Blueprint $table) {
@@ -15,10 +13,13 @@ return new class extends Migration {
             $table->id('facility_id');
             $table->unsignedBigInteger('parent_facility_id')->nullable();
 
+            // Role of this facility: Venue (standalone bookable), Container (groups rooms), Room (bookable inside a container)
+            $table->enum('facility_role', ['Venue', 'Container', 'Room']);
+
             // for rooms
             $table->unsignedTinyInteger('floor_level')->default(1)->nullable();
 
-            // for buildings 
+            // for buildings
             $table->string('facility_code', 20)->nullable();
             $table->unsignedTinyInteger('total_levels')->default(1)->nullable();
 
@@ -34,8 +35,6 @@ return new class extends Migration {
 
             // venue ownership
             $table->unsignedTinyInteger('managed_by')->nullable();
-            // account number
-            $table->unsignedBigInteger('account_number')->nullable();
 
             // fees and rates
             $table->decimal('base_fee', 10, 2);
@@ -49,7 +48,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('deleted_by')->nullable();
             $table->dateTime('last_booked_at')->nullable();
 
-            // Foreign key constraints 
+            // Foreign keys
             $table->foreign('parent_facility_id')->references('facility_id')->on('facilities')->onDelete('cascade');
             $table->foreign('managed_by')->references('department_id')->on('departments')->onDelete('set null');
             $table->foreign('category_id')->references('category_id')->on('facility_categories');
@@ -59,21 +58,18 @@ return new class extends Migration {
             $table->foreign('updated_by')->references('admin_id')->on('admins')->onDelete('set null');
             $table->foreign('deleted_by')->references('admin_id')->on('admins')->onDelete('set null');
 
-            // Composite indexes for queries 
+            // Indexes
             $table->index(['category_id', 'subcategory_id'], 'idx_facility_category_subcategory');
             $table->index(['parent_facility_id'], 'idx_facility_parent');
             $table->index(['managed_by', 'status_id'], 'idx_facility_managed_by_status');
-
-
+            $table->index(['facility_role', 'parent_facility_id'], 'idx_facility_role_parent');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('facilities');
+        DB::statement('DROP TYPE IF EXISTS facilities_facility_role');
         DB::statement('DROP TYPE IF EXISTS facilities_rate_type');
     }
 };

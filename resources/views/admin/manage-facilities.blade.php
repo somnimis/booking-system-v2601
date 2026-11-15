@@ -2,17 +2,10 @@
 /**
  * Manage Facilities View
  *
- * Uses a single merged API endpoint: GET /api/admin/manage-facilities
- * That one call returns paginated facilities AND all filter-dropdown metadata
- * (statuses, categories, parent buildings) — replacing the previous 3 separate
- * bootstrap calls.
+ * Tabbed layout: Venues | Containers | Rooms
+ * Uses facility_role column instead of fragile parent/child logic.
  *
- * Server-side pagination: 12 items per page (handled by the API).
- * Filtering (status, category, building) and search are sent as query
- * parameters so the database does the work instead of the browser.
- *
- * The mass-assign-departments API call is intentionally kept separate and
- * is NOT merged into the above endpoint.
+ * Pagination: 10 items per page per tab. Server-side via /api/admin/manage-facilities/section
  */
 ?>
 @extends('layouts.admin')
@@ -70,7 +63,6 @@
                                 All Categories
                             </label>
                         </div>
-                        {{-- JS fills the rest --}}
                     </div>
                 </aside>
 
@@ -79,52 +71,75 @@
                 {{-- RIGHT MAIN --}}
                 <section class="mgmt-main" id="mainColumn">
 
-                    {{-- Accordion view --}}
-                    <div id="accordionView">
+                    {{-- Nav Tabs --}}
+                    <ul class="nav nav-tabs mb-3" id="facilityTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="venues-tab" data-bs-toggle="tab"
+                                data-bs-target="#venues-pane" type="button" role="tab" data-section="venues">
+                                Venues
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="containers-tab" data-bs-toggle="tab"
+                                data-bs-target="#containers-pane" type="button" role="tab" data-section="containers">
+                                Containers
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="rooms-tab" data-bs-toggle="tab" data-bs-target="#rooms-pane"
+                                type="button" role="tab" data-section="rooms">
+                                Rooms
+                            </button>
+                        </li>
+                    </ul>
 
-                        {{-- Venues --}}
-                        <div class="section-header" data-section="venues">
-                            <span><i class="bi bi-chevron-down me-2 toggle-icon"></i>Standalone Venues</span>
-                            <span class="count" id="venuesCount">0 items</span>
-                        </div>
-                        <div class="section-body open" id="venuesBody">
-                            <div class="inner" id="venuesSection"></div>
+                    {{-- Wrapper for tab content + overlay --}}
+                    <div class="position-relative" style="min-height: 300px;">
+
+                        {{-- Tab Content --}}
+                        <div class="tab-content" id="facilityTabsContent">
+
+                            {{-- VENUES PANE --}}
+                            <div class="tab-pane fade show active" id="venues-pane" role="tabpanel">
+                                <div id="venuesList"></div>
+                                <div id="venuesPagination" class="d-flex justify-content-center mt-3"></div>
+                            </div>
+
+                            {{-- CONTAINERS PANE --}}
+                            <div class="tab-pane fade" id="containers-pane" role="tabpanel">
+                                <div id="containersList"></div>
+                                <div id="containersPagination" class="d-flex justify-content-center mt-3"></div>
+                            </div>
+
+                            {{-- ROOMS PANE --}}
+                            <div class="tab-pane fade" id="rooms-pane" role="tabpanel">
+                                <div id="roomsList"></div>
+                                <div id="roomsPagination" class="d-flex justify-content-center mt-3"></div>
+                            </div>
                         </div>
 
-                        {{-- Buildings --}}
-                        <div class="section-header" data-section="buildings">
-                            <span>
-                                <i class="bi bi-chevron-down toggle-icon"></i>Buildings
-                                <span class="section-hint">(with rooms)</span>
-                            </span>
-                            <span class="count" id="buildingsCount">0 items</span>
-                        </div>
-                        <div class="section-body open" id="buildingsBody">
-                            <div class="inner" id="buildingsSection"></div>
+                        {{-- Results overlay (used for search AND filters) --}}
+                        <div id="resultsView" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0 text-muted" id="resultsHeader">Results</h6>
+                            </div>
+                            <div id="resultsList"></div>
                         </div>
 
-                    </div>
-
-                    {{-- Results overlay (used for search AND filters) --}}
-                    <div id="resultsView">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0 text-muted" id="resultsHeader">Results</h6>
-                        </div>
-                        <div id="resultsList"></div>
-                    </div>
-
-                    {{-- Loading --}}
-                    <div id="loadingOverlay">
-                        <div class="text-center">
-                            <div class="spinner-border text-primary" role="status"></div>
-                            <p class="mt-2 text-muted mb-0">Loading facilities...</p>
+                        {{-- Loading --}}
+                        <div id="loadingOverlay"
+                            style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.7); z-index: 10;">
+                            <div class="text-center" style="position: sticky; top: 50%;">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-muted mb-0">Loading facilities...</p>
+                            </div>
                         </div>
                     </div>
 
                 </section>
             </div>
 
-            {{-- Modals (must be <template>-wrapped partials per Block A) --}}
+            {{-- Modals --}}
             @include('partials.resource-management.delete-confirmation-modal', [
                 'resourceLabel' => 'Facility',
             ])
@@ -143,11 +158,9 @@
     <script src="{{ asset('js/admin/toast.js') }}"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-
             const token = localStorage.getItem("adminToken");
             if (!token) return window.location.href = "/admin/login";
 
-            // ==================== DOM ====================
             const $ = (id) => document.getElementById(id);
             const els = {
                 filterPanel: $('filterPanel'),
@@ -158,45 +171,40 @@
                 clearFiltersBtn: $('clearFiltersBtn'),
                 statusFilter: $('statusFilter'),
                 categoryTree: $('categoryTree'),
-                accordionView: $('accordionView'),
-                venuesSection: $('venuesSection'),
-                buildingsSection: $('buildingsSection'),
-                venuesCount: $('venuesCount'),
-                buildingsCount: $('buildingsCount'),
-                venuesBody: $('venuesBody'),
-                buildingsBody: $('buildingsBody'),
+                tabsContainer: $('facilityTabs'),
+                tabContent: $('facilityTabsContent'),
                 resultsView: $('resultsView'),
                 resultsHeader: $('resultsHeader'),
                 resultsList: $('resultsList'),
                 loadingOverlay: $('loadingOverlay'),
             };
 
-            // ==================== STATE ====================
             const state = {
                 filtersLoaded: false,
                 categoriesById: {},
                 selectedCategoryId: null,
                 selectedSubcategoryId: null,
-                childCache: {},
                 searchTimer: null,
                 searchActive: false,
                 currentDeleteId: null,
-                pendingAssignment: null,
-                sectionState: {
+                childCache: {},
+                activeTab: 'venues', // default
+                pagination: {
                     venues: {
-                        loaded: false,
-                        currentPage: 0,
-                        lastPage: 1
+                        current_page: 1,
+                        last_page: 1
                     },
-                    buildings: {
-                        loaded: false,
-                        currentPage: 0,
-                        lastPage: 1
+                    containers: {
+                        current_page: 1,
+                        last_page: 1
                     },
-                },
+                    rooms: {
+                        current_page: 1,
+                        last_page: 1
+                    }
+                }
             };
 
-            // ==================== API ====================
             const apiFetch = async (url, options = {}) => {
                 const res = await fetch(url, {
                     ...options,
@@ -219,16 +227,15 @@
                 return res.json();
             };
 
-            const showLoading = () => els.loadingOverlay.style.display = 'flex';
+            const showLoading = () => els.loadingOverlay.style.display = 'block';
             const hideLoading = () => els.loadingOverlay.style.display = 'none';
 
-            // ==================== HELPERS ====================
             const escapeHtml = (s) => s === null || s === undefined ? '' : String(s)
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
             const typeBadge = (t) => ({
-                building: '<span class="badge bg-primary badge-type">Building</span>',
+                container: '<span class="badge bg-primary badge-type">Container</span>',
                 venue: '<span class="badge bg-info badge-type">Venue</span>',
                 room: '<span class="badge bg-secondary badge-type">Room</span>',
             } [t] || '');
@@ -237,10 +244,9 @@
                 "https://res.cloudinary.com/dn98ntlkd/image/upload/v1759850278/t4fyv56wog6pglhwvwtn.png";
             const imgFor = (r) => r.primary_image_url || FALLBACK_IMG;
 
-            const hasActiveFilters = () =>
-                !!els.statusFilter.value || !!state.selectedCategoryId || !!state.selectedSubcategoryId;
+            const hasActiveFilters = () => !!els.statusFilter.value || !!state.selectedCategoryId || !!state
+                .selectedSubcategoryId;
 
-            // ==================== FILTER QUERY ====================
             const buildFilterQuery = () => {
                 const p = new URLSearchParams();
                 if (els.statusFilter.value) p.set('status_id', els.statusFilter.value);
@@ -249,20 +255,14 @@
                 return p.toString();
             };
 
-            // ==================== LAZY MODAL LOADER ====================
-            // Clones <template> into body on first use. Subsequent calls are no-ops.
             const ensureModal = (templateId, modalId) => {
                 if (document.getElementById(modalId)) return true;
                 const tpl = document.getElementById(templateId);
-                if (!tpl) {
-                    console.error(`[ensureModal] template not found: #${templateId}`);
-                    return false;
-                }
+                if (!tpl) return false;
                 document.body.appendChild(tpl.content.cloneNode(true));
                 return true;
             };
 
-            // ==================== CATEGORY TREE ====================
             const renderCategoryTree = (categories) => {
                 state.categoriesById = {};
                 const rows = categories.map(c => {
@@ -270,8 +270,7 @@
                     const subs = (c.subcategories || []).map(s => `
           <div class="sub-node">
             <label class="d-block">
-              <input type="radio" name="subcategoryRadio" value="${s.subcategory_id}"
-                     data-parent-category="${c.category_id}" class="subcategory-radio">
+              <input type="radio" name="subcategoryRadio" value="${s.subcategory_id}" data-parent-category="${c.category_id}" class="subcategory-radio">
               ${escapeHtml(s.subcategory_name)}
             </label>
           </div>`).join('');
@@ -332,167 +331,122 @@
                 const statusBadge = row.status_name ?
                     `<span class="badge" style="background-color:${escapeHtml(row.status_color_code || '#6c757d')}; color:#fff;">${escapeHtml(row.status_name)}</span>` :
                     '';
-                const childCount = row.building_type === 'building' ?
+
+                // For Rooms tab, show parent container name
+                const parentInfo = (row.building_type === 'room' && row.parent_facility_name) ?
+                    ` · <span class="text-muted small"><i class="bi bi-building"></i> ${escapeHtml(row.parent_facility_name)}</span>` :
+                    '';
+
+                const childCount = row.building_type === 'container' ?
                     ` · <strong>${row.children_count} room${row.children_count === 1 ? '' : 's'}</strong>` : '';
+
                 const codeTag = row.facility_code ?
                     ` <span class="text-muted small">(${escapeHtml(row.facility_code)})</span>` : '';
 
                 return `
         <div class="node" data-facility-id="${row.facility_id}" data-type="${row.building_type}">
-          <img src="${imgFor(row)}" class="node-img ${row.building_type === 'room' ? 'sm' : ''}"
-               onerror="this.src='${FALLBACK_IMG}'" alt="${escapeHtml(row.facility_name)}">
+          <img src="${imgFor(row)}" class="node-img ${row.building_type === 'room' ? 'sm' : ''}" onerror="this.src='${FALLBACK_IMG}'" alt="${escapeHtml(row.facility_name)}">
           <div class="node-body">
             <p class="node-title">${escapeHtml(row.facility_name)}${codeTag}</p>
             <p class="node-meta">
               <i class="bi bi-tag-fill me-1"></i>${escapeHtml(row.category_name)}
               ${row.subcategory_name ? ' · ' + escapeHtml(row.subcategory_name) : ''}
+              ${parentInfo}
               ${childCount}
             </p>
-            ${row.base_fee !== null && row.base_fee !== undefined
-              ? `<p class="node-meta mb-0">
-                                                       <i class="bi bi-cash-stack me-1"></i>
-                                                       ₱${parseFloat(row.base_fee).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                       <span class="text-muted">(${escapeHtml(row.rate_type || '')})</span>
-                                                     </p>`
-              : ''}
+${row.base_fee !== null && row.base_fee !== undefined
+  ? `<p class="node-meta mb-0"><i class="bi bi-cash-stack me-1"></i>₱${parseFloat(row.base_fee).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span class="text-muted ms-1">(${escapeHtml(row.rate_type || '')})</span></p>`
+  : ''}
             <div class="mt-1">${statusBadge} ${typeBadge(row.building_type)}</div>
           </div>
           <div class="node-actions">
             <a href="/admin/edit-facility?id=${row.facility_id}" class="btn btn-sm btn-primary">Manage</a>
             <button class="btn btn-sm btn-danger btn-delete" data-id="${row.facility_id}">Delete</button>
-            ${row.building_type === 'building'
-              ? `<button class="btn btn-sm btn-outline-secondary btn-expand"
-                                                             data-id="${row.facility_id}" title="Expand"><i class="bi bi-chevron-down"></i></button>`
+            ${row.building_type === 'container'
+              ? `<button class="btn btn-sm btn-outline-secondary btn-expand" data-id="${row.facility_id}" title="Expand"><i class="bi bi-chevron-down"></i></button>`
               : ''}
           </div>
         </div>
-${row.building_type === 'building'
-  ? `<div class="children-wrap" data-children-for="${row.facility_id}"><div class="inner"></div></div>`
-  : ''}
+${row.building_type === 'container' ? `<div class="children-wrap" data-children-for="${row.facility_id}"><div class="inner"></div></div>` : ''}
       `;
             };
 
             const wireNodeEvents = (root) => {
-                root.querySelectorAll('.btn-delete').forEach(b =>
-                    b.addEventListener('click', () => openDeleteModal(b.dataset.id)));
-                root.querySelectorAll('.btn-expand').forEach(b =>
-                    b.addEventListener('click', () => toggleBuilding(b.dataset.id, b)));
+                root.querySelectorAll('.btn-delete').forEach(b => b.addEventListener('click', () =>
+                    openDeleteModal(b.dataset.id)));
+                root.querySelectorAll('.btn-expand').forEach(b => b.addEventListener('click', () =>
+                    toggleBuilding(b.dataset.id, b)));
             };
 
-            // ==================== ACCORDION RENDER ====================
-            const loadMoreHtml = (section) => {
-                const s = state.sectionState[section];
-                if (!s || s.currentPage >= s.lastPage) return '';
-                return `
-    <div class="text-center my-2">
-      <button class="btn btn-sm btn-outline-secondary btn-load-more-section" data-section="${section}">
-        <i class="bi bi-arrow-down-circle me-1"></i>
-        Load more ${section === 'venues' ? 'venues' : 'buildings'}
-        (${s.loadedCount}/${s.total})
-      </button>
-    </div>`;
-            };
+            // ==================== PAGINATION RENDERER ====================
+            const renderPagination = (containerId, section, pagination) => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
 
-            const renderAccordion = (data) => {
-                const venues = data.venues || [];
-                const buildings = data.buildings || [];
-                const venuesTotal = data.venues_total ?? venues.length;
-                const buildingsTotal = data.buildings_total ?? buildings.length;
+                if (pagination.last_page <= 1) {
+                    container.innerHTML = '';
+                    return;
+                }
 
-                const PER_PAGE = 10;
-                state.sectionState.venues = {
-                    loaded: true,
-                    currentPage: Math.ceil(venues.length / PER_PAGE) || 1,
-                    lastPage: Math.max(1, Math.ceil(venuesTotal / PER_PAGE)),
-                    loadedCount: venues.length,
-                    total: venuesTotal,
-                };
-                state.sectionState.buildings = {
-                    loaded: true,
-                    currentPage: Math.ceil(buildings.length / PER_PAGE) || 1,
-                    lastPage: Math.max(1, Math.ceil(buildingsTotal / PER_PAGE)),
-                    loadedCount: buildings.length,
-                    total: buildingsTotal,
-                };
+                container.innerHTML = `
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item ${pagination.current_page === 1 ? 'disabled' : ''}">
+                                <button class="page-link" data-section="${section}" data-page="${pagination.current_page - 1}">Previous</button>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">Page ${pagination.current_page} of ${pagination.last_page}</span>
+                            </li>
+                            <li class="page-item ${pagination.current_page === pagination.last_page ? 'disabled' : ''}">
+                                <button class="page-link" data-section="${section}" data-page="${pagination.current_page + 1}">Next</button>
+                            </li>
+                        </ul>
+                    </nav>
+                `;
 
-                els.venuesSection.innerHTML = venues.length ?
-                    venues.map(renderNode).join('') + loadMoreHtml('venues') :
-                    '<p class="text-muted small mb-0 p-2">No standalone venues match your filters.</p>';
-
-                els.buildingsSection.innerHTML = buildings.length ?
-                    buildings.map(renderNode).join('') + loadMoreHtml('buildings') :
-                    '<p class="text-muted small mb-0 p-2">No buildings match your filters.</p>';
-
-                const fmt = (shown, total) =>
-                    shown < total ? `${shown} of ${total} items` : `${total} item${total === 1 ? '' : 's'}`;
-                els.venuesCount.textContent = fmt(venues.length, venuesTotal);
-                els.buildingsCount.textContent = fmt(buildings.length, buildingsTotal);
-
-                wireNodeEvents(els.venuesSection);
-                wireNodeEvents(els.buildingsSection);
-                wireLoadMore(els.venuesSection, 'venues');
-                wireLoadMore(els.buildingsSection, 'buildings');
-            };
-
-            const loadMoreSection = async (section) => {
-                const s = state.sectionState[section];
-                if (!s || s.currentPage >= s.lastPage) return;
-
-                const btn = document.querySelector(`.btn-load-more-section[data-section="${section}"]`);
-                if (btn) btn.disabled = true;
-
-                const p = new URLSearchParams({
-                    section,
-                    page: s.currentPage + 1
+                container.querySelectorAll('.page-link').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const sec = btn.dataset.section;
+                        const page = parseInt(btn.dataset.page);
+                        if (page > 0 && page <= pagination.last_page) {
+                            fetchTabContent(sec, page);
+                        }
+                    });
                 });
-                if (els.statusFilter.value) p.set('status_id', els.statusFilter.value);
-                if (state.selectedCategoryId) p.set('category_id', state.selectedCategoryId);
-                if (state.selectedSubcategoryId) p.set('subcategory_id', state.selectedSubcategoryId);
+            };
 
+            // ==================== TAB FETCHER ====================
+            const fetchTabContent = async (section, page = 1) => {
+                showLoading();
                 try {
-                    const res = await apiFetch(`/api/admin/manage-facilities/section?${p.toString()}`);
-                    const rows = res.data || [];
-                    const target = section === 'venues' ? els.venuesSection : els.buildingsSection;
+                    const q = buildFilterQuery();
+                    const url =
+                        `/api/admin/manage-facilities/section?section=${section}&page=${page}${q ? '&' + q : ''}`;
+                    const res = await apiFetch(url);
 
-                    target.querySelectorAll('.btn-load-more-section').forEach(b => b.parentElement
-                        .remove());
-                    target.insertAdjacentHTML('beforeend', rows.map(renderNode).join(''));
+                    const listId = `${section}List`;
+                    const paginationId = `${section}Pagination`;
+                    const listEl = document.getElementById(listId);
 
-                    s.currentPage = res.pagination.current_page;
-                    s.lastPage = res.pagination.last_page;
-                    s.loadedCount += rows.length;
+                    if (res.data && res.data.length) {
+                        listEl.innerHTML = res.data.map(renderNode).join('');
+                        wireNodeEvents(listEl);
+                    } else {
+                        listEl.innerHTML =
+                            `<p class="text-muted small mb-0 p-2">No ${section} match your filters.</p>`;
+                    }
 
-                    wireNodeEvents(target);
-                    target.insertAdjacentHTML('beforeend', loadMoreHtml(section));
-                    wireLoadMore(target, section);
+                    state.pagination[section] = res.pagination;
+                    renderPagination(paginationId, section, res.pagination);
 
-                    const fmt = (shown, total) =>
-                        shown < total ? `${shown} of ${total} items` :
-                        `${total} item${total === 1 ? '' : 's'}`;
-                    if (section === 'venues') els.venuesCount.textContent = fmt(s.loadedCount, s.total);
-                    else els.buildingsCount.textContent = fmt(s.loadedCount, s.total);
                 } catch (e) {
                     console.error(e);
-                    if (typeof showToast === 'function') showToast('Failed to load more', 'error');
-                    if (btn) btn.disabled = false;
+                    if (typeof showToast === 'function') showToast(`Failed to load ${section}`, 'error');
+                } finally {
+                    hideLoading();
                 }
             };
-
-            const wireLoadMore = (root, section) => {
-                root.querySelectorAll(`.btn-load-more-section[data-section="${section}"]`).forEach(btn => {
-                    btn.addEventListener('click', () => loadMoreSection(section));
-                });
-            };
-
-            // ==================== SECTION COLLAPSE (accordion headers) ====================
-            document.querySelectorAll('.section-header').forEach(header => {
-                header.addEventListener('click', () => {
-                    const section = header.dataset.section;
-                    const body = section === 'venues' ? els.venuesBody : els.buildingsBody;
-                    body.classList.toggle('open');
-                    header.classList.toggle('closed');
-                });
-            });
 
             // ==================== LAZY LOAD CHILDREN ====================
             const loadChildrenPage = async (buildingId, page) => {
@@ -523,13 +477,10 @@ ${row.building_type === 'building'
                 const lmHtml = cache.currentPage < cache.lastPage ?
                     `<button class="btn btn-sm btn-outline-secondary btn-load-more my-2" data-id="${buildingId}">
                          <i class="bi bi-arrow-down-circle me-1"></i>Load more rooms (${cache.rows.length}/${res.pagination.total})
-                       </button>` :
-                    '';
+                       </button>` : '';
 
-                inner.innerHTML = (cache.rows.length ?
-                    nodesHtml :
+                inner.innerHTML = (cache.rows.length ? nodesHtml :
                     '<p class="text-muted small mb-2 p-2">No rooms match your filters.</p>') + lmHtml;
-
                 wrap.classList.add('open');
                 wireNodeEvents(inner);
 
@@ -538,7 +489,7 @@ ${row.building_type === 'building'
                     lm.disabled = true;
                     try {
                         const next = await loadChildrenPage(buildingId, cache.currentPage + 1);
-                        renderChildren(root, buildingId, next, true);
+                        renderChildren(wrap, buildingId, next, true);
                     } catch (e) {
                         console.error(e);
                         if (typeof showToast === 'function') showToast('Failed to load more rooms',
@@ -563,7 +514,6 @@ ${row.building_type === 'building'
                 wrap.classList.add('open');
                 btn.classList.add('expanded');
 
-                // If cached, paint from cache into THIS wrap (no refetch)
                 const cache = state.childCache[buildingId];
                 if (cache?.rows.length) {
                     renderChildrenFromCache(wrap, buildingId, cache);
@@ -589,13 +539,10 @@ ${row.building_type === 'building'
                 const lmHtml = cache.currentPage < cache.lastPage ?
                     `<button class="btn btn-sm btn-outline-secondary btn-load-more my-2" data-id="${buildingId}">
              <i class="bi bi-arrow-down-circle me-1"></i>Load more rooms (${cache.rows.length}/${cache.lastPage * 10})
-           </button>` :
-                    '';
+           </button>` : '';
 
-                inner.innerHTML = (cache.rows.length ?
-                    nodesHtml :
+                inner.innerHTML = (cache.rows.length ? nodesHtml :
                     '<p class="text-muted small mb-2 p-2">No rooms match your filters.</p>') + lmHtml;
-
                 wireNodeEvents(inner);
 
                 const lm = inner.querySelector('.btn-load-more');
@@ -613,10 +560,10 @@ ${row.building_type === 'building'
                 });
             };
 
-            // ==================== RESULTS OVERLAY RENDERER ====================
+            // ==================== RESULTS OVERLAY ====================
             const renderResults = (rows, headerText, emptyText) => {
-                els.accordionView.classList.add('hidden');
-                els.resultsView.classList.add('active');
+                document.querySelector('.tab-content').style.display = 'none';
+                els.resultsView.style.display = 'block';
                 els.resultsHeader.textContent = headerText;
 
                 if (!rows.length) {
@@ -632,12 +579,12 @@ ${row.building_type === 'building'
             };
 
             const exitResults = () => {
-                els.resultsView.classList.remove('active');
-                els.accordionView.classList.remove('hidden');
+                els.resultsView.style.display = 'none';
+                document.querySelector('.tab-content').style.display = 'block';
             };
 
             // ==================== FETCHERS ====================
-            const fetchIndexForAccordion = async (populate = false) => {
+            const fetchIndexForTabs = async (populate = false) => {
                 showLoading();
                 try {
                     const res = await apiFetch('/api/admin/manage-facilities');
@@ -652,11 +599,14 @@ ${row.building_type === 'building'
                         state.filtersLoaded = true;
                     }
                     exitResults();
-                    renderAccordion(res.data);
+
+                    // Render Initial Tab (Venues)
+                    await fetchTabContent('venues', 1);
+
                 } catch (e) {
                     console.error(e);
-                    els.venuesSection.innerHTML = '<p class="text-danger small p-2">Failed to load.</p>';
-                    els.buildingsSection.innerHTML = '';
+                    document.getElementById('venuesList').innerHTML =
+                        '<p class="text-danger small p-2">Failed to load.</p>';
                 } finally {
                     hideLoading();
                 }
@@ -667,7 +617,9 @@ ${row.building_type === 'building'
                 try {
                     const q = buildFilterQuery();
                     const res = await apiFetch(`/api/admin/manage-facilities?${q}`);
-                    const rows = [...(res.data.venues || []), ...(res.data.buildings || [])];
+                    // Combine all items for the flat list
+                    const rows = [...(res.data.venues || []), ...(res.data.containers || []), ...(res.data
+                        .rooms || [])];
                     renderResults(rows,
                         `Filtered Results — ${rows.length} match${rows.length === 1 ? '' : 'es'}`,
                         'No facility matches the selected filters.');
@@ -696,7 +648,6 @@ ${row.building_type === 'building'
                 }
             };
 
-            // ==================== VIEW REFRESH ====================
             const refreshView = () => {
                 const hasSearch = !!els.searchInput.value.trim();
                 if (hasSearch) return;
@@ -706,6 +657,8 @@ ${row.building_type === 'building'
                 } else {
                     els.clearFiltersBtn.disabled = true;
                     exitResults();
+                    // Reload the active tab
+                    fetchTabContent(state.activeTab, 1);
                 }
             };
 
@@ -752,11 +705,21 @@ ${row.building_type === 'building'
                 els.filterPanelBackdrop.classList.remove('show');
             });
 
-            // ==================== DELETE (lazy) ====================
+            // Bootstrap Tab Listener
+            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tabEl => {
+                tabEl.addEventListener('shown.bs.tab', (e) => {
+                    state.activeTab = e.target.dataset.section;
+                    if (!els.searchInput.value.trim() && !hasActiveFilters()) {
+                        const pagination = state.pagination[state.activeTab];
+                        fetchTabContent(state.activeTab, pagination.current_page || 1);
+                    }
+                });
+            });
+
+            // ==================== DELETE ====================
             const openDeleteModal = (id) => {
                 state.currentDeleteId = id;
                 ensureModal('deleteModalTemplate', 'deleteConfirmationModal');
-
                 if (!state._deleteWired) {
                     document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
                         if (!state.currentDeleteId) return;
@@ -771,8 +734,7 @@ ${row.building_type === 'building'
                             delete state.childCache[state.currentDeleteId];
                             bootstrap.Modal.getInstance(document.getElementById(
                                 'deleteConfirmationModal'))?.hide();
-                            if (hasActiveFilters()) fetchFilteredResults();
-                            else fetchIndexForAccordion();
+                            refreshView();
                         } catch (e) {
                             console.error(e);
                             if (typeof showToast === 'function') showToast(
@@ -784,12 +746,12 @@ ${row.building_type === 'building'
                     });
                     state._deleteWired = true;
                 }
-
                 const el = document.getElementById('deleteConfirmationModal');
                 if (el) new bootstrap.Modal(el).show();
             };
 
-            // ==================== MASS ASSIGN STATE ====================
+            // ==================== MASS ASSIGN ====================
+
             const maState = {
                 page: 1,
                 lastPage: 1,
@@ -1099,8 +1061,9 @@ ${row.building_type === 'building'
 
             document.getElementById('massAssignBtn').addEventListener('click', openMassAssignModal);
 
+
             // ==================== BOOT ====================
-            fetchIndexForAccordion(true);
+            fetchIndexForTabs(true);
         });
     </script>
 @endsection

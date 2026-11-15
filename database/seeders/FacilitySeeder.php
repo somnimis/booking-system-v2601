@@ -16,7 +16,8 @@ class FacilitySeeder extends Seeder
 
             // UG Classrooms
             [
-                'parent_facility_id' => 1, // Assuming UG gets ID 1
+                'parent_facility_id' => 1,
+                'facility_role' => 'Room', // Assuming UG gets ID 1
                 'floor_level' => 1,
                 'facility_code' => 'UG 101',
                 'total_levels' => null,
@@ -39,6 +40,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'UG 102',
                 'total_levels' => null,
@@ -61,6 +63,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'UG 103a',
                 'total_levels' => null,
@@ -83,6 +86,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'UG 103b',
                 'total_levels' => null,
@@ -105,6 +109,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'UG 104',
                 'total_levels' => null,
@@ -127,6 +132,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'UG 105',
                 'total_levels' => null,
@@ -149,6 +155,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'UG 106',
                 'total_levels' => null,
@@ -171,6 +178,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'UG 107',
                 'total_levels' => null,
@@ -193,6 +201,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'UG 202-A',
                 'total_levels' => null,
@@ -215,6 +224,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'UG 202-B',
                 'total_levels' => null,
@@ -237,6 +247,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'UG 203-B',
                 'total_levels' => null,
@@ -259,6 +270,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'UG 204-B',
                 'total_levels' => null,
@@ -281,6 +293,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'UG 205a',
                 'total_levels' => null,
@@ -303,6 +316,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 1,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'UG 205b',
                 'total_levels' => null,
@@ -327,6 +341,7 @@ class FacilitySeeder extends Seeder
             // NV Classrooms 
             [
                 'parent_facility_id' => 5,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'NV 100',
                 'total_levels' => null,
@@ -349,6 +364,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 5,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'NV 105',
                 'total_levels' => null,
@@ -371,6 +387,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 5,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'NV 201',
                 'total_levels' => null,
@@ -393,6 +410,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 5,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'NV 202',
                 'total_levels' => null,
@@ -415,6 +433,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 5,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'NV 203',
                 'total_levels' => null,
@@ -437,6 +456,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 5,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'NV 204',
                 'total_levels' => null,
@@ -459,6 +479,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 5,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'NV 205',
                 'total_levels' => null,
@@ -481,6 +502,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 5,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'NV 207',
                 'total_levels' => null,
@@ -503,6 +525,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 5,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'NV 304',
                 'total_levels' => null,
@@ -525,6 +548,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 5,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'NV 306',
                 'total_levels' => null,
@@ -550,6 +574,7 @@ class FacilitySeeder extends Seeder
             // OV Classrooms 
             [
                 'parent_facility_id' => 6,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'OV104',
                 'total_levels' => null,
@@ -572,6 +597,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 6,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'OV106',
                 'total_levels' => null,
@@ -594,6 +620,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 6,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'OV107',
                 'total_levels' => null,
@@ -616,6 +643,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 6,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'OV108',
                 'total_levels' => null,
@@ -638,6 +666,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 6,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'OV110',
                 'total_levels' => null,
@@ -660,6 +689,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 6,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'OV111',
                 'total_levels' => null,
@@ -682,6 +712,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 6,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'OV 204',
                 'total_levels' => null,
@@ -704,6 +735,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 6,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'OV 205',
                 'total_levels' => null,
@@ -726,6 +758,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 6,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'OV 208',
                 'total_levels' => null,
@@ -748,6 +781,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 6,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'OV 209',
                 'total_levels' => null,
@@ -770,6 +804,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 6,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'OV 210',
                 'total_levels' => null,
@@ -794,6 +829,7 @@ class FacilitySeeder extends Seeder
             // Library Rooms (parent ID 39)
             [
                 'parent_facility_id' => 7,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'HLL-C1',
                 'total_levels' => null,
@@ -816,6 +852,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 7,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'HLL-C2',
                 'total_levels' => null,
@@ -838,6 +875,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 7,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'HLL-KDC',
                 'total_levels' => null,
@@ -860,6 +898,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 7,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'HLL-CL',
                 'total_levels' => null,
@@ -882,6 +921,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 7,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'HLL-DR1',
                 'total_levels' => null,
@@ -904,6 +944,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 7,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'HLL-DR2',
                 'total_levels' => null,
@@ -926,6 +967,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 7,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'HLL-AC',
                 'total_levels' => null,
@@ -948,6 +990,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 7,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'HLL-IELTS',
                 'total_levels' => null,
@@ -973,6 +1016,7 @@ class FacilitySeeder extends Seeder
             // AP Classrooms 
             [
                 'parent_facility_id' => 13,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'RM 1',
                 'total_levels' => null,
@@ -995,6 +1039,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 13,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'RM 2',
                 'total_levels' => null,
@@ -1017,6 +1062,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 13,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'RM 3',
                 'total_levels' => null,
@@ -1042,6 +1088,7 @@ class FacilitySeeder extends Seeder
             // EL Classrooms
             [
                 'parent_facility_id' => 14,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EL 401',
                 'total_levels' => null,
@@ -1064,6 +1111,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 14,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EL 402',
                 'total_levels' => null,
@@ -1086,6 +1134,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 14,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EL 403',
                 'total_levels' => null,
@@ -1108,6 +1157,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 14,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EL 404',
                 'total_levels' => null,
@@ -1130,6 +1180,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 14,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EL 405',
                 'total_levels' => null,
@@ -1152,6 +1203,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 14,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EL 406',
                 'total_levels' => null,
@@ -1174,6 +1226,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 14,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EL 407',
                 'total_levels' => null,
@@ -1198,6 +1251,7 @@ class FacilitySeeder extends Seeder
             // EN Classrooms 
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'EN 106',
                 'total_levels' => null,
@@ -1220,6 +1274,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'EN 107',
                 'total_levels' => null,
@@ -1242,6 +1297,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'EN 109',
                 'total_levels' => null,
@@ -1264,6 +1320,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'EN 110',
                 'total_levels' => null,
@@ -1286,6 +1343,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'EN 114',
                 'total_levels' => null,
@@ -1308,6 +1366,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'EN 122',
                 'total_levels' => null,
@@ -1330,6 +1389,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'EN 123',
                 'total_levels' => null,
@@ -1352,6 +1412,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'EN 124',
                 'total_levels' => null,
@@ -1374,6 +1435,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'EN 204',
                 'total_levels' => null,
@@ -1396,6 +1458,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'EN 205a',
                 'total_levels' => null,
@@ -1418,6 +1481,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'EN 206',
                 'total_levels' => null,
@@ -1440,6 +1504,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'EN 209b',
                 'total_levels' => null,
@@ -1462,6 +1527,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'EnA202',
                 'total_levels' => null,
@@ -1484,6 +1550,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'Ena203',
                 'total_levels' => null,
@@ -1506,6 +1573,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'EnA205',
                 'total_levels' => null,
@@ -1528,6 +1596,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'EnA209',
                 'total_levels' => null,
@@ -1550,6 +1619,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'EN 302',
                 'total_levels' => null,
@@ -1572,6 +1642,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'EN 303',
                 'total_levels' => null,
@@ -1594,6 +1665,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'EN 304',
                 'total_levels' => null,
@@ -1616,6 +1688,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'EN 305',
                 'total_levels' => null,
@@ -1638,6 +1711,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'EN 306',
                 'total_levels' => null,
@@ -1660,6 +1734,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'EN 307',
                 'total_levels' => null,
@@ -1682,6 +1757,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'EN 308',
                 'total_levels' => null,
@@ -1704,6 +1780,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'EN 309',
                 'total_levels' => null,
@@ -1726,6 +1803,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'EN 312',
                 'total_levels' => null,
@@ -1748,6 +1826,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EN 401',
                 'total_levels' => null,
@@ -1770,6 +1849,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EN 402',
                 'total_levels' => null,
@@ -1792,6 +1872,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EN 403',
                 'total_levels' => null,
@@ -1814,6 +1895,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EN 404',
                 'total_levels' => null,
@@ -1836,6 +1918,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EN 405',
                 'total_levels' => null,
@@ -1858,6 +1941,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EN 406',
                 'total_levels' => null,
@@ -1880,6 +1964,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EN 407',
                 'total_levels' => null,
@@ -1902,6 +1987,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EN 408',
                 'total_levels' => null,
@@ -1924,6 +2010,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EN 409',
                 'total_levels' => null,
@@ -1946,6 +2033,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EN 410-A',
                 'total_levels' => null,
@@ -1968,6 +2056,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 15,
+                'facility_role' => 'Room',
                 'floor_level' => 4,
                 'facility_code' => 'EN 401-B',
                 'total_levels' => null,
@@ -1993,6 +2082,7 @@ class FacilitySeeder extends Seeder
             // MT Classrooms 
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'MT 101',
                 'total_levels' => null,
@@ -2015,6 +2105,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'MT 102',
                 'total_levels' => null,
@@ -2037,6 +2128,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'MT 103',
                 'total_levels' => null,
@@ -2059,6 +2151,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'MT 104',
                 'total_levels' => null,
@@ -2081,6 +2174,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'MT110',
                 'total_levels' => null,
@@ -2103,6 +2197,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'MT111',
                 'total_levels' => null,
@@ -2125,6 +2220,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'MT112',
                 'total_levels' => null,
@@ -2147,6 +2243,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'MT113',
                 'total_levels' => null,
@@ -2170,6 +2267,7 @@ class FacilitySeeder extends Seeder
             // MT Computer Labs (parent ID: 105)
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'MTCL 1',
                 'total_levels' => null,
@@ -2192,6 +2290,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'MTCL 2',
                 'total_levels' => null,
@@ -2214,6 +2313,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'MTCL 3',
                 'total_levels' => null,
@@ -2236,6 +2336,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'MTCL 4',
                 'total_levels' => null,
@@ -2258,6 +2359,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'MTCL 5',
                 'total_levels' => null,
@@ -2280,6 +2382,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'MTCL 6',
                 'total_levels' => null,
@@ -2302,6 +2405,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'MTCL 7',
                 'total_levels' => null,
@@ -2324,6 +2428,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'MTCL 8',
                 'total_levels' => null,
@@ -2346,6 +2451,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'MT 210',
                 'total_levels' => null,
@@ -2368,6 +2474,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 16,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'MT 211',
                 'total_levels' => null,
@@ -2392,6 +2499,7 @@ class FacilitySeeder extends Seeder
             // LDT Classrooms
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'LDT 102',
                 'total_levels' => null,
@@ -2414,6 +2522,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'LDT 104',
                 'total_levels' => null,
@@ -2436,6 +2545,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'LDT 109',
                 'total_levels' => null,
@@ -2458,6 +2568,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LDT 201',
                 'total_levels' => null,
@@ -2480,6 +2591,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LDT 202',
                 'total_levels' => null,
@@ -2502,6 +2614,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LDT 203',
                 'total_levels' => null,
@@ -2524,6 +2637,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LDT 204',
                 'total_levels' => null,
@@ -2546,6 +2660,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LDT 205',
                 'total_levels' => null,
@@ -2568,6 +2683,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LDT 206',
                 'total_levels' => null,
@@ -2590,6 +2706,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LDT 211',
                 'total_levels' => null,
@@ -2612,6 +2729,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LDT 212',
                 'total_levels' => null,
@@ -2634,6 +2752,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LDT 213',
                 'total_levels' => null,
@@ -2656,6 +2775,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LDT 301',
                 'total_levels' => null,
@@ -2678,6 +2798,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LDT 302',
                 'total_levels' => null,
@@ -2700,6 +2821,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LDT 303',
                 'total_levels' => null,
@@ -2722,6 +2844,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LDT 304',
                 'total_levels' => null,
@@ -2744,6 +2867,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LDT 306',
                 'total_levels' => null,
@@ -2766,6 +2890,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LDT 307',
                 'total_levels' => null,
@@ -2788,6 +2913,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 17,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LDT 308',
                 'total_levels' => null,
@@ -2813,6 +2939,7 @@ class FacilitySeeder extends Seeder
             // ROB Classrooms 
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'ROB 101',
                 'total_levels' => null,
@@ -2835,6 +2962,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'ROB 103',
                 'total_levels' => null,
@@ -2857,6 +2985,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'ROB 105',
                 'total_levels' => null,
@@ -2879,6 +3008,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'ROB 111',
                 'total_levels' => null,
@@ -2901,6 +3031,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'ROB 113',
                 'total_levels' => null,
@@ -2923,6 +3054,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'ROB 114',
                 'total_levels' => null,
@@ -2945,6 +3077,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'ROB 201',
                 'total_levels' => null,
@@ -2967,6 +3100,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'ROB 203',
                 'total_levels' => null,
@@ -2989,6 +3123,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'ROB 204',
                 'total_levels' => null,
@@ -3011,6 +3146,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'ROB 205A/B',
                 'total_levels' => null,
@@ -3033,6 +3169,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'ROB 206',
                 'total_levels' => null,
@@ -3055,6 +3192,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'ROB 207',
                 'total_levels' => null,
@@ -3077,6 +3215,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'ROB 208',
                 'total_levels' => null,
@@ -3099,6 +3238,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'ROB 209',
                 'total_levels' => null,
@@ -3121,6 +3261,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 21,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'ROB 207 PCR',
                 'total_levels' => null,
@@ -3146,6 +3287,7 @@ class FacilitySeeder extends Seeder
             // LEB Classrooms 
             [
                 'parent_facility_id' => 22,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'LEB 101-102',
                 'total_levels' => null,
@@ -3168,6 +3310,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 22,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'LEB 105',
                 'total_levels' => null,
@@ -3190,6 +3333,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 22,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LEB 201',
                 'total_levels' => null,
@@ -3212,6 +3356,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 22,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LEB 202',
                 'total_levels' => null,
@@ -3234,6 +3379,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 22,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LEB 203',
                 'total_levels' => null,
@@ -3256,6 +3402,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 22,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LEB 204',
                 'total_levels' => null,
@@ -3278,6 +3425,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 22,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LEB 205',
                 'total_levels' => null,
@@ -3300,6 +3448,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 22,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'ATC-2',
                 'total_levels' => null,
@@ -3325,6 +3474,7 @@ class FacilitySeeder extends Seeder
             // JHN Classrooms
             [
                 'parent_facility_id' => 23,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'JHN 101',
                 'total_levels' => null,
@@ -3347,6 +3497,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 23,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'JHN 102',
                 'total_levels' => null,
@@ -3369,6 +3520,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 23,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'JHN 103',
                 'total_levels' => null,
@@ -3391,6 +3543,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 23,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'JHN 104',
                 'total_levels' => null,
@@ -3413,6 +3566,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 23,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'JHN 201',
                 'total_levels' => null,
@@ -3438,6 +3592,7 @@ class FacilitySeeder extends Seeder
             // A Classrooms (parent ID: 189)
             [
                 'parent_facility_id' => 24,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'A 102',
                 'total_levels' => null,
@@ -3460,6 +3615,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 24,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'A 103',
                 'total_levels' => null,
@@ -3482,6 +3638,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 24,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'A 104a',
                 'total_levels' => null,
@@ -3504,6 +3661,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 24,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'A 104b',
                 'total_levels' => null,
@@ -3526,6 +3684,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 24,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'E Learning',
                 'total_levels' => null,
@@ -3548,6 +3707,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 24,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'A202',
                 'total_levels' => null,
@@ -3570,6 +3730,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 24,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'A203',
                 'total_levels' => null,
@@ -3602,6 +3763,7 @@ class FacilitySeeder extends Seeder
             // LHB Classrooms (parent ID: 212)
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'LHB 101',
                 'total_levels' => null,
@@ -3624,6 +3786,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'LHB 102',
                 'total_levels' => null,
@@ -3646,6 +3809,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'LHB 103',
                 'total_levels' => null,
@@ -3668,6 +3832,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'LHB 104',
                 'total_levels' => null,
@@ -3690,6 +3855,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 1,
                 'facility_code' => 'LHB 105',
                 'total_levels' => null,
@@ -3712,6 +3878,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LHB 201',
                 'total_levels' => null,
@@ -3734,6 +3901,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 2,
                 'facility_code' => 'LHB 202',
                 'total_levels' => null,
@@ -3756,6 +3924,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LHB 301',
                 'total_levels' => null,
@@ -3778,6 +3947,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LHB 302',
                 'total_levels' => null,
@@ -3800,6 +3970,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LHB 303',
                 'total_levels' => null,
@@ -3822,6 +3993,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LHB 304',
                 'total_levels' => null,
@@ -3844,6 +4016,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 33,
+                'facility_role' => 'Room',
                 'floor_level' => 3,
                 'facility_code' => 'LHB 305',
                 'total_levels' => null,
@@ -3867,6 +4040,7 @@ class FacilitySeeder extends Seeder
             // ==================== GAZEBOS ====================
             [
                 'parent_facility_id' => 25,
+                'facility_role' => 'Room',
                 'floor_level' => null,
                 'facility_code' => 'GAZ-1',
                 'total_levels' => null,
@@ -3889,6 +4063,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 25,
+                'facility_role' => 'Room',
                 'floor_level' => null,
                 'facility_code' => 'GAZ-2',
                 'total_levels' => null,
@@ -3911,6 +4086,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 25,
+                'facility_role' => 'Room',
                 'floor_level' => null,
                 'facility_code' => 'GAZ-3',
                 'total_levels' => null,
@@ -3933,6 +4109,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 25,
+                'facility_role' => 'Room',
                 'floor_level' => null,
                 'facility_code' => 'GAZ-4',
                 'total_levels' => null,
@@ -3955,6 +4132,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 25,
+                'facility_role' => 'Room',
                 'floor_level' => null,
                 'facility_code' => 'GAZ-5',
                 'total_levels' => null,
@@ -3977,6 +4155,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 25,
+                'facility_role' => 'Room',
                 'floor_level' => null,
                 'facility_code' => 'GAZ-6',
                 'total_levels' => null,
@@ -3999,6 +4178,7 @@ class FacilitySeeder extends Seeder
             ],
             [
                 'parent_facility_id' => 25,
+                'facility_role' => 'Room',
                 'floor_level' => null,
                 'facility_code' => 'GAZ-7',
                 'total_levels' => null,

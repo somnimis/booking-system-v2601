@@ -18,6 +18,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 1. UNIVERSITY GYMNASIUM (Building) ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'UG',
                 'total_levels' => 2,
@@ -41,6 +42,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 2. ROSE MEMORIAL AUDITORIUM ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'RMA',
                 'total_levels' => 2,
@@ -66,6 +68,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 3. EDUCATIONAL MEDIA CONFERENCE ROOM ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => 1,
                 'facility_code' => 'EMC',
                 'total_levels' => 1,
@@ -90,6 +93,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 4. ALUMNI PROMENADE & CONCERT PARK ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'APCP',
                 'total_levels' => null,
@@ -115,6 +119,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 5. NEW VALENTINE BUILDING ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'NV',
                 'total_levels' => 3,
@@ -139,6 +144,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 6. OLD VALENTINE BUILDING ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'OV',
                 'total_levels' => 2,
@@ -163,6 +169,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 7. HENRY LUCE LIBRARY ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'HLL',
                 'total_levels' => 4,
@@ -189,6 +196,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 8. BIG FIELD ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'BF',
                 'total_levels' => null,
@@ -214,6 +222,7 @@ class ParentFacilitySeeder extends Seeder
 
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'HD',
                 'total_levels' => null,
@@ -239,6 +248,7 @@ class ParentFacilitySeeder extends Seeder
 
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'HF',
                 'total_levels' => null,
@@ -264,6 +274,7 @@ class ParentFacilitySeeder extends Seeder
 
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'SP',
                 'total_levels' => null,
@@ -289,6 +300,7 @@ class ParentFacilitySeeder extends Seeder
 
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => 4,
                 'facility_code' => 'UY',
                 'total_levels' => 4,
@@ -313,6 +325,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 13. ANCHETA PAGSUBERON HALL ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'APH',
                 'total_levels' => 1,
@@ -337,6 +350,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 14. ELEMENTARY BUILDING ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'EL',
                 'total_levels' => 4,
@@ -361,6 +375,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 15. ENGINEERING BUILDING ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'EN',
                 'total_levels' => 4,
@@ -385,6 +400,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 16. MARY THOMAS HALL ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'MT',
                 'total_levels' => 2,
@@ -410,6 +426,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 17. LORETO D. TUPAZ HALL ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'LDT',
                 'total_levels' => 3,
@@ -434,6 +451,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 18. SOFTBALL FIELD ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'SF',
                 'total_levels' => null,
@@ -458,6 +476,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 19. TENNIS COURT ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'TC',
                 'total_levels' => null,
@@ -481,6 +500,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 20. UNIVERSITY CHURCH ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'UC',
                 'total_levels' => null,
@@ -504,6 +524,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 21. ROBLEE HALL ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'ROB',
                 'total_levels' => 2,
@@ -527,6 +548,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 22. DR. LENWOOD EDGE BUILDING ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'LEB',
                 'total_levels' => 2,
@@ -550,6 +572,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 23. JOHNSON HALL ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'JHN',
                 'total_levels' => 2,
@@ -574,6 +597,7 @@ class ParentFacilitySeeder extends Seeder
 
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'AH',
                 'total_levels' => 2,
@@ -597,6 +621,7 @@ class ParentFacilitySeeder extends Seeder
            // ==================== 25. GAZEBOS ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'GAZ',
                 'total_levels' => null,
@@ -622,6 +647,7 @@ class ParentFacilitySeeder extends Seeder
 
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'SC',
                 'total_levels' => null,
@@ -646,6 +672,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 27. ELEMENTARY GYMNASIUM ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'EGYM',
                 'total_levels' => null,
@@ -670,6 +697,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 28. JUNIOR HIGHSCHOOL GYMNASIUM ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'JHSGYM',
                 'total_levels' => null,
@@ -694,6 +722,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 29. GRANDSTAND ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'GS',
                 'total_levels' => null,
@@ -719,6 +748,7 @@ class ParentFacilitySeeder extends Seeder
 
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'GR',
                 'total_levels' => null,
@@ -743,6 +773,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 31. PACKAGING ENGINEERING ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'PE',
                 'total_levels' => null,
@@ -767,6 +798,7 @@ class ParentFacilitySeeder extends Seeder
             // ==================== 32. ANCHETA BASKETBALL COURT ====================
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Venue',
                 'floor_level' => null,
                 'facility_code' => 'ABC',
                 'total_levels' => null,
@@ -792,6 +824,7 @@ class ParentFacilitySeeder extends Seeder
 
             [
                 'parent_facility_id' => null,
+                'facility_role' => 'Container',
                 'floor_level' => null,
                 'facility_code' => 'LHB',
                 'total_levels' => 3,
