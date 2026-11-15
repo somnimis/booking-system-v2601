@@ -378,3 +378,21 @@ font-weight: 400;
 color: #6c757d;
 font-style: normal;
 }
+
+/* Department Checkboxes Container (used in Mass Assign) */
+.department-checkboxes {
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+}
+
+.department-checkboxes .form-check {
+    margin-bottom: 0.25rem;
+}
+
+.department-checkboxes .form-check:last-child {
+    margin-bottom: 0;
+}

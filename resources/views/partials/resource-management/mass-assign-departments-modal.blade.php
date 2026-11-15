@@ -33,7 +33,7 @@
                                     Select {{ $plural }}
                                 </label>
 
-                                <div class="input-group input-group-sm mb-2">
+                                <div class="input-group input-group-sm mb-2 flex-shrink-0">
                                     <span class="input-group-text"><i class="bi bi-search"></i></span>
                                     <input type="text" id="massAssignSearch" class="form-control"
                                         placeholder="Search by name or code...">
@@ -43,12 +43,13 @@
                                     </button>
                                 </div>
 
-                                <div id="massAssignCheckboxList" class="border rounded p-2 flex-grow-1"
-                                    style="max-height: 320px; min-height: 320px; overflow-y: auto; background: #fff;">
+                                {{-- Scrollable Facility List --}}
+                                <div id="massAssignCheckboxList" class="department-checkboxes flex-grow-1 mb-2"
+                                    style="min-height: 450px; overflow-y: auto;">
                                     {{-- JS fills checkboxes --}}
                                 </div>
 
-                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div class="d-flex justify-content-between align-items-center flex-shrink-0">
                                     <div class="text-muted small">
                                         <span id="massAssignPageIndicator">1 / 1</span>
                                         <span class="mx-2">·</span>
@@ -67,18 +68,20 @@
 
                             {{-- RIGHT: Department + Selected --}}
                             <div class="col-md-5 d-flex flex-column">
-                                <label class="form-label fw-bold mb-2" style="color: #003366;">
+                                <label class="form-label fw-bold mb-2 flex-shrink-0" style="color: #003366;">
                                     Select Department to Assign
                                 </label>
-                                <select id="departmentSingleSelect" class="form-select mb-3"
-                                    style="border-color: #003366;">
-                                    <option value="">Select a department...</option>
-                                </select>
 
-                                {{-- SELECTED section: fixed to same height as left column's checkbox list --}}
-                                <div class="border rounded flex-grow-1"
-                                    style="background:#f8f9fa; min-height: 320px; max-height: 320px; overflow: hidden;">
-                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 border-bottom"
+                                {{-- Department List --}}
+                                <div class="department-checkboxes mb-3 flex-shrink-0" id="departmentCheckboxList"
+                                    style="min-height: 200px; max-height: 200px; overflow-y: auto;">
+                                    {{-- JS fills checkboxes --}}
+                                </div>
+
+                                {{-- SELECTED section --}}
+                                <div class="border rounded d-flex flex-column"
+                                    style="background:#f8f9fa; min-height: 320px; max-height: 320px;">
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 border-bottom flex-shrink-0"
                                         style="background:#fff;">
                                         <strong class="small" style="color: #003366;">
                                             Selected <span id="massAssignSelectedCount"
@@ -96,15 +99,15 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <div id="massAssignSelectedList" class="px-3 py-2"
-                                        style="max-height: 280px; overflow-y: auto;">
+                                    
+                                    {{-- Scrollable Selected List --}}
+                                    <div id="massAssignSelectedList" class="px-3 py-2 flex-grow-1"
+                                        style="overflow-y: auto; min-height: 0;">
                                         <p class="text-muted small mb-0">No {{ strtolower($plural) }} selected yet.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        {{-- Selection summary alert removed per request --}}
                     </form>
                 </div>
 

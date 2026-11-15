@@ -751,7 +751,6 @@ ${row.building_type === 'container' ? `<div class="children-wrap" data-children-
             };
 
             // ==================== MASS ASSIGN ====================
-
             const maState = {
                 page: 1,
                 lastPage: 1,
@@ -767,7 +766,8 @@ ${row.building_type === 'container' ? `<div class="children-wrap" data-children-
 
             const maFetchPage = async (page = 1) => {
                 const p = new URLSearchParams({
-                    page
+                    page,
+                    per_page: 15 // Load 15 facilities per page
                 });
                 if (maState.search) p.set('search', maState.search);
                 return apiFetch(`/api/facilities/dropdown?${p.toString()}`);
@@ -875,11 +875,21 @@ ${row.building_type === 'container' ? `<div class="children-wrap" data-children-
                 try {
                     const res = await apiFetch("/api/departments");
                     const list = Array.isArray(res) ? res : (res.data || []);
-                    const sel = document.getElementById('departmentSingleSelect');
-                    if (sel) sel.innerHTML = '<option value="">Select a department...</option>' +
-                        list.map(d =>
-                            `<option value="${d.department_id}">${escapeHtml(d.department_name)}</option>`)
-                        .join('');
+                    const container = document.getElementById('departmentCheckboxList');
+                    if (!container) return;
+
+                    // Render departments as CHECKBOXES
+                    container.innerHTML = list.map(d => `
+                        <div class="form-check py-1 border-bottom">
+                            <input class="form-check-input ma-department-checkbox" type="checkbox"
+                                   value="${d.department_id}"
+                                   id="ma-dept-${d.department_id}">
+                            <label class="form-check-label small" for="ma-dept-${d.department_id}">
+                                ${escapeHtml(d.department_name)}
+                            </label>
+                        </div>
+                    `).join('');
+
                     maState.departmentsLoaded = true;
                 } catch (e) {
                     console.error(e);
@@ -894,9 +904,9 @@ ${row.building_type === 'container' ? `<div class="children-wrap" data-children-
                 const next = document.getElementById('massAssignNext');
                 const selectPage = document.getElementById('massAssignSelectPage');
                 const clearAll = document.getElementById('massAssignClearAll');
-                const deptSel = document.getElementById('departmentSingleSelect');
                 const execBtn = document.getElementById('executeMassAssignBtn');
                 const confirmBtn = document.getElementById('confirmAssignBtn');
+                
                 if (!searchInput || !execBtn || !confirmBtn) {
                     console.error('[mass-assign] modal elements not found after template clone');
                     return;
@@ -950,15 +960,17 @@ ${row.building_type === 'container' ? `<div class="children-wrap" data-children-
                 });
 
                 execBtn.addEventListener('click', () => {
-                    const deptId = deptSel?.value;
-                    if (maState.selected.size === 0) return showToast(
-                        'Please select at least one facility', 'error');
-                    if (!deptId) return showToast('Please select a department', 'error');
+                    const checkedDepts = Array.from(document.querySelectorAll('.ma-department-checkbox:checked')).map(cb => ({
+                        id: parseInt(cb.value),
+                        name: document.querySelector(`label[for="${cb.id}"]`)?.textContent.trim()
+                    }));
+
+                    if (maState.selected.size === 0) return showToast('Please select at least one facility', 'error');
+                    if (checkedDepts.length === 0) return showToast('Please select at least one department', 'error');
 
                     maState.pendingAssignment = {
                         ids: Array.from(maState.selected.keys()),
-                        deptId: parseInt(deptId),
-                        deptName: deptSel.options[deptSel.selectedIndex].text,
+                        depts: checkedDepts,
                     };
 
                     ensureModal('assignmentWarningTemplate', 'assignmentWarningModal');
@@ -992,16 +1004,23 @@ ${row.building_type === 'container' ? `<div class="children-wrap" data-children-
                         '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
                     try {
-                        await apiFetch('/api/admin/facilities/mass-assign-department', {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                facility_ids: maState.pendingAssignment.ids,
-                                department_id: maState.pendingAssignment.deptId,
-                            }),
-                        });
+                        // Backend will sync all selected departments to all facilities
+                        for (const dept of maState.pendingAssignment.depts) {
+                            await apiFetch('/api/admin/facilities/mass-assign-department', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    facility_ids: maState.pendingAssignment.ids,
+                                    department_id: dept.id,
+                                }),
+                            });
+                        }
+
+                        const countFac = maState.pendingAssignment.ids.length;
+                        const countDept = maState.pendingAssignment.depts.length;
                         showToast(
-                            `Assigned ${maState.pendingAssignment.ids.length} facility/facilities to ${maState.pendingAssignment.deptName}`,
+                            `Assigned ${countDept} department(s) to ${countFac} facility/facilities.`,
                             'success');
+                            
                         bootstrap.Modal.getInstance(document.getElementById(
                             'assignmentWarningModal'))?.hide();
                         bootstrap.Modal.getInstance(document.getElementById(
@@ -1021,46 +1040,63 @@ ${row.building_type === 'container' ? `<div class="children-wrap" data-children-
                 });
             };
 
-            const openMassAssignModal = async () => {
-                ensureModal('massAssignModalTemplate', 'massAssignDepartmentsModal');
-                if (!document.getElementById('massAssignDepartmentsModal')) {
-                    showToast('Failed to open modal', 'error');
-                    return;
+            const openMassAssignModal = async (e) => {
+                const btn = e.currentTarget;
+                const origHtml = btn.innerHTML;
+
+                // 1. Set Loading State
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+
+                try {
+                    ensureModal('massAssignModalTemplate', 'massAssignDepartmentsModal');
+                    if (!document.getElementById('massAssignDepartmentsModal')) {
+                        showToast('Failed to open modal', 'error');
+                        return;
+                    }
+
+                    maState.page = 1;
+                    maState.search = '';
+                    maState.currentRows = [];
+                    maState.selected.clear();
+                    maState.pendingAssignment = null;
+
+                    const searchInput = document.getElementById('massAssignSearch');
+                    const searchClear = document.getElementById('massAssignSearchClear');
+                    const selList = document.getElementById('massAssignSelectedList');
+                    const selCount = document.getElementById('massAssignSelectedCount');
+                    const summary = document.getElementById('summaryText');
+
+                    if (searchInput) searchInput.value = '';
+                    if (searchClear) searchClear.style.display = 'none';
+                    
+                    // Reset department selection
+                    document.querySelectorAll('.ma-department-checkbox').forEach(cb => cb.checked = false);
+                    
+                    if (selList) selList.innerHTML =
+                        '<p class="text-muted small mb-0">No facilities selected yet.</p>';
+                    if (selCount) selCount.textContent = '0';
+                    if (summary) summary.textContent = 'Please select at least one facility.';
+
+                    if (!maState.wired) {
+                        wireMassAssignControls();
+                        maState.wired = true;
+                    }
+
+                    // Fetch data
+                    await Promise.all([maLoadPage(1), maLoadDepartments()]);
+
+                    // Show modal
+                    new bootstrap.Modal(document.getElementById('massAssignDepartmentsModal')).show();
+                    
+                } finally {
+                    // 2. Restore Button State
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
                 }
-
-                maState.page = 1;
-                maState.search = '';
-                maState.currentRows = [];
-                maState.selected.clear();
-                maState.pendingAssignment = null;
-
-                const searchInput = document.getElementById('massAssignSearch');
-                const searchClear = document.getElementById('massAssignSearchClear');
-                const deptSel = document.getElementById('departmentSingleSelect');
-                const selList = document.getElementById('massAssignSelectedList');
-                const selCount = document.getElementById('massAssignSelectedCount');
-                const summary = document.getElementById('summaryText');
-
-                if (searchInput) searchInput.value = '';
-                if (searchClear) searchClear.style.display = 'none';
-                if (deptSel) deptSel.value = '';
-                if (selList) selList.innerHTML =
-                    '<p class="text-muted small mb-0">No facilities selected yet.</p>';
-                if (selCount) selCount.textContent = '0';
-                if (summary) summary.textContent = 'Please select at least one facility.';
-
-                if (!maState.wired) {
-                    wireMassAssignControls();
-                    maState.wired = true;
-                }
-
-                await Promise.all([maLoadPage(1), maLoadDepartments()]);
-
-                new bootstrap.Modal(document.getElementById('massAssignDepartmentsModal')).show();
             };
 
             document.getElementById('massAssignBtn').addEventListener('click', openMassAssignModal);
-
 
             // ==================== BOOT ====================
             fetchIndexForTabs(true);

@@ -17,7 +17,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Hour',
                 'category_id' => 1, 
                 'status_id' => 1,  
-                'managed_by' => 4, 
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -28,7 +27,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Hour',
                 'category_id' => 1,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -39,7 +37,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Hour',
                 'category_id' => 1,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -50,7 +47,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Hour',
                 'category_id' => 1,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -63,7 +59,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event', // Was 'Per Piece, Show'
                 'category_id' => 2, // Assuming new category
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -74,7 +69,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event', // Was 'Per Piece, Show'
                 'category_id' => 2,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -85,7 +79,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event', // Was 'Piece, Show'
                 'category_id' => 2,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -96,7 +89,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event', // Was 'Show'
                 'category_id' => 2,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -109,7 +101,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Hour', // Default
                 'category_id' => 3, // Assuming new category
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -120,7 +111,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Hour', // Default
                 'category_id' => 3,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -131,7 +121,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event',
                 'category_id' => 3,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -144,7 +133,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event', // Was 'Per Show'
                 'category_id' => 4, // Assuming new category
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -155,7 +143,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event', // Was 'Per Show'
                 'category_id' => 4,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -166,7 +153,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event',
                 'category_id' => 5, // Assuming new category
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -177,7 +163,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event',
                 'category_id' => 5,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -188,7 +173,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event',
                 'category_id' => 5,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -199,7 +183,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event',
                 'category_id' => 4,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -210,7 +193,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Hour', // Default
                 'category_id' => 1,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -221,7 +203,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Hour', // Default
                 'category_id' => 1,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -232,7 +213,6 @@ class EquipmentSeeder extends Seeder
                 'rate_type' => 'Per Event', // Was 'Per Show'
                 'category_id' => 1,
                 'status_id' => 1,
-                'managed_by' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

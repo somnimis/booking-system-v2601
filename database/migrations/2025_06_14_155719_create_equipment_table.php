@@ -27,15 +27,10 @@ return new class extends Migration {
             $table->unsignedBigInteger('deleted_by')->nullable();
             $table->dateTime('last_booked_at')->nullable();
 
-            // equipment ownership
-            $table->unsignedTinyInteger('managed_by')->nullable();
-            $table->unsignedBigInteger('account_number')->nullable();
-
             // Foreign key constraints
             $table->foreign('created_by')->references('admin_id')->on('admins')->onDelete('set null');
             $table->foreign('updated_by')->references('admin_id')->on('admins')->onDelete('set null');
             $table->foreign('deleted_by')->references('admin_id')->on('admins')->onDelete('set null');
-            $table->foreign('managed_by')->references('department_id')->on('departments')->onDelete('set null');
 
             $table->foreign('category_id')->references('category_id')->on('equipment_categories')->onDelete('restrict');
             $table->foreign('status_id')->references('status_id')->on('availability_statuses')->onDelete('restrict');
@@ -46,11 +41,9 @@ return new class extends Migration {
             $table->index('storage_location', 'idx_equipment_storage_location');
             $table->index('category_id', 'idx_equipment_category');
             $table->index('status_id', 'idx_equipment_status');
-            $table->index('managed_by', 'idx_equipment_managed_by');
 
             // Composite indexes for common query patterns
             $table->index(['category_id', 'status_id'], 'idx_equipment_category_status');
-            $table->index(['managed_by', 'status_id'], 'idx_equipment_managed_by_status');
             $table->index(['status_id', 'category_id'], 'idx_equipment_status_category');
 
             // Text search optimization (if using MySQL/PostgreSQL full-text search)

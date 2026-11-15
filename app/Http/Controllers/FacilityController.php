@@ -153,9 +153,11 @@ class FacilityController extends Controller
             }
         }
 
+        $perPage = $request->input('per_page', 10); // Default to 10, but allow overrides
+
         return $query
             ->orderBy('facility_name')
-            ->paginate(10);
+            ->paginate($perPage);
     }
 
     public function publicIndex(): JsonResponse
@@ -765,7 +767,7 @@ class FacilityController extends Controller
     }
 
     /**
-     * Mass assign a department to multiple facilities (update managed_by field)
+     * Mass assign a department to multiple facilities (updates the department_facilities pivot).
      */
     public function massAssignDepartment(Request $request): JsonResponse
     {
@@ -788,9 +790,8 @@ class FacilityController extends Controller
                 try {
                     $facility = Facility::findOrFail($facilityId);
 
-                    // Update the managed_by field
-                    $facility->managed_by = $departmentId;
-                    $facility->save();
+                    // Replace all existing departments with the new one
+                    $facility->departments()->sync([$departmentId]);
 
                     $results['success'][] = [
                         'facility_id' => $facilityId,
@@ -902,14 +903,37 @@ class FacilityController extends Controller
                 'category',
                 'subcategory',
                 'status',
-                'department',
+                'departments',
                 'images'
             ])->findOrFail($id);
 
             return response()->json([
-                'data' => $facility
+                'data' => [
+                    'facility_id' => $facility->facility_id,
+                    'facility_name' => $facility->facility_name,
+                    'facility_code' => $facility->facility_code,
+                    'facility_role' => $facility->facility_role,
+                    'parent_facility_id' => $facility->parent_facility_id,
+                    'category_id' => $facility->category_id,
+                    'subcategory_id' => $facility->subcategory_id,
+                    'capacity' => $facility->capacity,
+                    'floor_level' => $facility->floor_level,
+                    'total_levels' => $facility->total_levels,
+                    'base_fee' => $facility->base_fee,
+                    'rate_type' => $facility->rate_type,
+                    'location_type' => $facility->location_type,
+                    'description' => $facility->description,
+                    'location_note' => $facility->location_note,
+                    'status_id' => $facility->status_id,
+                    'department_ids' => $facility->departments->pluck('department_id')->toArray(),
+                    'images' => $facility->images->map(fn($img) => [
+                        'image_id' => $img->image_id,
+                        'image_url' => $img->image_url,
+                        'image_type' => $img->image_type,
+                        'sort_order' => $img->sort_order,
+                    ])->toArray(),
+                ]
             ]);
-
         } catch (\Exception $e) {
             \Log::error('Error fetching facility: ' . $e->getMessage());
             return response()->json([

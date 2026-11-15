@@ -3,511 +3,267 @@
 @section('title', 'Edit Facility')
 
 @section('content')
-    <style>
-        label.required::after {
-            content: " *";
-            color: red;
-            font-weight: bold;
-        }
+    <link rel="stylesheet" href="{{ asset('css/admin/facility-form.css') }}">
 
-        /* Toast notification styles */
-        .toast {
-            z-index: 1100;
-            bottom: 0;
-            left: 0;
-            margin: 1rem;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: transform 0.4s ease, opacity 0.4s ease;
-            min-width: 250px;
-            border-radius: 0.3rem;
-        }
-
-        .toast .loading-bar {
-            height: 3px;
-            background: rgba(255, 255, 255, 0.7);
-            width: 100%;
-            transition: width 3000ms linear;
-        }
-
-        input[readonly],
-        textarea[readonly] {
-            pointer-events: none;
-            /* disables clicking/selection */
-            user-select: none;
-            /* prevents highlighting */
-            background-color: #fff;
-            /* optional: removes gray "disabled" look */
-            cursor: default;
-            /* arrow cursor instead of I-beam */
-        }
-
-        /* Add this to your existing styles */
-        #photosPreview {
-            min-height: 110px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .photo-preview {
-            position: relative;
-            width: 100px;
-            height: 100px;
-        }
-
-        /* Layout fixes */
-        .dropzone {
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #photosPreview {
-            min-height: 110px;
-        }
-
-        .form-control,
-        .form-select {
-            padding: 0.5rem 0.75rem;
-        }
-
-        textarea.form-control {
-            min-height: 100px;
-        }
-
-        .row.mb-4 {
-            margin-bottom: 1.5rem !important;
-        }
-
-        #itemsContainer {
-            min-height: 100px;
-        }
-
-        .amenity-item,
-        .facility-item {
-            margin-bottom: 0.75rem;
-        }
-
-        .modal-body .dropzone {
-            min-height: 150px;
-        }
-
-        .photo-container {
-            position: relative;
-        }
-
-        .photo-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
-        }
-
-        .change-photo-btn {
-            z-index: 1;
-        }
-
-        .facility-item img {
-            max-width: 100px;
-            /* Restrict photo width */
-            max-height: 100px;
-            /* Restrict photo height */
-            object-fit: cover;
-            /* Ensure photo fits within bounds */
-        }
-
-        .facility-item .card-body {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            /* Add spacing between elements */
-        }
-
-        .facility-item .flex-grow-1 {
-            flex: 1;
-            /* Allow details section to take remaining space */
-        }
-    </style>
-    <!-- Main Content -->
     <main id="main">
-        <div class="container-fluid px-4">
-            <!-- Edit Facility Page -->
+        <div class="container main-content mb-5" style="max-width: 960px; margin-left: auto; margin-right: auto;"
+            x-data="facilityForm()" x-cloak>
 
-            <div class="card-body">
-                <form id="editFacilityForm">
-                    <input type="hidden" id="facilityId" value="{{ request()->get('id') }}">
+            <div class="bg-white border rounded-3 admin-livewire-form" style="border-color: #dee2e6;">
 
-                    <!-- Overall Row Container -->
-                    <div class="row mb-4 align-items-stretch">
+                <style>
+                    .admin-livewire-form .form-page-title {
+                        font-family: "Fraunces", Georgia, serif;
+                        font-weight: 900;
+                        font-size: 1.25rem;
+                        margin: 0;
+                        color: #fff;
+                    }
+                    [x-cloak] { display: none !important; }
+                </style>
 
-                        <!-- Row 1: Photos and Basic Facility Details -->
-                        <div class="row mb-4">
-                            <!-- Facility Details Card (now containing photos section) -->
+                {{-- Page header --}}
+                <div class="d-flex justify-content-between align-items-center p-3"
+                    style="background: #045191; border-top-left-radius: 0.375rem; border-top-right-radius: 0.375rem;">
+                    <h4 class="form-page-title">Edit Facility</h4>
+                    <a href="{{ url('/admin/manage-facilities') }}" class="btn btn-sm btn-light">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Facilities
+                    </a>
+                </div>
+
+                <div class="p-4 position-relative" style="min-height: 400px;">
+                    
+                    {{-- Loading Overlay (covers form area, spinner elevated to top third) --}}
+                    <div id="pageLoadingOverlay" style="display: flex; position: absolute; inset: 0; background: #fff; z-index: 10; justify-content: center; align-items: flex-start; padding-top: 15vh;">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted mb-0">Loading facility data...</p>
+                        </div>
+                    </div>
+
+                    <form id="editFacilityForm">
+                        <input type="hidden" id="facilityId" value="{{ $facilityId }}">
+
+                        {{-- ============ FACILITY TYPE ============ --}}
+                        <div class="row mb-3">
                             <div class="col-12">
                                 <div class="card">
-                                    <div class="card-header d-flex justify-content-between align-items-center"
-                                        style="height: 56px;">
-                                        <h5 class="fw-bold mb-0">Facility Details</h5>
+                                    <div class="card-header"><strong>Facility Type</strong></div>
+                                    <div class="card-body row g-3">
+
+                                        <div class="col-md-4">
+                                            <input type="radio" class="btn-check" name="facility_role" id="type_venue"
+                                                value="Venue" :checked="facilityRole === 'Venue'"
+                                                @change="onFacilityRoleChange('Venue', $event)">
+                                            <label class="type-option d-block" for="type_venue">
+                                                <div class="type-title">Venue</div>
+                                                <div class="type-help">A bookable facility that does not contain
+                                                    other rooms (e.g., Gymnasium, Auditorium).</div>
+                                            </label>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <input type="radio" class="btn-check" name="facility_role" id="type_container"
+                                                value="Container" :checked="facilityRole === 'Container'"
+                                                @change="onFacilityRoleChange('Container', $event)">
+                                            <label class="type-option d-block" for="type_container">
+                                                <div class="type-title">Container</div>
+                                                <div class="type-help">Groups rooms together and is not bookable
+                                                    itself (e.g., College Building).</div>
+                                            </label>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <input type="radio" class="btn-check" name="facility_role" id="type_room"
+                                                value="Room" :checked="facilityRole === 'Room'"
+                                                @change="onFacilityRoleChange('Room', $event)">
+                                            <label class="type-option d-block" for="type_room">
+                                                <div class="type-title">Room</div>
+                                                <div class="type-help">A bookable space inside a container
+                                                    building (e.g., Room 301 in Engineering Hall).</div>
+                                            </label>
+                                        </div>
+
+                                        <div class="col-12" x-show="facilityRole === 'Room'" x-cloak>
+                                            <label for="parentFacilityId" class="form-label">
+                                                Parent Building
+                                            </label>
+                                            <select class="form-select" id="parentFacilityId" x-model="parentFacilityId">
+                                                <option value="">Select a container building…</option>
+                                                <template x-for="building in containerBuildings"
+                                                    :key="building.facility_id">
+                                                    <option :value="building.facility_id" x-text="building.facility_name">
+                                                    </option>
+                                                </template>
+                                            </select>
+                                            <small class="text-muted">
+                                                Rooms must belong to a container building.
+                                            </small>
+                                        </div>
+
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- ============ PHOTOS & MAIN INFO ============ --}}
+                        <div class="row mb-3 d-flex align-items-stretch">
+                            <div class="col-md-6 mb-3 mb-md-0 d-flex">
+                                <div class="card w-100">
+                                    <div class="card-header"><strong>Facility Photos</strong></div>
                                     <div class="card-body">
-                                        <!-- Photos and Basic Information Side by Side -->
-                                        <div class="row">
-                                            <!-- Photos Section - Left Column -->
-                                            <div class="col-md-6">
-                                                <div class="photo-section">
-                                                    <div class="dropzone border p-4 text-center" id="facilityPhotosDropzone"
-                                                        style="cursor: pointer;">
-                                                        <i class="bi bi-images fs-1 text-muted"></i>
-                                                        <p class="mt-2">Drag & drop facility photos here or click to browse
-                                                        </p>
-                                                        <input type="file" id="facilityPhotos" class="d-none" multiple
-                                                            accept="image/*">
-                                                    </div>
-                                                    <small class="text-muted mt-2 d-block">
-                                                        Upload at least one photo of the facility (max 5 photos)
-                                                    </small>
-                                                    <div id="photosPreview" class="d-flex flex-wrap gap-2 mt-3"></div>
-                                                </div>
-                                            </div>
+                                        <div class="dropzone border p-4 text-center"
+                                            id="facilityPhotosDropzone" style="cursor: pointer;">
+                                            <i class="bi bi-images fs-1 text-muted"></i>
+                                            <p class="mt-2 mb-0">Drag &amp; drop facility photos here or click
+                                                to browse</p>
+                                            <input type="file" id="facilityPhotos" class="d-none" multiple
+                                                accept="image/*">
+                                        </div>
+                                        <small class="text-muted mt-2 d-block">
+                                            Max 5 photos. The blue star marks the primary photo.
+                                        </small>
+                                        <div id="photosPreview" class="d-flex flex-wrap gap-2 mt-3"></div>
+                                    </div>
+                                </div>
+                            </div>
 
-                                            <!-- Basic Information Section - Right Column -->
-
-                                            <div class="col-md-6">
-                                                <div class="details-section">
-                                                    <!-- Facility Information Header -->
-                                                    <div class="row mb-3">
-                                                        <div class="col-12 d-flex align-items-center">
-                                                            <div class="flex-grow-1 border-top"></div>
-                                                            <h6 class="text-center mx-3 fw-bold text-primary mb-0">Main
-                                                                Information</h6>
-                                                            <div class="flex-grow-1 border-top"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row mb-3">
-                                                        <div class="col-md-6">
-                                                            <label for="facilityName"
-                                                                class="form-label fw-bold d-flex align-items-center">
-                                                                Facility Name
-                                                                <i class="bi bi-pencil text-secondary ms-2 edit-icon"
-                                                                    data-field="facilityName" style="cursor: pointer;"></i>
-                                                                <div class="edit-actions ms-2 d-none"
-                                                                    data-field="facilityName">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-success me-1 save-btn">
-                                                                        <i class="bi bi-check"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-danger cancel-btn">
-                                                                        <i class="bi bi-x"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </label>
-                                                            <input type="text" class="form-control text-secondary" required
-                                                                id="facilityName" value="" readonly
-                                                                placeholder="Facility Name">
-                                                        </div>
-
-                                                        <div class="col-md-6">
-                                                            <label for="buildingCode"
-                                                                class="form-label fw-bold d-flex align-items-center">
-                                                                Facility Code
-                                                                <i class="bi bi-pencil text-secondary ms-2 edit-icon"
-                                                                    data-field="buildingCode" style="cursor: pointer;"></i>
-                                                                <div class="edit-actions ms-2 d-none"
-                                                                    data-field="buildingCode">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-success me-1 save-btn">
-                                                                        <i class="bi bi-check"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-danger cancel-btn">
-                                                                        <i class="bi bi-x"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </label>
-                                                            <input type="text" class="form-control text-secondary" required
-                                                                id="buildingCode" value="" readonly
-                                                                placeholder="Facility Code">
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="row mb-3">
-                                                        <div class="col-12 position-relative">
-                                                            <label for="description"
-                                                                class="form-label fw-bold d-flex align-items-center">
-                                                                Description
-                                                                <i class="bi bi-pencil text-secondary ms-2 edit-icon"
-                                                                    data-field="description" style="cursor: pointer;"></i>
-                                                                <div class="edit-actions ms-2 d-none"
-                                                                    data-field="description">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-success me-1 save-btn">
-                                                                        <i class="bi bi-check"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-danger cancel-btn">
-                                                                        <i class="bi bi-x"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </label>
-                                                            <textarea class="form-control text-secondary" id="description"
-                                                                rows="3" readonly
-                                                                placeholder="Write a description..."></textarea>
-                                                            <small
-                                                                class="text-muted position-absolute bottom-0 end-0 me-4 mb-1"
-                                                                id="descriptionWordCount">0/250 characters</small>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="row mb-3">
-
-                                                        <!-- Rental Fee -->
-                                                        <div class="col-md-6">
-                                                            <label for="rentalFee"
-                                                                class="form-label fw-bold d-flex align-items-center">
-                                                                Rental Fee (₱)
-                                                            </label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text">₱</span>
-                                                                <input type="number" class="form-control" id="rentalFee"
-                                                                    min="0" step="0.01" required placeholder="0.00">
-                                                            </div>
-                                                        </div>
-                                                        <!-- Rate Type -->
-                                                        <div class="col-md-6">
-                                                            <label for="rateType"
-                                                                class="form-label fw-bold d-flex align-items-center">
-                                                                Rate Type
-                                                            </label>
-                                                            <select class="form-select" id="rateType" required>
-                                                                <option value="Per Hour">Per Hour</option>
-                                                                <option value="Per Event">Per Event</option>
-                                                            </select>
-                                                        </div>
-
-
-
-                                                        <!-- Category and Subcategory row -->
-                                                        <div class="row mt-3 mb-3">
-                                                            <div class="col-md-6">
-                                                                <label for="category"
-                                                                    class="form-label fw-bold d-flex align-items-center">
-                                                                    Category
-                                                                </label>
-                                                                <select class="form-select" id="category" required>
-                                                                    <option value="">Select Category</option>
-                                                                    <!-- Categories populated dynamically -->
-                                                                </select>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label for="subcategory"
-                                                                    class="form-label fw-bold d-flex align-items-center">
-                                                                    Subcategory
-                                                                </label>
-                                                                <select class="form-select" id="subcategory">
-                                                                    <option value="">Select Subcategory</option>
-                                                                    <!-- Subcategories populated dynamically -->
-                                                                </select>
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-                                                </div>
+                            <div class="col-md-6 d-flex">
+                                <div class="card w-100">
+                                    <div class="card-header"><strong>Main Information</strong></div>
+                                    <div class="card-body row g-3">
+                                        <div class="col-md-6">
+                                            <label for="facilityName" class="form-label">Facility Name</label>
+                                            <input type="text" class="form-control" required maxlength="50" id="facilityName" placeholder="e.g. Engineering Hall">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="buildingCode" class="form-label">Facility Code</label>
+                                            <input type="text" class="form-control" maxlength="20" id="buildingCode" placeholder="e.g. ENG-HALL">
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="description" class="form-label">Description</label>
+                                            <textarea class="form-control" id="description" rows="3" maxlength="250" placeholder="Short description of the facility..."></textarea>
+                                            <small class="text-muted d-block text-end mt-1" id="descriptionWordCount">0/250 characters</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="rentalFee" class="form-label">Rental Fee (₱)</label>
+                                            <div class="input-group" :data-bs-toggle="isContainer ? 'tooltip' : null" :data-bs-title="isContainer ? 'Not applicable to containers.' : null">
+                                                <span class="input-group-text">₱</span>
+                                                <input type="number" class="form-control" id="rentalFee" min="0" step="0.01" placeholder="0.00" :disabled="isContainer">
                                             </div>
                                         </div>
-
-                                        <!-- Divider: More Details -->
-                                        <div class="row my-1">
-                                            <div class="col-12 d-flex align-items-center">
-                                                <div class="flex-grow-1 border-top"></div>
-                                                <h6 class="text-center text-primary mx-3 mb-0 fw-bold">Additional Details
-                                                </h6>
-                                                <div class="flex-grow-1 border-top"></div>
-                                            </div>
+                                        <div class="col-md-6">
+                                            <label for="rateType" class="form-label">Rate Type</label>
+                                            <span class="d-block" :data-bs-toggle="isContainer ? 'tooltip' : null" :data-bs-title="isContainer ? 'Not applicable to containers.' : null">
+                                                <select class="form-select" id="rateType" :disabled="isContainer">
+                                                    <option value="Per Hour">Per Hour</option>
+                                                    <option value="Per Event">Per Event</option>
+                                                </select>
+                                            </span>
                                         </div>
-
-                                        <!-- New Row: Category, Subcategory, and Capacity Section Below -->
-                                        <div class="row my-3">
-
-                                            <!-- Capacity & Location Section -->
-                                            <div class="row mb-3">
-                                                <div class="col-md-3">
-                                                    <label for="capacity"
-                                                        class="form-label fw-bold d-flex align-items-center">
-                                                        Capacity
-                                                    </label>
-                                                    <input type="number" class="form-control" id="capacity" min="1"
-                                                        value="1" required>
-                                                </div>
-
-                                                <div class="col-md-3">
-                                                    <label for="floorLevel"
-                                                        class="form-label fw-bold d-flex align-items-center">
-                                                        Floor Level
-                                                    </label>
-                                                    <input type="number" class="form-control" id="floorLevel" min="1"
-                                                        placeholder="Floor Level">
-                                                </div>
-                                                <!-- Building Details Section -->
-                                                <div class="col-md-3">
-                                                    <label for="totalLevels"
-                                                        class="form-label fw-bold d-flex align-items-center">
-                                                        Total Levels
-                                                    </label>
-                                                    <input type="number" class="form-control" id="totalLevels" min="1"
-                                                        placeholder="Total Levels">
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <label for="totalRooms"
-                                                        class="form-label fw-bold d-flex align-items-center">
-                                                        Total Rooms
-                                                    </label>
-                                                    <input type="number" class="form-control" id="totalRooms" min="1"
-                                                        placeholder="Total Rooms">
-                                                </div>
-                                            </div>
-
-                                            <!-- Pricing Section -->
-                                            <div class="row mb-3">
-                                                <!-- Location Note: wider (8 of 12 columns) -->
-                                                <div class="col-md-9">
-                                                    <label for="locationNote"
-                                                        class="form-label fw-bold d-flex align-items-center">
-                                                        Location Note
-                                                        <i class="bi bi-pencil text-secondary ms-2 edit-icon"
-                                                            data-field="locationNote" style="cursor: pointer;"></i>
-                                                        <div class="edit-actions ms-2 d-none" data-field="locationNote">
-                                                            <button type="button"
-                                                                class="btn btn-sm btn-success me-1 save-btn">
-                                                                <i class="bi bi-check"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-danger cancel-btn">
-                                                                <i class="bi bi-x"></i>
-                                                            </button>
-                                                        </div>
-                                                    </label>
-                                                    <input type="text" class="form-control text-secondary" id="locationNote"
-                                                        value="" readonly placeholder="Write directions to facility...">
-                                                </div>
-                                                <!-- Location Type: narrower (4 of 12 columns) -->
-                                                <div class="col-md-3">
-                                                    <label for="locationType"
-                                                        class="form-label fw-bold d-flex align-items-center">
-                                                        Location Type
-                                                    </label>
-                                                    <select class="form-select" id="locationType" required>
-                                                        <option value="Indoors">Indoors</option>
-                                                        <option value="Outdoors">Outdoors</option>
-                                                    </select>
-                                                </div>
-
-
-
-                                            </div>
-                                            <div class="row mb-3">
-                                                <!-- Department Section -->
-                                                <div class="col-md-6">
-                                                    <label for="departments"
-                                                        class="form-label fw-bold d-flex align-items-center">
-                                                        Owning Departments
-                                                    </label>
-                                                    <select class="form-select" id="departments" name="departments[]"
-                                                        multiple required size="4">
-                                                        <!-- Departments will be populated dynamically -->
-                                                    </select>
-                                                    <small class="text-muted">Hold Ctrl/Cmd to select multiple
-                                                        departments</small>
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label for="availabilityStatus"
-                                                        class="form-label fw-bold d-flex align-items-center">
-                                                        Availability Status
-                                                    </label>
-                                                    <select class="form-select" id="availabilityStatus" required>
-                                                        <!-- Statuses will be populated dynamically -->
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <!-- Form Actions -->
-                                            <div class="d-flex justify-content-end mt-3 gap-2">
-                                                <button type="button" class="btn btn-secondary"
-                                                    id="cancelBtn">Discard</button>
-                                                <button type="submit" class="btn btn-primary">Update Facility</button>
-                                            </div>
-
+                                        <div class="col-md-6">
+                                            <label for="category" class="form-label">Category</label>
+                                            <select class="form-select" id="category" required>
+                                                <option value="">Select Category</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="subcategory" class="form-label">Subcategory</label>
+                                            <select class="form-select" id="subcategory" required>
+                                                <option value="">Select Subcategory</option>
+                                            </select>
                                         </div>
                                     </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                    </div>
-
-                    <!-- Image Deletion Confirmation Modal -->
-                    <div class="modal fade" id="deleteImageModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Confirm Image Deletion</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    Are you sure you want to delete this photo? This action cannot be undone.
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="button" class="btn btn-danger" id="confirmDeleteImageBtn">Delete
-                                        Photo</button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </form>
 
-            </div>
+                        {{-- ============ ADDITIONAL DETAILS ============ --}}
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header"><strong>Additional Details</strong></div>
+                                    <div class="card-body row g-3">
+                                        <div class="col-md-4">
+                                            <label for="capacity" class="form-label">Capacity</label>
+                                            <input type="number" class="form-control" id="capacity" min="1" required placeholder="e.g. 100">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="floorLevel" class="form-label">Floor Level</label>
+                                            <span class="d-block" :data-bs-toggle="isContainer ? 'tooltip' : null" :data-bs-title="isContainer ? 'Not applicable to containers.' : null">
+                                                <input type="number" class="form-control" id="floorLevel" min="1" placeholder="e.g. 2" :disabled="isContainer">
+                                            </span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="totalLevels" class="form-label">Total Levels</label>
+                                            <input type="number" class="form-control" id="totalLevels" min="1" placeholder="e.g. 5">
+                                        </div>
+                                        <div class="col-md-9">
+                                            <label for="locationNote" class="form-label">Location Note</label>
+                                            <input type="text" class="form-control" id="locationNote" maxlength="200" placeholder="Directions to the facility...">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="locationType" class="form-label">Location Type</label>
+                                            <select class="form-select" id="locationType" required>
+                                                <option value="Indoors">Indoors</option>
+                                                <option value="Outdoors">Outdoors</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Owning Departments</label>
+                                            <div class="department-checkboxes" id="departmentCheckboxes">
+                                                <template x-if="departments.length === 0">
+                                                    <div class="department-checkboxes-loading">
+                                                        <span class="spinner-border spinner-border-sm me-2"></span> Loading departments…
+                                                    </div>
+                                                </template>
+                                                <template x-for="dep in departments" :key="dep.department_id">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="department_ids" :value="dep.department_id" :id="`main_dep_${dep.department_id}`" x-model="mainDepartmentIds">
+                                                        <label class="form-check-label" :for="`main_dep_${dep.department_id}`" x-text="dep.department_name"></label>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <small class="text-muted">Select one or more departments.</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Availability Status</label>
+                                            <div class="department-checkboxes" id="availabilityStatus"
+                                                :class="{ 'opacity-50': isContainer }"
+                                                :data-bs-toggle="isContainer ? 'tooltip' : null"
+                                                :data-bs-title="isContainer ? 'Not applicable to containers.' : null">
+                                                <template x-if="statuses.length === 0">
+                                                    <div class="department-checkboxes-loading">
+                                                        <span class="spinner-border spinner-border-sm me-2"></span> Loading statuses…
+                                                    </div>
+                                                </template>
+                                                <template x-for="st in statuses" :key="st.status_id">
+                                                    <label class="status-item"
+                                                        :class="{ 'is-active': mainStatusId == st.status_id, 'pe-none': isContainer }">
+                                                        <input type="radio" class="form-check-input me-2" name="main_status" :value="st.status_id" x-model="mainStatusId" :disabled="isContainer">
+                                                        <span x-text="st.status_name"></span>
+                                                    </label>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-            <!-- Event Modal -->
-            <div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Event Details</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item">
-                                    <strong>Title:</strong> <span id="eventTitle"></span>
-                                </li>
-                                <li class="list-group-item">
-                                    <strong>Date:</strong> <span id="eventDate"></span>
-                                </li>
-                                <li class="list-group-item">
-                                    <strong>Time:</strong> <span id="eventTime">10:00 AM - 12:00 PM</span>
-                                </li>
-                                <li class="list-group-item">
-                                    <strong>Description:</strong> <span id="eventDescription"></span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
+
+            {{-- Action buttons OUTSIDE the form shell --}}
+            <div class="bg-white border rounded-3 p-3 mt-3 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" id="cancelBtn">Discard</button>
+                <button type="submit" form="editFacilityForm" class="btn btn-primary" id="saveFacilityBtn">
+                    <span class="spinner-border spinner-border-sm d-none me-1" id="saveFacilitySpinner"></span>
+                    <span id="saveFacilityBtnText">Save Changes</span>
+                </button>
+            </div>
+
             <!-- Reset Confirmation Modal -->
             <div class="modal fade" id="cancelConfirmationModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
@@ -526,868 +282,469 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </main>
 @endsection
 
 @section('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Global variables to track pending changes
-            window.pendingImageUploads = []; // New images to upload
-            window.pendingImageDeletions = []; // Images to delete
-            window.updatedFields = {}; // Field changes
-            window.facilityCategories = [];
+        function facilityForm() {
+            const tooltipInstances = new Set();
+            const jsonHeaders = { 'Accept': 'application/json' };
+            return {
+                facilityRole: 'Venue',
+                parentFacilityId: '',
+                containerBuildings: [],
+                categories: [],
+                departments: [],
+                statuses: [],
+                mainDepartmentIds: [],
+                mainStatusId: '',
 
-            // Authentication check
-            const token = localStorage.getItem('adminToken');
-            if (!token) {
-                window.location.href = '/admin/login';
-                return;
-            }
+                get isContainer() {
+                    return this.facilityRole === 'Container';
+                },
 
-            // Global helper function for toast notifications
-            window.showToast = function (message, type = 'success', duration = 3000) {
-                const toast = document.createElement('div');
+                async init() {
+                    this.refreshTooltips();
+                    await Promise.all([
+                        this.loadCategories(),
+                        this.loadDepartments(),
+                        this.loadStatuses(),
+                        this.loadContainerBuildings()
+                    ]);
+                    
+                    // Wait for dropdowns to populate before fetching the facility data
+                    await this.$nextTick();
+                    await this.fetchFacilityData();
+                },
 
-                // Toast base styles
-                toast.className = `toast align-items-center border-0 position-fixed start-0 mb-2`;
-                toast.style.zIndex = '1100';
-                toast.style.bottom = '0';
-                toast.style.left = '0';
-                toast.style.margin = '1rem';
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(20px)';
-                toast.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-                toast.setAttribute('role', 'alert');
-                toast.setAttribute('aria-live', 'assertive');
-                toast.setAttribute('aria-atomic', 'true');
-
-                // Colors
-                const bgColor = type === 'success' ? '#004183ff' : '#dc3545';
-                toast.style.backgroundColor = bgColor;
-                toast.style.color = '#fff';
-                toast.style.minWidth = '250px';
-                toast.style.borderRadius = '0.3rem';
-
-                toast.innerHTML = `
-                                        <div class="d-flex align-items-center px-3 py-1"> 
-                                            <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                                            <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                                            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                                        </div>
-                                        <div class="loading-bar" style="
-                                            height: 3px;
-                                            background: rgba(255,255,255,0.7);
-                                            width: 100%;
-                                            transition: width ${duration}ms linear;
-                                        "></div>
-                                    `;
-
-                document.body.appendChild(toast);
-
-                // Bootstrap toast instance
-                const bsToast = new bootstrap.Toast(toast, { autohide: false });
-                bsToast.show();
-
-                // Float up appear animation
-                requestAnimationFrame(() => {
-                    toast.style.opacity = '1';
-                    toast.style.transform = 'translateY(0)';
-                });
-
-                // Start loading bar animation
-                const loadingBar = toast.querySelector('.loading-bar');
-                requestAnimationFrame(() => {
-                    loadingBar.style.width = '0%';
-                });
-
-                // Remove after duration
-                setTimeout(() => {
-                    // Float down disappear animation
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateY(20px)';
-
-                    setTimeout(() => {
-                        bsToast.hide();
-                        toast.remove();
-                    }, 400);
-                }, duration);
-            };
-
-            // Initialize the delete confirmation modal
-            const deleteImageModal = new bootstrap.Modal('#deleteImageModal', {
-                backdrop: 'static',
-                keyboard: false
-            });
-
-            // Variables to track the image to be deleted
-            let currentDeletePhotoId = null;
-            let currentDeletePublicId = null;
-            let currentDeletePreviewElement = null;
-
-            // Function to handle image deletion with confirmation - only tracks for later
-            function handleImageDeletion(photoId, publicId, previewElement) {
-                currentDeletePhotoId = photoId;
-                currentDeletePublicId = publicId;
-                currentDeletePreviewElement = previewElement;
-
-                // Show the confirmation modal
-                deleteImageModal.show();
-            }
-
-            // Handle confirm delete button click - only tracks deletion for later processing
-            document.getElementById('confirmDeleteImageBtn').addEventListener('click', function () {
-                // Add to pending deletions for processing during form submission
-                if (currentDeletePhotoId || currentDeletePublicId) {
-                    window.pendingImageDeletions.push({
-                        photoId: currentDeletePhotoId,
-                        publicId: currentDeletePublicId,
-                        previewElement: currentDeletePreviewElement
-                    });
-                }
-
-                // Remove the preview element immediately (UI only)
-                if (currentDeletePreviewElement) {
-                    currentDeletePreviewElement.remove();
-                }
-
-                // Update the uploadedPhotos array (UI only)
-                window.uploadedPhotos = window.uploadedPhotos.filter(photo =>
-                    photo.id !== currentDeletePhotoId && photo.publicId !== currentDeletePublicId
-                );
-
-                // Hide the modal
-                deleteImageModal.hide();
-                showToast('Image will be deleted after saving.', 'success');
-            });
-
-            // Modified function to only track files for later upload
-            async function handleFacilityFiles(files) {
-                const photosPreview = document.getElementById('photosPreview');
-
-                for (const file of files) {
-                    // Check if file is an image
-                    if (!file.type.startsWith('image/')) {
-                        showToast('Please upload only image files', 'error');
-                        continue;
-                    }
-
-                    // Check if we've reached the maximum of 5 photos (including existing and pending)
-                    const totalPhotos = (window.uploadedPhotos?.length || 0) + (window.pendingImageUploads?.length || 0);
-                    if (totalPhotos >= 5) {
-                        showToast('Maximum of 5 photos allowed', 'error');
-                        break;
-                    }
-
+                async loadContainerBuildings() {
                     try {
-                        const previewId = 'pending_' + Date.now();
-
-                        // Create a preview only (no upload yet)
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            const preview = document.createElement('div');
-                            preview.className = 'photo-preview';
-                            preview.dataset.id = previewId;
-
-                            const img = document.createElement('img');
-                            img.src = e.target.result;
-                            img.className = 'img-thumbnail h-100 w-100 object-fit-cover';
-
-                            const removeBtn = document.createElement('button');
-                            removeBtn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0';
-                            removeBtn.innerHTML = '<i class="bi bi-x"></i>';
-                            removeBtn.onclick = function () {
-                                preview.remove();
-                                // Remove from pending uploads
-                                window.pendingImageUploads = window.pendingImageUploads.filter(
-                                    upload => upload.previewId !== previewId
-                                );
-                            };
-
-                            preview.appendChild(img);
-                            preview.appendChild(removeBtn);
-                            photosPreview.appendChild(preview);
-
-                            // Store file and preview info for later processing
-                            window.pendingImageUploads.push({
-                                file: file,
-                                previewId: previewId,
-                                previewElement: preview
-                            });
-                        };
-                        reader.readAsDataURL(file);
-
-                        showToast('Image added!', 'success');
-
-                    } catch (error) {
-                        console.error('Error processing file:', error);
-                        showToast('Failed to process file: ' + error.message, 'error');
-                    }
-                }
-            }
-
-            // Cloudinary direct upload implementation (now only called during form submission)
-            async function uploadToCloudinary(file, facilityId) {
-                const CLOUD_NAME = 'dn98ntlkd';
-                const UPLOAD_PRESET = 'facility-photos';
-
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', UPLOAD_PRESET);
-                formData.append('folder', `facility-photos/${facilityId}`);
-                formData.append('tags', `facility_${facilityId}`);
-
-                try {
-                    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error?.message || 'Upload failed');
-                    }
-
-                    const data = await response.json();
-                    console.log('Cloudinary upload successful:', data);
-                    return data;
-
-                } catch (error) {
-                    console.error('Cloudinary upload error:', error);
-                    throw error;
-                }
-            }
-
-            // Function to save image reference to your database (now only called during form submission)
-            async function saveImageToDatabase(facilityId, imageUrl, publicId) {
-                try {
-                    const response = await fetch(`/api/admin/facilities/${facilityId}/images/save`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            image_url: imageUrl,
-                            description: 'Facility photo'
-                        })
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('Database save failed:', response.status, errorText);
-                        throw new Error(`Failed to save image to database: ${response.status} ${errorText}`);
-                    }
-
-                    const result = await response.json();
-                    console.log('Image saved to database:', result);
-                    return result;
-
-                } catch (error) {
-                    console.error('Error saving image to database:', error);
-                    throw error;
-                }
-            }
-
-            // Function to delete image (now only called during form submission)
-            async function deleteImage(facilityId, imageId, cloudinaryPublicId) {
-                try {
-                    const token = localStorage.getItem('adminToken');
-
-                    // 1. Delete from Cloudinary via your simple backend endpoint
-                    if (cloudinaryPublicId) {
-                        await fetch(`/api/admin/cloudinary/delete`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ public_id: cloudinaryPublicId })
-                        });
-                        showToast('Image deleted from storage', 'success');
-                        console.log('Image deleted from Cloudinary:', cloudinaryPublicId);
-                    }
-
-                    // 2. Delete from your database
-                    const response = await fetch(`/api/admin/facilities/${facilityId}/images/${imageId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json'
+                        const res = await fetch('/api/facilities/dropdown?role=container', { headers: jsonHeaders });
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.containerBuildings = Array.isArray(data.data || data) ? (data.data || data) : [];
                         }
-                    });
+                    } catch (e) { console.error('containerBuildings', e); }
+                },
+                async loadList(url, prop, headers = jsonHeaders) {
+                    try {
+                        const res = await fetch(url, { headers });
+                        if (res.ok) this[prop] = await res.json();
+                    } catch (e) { console.error(prop, e); }
+                },
+                loadCategories() { return this.loadList('/api/facility-categories/index', 'categories'); },
+                loadDepartments() { return this.loadList('/api/departments', 'departments', { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}`, 'Accept': 'application/json' }); },
+                loadStatuses() { return this.loadList('/api/availability-statuses', 'statuses'); },
 
-                    if (!response.ok) {
-                        throw new Error('Failed to delete image from database');
+                async fetchFacilityData() {
+                    const id = document.getElementById('facilityId').value;
+                    try {
+                        const res = await fetch(`/api/admin/facilities/${id}`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (!res.ok) throw new Error('Failed to fetch facility data');
+                        
+                        const { data } = await res.json();
+                        
+                        // Populate Alpine state
+                        this.facilityRole = data.facility_role;
+                        this.parentFacilityId = data.parent_facility_id || '';
+                        this.mainDepartmentIds = data.department_ids.map(Number);
+                        this.mainStatusId = data.status_id || '';
+
+                        // Populate DOM elements
+                        document.getElementById('facilityName').value = data.facility_name || '';
+                        document.getElementById('buildingCode').value = data.facility_code || '';
+                        document.getElementById('description').value = data.description || '';
+                        document.getElementById('description').dispatchEvent(new Event('input')); // Update counter
+                        document.getElementById('rentalFee').value = data.base_fee || '';
+                        document.getElementById('rateType').value = data.rate_type || 'Per Hour';
+                        document.getElementById('capacity').value = data.capacity || '';
+                        document.getElementById('floorLevel').value = data.floor_level || '';
+                        document.getElementById('totalLevels').value = data.total_levels || '';
+                        document.getElementById('locationNote').value = data.location_note || '';
+                        document.getElementById('locationType').value = data.location_type || 'Indoors';
+
+                        // Populate categories
+                        const catSel = document.getElementById('category');
+                        if (data.category_id) {
+                            catSel.value = data.category_id;
+                            catSel.dispatchEvent(new Event('change')); // Populate subcategories
+                            setTimeout(() => {
+                                if (data.subcategory_id) {
+                                    document.getElementById('subcategory').value = data.subcategory_id;
+                                }
+                            }, 100);
+                        }
+
+                        // Set existing images
+                        window.existingImages = data.images || [];
+                        renderPhotos();
+
+                        this.refreshTooltips();
+
+                    } catch (e) {
+                        console.error(e);
+                        window.showToast('Failed to load facility data', 'error');
+                    } finally {
+                        const overlay = document.getElementById('pageLoadingOverlay');
+                        if (overlay) overlay.style.display = 'none';
                     }
+                },
+                refreshTooltips() {
+                    setTimeout(() => {
+                        tooltipInstances.forEach(tip => tip.dispose());
+                        tooltipInstances.clear();
+                        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+                            tooltipInstances.add(new bootstrap.Tooltip(el, { delay: 0, placement: 'top' }));
+                        });
+                    }, 0);
+                },
 
-                    console.log('Image reference deleted from database:', imageId);
-                    return await response.json();
-
-                } catch (error) {
-                    console.error('Error deleting image:', error);
-                    throw error;
+                onFacilityRoleChange(newRole, event) {
+                    if (newRole === this.facilityRole) return;
+                    this.facilityRole = newRole;
+                    if (newRole !== 'Room') {
+                        this.parentFacilityId = '';
+                    }
+                    this.refreshTooltips();
                 }
-            }
+            };
+        }
 
-            // Generic edit functionality for all fields - only tracks changes locally
-            document.querySelectorAll('.edit-icon').forEach(icon => {
-                const fieldId = icon.getAttribute('data-field');
-                const inputField = document.getElementById(fieldId);
-                const editActions = document.querySelector(`.edit-actions[data-field="${fieldId}"]`);
-                const saveBtn = editActions.querySelector('.save-btn');
-                const cancelBtn = editActions.querySelector('.cancel-btn');
+        document.addEventListener('DOMContentLoaded', function() {
+            window.pendingImageUploads = [];
+            window.existingImages = [];
+            window.pendingImageDeletions = [];
 
-                let originalValue = inputField.value;
-                let originalSelectValue = inputField.tagName === 'SELECT' ? inputField.value : null;
+            const token = localStorage.getItem('adminToken');
+            if (!token) return window.location.href = '/admin/login';
 
-                // Enter edit mode
-                icon.addEventListener('click', () => {
-                    inputField.removeAttribute('readonly');
-                    inputField.classList.remove('text-secondary');
-                    icon.classList.add('d-none');
-                    editActions.classList.remove('d-none');
-
-                    if (inputField.tagName === 'SELECT') {
-                        originalSelectValue = inputField.value;
-                        inputField.classList.remove('text-secondary');
-                    } else {
-                        originalValue = inputField.value;
-                    }
-
-                    inputField.focus();
-                });
-
-                // Save changes locally (UI only)
-                saveBtn.addEventListener('click', () => {
-                    const newValue = inputField.value;
-
-                    // Track the change for later submission
-                    window.updatedFields[fieldId] = newValue;
-
-                    inputField.setAttribute('readonly', true);
-                    inputField.classList.add('text-secondary');
-                    icon.classList.remove('d-none');
-                    editActions.classList.add('d-none');
-
-                    showToast('Change saved locally (will apply after update)', 'success');
-                });
-
-                // Cancel changes locally
-                cancelBtn.addEventListener('click', () => {
-                    if (inputField.tagName === 'SELECT') {
-                        inputField.value = originalSelectValue;
-                    } else {
-                        inputField.value = originalValue;
-                    }
-
-                    // Remove from updated fields if it was tracked
-                    delete window.updatedFields[fieldId];
-
-                    inputField.setAttribute('readonly', true);
-                    inputField.classList.add('text-secondary');
-                    icon.classList.remove('d-none');
-                    editActions.classList.add('d-none');
-                });
-            });
-
-            const facilityId = document.getElementById('facilityId').value;
-
-            if (!facilityId) {
-                alert('No facility ID provided');
-                window.location.href = '/admin/manage-facilities';
-                return;
-            }
-
-            // Initialize the cancel confirmation modal
-            const cancelConfirmationModal = new bootstrap.Modal('#cancelConfirmationModal', {
-                backdrop: 'static',
-                keyboard: false
-            });
-
-            // Handle cancel button click
-            document.getElementById('cancelBtn').addEventListener('click', function (e) {
-                e.preventDefault();
-                cancelConfirmationModal.show();
-            });
-
-            // Handle confirm cancel button click
-            document.getElementById('confirmCancelBtn').addEventListener('click', function () {
-                // Hide the modal first
-                cancelConfirmationModal.hide();
-
-                // Then redirect to manage-facilities
-                window.location.href = '/admin/manage-facilities';
-            });
-
-            // Facility Photos Section
+            // ---- Photos Logic ----
             const facilityDropzone = document.getElementById('facilityPhotosDropzone');
             const facilityFileInput = document.getElementById('facilityPhotos');
             const photosPreview = document.getElementById('photosPreview');
-            window.uploadedPhotos = []; // Track existing photos
 
-            if (facilityDropzone && facilityFileInput) {
-                facilityDropzone.addEventListener('click', function () {
-                    facilityFileInput.click();
+            window.renderPhotos = function() {
+                photosPreview.innerHTML = '';
+                
+                // Render existing images
+                window.existingImages.forEach((img) => {
+                    if (window.pendingImageDeletions.includes(img.image_id)) return; // Skip marked for deletion
+
+                    const tile = document.createElement('div');
+                    tile.className = 'photo-preview';
+                    
+                    const imageEl = document.createElement('img');
+                    imageEl.src = img.image_url;
+                    tile.appendChild(imageEl);
+
+                    const star = document.createElement('button');
+                    star.type = 'button';
+                    star.className = 'primary-star' + (img.image_type === 'Primary' ? ' is-primary' : '');
+                    star.innerHTML = '<i class="bi bi-star-fill"></i>';
+                    star.addEventListener('click', () => {
+                        if (img.image_type === 'Primary') return;
+                        window.existingImages.forEach(e => e.image_type = 'Secondary');
+                        img.image_type = 'Primary';
+                        window.pendingImageUploads.forEach(e => e.image_type = 'Secondary');
+                        window.renderPhotos();
+                    });
+                    tile.appendChild(star);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'photo-actions';
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.innerHTML = '<i class="bi bi-x"></i>';
+                    removeBtn.addEventListener('click', () => {
+                        window.pendingImageDeletions.push(img.image_id);
+                        window.renderPhotos();
+                    });
+                    actions.appendChild(removeBtn);
+
+                    tile.appendChild(actions);
+                    photosPreview.appendChild(tile);
                 });
 
-                facilityFileInput.addEventListener('change', function () {
-                    handleFacilityFiles(this.files);
-                    this.value = '';
-                });
+                // Render new uploads
+                window.pendingImageUploads.forEach((entry) => {
+                    const tile = document.createElement('div');
+                    tile.className = 'photo-preview';
+                    tile.dataset.tempId = entry.temp_id;
 
-                facilityDropzone.addEventListener('dragover', function (e) {
-                    e.preventDefault();
-                    this.classList.add('border-primary');
-                });
+                    const img = document.createElement('img');
+                    img.src = entry.objectUrl;
+                    tile.appendChild(img);
 
-                facilityDropzone.addEventListener('dragleave', function () {
-                    this.classList.remove('border-primary');
-                });
+                    const star = document.createElement('button');
+                    star.type = 'button';
+                    star.className = 'primary-star' + (entry.image_type === 'Primary' ? ' is-primary' : '');
+                    star.innerHTML = '<i class="bi bi-star-fill"></i>';
+                    star.addEventListener('click', () => {
+                        if (entry.image_type === 'Primary') return;
+                        window.pendingImageUploads.forEach(e => e.image_type = 'Secondary');
+                        window.existingImages.forEach(e => e.image_type = 'Secondary');
+                        entry.image_type = 'Primary';
+                        window.renderPhotos();
+                    });
+                    tile.appendChild(star);
 
-                facilityDropzone.addEventListener('drop', function (e) {
-                    e.preventDefault();
-                    this.classList.remove('border-primary');
-                    if (e.dataTransfer.files.length) {
-                        handleFacilityFiles(e.dataTransfer.files);
+                    const actions = document.createElement('div');
+                    actions.className = 'photo-actions';
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.innerHTML = '<i class="bi bi-x"></i>';
+                    removeBtn.addEventListener('click', () => {
+                        const idx = window.pendingImageUploads.findIndex(e => e.temp_id === entry.temp_id);
+                        if (idx > -1) {
+                            URL.revokeObjectURL(window.pendingImageUploads[idx].objectUrl);
+                            window.pendingImageUploads.splice(idx, 1);
+                        }
+                        window.renderPhotos();
+                    });
+                    actions.appendChild(removeBtn);
+
+                    tile.appendChild(actions);
+                    photosPreview.appendChild(tile);
+                });
+            };
+
+            function handleFacilityFiles(files) {
+                for (const file of files) {
+                    if (!file.type.startsWith('image/')) {
+                        window.showToast('Please upload only image files', 'error');
+                        continue;
                     }
-                });
+                    if (window.pendingImageUploads.length + window.existingImages.length - window.pendingImageDeletions.length >= 5) {
+                        window.showToast('Maximum of 5 photos allowed', 'error');
+                        break;
+                    }
+                    const isFirst = (window.pendingImageUploads.length === 0 && window.existingImages.length === 0);
+                    window.pendingImageUploads.push({
+                        temp_id: 'temp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                        file: file,
+                        objectUrl: URL.createObjectURL(file),
+                        image_type: isFirst ? 'Primary' : 'Secondary',
+                        sort_order: window.pendingImageUploads.length + window.existingImages.length,
+                    });
+                }
+                window.renderPhotos();
             }
 
-            // Word count limiter for Description textbox
+            facilityDropzone.addEventListener('click', () => facilityFileInput.click());
+            facilityFileInput.addEventListener('change', function() {
+                handleFacilityFiles(this.files);
+                this.value = '';
+            });
+            
+            // Drag and drop
+            facilityDropzone.addEventListener('dragover', (e) => { e.preventDefault(); facilityDropzone.classList.add('border-primary'); });
+            facilityDropzone.addEventListener('dragleave', () => { facilityDropzone.classList.remove('border-primary'); });
+            facilityDropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                facilityDropzone.classList.remove('border-primary');
+                if (e.dataTransfer.files.length) handleFacilityFiles(e.dataTransfer.files);
+            });
+
+            // ---- Description Counter ----
             const description = document.getElementById('description');
             const descriptionWordCount = document.getElementById('descriptionWordCount');
-            if (description && descriptionWordCount) {
-                description.addEventListener('input', function () {
-                    const currentLength = this.value.length;
-                    descriptionWordCount.textContent = `${currentLength}/250 characters`;
-                    if (currentLength > 250) {
-                        this.value = this.value.substring(0, 250);
-                        descriptionWordCount.textContent = '250/250 characters';
-                    }
-                });
-            }
+            description.addEventListener('input', function() {
+                if (this.value.length > 250) this.value = this.value.substring(0, 250);
+                descriptionWordCount.textContent = `${this.value.length}/250 characters`;
+            });
 
-            // Fetch facility data
-            async function fetchFacilityData() {
+            // ---- Main Dropdowns (Categories) ----
+            async function populateMainDropdowns() {
                 try {
-                    const response = await fetch(`/api/admin/facilities/${facilityId}`, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch facility data');
-                    }
-
-                    const result = await response.json();
-                    const facility = result.data;
-
-                    // Store original values for comparison
-                    window.originalFacilityData = {
-                        facility_name: facility.facility_name || '',
-                        facility_code: facility.facility_code || '',
-                        description: facility.description || '',
-                        location_note: facility.location_note || '',
-                        capacity: facility.capacity || 1,
-                        location_type: facility.location_type || 'Indoors',
-                        floor_level: facility.floor_level || '',
-                        base_fee: facility.base_fee || '0.00',
-                        rate_type: facility.rate_type || 'Per Hour',
-                        total_levels: facility.total_levels || '',
-                        category_id: facility.category_id || '',
-                        subcategory_id: facility.subcategory_id || '',
-                        department_ids: facility.departments ? facility.departments.map(d => d.department_id) : (facility.department_id ? [facility.department_id] : []),
-                        status_id: facility.status_id || ''
-                    };
-                    // Debug: Log the facility data to see what's available
-                    console.log('Facility data received:', facility);
-
-                    // Populate form fields with facility data
-                    document.getElementById('facilityName').value = facility.facility_name || '';
-                    document.getElementById('buildingCode').value = facility.facility_code || '';
-                    document.getElementById('description').value = facility.description || '';
-                    document.getElementById('locationNote').value = facility.location_note || '';
-                    document.getElementById('capacity').value = facility.capacity || 1;
-                    document.getElementById('locationType').value = facility.location_type || 'Indoors';
-                    document.getElementById('floorLevel').value = facility.floor_level || '';
-                    document.getElementById('rentalFee').value = facility.base_fee || '0.00';
-                    document.getElementById('rateType').value = facility.rate_type || 'Per Hour';
-                    document.getElementById('totalLevels').value = facility.total_levels || '';
-
-                    // Update word count display
-                    if (descriptionWordCount) {
-                        descriptionWordCount.textContent = `${facility.description?.length || 0}/250 characters`;
-                    }
-
-                    // Load existing images
-                    if (facility.images && facility.images.length > 0) {
-                        facility.images.forEach(image => {
-                            const preview = document.createElement('div');
-                            preview.className = 'photo-preview';
-                            preview.dataset.id = image.image_id;
-
-                            const img = document.createElement('img');
-                            img.src = image.image_url;
-                            img.className = 'img-thumbnail h-100 w-100 object-fit-cover';
-
-                            const removeBtn = document.createElement('button');
-                            removeBtn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0';
-                            removeBtn.innerHTML = '<i class="bi bi-x"></i>';
-                            removeBtn.onclick = () => handleImageDeletion(image.image_id, image.cloudinary_public_id, preview);
-
-                            preview.appendChild(img);
-                            preview.appendChild(removeBtn);
-                            photosPreview.appendChild(preview);
-
-                            window.uploadedPhotos.push({
-                                id: image.image_id,
-                                url: image.image_url,
-                                publicId: image.cloudinary_public_id
-                            });
+                    const catRes = await fetch('/api/facility-categories/index', { headers: { 'Accept': 'application/json' } });
+                    if (catRes.ok) {
+                        const cats = await catRes.json();
+                        const catSel = document.getElementById('category');
+                        while (catSel.options.length > 1) catSel.remove(1);
+                        cats.forEach(c => {
+                            const o = document.createElement('option');
+                            o.value = c.category_id;
+                            o.textContent = c.category_name;
+                            catSel.appendChild(o);
                         });
-                    }
 
-                    // Fetch and populate dropdowns, then set their values
-                    await fetchCategoriesWithSubcategories();
-                    await fetchDepartments();
-                    await fetchStatuses();
-
-                    // Set dropdown values after they are populated
-                    setTimeout(() => {
-                        if (facility.category_id) document.getElementById('category').value = facility.category_id;
-                        if (facility.subcategory_id) document.getElementById('subcategory').value = facility.subcategory_id;
-                        if (facility.status_id) document.getElementById('availabilityStatus').value = facility.status_id;
-
-                        // Trigger category change to load subcategories if needed
-                        if (facility.category_id) {
-                            document.getElementById('category').dispatchEvent(new Event('change'));
-                        }
-                    }, 100);
-
-                } catch (error) {
-                    console.error('Error fetching facility data:', {
-                        error: error.message,
-                        facilityId: facilityId,
-                        endpoint: `facilities/${facilityId}`,
-                        response: error.response // This might help debug
-                    });
-                    showToast('Failed to load facility data: ' + error.message, 'error');
-                }
-            }
-
-            async function fetchCategoriesWithSubcategories() {
-                try {
-                    const response = await fetch('/api/facility-categories/index', {
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (response.ok) {
-                        const categoriesData = await response.json();
-                        window.facilityCategories = categoriesData;
-                        populateCategoryDropdown(categoriesData);
-                    } else {
-                        console.error('Failed to fetch categories with subcategories:', response.status);
-                        showToast('Failed to load categories', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error fetching categories:', error);
-                    showToast('Error loading categories', 'error');
-                }
-            }
-
-            function populateCategoryDropdown(categories) {
-                const categoryDropdown = document.getElementById('category');
-                if (!categoryDropdown) return;
-
-                // Clear existing options except the first one
-                while (categoryDropdown.options.length > 1) {
-                    categoryDropdown.remove(1);
-                }
-
-                // Add new options
-                categories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.category_id;
-                    option.textContent = category.category_name;
-                    categoryDropdown.appendChild(option);
-                });
-            }
-
-            async function fetchDepartments() {
-                try {
-                    const response = await fetch('/api/departments', {
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (response.ok) {
-                        const departmentsData = await response.json();
-                        console.log('Departments fetched:', departmentsData);
-
-                        // Get the selected department IDs from the facility data
-                        const selectedDeptIds = window.originalFacilityData?.department_ids ||
-                            (window.originalFacilityData?.department_id ? [window.originalFacilityData.department_id] : []);
-
-                        populateDepartmentsDropdown(departmentsData, selectedDeptIds);
-                    } else {
-                        console.error('Failed to fetch departments:', response.status);
-                        showToast('Failed to load departments', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error fetching departments:', error);
-                    showToast('Error loading departments', 'error');
-                }
-            }
-
-            // NEW FUNCTION: Populate departments multiple select
-            function populateDepartmentsDropdown(departments, selectedIds = []) {
-                const dropdown = document.getElementById('departments');
-                if (!dropdown) {
-                    console.error('Departments dropdown not found');
-                    return;
-                }
-
-                // Clear existing options
-                dropdown.innerHTML = '';
-
-                // Add new options
-                departments.forEach(dept => {
-                    const option = document.createElement('option');
-                    option.value = dept.department_id;
-                    option.textContent = dept.department_name;
-
-                    // Check if this department should be selected
-                    if (selectedIds.includes(dept.department_id)) {
-                        option.selected = true;
-                    }
-
-                    dropdown.appendChild(option);
-                });
-
-                console.log('Departments dropdown populated with', departments.length, 'departments, selected:', selectedIds);
-            }
-
-            async function fetchStatuses() {
-                try {
-                    const response = await fetch('/api/availability-statuses', {
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (response.ok) {
-                        const statusesData = await response.json();
-                        populateDropdown('availabilityStatus', statusesData, null, 'status_id', 'status_name');
-                    } else {
-                        console.error('Failed to fetch statuses:', response.status);
-                        showToast('Failed to load statuses', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error fetching statuses:', error);
-                    showToast('Error loading statuses', 'error');
-                }
-            }
-
-            function populateDropdown(elementId, data, selectedValue = null, idKey, nameKey) {
-                const dropdown = document.getElementById(elementId);
-                if (!dropdown) {
-                    console.error('Dropdown element not found:', elementId);
-                    return;
-                }
-
-                // Clear existing options except the first one
-                while (dropdown.options.length > 1) {
-                    dropdown.remove(1);
-                }
-
-                // Add new options
-                data.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item[idKey];
-                    option.textContent = item[nameKey];
-                    dropdown.appendChild(option);
-                });
-
-                // Set selected value if provided
-                if (selectedValue !== null) {
-                    dropdown.value = selectedValue;
-                }
-            }
-
-            // Setup category change handler
-            function setupCategoryChangeHandler() {
-                const categoryDropdown = document.getElementById('category');
-                const subcategoryDropdown = document.getElementById('subcategory');
-
-                if (!categoryDropdown || !subcategoryDropdown) return;
-
-                categoryDropdown.addEventListener('change', function () {
-                    const categoryId = this.value;
-                    const selectedCategory = window.facilityCategories.find(cat =>
-                        cat.category_id.toString() === categoryId
-                    );
-
-                    // Clear subcategory dropdown
-                    while (subcategoryDropdown.options.length > 1) {
-                        subcategoryDropdown.remove(1);
-                    }
-
-                    // Populate subcategories if category has them
-                    if (selectedCategory && selectedCategory.subcategories && selectedCategory.subcategories.length > 0) {
-                        selectedCategory.subcategories.forEach(subcategory => {
-                            const option = document.createElement('option');
-                            option.value = subcategory.subcategory_id;
-                            option.textContent = subcategory.subcategory_name;
-                            subcategoryDropdown.appendChild(option);
-                        });
-                    }
-                });
-            }
-
-            // Form submission - NOW processes all pending changes
-            document.getElementById('editFacilityForm').addEventListener('submit', async function (e) {
-                e.preventDefault();
-
-                try {
-                    showToast('Updating facility...', 'success', 5000);
-
-                    // Build form data from current field values
-                    // Get selected departments from multiple select
-                    const departmentsSelect = document.getElementById('departments');
-                    const selectedDepartments = Array.from(departmentsSelect.selectedOptions).map(option => option.value);
-
-                    const formData = {
-                        facility_name: document.getElementById('facilityName').value,
-                        facility_code: document.getElementById('buildingCode').value,
-                        description: document.getElementById('description').value.trim() || 'No description provided for this facility.',
-                        location_note: document.getElementById('locationNote').value,
-                        category_id: document.getElementById('category').value,
-                        subcategory_id: document.getElementById('subcategory').value,
-                        capacity: parseInt(document.getElementById('capacity').value),
-                        location_type: document.getElementById('locationType').value,
-                        floor_level: document.getElementById('floorLevel').value ? parseInt(document.getElementById('floorLevel').value) : null,
-                        base_fee: parseFloat(document.getElementById('rentalFee').value),
-                        rate_type: document.getElementById('rateType').value,
-                        total_levels: document.getElementById('totalLevels').value ? parseInt(document.getElementById('totalLevels').value) : null,
-                        departments: selectedDepartments, // Send array of department IDs
-                        status_id: document.getElementById('availabilityStatus').value
-                    };
-
-
-                    // Validate required fields
-                    const requiredFields = [
-                        'facility_name', 'location_note', 'capacity', 'category_id', 'subcategory_id',
-                        'departments', 'location_type', 'base_fee', 'rate_type', 'status_id'
-                    ];
-
-                    for (const field of requiredFields) {
-                        if (field === 'departments') {
-                            if (!formData[field] || formData[field].length === 0) {
-                                showToast('Please select at least one department', 'error');
-                                return;
+                        catSel.addEventListener('change', function() {
+                            const cat = cats.find(c => String(c.category_id) === String(this.value));
+                            const subSel = document.getElementById('subcategory');
+                            while (subSel.options.length > 1) subSel.remove(1);
+                            if (cat && cat.subcategories) {
+                                cat.subcategories.forEach(s => {
+                                    const o = document.createElement('option');
+                                    o.value = s.subcategory_id;
+                                    o.textContent = s.subcategory_name;
+                                    subSel.appendChild(o);
+                                });
                             }
-                        } else if (!formData[field]) {
-                            showToast(`Please fill in the ${field.replace(/_/g, ' ')} field`, 'error');
+                        });
+                    }
+                } catch (e) { console.error('populateMainDropdowns', e); }
+            }
+            populateMainDropdowns();
+
+            // ---- Cancel Flow ----
+            const cancelConfirmationModal = new bootstrap.Modal('#cancelConfirmationModal', { backdrop: 'static', keyboard: false });
+            document.getElementById('cancelBtn').addEventListener('click', (e) => { e.preventDefault(); cancelConfirmationModal.show(); });
+            document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+                cancelConfirmationModal.hide();
+                window.location.href = '/admin/manage-facilities';
+            });
+
+            // ---- Submit ----
+            const form = document.getElementById('editFacilityForm');
+            const btn = document.getElementById('saveFacilityBtn');
+            const spinner = document.getElementById('saveFacilitySpinner');
+            const btnText = document.getElementById('saveFacilityBtnText');
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                btn.disabled = true;
+                spinner.classList.remove('d-none');
+                btnText.textContent = 'Saving...';
+
+                try {
+                    const id = document.getElementById('facilityId').value;
+                    const alpine = window.Alpine.$data(document.querySelector('[x-data]'));
+                    const facilityRole = alpine.facilityRole;
+
+                    if (facilityRole === 'Room' && !alpine.parentFacilityId) {
+                        window.showToast('Please select a parent building for this room.', 'error');
+                        return;
+                    }
+
+                    const requiredIds = ['facilityName', 'capacity', 'category', 'locationType'];
+                    if (facilityRole !== 'Container') requiredIds.push('rentalFee', 'rateType');
+                    
+                    for (const fieldId of requiredIds) {
+                        const el = document.getElementById(fieldId);
+                        if (!el || !String(el.value).trim()) {
+                            window.showToast(`Please fill in the ${fieldId.replace(/([A-Z])/g, ' $1').toLowerCase()} field`, 'error');
+                            el?.focus();
                             return;
                         }
                     }
 
-                    // Step 1: Update facility data
-                    const response = await fetch(`/api/admin/facilities/${facilityId}`, {
+                    if (!alpine.mainDepartmentIds || alpine.mainDepartmentIds.length === 0) {
+                        window.showToast('Please select at least one department.', 'error');
+                        return;
+                    }
+
+                    if (facilityRole !== 'Container' && !alpine.mainStatusId) {
+                        window.showToast('Please select an availability status.', 'error');
+                        return;
+                    }
+
+                    const payload = {
+                        facility_name: document.getElementById('facilityName').value.trim(),
+                        facility_code: document.getElementById('buildingCode').value.trim() || null,
+                        location_type: document.getElementById('locationType').value,
+                        category_id: document.getElementById('category').value,
+                        subcategory_id: document.getElementById('subcategory').value || null,
+                        capacity: parseInt(document.getElementById('capacity').value),
+                        floor_level: facilityRole === 'Container' ? null : (document.getElementById('floorLevel').value ? parseInt(document.getElementById('floorLevel').value) : null),
+                        base_fee: facilityRole === 'Container' ? 0 : parseFloat(document.getElementById('rentalFee').value),
+                        rate_type: facilityRole === 'Container' ? 'Per Hour' : document.getElementById('rateType').value,
+                        total_levels: document.getElementById('totalLevels').value ? parseInt(document.getElementById('totalLevels').value) : null,
+                        departments: (alpine.mainDepartmentIds || []).map(Number),
+                        status_id: facilityRole === 'Container' ? (alpine.statuses[0]?.status_id || null) : alpine.mainStatusId,
+                        description: document.getElementById('description').value.trim() || 'No description provided',
+                        location_note: document.getElementById('locationNote').value.trim() || 'No location details provided',
+                        facility_role: facilityRole,
+                        parent_facility_id: facilityRole === 'Room' ? (parseInt(alpine.parentFacilityId) || null) : null
+                    };
+
+                    // 1. Update facility details
+                    const res = await fetch(`/api/admin/facilities/${id}`, {
                         method: 'PUT',
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
                             'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'Accept': 'application/json'
                         },
-                        body: JSON.stringify(formData)
+                        body: JSON.stringify(payload)
                     });
 
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('Facility update failed:', {
-                            status: response.status,
-                            error: errorText,
-                            facilityId: facilityId
+                    if (!res.ok) {
+                        const err = await res.json().catch(() => ({}));
+                        let errorMessage = err.message || `Failed to update facility: ${res.status}`;
+                        if (err.errors) {
+                            const firstErrorKey = Object.keys(err.errors)[0];
+                            if (firstErrorKey && err.errors[firstErrorKey].length > 0) {
+                                errorMessage = err.errors[firstErrorKey][0];
+                            }
+                        }
+                        throw new Error(errorMessage);
+                    }
+
+                    // 2. Handle Image Deletions
+                    for (const imageId of window.pendingImageDeletions) {
+                        await fetch(`/api/admin/facilities/${id}/images/${imageId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}`, 'Accept': 'application/json' }
                         });
-                        throw new Error(`Failed to update facility: ${response.status}`);
                     }
 
-                    const result = await response.json();
-                    showToast('Facility data updated successfully!', 'success');
+                    // 3. Handle New Image Uploads
+                    for (const entry of window.pendingImageUploads) {
+                        try {
+                            const fd = new FormData();
+                            fd.append('image', entry.file);
+                            fd.append('image_type', entry.image_type);
+                            fd.append('sort_order', entry.sort_order);
 
-                    // Step 2: Process image deletions
-                    if (window.pendingImageDeletions.length > 0) {
-                        showToast('Deleting images...', 'success');
-                        for (const deletion of window.pendingImageDeletions) {
-                            try {
-                                await deleteImage(facilityId, deletion.photoId, deletion.publicId);
-                                console.log('Successfully deleted image:', deletion.photoId || deletion.publicId);
-                            } catch (error) {
-                                console.error('Error deleting image:', {
-                                    deletion: deletion,
-                                    error: error.message
-                                });
-                                showToast('Warning: Failed to delete some images', 'warning');
-                            }
-                        }
-                        showToast('Image deletions completed', 'success');
+                            const upRes = await fetch(`/api/admin/facilities/${id}/images`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}`, 'Accept': 'application/json' },
+                                body: fd
+                            });
+                            if (!upRes.ok) window.showToast('Some new images failed to upload.', 'error');
+                        } catch (err) { console.error(err); }
                     }
 
-                    // Step 3: Process new image uploads
-                    if (window.pendingImageUploads.length > 0) {
-                        showToast('Uploading new images...', 'success');
-                        for (const upload of window.pendingImageUploads) {
-                            try {
-                                const cloudinaryData = await uploadToCloudinary(upload.file, facilityId);
-                                await saveImageToDatabase(facilityId, cloudinaryData.secure_url, cloudinaryData.public_id);
-                                console.log('Successfully uploaded image:', upload.previewId);
-                            } catch (error) {
-                                console.error('Error uploading facility image:', {
-                                    upload: upload,
-                                    error: error.message
-                                });
-                                showToast('Warning: Failed to upload some images', 'warning');
-                            }
-                        }
-                        showToast('Facility updated successfully!', 'success');
+                    // 4. Handle Image Reordering / Primary Status Changes
+                    if (window.pendingImageDeletions.length === 0 && window.pendingImageUploads.length === 0 && window.existingImages.length > 0) {
+                         const sortPayload = window.existingImages.map((img, index) => ({
+                             image_id: img.image_id,
+                             sort_order: index,
+                             image_type: img.image_type
+                         }));
+                         await fetch(`/api/admin/facilities/${id}/images/reorder`, {
+                             method: 'POST',
+                             headers: {
+                                 'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                                 'Content-Type': 'application/json',
+                                 'Accept': 'application/json'
+                             },
+                             body: JSON.stringify({ images: sortPayload })
+                         });
                     }
 
-                    // Clear pending changes
-                    window.pendingImageUploads = [];
-                    window.pendingImageDeletions = [];
-                    window.updatedFields = {};
+                    window.showToast('Facility updated successfully!', 'success');
+                    setTimeout(() => { window.location.href = '/admin/manage-facilities'; }, 1200);
 
-                    // Redirect after a short delay
-                    setTimeout(() => {
-                        window.location.href = '/admin/manage-facilities';
-                    }, 1500);
-
-                } catch (error) {
-                    console.error('Error updating facility:', {
-                        error: error.message,
-                        facilityId: facilityId,
-                        endpoint: `admin/facility/${facilityId}`
-                    });
-                    showToast('Failed to update facility: ' + error.message, 'error');
+                } catch (err) {
+                    console.error(err);
+                    window.showToast(err.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    spinner.classList.add('d-none');
+                    btnText.textContent = 'Save Changes';
                 }
-            });
-
-            // Initialize the page
-            fetchFacilityData().then(() => {
-                setupCategoryChangeHandler();
-                fetchDepartments();
             });
         });
     </script>

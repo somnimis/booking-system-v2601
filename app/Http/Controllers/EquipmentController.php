@@ -6,12 +6,11 @@ use App\Models\Equipment;
 use App\Models\EquipmentItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
-
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class EquipmentController extends Controller
 {
-
     // ----- Indexes ----- //
 
     public function publicIndex(Request $request): JsonResponse
@@ -20,7 +19,7 @@ class EquipmentController extends Controller
             $query = Equipment::with([
                 'category',
                 'status',
-                'department',
+                'departments', // Updated to many-to-many
                 'items' => function ($query) {
                     $query->where('status_id', '!=', 5);
                 },
@@ -28,7 +27,6 @@ class EquipmentController extends Controller
                 'images'
             ]);
 
-            // Apply search filter on equipment items
             if ($request->has('search') && !empty($request->search)) {
                 $search = $request->search;
                 $query->whereHas('items', function ($q) use ($search) {
@@ -36,7 +34,6 @@ class EquipmentController extends Controller
                 });
             }
 
-            // Apply status filter
             if ($request->has('status') && !empty($request->status)) {
                 $statusId = $request->status;
                 $query->whereHas('status', function ($q) use ($statusId) {
@@ -44,7 +41,6 @@ class EquipmentController extends Controller
                 });
             }
 
-            // Apply category filters
             if ($request->has('categories') && !empty($request->categories)) {
                 $categories = $request->categories;
                 $query->whereHas('category', function ($q) use ($categories) {
@@ -52,15 +48,12 @@ class EquipmentController extends Controller
                 });
             }
 
-            // Apply pagination
             $perPage = $request->input('per_page', 6);
             $equipment = $query->orderBy('equipment_name')->paginate($perPage);
 
             $formatted = $equipment->getCollection()->map(function ($item) {
                 $availableCount = $item->items
-                    ->filter(function ($item) {
-                        return $item->status_id == 1 && in_array($item->condition_id, [1, 2, 3]);
-                    })
+                    ->filter(fn($i) => $i->status_id == 1 && in_array($i->condition_id, [1, 2, 3]))
                     ->count();
 
                 $totalCount = $item->items->count();
@@ -83,18 +76,11 @@ class EquipmentController extends Controller
                 'per_page' => $equipment->perPage()
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching public equipment', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json([
-                'message' => 'Failed to fetch equipment data',
-                'error' => $e->getMessage()
-            ], 500);
+            \Log::error('Error fetching public equipment', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to fetch equipment data', 'error' => $e->getMessage()], 500);
         }
     }
 
-    // === EQUIPMENT DETAILS API ENDPOINT === //
     public function getEquipmentDetails($id): JsonResponse
     {
         try {
@@ -102,19 +88,10 @@ class EquipmentController extends Controller
                 return response()->json(['success' => false, 'message' => 'Equipment ID is required'], 400);
             }
 
-            $equipment = Equipment::with(['category', 'status', 'department', 'images'])
-                // Count total items (excluding status_id 5)
+            $equipment = Equipment::with(['category', 'status', 'departments', 'images'])
                 ->withCount([
-                    'items as total_quantity' => function ($query) {
-                        $query->where('status_id', '!=', 5);
-                    }
-                ])
-                // Count available items based on status AND condition rules
-                ->withCount([
-                    'items as available_quantity' => function ($query) {
-                        $query->where('status_id', 1)
-                            ->whereIn('condition_id', [1, 2, 3]);
-                    }
+                    'items as total_quantity' => fn($query) => $query->where('status_id', '!=', 5),
+                    'items as available_quantity' => fn($query) => $query->where('status_id', 1)->whereIn('condition_id', [1, 2, 3])
                 ])
                 ->find($id);
 
@@ -123,31 +100,19 @@ class EquipmentController extends Controller
             }
 
             $formattedEquipment = $this->formatPublicEquipment($equipment);
-
-            // Map the counts from the model attributes to your response
             $formattedEquipment['available_quantity'] = $equipment->available_quantity;
             $formattedEquipment['total_quantity'] = $equipment->total_quantity;
             $formattedEquipment['images'] = $equipment->images;
 
-            return response()->json([
-                'success' => true,
-                'data' => $formattedEquipment
-            ]);
+            return response()->json(['success' => true, 'data' => $formattedEquipment]);
 
         } catch (\Exception $e) {
             \Log::error('Error fetching equipment details', ['error' => $e->getMessage()]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch equipment details'
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to fetch equipment details'], 500);
         }
     }
 
     // ----- EQUIPMENT MANAGEMENT SECTION ----- //
-
-
-    // ----- Store Equipment ----- //
 
     public function store(Request $request): JsonResponse
     {
@@ -160,7 +125,10 @@ class EquipmentController extends Controller
             'base_fee' => 'required|numeric|min:0',
             'rate_type' => 'required|in:Per Hour,Per Event',
             'status_id' => 'required|exists:availability_statuses,status_id',
-            'managed_by' => 'required|exists:departments,department_id', // Changed from departments array
+            
+            'departments' => 'required|array|min:1',
+            'departments.*' => 'exists:departments,department_id',
+            
             'maximum_rental_hour' => 'nullable|integer',
 
             'items' => 'sometimes|array',
@@ -176,33 +144,36 @@ class EquipmentController extends Controller
             'images.*.image_type' => 'required|exists:image_types,image_type',
         ]);
 
-        // Create equipment with managed_by field (department_id)
-        $equipment = Equipment::create([
-            'equipment_name' => $data['equipment_name'],
-            'description' => $data['description'] ?? null,
-            'brand' => $data['brand'] ?? null,
-            'storage_location' => $data['storage_location'],
-            'category_id' => $data['category_id'],
-            'base_fee' => $data['base_fee'],
-            'rate_type' => $data['rate_type'],
-            'status_id' => $data['status_id'],
-            'department_id' => $data['managed_by'], // Use managed_by as department_id
-            'maximum_rental_hour' => $data['maximum_rental_hour'],
-            'created_by' => auth()->id()
-        ]);
+        $equipment = \DB::transaction(function () use ($data) {
+            $eq = Equipment::create([
+                'equipment_name' => $data['equipment_name'],
+                'description' => $data['description'] ?? null,
+                'brand' => $data['brand'] ?? null,
+                'storage_location' => $data['storage_location'],
+                'category_id' => $data['category_id'],
+                'base_fee' => $data['base_fee'],
+                'rate_type' => $data['rate_type'],
+                'status_id' => $data['status_id'],
+                'maximum_rental_hour' => $data['maximum_rental_hour'] ?? null,
+                'created_by' => auth()->id()
+            ]);
 
-        // Optional: Handle items and images if provided
-        if (!empty($data['items'])) {
-            foreach ($data['items'] as $item) {
-                $equipment->items()->create($item);
-            }
-        }
+            $eq->departments()->attach($data['departments']);
 
-        if (!empty($data['images'])) {
-            foreach ($data['images'] as $image) {
-                $equipment->images()->create($image);
+            if (!empty($data['items'])) {
+                foreach ($data['items'] as $item) {
+                    $eq->items()->create($item);
+                }
             }
-        }
+
+            if (!empty($data['images'])) {
+                foreach ($data['images'] as $image) {
+                    $eq->images()->create($image);
+                }
+            }
+
+            return $eq;
+        });
 
         return response()->json([
             'message' => 'Equipment created successfully',
@@ -210,33 +181,16 @@ class EquipmentController extends Controller
         ], 201);
     }
 
-    // ----- Display Equipment ----- //
-
     public function show($id)
     {
         try {
-            $equipment = Equipment::with([
-                'category',
-                'status',
-                'department',
-                'images'
-            ])->findOrFail($id);
-
-            return response()->json([
-                'data' => $equipment
-            ]);
-
+            $equipment = Equipment::with(['category', 'status', 'departments', 'images'])->findOrFail($id);
+            return response()->json(['data' => $equipment]);
         } catch (\Exception $e) {
             \Log::error('Error fetching equipment: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Failed to fetch equipment',
-                'error' => $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Failed to fetch equipment', 'error' => $e->getMessage()], 500);
         }
     }
-
-
-    // ----- Update Equipment ----- //
 
     public function update(Request $request, $id)
     {
@@ -250,58 +204,51 @@ class EquipmentController extends Controller
                 'base_fee' => 'required|numeric|min:0',
                 'rate_type' => 'required|in:Per Hour,Per Event',
                 'status_id' => 'required|exists:availability_statuses,status_id',
-                'managed_by' => 'required|exists:departments,department_id', // Changed from departments array
+                'departments' => 'required|array|min:1',
+                'departments.*' => 'exists:departments,department_id',
                 'maximum_rental_hour' => 'required|integer|min:1',
             ]);
 
             $equipment = Equipment::findOrFail($id);
 
-            // Update equipment with managed_by field
-            $equipment->update([
-                'equipment_name' => $validated['equipment_name'],
-                'description' => $validated['description'],
-                'brand' => $validated['brand'],
-                'storage_location' => $validated['storage_location'],
-                'category_id' => $validated['category_id'],
-                'base_fee' => $validated['base_fee'],
-                'rate_type' => $validated['rate_type'],
-                'status_id' => $validated['status_id'],
-                'department_id' => $validated['managed_by'], // Use managed_by as department_id
-                'maximum_rental_hour' => $validated['maximum_rental_hour'],
-            ]);
+            \DB::transaction(function () use ($equipment, $validated) {
+                $equipment->update([
+                    'equipment_name' => $validated['equipment_name'],
+                    'description' => $validated['description'] ?? null,
+                    'brand' => $validated['brand'] ?? null,
+                    'storage_location' => $validated['storage_location'],
+                    'category_id' => $validated['category_id'],
+                    'base_fee' => $validated['base_fee'],
+                    'rate_type' => $validated['rate_type'],
+                    'status_id' => $validated['status_id'],
+                    'maximum_rental_hour' => $validated['maximum_rental_hour'],
+                    'updated_by' => auth()->id()
+                ]);
+
+                $equipment->departments()->sync($validated['departments']);
+            });
 
             return response()->json([
                 'message' => 'Equipment updated successfully',
-                'data' => $equipment->fresh()
+                'data' => $equipment->fresh(['departments'])
             ]);
 
         } catch (\Exception $e) {
             \Log::error('Error updating equipment: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Failed to update equipment',
-                'error' => $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Failed to update equipment', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function getEquipmentWithSelected(Request $request)
     {
+        // ... (Keep existing logic, it doesn't reference managed_by)
         $search = $request->input('search');
         $filter = $request->input('filter');
         $page = $request->input('page', 1);
         $perPage = 10;
 
-        $query = Equipment::join(
-            'availability_statuses',
-            'equipment.status_id',
-            '=',
-            'availability_statuses.status_id'
-        )
-            ->select(
-                'equipment.equipment_id',
-                'equipment.equipment_name',
-                'availability_statuses.status_name'
-            );
+        $query = Equipment::join('availability_statuses', 'equipment.status_id', '=', 'availability_statuses.status_id')
+            ->select('equipment.equipment_id', 'equipment.equipment_name', 'availability_statuses.status_name');
 
         if ($search) {
             $query->where('equipment.equipment_name', 'like', "%{$search}%");
@@ -316,11 +263,9 @@ class EquipmentController extends Controller
 
         $equipment = $query->orderBy('equipment.equipment_name')->paginate($perPage, ['*'], 'page', $page);
 
-        // Filter out "Hidden" status
         $filteredItems = $equipment->items();
         $filteredItems = array_filter($filteredItems, fn($e) => $e->status_name !== 'Hidden');
 
-        // Get selected item IDs from session
         $selectedItems = session('selected_items', []);
         $selectedEquipmentIds = collect($selectedItems)
             ->filter(fn($item) => $item['type'] === 'equipment')
@@ -339,99 +284,60 @@ class EquipmentController extends Controller
 
     public function getEquipmentForDropdown(Request $request): JsonResponse
     {
+        // ... (Keep existing logic)
         $search = $request->input('search');
         $filter = $request->input('filter');
 
-        $query = Equipment::join(
-            'availability_statuses',
-            'equipment.status_id',
-            '=',
-            'availability_statuses.status_id'
-        )
-            ->select(
-                'equipment.equipment_id',
-                'equipment.equipment_name',
-                'availability_statuses.status_name'
-            )
-            ->when($search, function ($query) use ($search) {
-                $query->where(
-                    'equipment.equipment_name',
-                    'like',
-                    "%{$search}%"
-                );
-            });
+        $query = Equipment::join('availability_statuses', 'equipment.status_id', '=', 'availability_statuses.status_id')
+            ->select('equipment.equipment_id', 'equipment.equipment_name', 'availability_statuses.status_name')
+            ->when($search, fn($q) => $q->where('equipment.equipment_name', 'like', "%{$search}%"));
 
         if ($filter) {
             [$type, $id] = explode(':', $filter);
-
             if ($type === 'category') {
                 $query->where('equipment.category_id', $id);
             }
         }
 
-        return response()->json(
-            $query
-                ->orderBy('equipment.equipment_name')
-                ->paginate(
-                    perPage: 10,
-                    page: $request->input('page', 1)
-                )
-        );
+        return response()->json($query->orderBy('equipment.equipment_name')->paginate(perPage: 10, page: $request->input('page', 1)));
     }
 
-    /**
-     * Paginated equipment dropdown for the mass-assign modal.
-     * Matches by name OR brand (ILIKE, partial, case-insensitive).
-     * Returns paginator shape so the modal can paginate + search.
-     */
     public function getEquipmentForMassAssign(Request $request): JsonResponse
     {
+        // ... (Keep existing logic)
         $search = trim((string) $request->input('search', ''));
 
         $query = Equipment::query()
             ->select('equipment_id', 'equipment_name', 'brand')
             ->when($search !== '', function ($q) use ($search) {
                 $like = "%{$search}%";
-                $q->where(function ($qq) use ($like) {
-                    $qq->where('equipment_name', 'ILIKE', $like)
-                        ->orWhere('brand', 'ILIKE', $like);
-                });
+                $q->where(fn($qq) => $qq->where('equipment_name', 'ILIKE', $like)->orWhere('brand', 'ILIKE', $like));
             })
             ->orderBy('equipment_name');
 
-        return response()->json(
-            $query->paginate(perPage: 10, page: $request->input('page', 1))
-        );
+        return response()->json($query->paginate(perPage: 10, page: $request->input('page', 1)));
     }
 
-    /**
-     * Mass assign departments to multiple equipment
-     */
     public function massAssignDepartments(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
                 'equipment_ids' => 'required|array|min:1',
                 'equipment_ids.*' => 'exists:equipment,equipment_id',
-                'department_id' => 'required|exists:departments,department_id', // Single department ID
+                'department_id' => 'required|exists:departments,department_id',
             ]);
 
             $equipmentIds = $validated['equipment_ids'];
             $departmentId = $validated['department_id'];
 
-            $results = [
-                'success' => [],
-                'failed' => []
-            ];
+            $results = ['success' => [], 'failed' => []];
 
             foreach ($equipmentIds as $equipmentId) {
                 try {
                     $equipment = Equipment::findOrFail($equipmentId);
-
-                    // Update the managed_by field (department_id)
-                    $equipment->update([
-                        'managed_by' => $departmentId  // Changed from 'department_id' to 'managed_by'
-                    ]);
+                    
+                    // Sync replaces old links and saves the new one
+                    $equipment->departments()->sync([$departmentId]);
 
                     $results['success'][] = [
                         'equipment_id' => $equipmentId,
@@ -439,15 +345,8 @@ class EquipmentController extends Controller
                     ];
 
                 } catch (\Exception $e) {
-                    \Log::error('Failed to mass assign department to equipment', [
-                        'equipment_id' => $equipmentId,
-                        'error' => $e->getMessage()
-                    ]);
-
-                    $results['failed'][] = [
-                        'equipment_id' => $equipmentId,
-                        'error' => $e->getMessage()
-                    ];
+                    \Log::error('Failed to mass assign department to equipment', ['equipment_id' => $equipmentId, 'error' => $e->getMessage()]);
+                    $results['failed'][] = ['equipment_id' => $equipmentId, 'error' => $e->getMessage()];
                 }
             }
 
@@ -459,83 +358,35 @@ class EquipmentController extends Controller
             } else if ($failedCount === 0) {
                 $message = "Successfully assigned department to " . ($successCount === 1 ? "1 equipment" : "{$successCount} equipment items");
             } else {
-                $message = "Assigned department to {$successCount} " . ($successCount === 1 ? "equipment" : "equipment items") .
-                    ", failed for {$failedCount} " . ($failedCount === 1 ? "equipment" : "equipment items");
+                $message = "Assigned department to {$successCount} " . ($successCount === 1 ? "equipment" : "equipment items") . ", failed for {$failedCount}";
             }
 
-            return response()->json([
-                'message' => $message,
-                'results' => $results
-            ]);
+            return response()->json(['message' => $message, 'results' => $results]);
 
         } catch (\Exception $e) {
-            \Log::error('Error in mass department assignment for equipment', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to process mass department assignment',
-                'error' => $e->getMessage()
-            ], 500);
+            \Log::error('Error in mass department assignment', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to process mass department assignment', 'error' => $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Helper method to generate appropriate message for mass assignment
-     */
-    private function getMassAssignmentMessage(array $results, string $action, string $type): string
-    {
-        $successCount = count($results['success']);
-        $failedCount = count($results['failed']);
-
-        $actionText = [
-            'add' => 'added to',
-            'replace' => 'assigned to',
-            'remove' => 'removed from'
-        ][$action];
-
-        if ($successCount === 0) {
-            return "Failed to {$action} departments for any {$type}s.";
-        }
-
-        if ($failedCount === 0) {
-            return "Successfully {$actionText} " . ($successCount === 1 ? "1 {$type}" : "{$successCount} {$type}s");
-        }
-
-        return "Departments {$actionText} {$successCount} " . ($successCount === 1 ? $type : "{$type}s") .
-            ", failed for {$failedCount} " . ($failedCount === 1 ? $type : "{$type}s");
-    }
     public function edit(Request $request)
     {
         $equipmentId = $request->query('id');
-
-        if (!$equipmentId) {
-            return redirect('/admin/manage-equipment')->with('error', 'No equipment ID provided');
-        }
-
+        if (!$equipmentId) return redirect('/admin/manage-equipment')->with('error', 'No equipment ID provided');
         return view('admin.edit-equipment', ['equipmentId' => $equipmentId]);
     }
 
-    // ----- Delete Equipment ----- //
     public function destroy($id): JsonResponse
     {
         try {
             $equipment = Equipment::findOrFail($id);
-
-            // equipment_images + equipment_items cascade-delete via FK constraints.
             $equipment->delete();
-
             \Log::info('Equipment deleted successfully', ['equipment_id' => $id]);
-
             return response()->json(['message' => 'Equipment deleted successfully']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'Equipment not found'], 404);
         } catch (\Exception $e) {
-            \Log::error('Error deleting equipment', [
-                'equipment_id' => $id,
-                'error' => $e->getMessage(),
-            ]);
+            \Log::error('Error deleting equipment', ['equipment_id' => $id, 'error' => $e->getMessage()]);
             return response()->json(['message' => 'Failed to delete equipment: ' . $e->getMessage()], 500);
         }
     }
@@ -544,7 +395,7 @@ class EquipmentController extends Controller
 
     private function formatEquipment($equipment): array
     {
-        $equipment->load(['category', 'status', 'department', 'items', 'images']);
+        $equipment->load(['category', 'status', 'departments', 'items', 'images']);
 
         return [
             'equipment_id' => $equipment->equipment_id,
@@ -563,10 +414,10 @@ class EquipmentController extends Controller
                 'status_name' => $equipment->status->status_name,
                 'color_code' => $equipment->status->color_code,
             ],
-            'department' => [
-                'department_id' => $equipment->department_id,
-                'department_name' => $equipment->department->department_name,
-            ],
+            'departments' => $equipment->departments->map(fn($d) => [
+                'department_id' => $d->department_id,
+                'department_name' => $d->department_name
+            ])->values()->toArray(),
             'maximum_rental_hour' => $equipment->maximum_rental_hour,
             'items' => $equipment->items,
             'images' => $equipment->images,
@@ -577,7 +428,7 @@ class EquipmentController extends Controller
 
     private function formatPublicEquipment($equipment): array
     {
-        $equipment->load(['category', 'status', 'department', 'items.condition', 'images']);
+        $equipment->load(['category', 'status', 'departments', 'items.condition', 'images']);
 
         return [
             'equipment_id' => $equipment->equipment_id,
@@ -596,46 +447,36 @@ class EquipmentController extends Controller
                 'status_name' => $equipment->status->status_name,
                 'color_code' => $equipment->status->color_code,
             ],
+            'departments' => $equipment->departments->map(fn($d) => [
+                'department_id' => $d->department_id,
+                'department_name' => $d->department_name
+            ])->values()->toArray(),
             'items' => $equipment->items,
             'images' => $equipment->images,
         ];
     }
-
-
-
 
     // ---------  EQUIPMENT ITEMS MANAGEMENT ---------- //
 
     public function getItems($equipmentId): JsonResponse
     {
         try {
-
             $items = EquipmentItem::with(['condition'])
                 ->where('equipment_id', $equipmentId)
                 ->orderBy('item_name')
                 ->get();
 
-            return response()->json([
-                'data' => $items
-            ]);
+            return response()->json(['data' => $items]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching equipment items', [
-                'error' => $e->getMessage(),
-                'equipmentId' => $equipmentId,
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to fetch equipment items',
-                'error' => $e->getMessage()
-            ], 500);
+            \Log::error('Error fetching equipment items', ['error' => $e->getMessage(), 'equipmentId' => $equipmentId]);
+            return response()->json(['message' => 'Failed to fetch equipment items', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function storeItem(Request $request, $equipmentId)
     {
         try {
-            $admin = auth()->user(); // This gets the authenticated admin
+            $admin = auth()->user();
 
             $validatedData = $request->validate([
                 'item_name' => 'required|string|max:50',
@@ -645,42 +486,22 @@ class EquipmentController extends Controller
                 'image_url' => 'nullable|url',
             ]);
 
-            // Log authentication details for debugging
-            \Log::info('Creating equipment item', [
-                'admin_id' => $admin->admin_id,
-                'admin_email' => $admin->email,
-                'equipment_id' => $equipmentId,
-                'validated_data' => $validatedData
-            ]);
-
             $item = EquipmentItem::create([
                 'equipment_id' => $equipmentId,
                 'item_name' => $validatedData['item_name'],
                 'condition_id' => $validatedData['condition_id'],
                 'barcode_number' => $validatedData['barcode_number'] ?? null,
                 'item_notes' => $validatedData['item_notes'] ?? 'No notes provided for this asset.',
-                'image_url' => $validatedData['image_url'] ?? 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1750895337/oxvsxogzu9koqhctnf7s.webp',
+                'image_url' => $validatedData['image_url'] ?? '/assets/placeholder-image.png', // Removed Cloudinary
                 'status_id' => 1,
-                'created_by' => $admin->admin_id // Use authenticated admin's ID
+                'created_by' => $admin->admin_id
             ]);
 
-            return response()->json([
-                'message' => 'Item added successfully',
-                'item' => $item->load('condition')
-            ]);
+            return response()->json(['message' => 'Item added successfully', 'item' => $item->load('condition')]);
 
         } catch (\Exception $e) {
-            \Log::error('Failed to create equipment item', [
-                'equipment_id' => $equipmentId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'admin_id' => auth()->check() ? auth()->user()->admin_id : 'Not authenticated'
-            ]);
-
-            return response()->json([
-                'error' => 'Failed to add item',
-                'details' => $e->getMessage()
-            ], 500);
+            \Log::error('Failed to create equipment item', ['equipment_id' => $equipmentId, 'error' => $e->getMessage()]);
+            return response()->json(['error' => 'Failed to add item', 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -695,10 +516,7 @@ class EquipmentController extends Controller
                 'image_url' => 'nullable|url',
             ]);
 
-
-            $item = EquipmentItem::where('equipment_id', $equipmentId)
-                ->where('item_id', $itemId)
-                ->firstOrFail();
+            $item = EquipmentItem::where('equipment_id', $equipmentId)->where('item_id', $itemId)->firstOrFail();
 
             $item->update([
                 'item_name' => $validated['item_name'],
@@ -709,80 +527,27 @@ class EquipmentController extends Controller
                 'updated_by' => auth()->id()
             ]);
 
-            \Log::info('Equipment item updated successfully', [
-                'item_id' => $itemId,
-                'equipment_id' => $equipmentId,
-                'updated_by' => auth()->id()
-            ]);
-
-            return response()->json([
-                'message' => 'Item updated successfully',
-                'data' => $item->fresh()->load('condition')
-            ]);
+            return response()->json(['message' => 'Item updated successfully', 'data' => $item->fresh()->load('condition')]);
 
         } catch (\Exception $e) {
-            \Log::error('Error updating equipment item', [
-                'error' => $e->getMessage(),
-                'equipmentId' => $equipmentId,
-                'itemId' => $itemId,
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to update item',
-                'error' => $e->getMessage()
-            ], 500);
+            \Log::error('Error updating equipment item', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to update item', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function deleteItem($equipmentId, $itemId)
     {
         try {
-            $item = EquipmentItem::where('equipment_id', $equipmentId)
-                ->where('item_id', $itemId)
-                ->firstOrFail();
-
-
-            // Delete the database record
+            $item = EquipmentItem::where('equipment_id', $equipmentId)->where('item_id', $itemId)->firstOrFail();
             $item->delete();
-
-            \Log::info('Equipment item deleted successfully', [
-                'item_id' => $itemId,
-                'equipment_id' => $equipmentId,
-                'admin_id' => auth()->id(),
-            ]);
-
-            return response()->json([
-                'message' => 'Item deleted successfully'
-            ]);
+            \Log::info('Equipment item deleted successfully', ['item_id' => $itemId, 'equipment_id' => $equipmentId]);
+            return response()->json(['message' => 'Item deleted successfully']);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            \Log::error('Equipment item not found for deletion', [
-                'equipment_id' => $equipmentId,
-                'item_id' => $itemId,
-                'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'error' => 'Item not found',
-                'details' => $e->getMessage()
-            ], 404);
-
+            return response()->json(['error' => 'Item not found', 'details' => $e->getMessage()], 404);
         } catch (\Exception $e) {
-            \Log::error('Failed to delete equipment item', [
-                'item_id' => $itemId,
-                'equipment_id' => $equipmentId,
-                'admin_id' => auth()->id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'error' => 'Failed to delete item',
-                'details' => $e->getMessage()
-            ], 500);
+            \Log::error('Failed to delete equipment item', ['item_id' => $itemId, 'error' => $e->getMessage()]);
+            return response()->json(['error' => 'Failed to delete item', 'details' => $e->getMessage()], 500);
         }
     }
-
-
 }

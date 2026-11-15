@@ -199,6 +199,7 @@ Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
 });
 
 // Mass Assignment Routes //
+
 // Equipment mass department assignment
 Route::post('/admin/equipment/mass-assign-departments', [EquipmentController::class, 'massAssignDepartments']);
 

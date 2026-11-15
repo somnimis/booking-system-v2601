@@ -6,7 +6,10 @@
   Required DOM hooks:
     #assignmentWarningModal, #confirmAssignBtn  (listener attached by caller)
 --}}
-@php($resourceLabel = $resourceLabel ?? 'Resource')
+@php
+    $resourceLabel = $resourceLabel ?? 'Resource';
+    $resourcePlural = \Illuminate\Support\Str::plural($resourceLabel);
+@endphp
 
 <div class="modal fade" id="assignmentWarningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -20,8 +23,8 @@
           <i class="bi bi-exclamation-triangle-fill" style="color: #003366; font-size: 2.5rem;"></i>
         </div>
         <p class="text-center mb-0">
-          This action will <strong>replace the managed_by field</strong> for all selected
-          {{ strtolower($resourceLabel) }}s with the selected department.
+          This will <strong>replace the assigned departments</strong> for all chosen
+          {{ strtolower($resourcePlural) }} with the selection. 
         </p>
         <p class="text-center text-muted mt-2 mb-0">Are you sure you want to continue?</p>
       </div>
