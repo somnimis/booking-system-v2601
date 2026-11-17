@@ -193,8 +193,29 @@ class ManageEquipmentController extends Controller
             'status_name' => $equipment->status?->status_name,
             'status_color_code' => $equipment->status?->color_code,
             'items_count' => $equipment->items_count ?? 0,
-            'primary_image_url' => $this->primaryImageUrl($equipment),
+            'primary_image_url' => $this->getPrimaryImageUrl($equipment),
         ];
+    }
+
+    /**
+     * Helper to safely extract the primary image URL.
+     * Looks for image_type === 'Primary', otherwise falls back to the lowest sort_order.
+     */
+    private function getPrimaryImageUrl(Equipment $equipment): ?string
+    {
+        if (!$equipment->relationLoaded('images') || $equipment->images->isEmpty()) {
+            return null;
+        }
+
+        // Try to find the designated primary image
+        $primary = $equipment->images->firstWhere('image_type', 'Primary');
+        
+        // Fallback: if no primary is found, just grab the first image by sort order
+        if (!$primary) {
+            $primary = $equipment->images->sortBy('sort_order')->first();
+        }
+
+        return $primary ? $primary->image_url : null;
     }
 
     private function formatItem($item, ?string $fallbackImage = null): array
