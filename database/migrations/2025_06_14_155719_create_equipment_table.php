@@ -13,7 +13,7 @@ return new class extends Migration {
     {
         Schema::create('equipment', function (Blueprint $table) {
             $table->id('equipment_id');
-            $table->string('equipment_name', 100);
+            $table->string('equipment_name', 100)->unique();
             $table->string('description', 255)->default('No description provided for this equipment.');
             $table->string('brand', 80)->nullable();
             $table->string('storage_location', 50)->default('No storage location specified.');

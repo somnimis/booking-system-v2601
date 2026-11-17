@@ -288,18 +288,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('admin/manage-equipment/section', [ManageEquipmentController::class, 'section']);
     Route::get('admin/manage-equipment/search', [ManageEquipmentController::class, 'search']);
     Route::get('admin/equipment/{equipmentId}/items-list', [ManageEquipmentController::class, 'items'])
-    ->whereNumber('equipmentId');
+        ->whereNumber('equipmentId');
     Route::get('admin/manage-equipment/dropdown', [EquipmentController::class, 'getEquipmentForMassAssign']);
     Route::post('admin/equipment', [EquipmentController::class, 'store']);
     Route::put('admin/equipment/{equipmentId}', [EquipmentController::class, 'update']);
     Route::delete('/admin/equipment/{equipmentId}', [EquipmentController::class, 'destroy']);
 
     // Equipment Images
-    Route::post('/admin/upload', [EquipmentController::class, 'uploadImage']);
-    Route::post('/admin/bulk-upload', [EquipmentController::class, 'uploadMultipleImages']);
-    Route::delete('/admin/equipment/{equipmentId}/images/{imageId}', [EquipmentController::class, 'deleteImage']);
-    Route::post('/admin/reorder', [EquipmentController::class, 'reorderImages']);
-    Route::post('/admin/equipment/{equipmentId}/images/save', [EquipmentController::class, 'saveImageReference']);
+    Route::post('/admin/equipment/{equipmentId}/images', [EquipmentController::class, 'uploadImage'])->whereNumber('equipmentId');
+    Route::post('/admin/equipment/{equipmentId}/images/reorder', [EquipmentController::class, 'reorderImages'])->whereNumber('equipmentId');
+    Route::delete('/admin/equipment/{equipmentId}/images/{imageId}', [EquipmentController::class, 'deleteImage'])->whereNumber('equipmentId')->whereNumber('imageId');
 
     // Equipment Items
     Route::get('admin/equipment/{equipmentId}/items', [EquipmentController::class, 'getItems']);

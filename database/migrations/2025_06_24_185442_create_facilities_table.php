@@ -24,7 +24,7 @@ return new class extends Migration {
             $table->unsignedTinyInteger('total_levels')->default(1)->nullable();
 
             // general details
-            $table->string('facility_name', 50);
+            $table->string('facility_name', 50)->unique();
             $table->string('description', 250)->default('No description provided for this facility.');
             $table->unsignedInteger('maximum_rental_hour')->nullable();
             $table->unsignedTinyInteger('category_id')->default(1);

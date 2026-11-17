@@ -3,7 +3,7 @@
 @section('title', 'Edit Facility')
 
 @section('content')
-    <link rel="stylesheet" href="{{ asset('css/admin/facility-form.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin/resource-form.css') }}">
 
     <main id="main">
         <div class="container main-content mb-5" style="max-width: 960px; margin-left: auto; margin-right: auto;"

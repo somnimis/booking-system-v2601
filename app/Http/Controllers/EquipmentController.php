@@ -19,7 +19,7 @@ class EquipmentController extends Controller
             $query = Equipment::with([
                 'category',
                 'status',
-                'departments', // Updated to many-to-many
+                'departments',
                 'items' => function ($query) {
                     $query->where('status_id', '!=', 5);
                 },
@@ -114,115 +114,127 @@ class EquipmentController extends Controller
 
     // ----- EQUIPMENT MANAGEMENT SECTION ----- //
 
+    /**
+     * Create a new equipment record with optional inline items and department links.
+     * Images are uploaded separately after creation via POST /admin/equipment/{id}/images
+     * (parallel from the client), so they are not accepted in this payload.
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'equipment_name' => 'required|string|max:50',
-            'description' => 'nullable|string|max:255',
-            'brand' => 'nullable|string|max:80',
+            'equipment_name' => 'required|string|max:100',
+            'description'    => 'nullable|string|max:255',
+            'brand'          => 'nullable|string|max:80',
             'storage_location' => 'required|string|max:50',
-            'category_id' => 'required|exists:equipment_categories,category_id',
-            'base_fee' => 'required|numeric|min:0',
-            'rate_type' => 'required|in:Per Hour,Per Event',
-            'status_id' => 'required|exists:availability_statuses,status_id',
-            
-            'departments' => 'required|array|min:1',
-            'departments.*' => 'exists:departments,department_id',
-            
-            'maximum_rental_hour' => 'nullable|integer',
+            'category_id'    => 'required|exists:equipment_categories,category_id',
+            'base_fee'       => 'required|numeric|min:0',
+            'rate_type'      => 'required|in:Per Hour,Per Event',
+            'status_id'      => 'required|exists:availability_statuses,status_id',
 
-            'items' => 'sometimes|array',
-            'items.*.item_name' => 'sometimes|string|max:100',
-            'items.*.condition_id' => 'required|exists:conditions,condition_id',
-            'items.*.barcode_number' => 'nullable|string|max:100',
-            'items.*.item_notes' => 'nullable|string',
+            'departments'    => 'required|array|min:1',
+            'departments.*'  => 'exists:departments,department_id',
 
-            'images' => 'sometimes|array',
-            'images.*.image_url' => 'required|url|max:500',
-            'images.*.description' => 'nullable|string',
-            'images.*.sort_order' => 'sometimes|integer',
-            'images.*.image_type' => 'required|exists:image_types,image_type',
+            'items'                       => 'sometimes|array',
+            'items.*.item_name'           => 'required_with:items|string|max:50',
+            'items.*.condition_id'        => 'required_with:items|exists:conditions,condition_id',
+            'items.*.barcode_number'      => 'nullable|string|max:20',
+            'items.*.item_notes'          => 'nullable|string|max:100',
         ]);
 
-        $equipment = \DB::transaction(function () use ($data) {
-            $eq = Equipment::create([
-                'equipment_name' => $data['equipment_name'],
-                'description' => $data['description'] ?? null,
-                'brand' => $data['brand'] ?? null,
-                'storage_location' => $data['storage_location'],
-                'category_id' => $data['category_id'],
-                'base_fee' => $data['base_fee'],
-                'rate_type' => $data['rate_type'],
-                'status_id' => $data['status_id'],
-                'maximum_rental_hour' => $data['maximum_rental_hour'] ?? null,
-                'created_by' => auth()->id()
-            ]);
+        $admin = auth()->user();
 
-            $eq->departments()->attach($data['departments']);
+        try {
+            $equipment = \DB::transaction(function () use ($data, $admin) {
+                $eq = Equipment::create([
+                    'equipment_name'   => $data['equipment_name'],
+                    'description'      => $data['description'] ?? 'No description provided for this equipment.',
+                    'brand'            => $data['brand'] ?? null,
+                    'storage_location' => $data['storage_location'],
+                    'category_id'      => $data['category_id'],
+                    'base_fee'         => $data['base_fee'],
+                    'rate_type'        => $data['rate_type'],
+                    'status_id'        => $data['status_id'],
+                    'created_by'       => $admin->admin_id,
+                ]);
 
-            if (!empty($data['items'])) {
-                foreach ($data['items'] as $item) {
-                    $eq->items()->create($item);
+                $eq->departments()->attach($data['departments']);
+
+                if (!empty($data['items'])) {
+                    foreach ($data['items'] as $item) {
+                        $eq->items()->create([
+                            'item_name'      => $item['item_name'],
+                            'condition_id'   => $item['condition_id'],
+                            'barcode_number' => $item['barcode_number'] ?? $this->generateBarcode(),
+                            'item_notes'     => $item['item_notes'] ?? 'No notes provided for this asset.',
+                            'status_id'      => 1,
+                            'created_by'     => $admin->admin_id,
+                        ]);
+                    }
                 }
-            }
 
-            if (!empty($data['images'])) {
-                foreach ($data['images'] as $image) {
-                    $eq->images()->create($image);
-                }
+                return $eq;
+            });
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), 'barcode_number')) {
+                return response()->json([
+                    'message' => 'A duplicate barcode was generated. Please try again.',
+                ], 422);
             }
-
-            return $eq;
-        });
+            if (str_contains($e->getMessage(), 'equipment_name')) {
+                return response()->json([
+                    'message' => 'This equipment name is already taken. Please choose another.',
+                ], 422);
+            }
+            throw $e;
+        }
 
         return response()->json([
             'message' => 'Equipment created successfully',
-            'data' => $this->formatEquipment($equipment->fresh())
+            'data'    => $this->formatEquipment($equipment->fresh())
         ], 201);
     }
 
     public function show($id)
     {
         try {
-            $equipment = Equipment::with(['category', 'status', 'departments', 'images'])->findOrFail($id);
+            // Eager load items and their conditions
+            $equipment = Equipment::with(['category', 'status', 'departments', 'images', 'items.condition'])->findOrFail($id);
             return response()->json(['data' => $equipment]);
         } catch (\Exception $e) {
             \Log::error('Error fetching equipment: ' . $e->getMessage());
             return response()->json(['message' => 'Failed to fetch equipment', 'error' => $e->getMessage()], 500);
         }
     }
-
     public function update(Request $request, $id)
     {
         try {
             $validated = $request->validate([
-                'equipment_name' => 'required|string|max:255',
-                'description' => 'nullable|string|max:255',
-                'brand' => 'nullable|string|max:255',
-                'storage_location' => 'required|string|max:255',
-                'category_id' => 'required|exists:equipment_categories,category_id',
-                'base_fee' => 'required|numeric|min:0',
-                'rate_type' => 'required|in:Per Hour,Per Event',
-                'status_id' => 'required|exists:availability_statuses,status_id',
-                'departments' => 'required|array|min:1',
-                'departments.*' => 'exists:departments,department_id',
-                'maximum_rental_hour' => 'required|integer|min:1',
+                'equipment_name'   => 'required|string|max:100',
+                'description'      => 'nullable|string|max:255',
+                'brand'            => 'nullable|string|max:80',
+                'storage_location' => 'required|string|max:50',
+                'category_id'      => 'required|exists:equipment_categories,category_id',
+                'base_fee'         => 'required|numeric|min:0',
+                'rate_type'        => 'required|in:Per Hour,Per Event',
+                'status_id'        => 'required|exists:availability_statuses,status_id',
+                'departments'      => 'required|array|min:1',
+                'departments.*'    => 'exists:departments,department_id',
             ]);
 
             $equipment = Equipment::findOrFail($id);
+            $admin = auth()->user();
 
-            \DB::transaction(function () use ($equipment, $validated) {
+            \DB::transaction(function () use ($equipment, $validated, $admin) {
                 $equipment->update([
-                    'equipment_name' => $validated['equipment_name'],
-                    'description' => $validated['description'] ?? null,
-                    'brand' => $validated['brand'] ?? null,
+                    'equipment_name'   => $validated['equipment_name'],
+                    'description'      => $validated['description'] ?? null,
+                    'brand'            => $validated['brand'] ?? null,
                     'storage_location' => $validated['storage_location'],
-                    'category_id' => $validated['category_id'],
-                    'base_fee' => $validated['base_fee'],
-                    'rate_type' => $validated['rate_type'],
-                    'status_id' => $validated['status_id'],
-                    'maximum_rental_hour' => $validated['maximum_rental_hour'],
-                    'updated_by' => auth()->id()
+                    'category_id'      => $validated['category_id'],
+                    'base_fee'         => $validated['base_fee'],
+                    'rate_type'        => $validated['rate_type'],
+                    'status_id'        => $validated['status_id'],
+                    'updated_by'       => $admin->admin_id,
                 ]);
 
                 $equipment->departments()->sync($validated['departments']);
@@ -230,7 +242,7 @@ class EquipmentController extends Controller
 
             return response()->json([
                 'message' => 'Equipment updated successfully',
-                'data' => $equipment->fresh(['departments'])
+                'data'    => $equipment->fresh(['departments'])
             ]);
 
         } catch (\Exception $e) {
@@ -241,7 +253,6 @@ class EquipmentController extends Controller
 
     public function getEquipmentWithSelected(Request $request)
     {
-        // ... (Keep existing logic, it doesn't reference managed_by)
         $search = $request->input('search');
         $filter = $request->input('filter');
         $page = $request->input('page', 1);
@@ -284,7 +295,6 @@ class EquipmentController extends Controller
 
     public function getEquipmentForDropdown(Request $request): JsonResponse
     {
-        // ... (Keep existing logic)
         $search = $request->input('search');
         $filter = $request->input('filter');
 
@@ -304,7 +314,6 @@ class EquipmentController extends Controller
 
     public function getEquipmentForMassAssign(Request $request): JsonResponse
     {
-        // ... (Keep existing logic)
         $search = trim((string) $request->input('search', ''));
 
         $query = Equipment::query()
@@ -322,9 +331,9 @@ class EquipmentController extends Controller
     {
         try {
             $validated = $request->validate([
-                'equipment_ids' => 'required|array|min:1',
+                'equipment_ids'   => 'required|array|min:1',
                 'equipment_ids.*' => 'exists:equipment,equipment_id',
-                'department_id' => 'required|exists:departments,department_id',
+                'department_id'   => 'required|exists:departments,department_id',
             ]);
 
             $equipmentIds = $validated['equipment_ids'];
@@ -335,15 +344,12 @@ class EquipmentController extends Controller
             foreach ($equipmentIds as $equipmentId) {
                 try {
                     $equipment = Equipment::findOrFail($equipmentId);
-                    
-                    // Sync replaces old links and saves the new one
                     $equipment->departments()->sync([$departmentId]);
 
                     $results['success'][] = [
-                        'equipment_id' => $equipmentId,
+                        'equipment_id'   => $equipmentId,
                         'equipment_name' => $equipment->equipment_name
                     ];
-
                 } catch (\Exception $e) {
                     \Log::error('Failed to mass assign department to equipment', ['equipment_id' => $equipmentId, 'error' => $e->getMessage()]);
                     $results['failed'][] = ['equipment_id' => $equipmentId, 'error' => $e->getMessage()];
@@ -351,7 +357,7 @@ class EquipmentController extends Controller
             }
 
             $successCount = count($results['success']);
-            $failedCount = count($results['failed']);
+            $failedCount  = count($results['failed']);
 
             if ($successCount === 0) {
                 $message = "Failed to assign department to any equipment.";
@@ -362,7 +368,6 @@ class EquipmentController extends Controller
             }
 
             return response()->json(['message' => $message, 'results' => $results]);
-
         } catch (\Exception $e) {
             \Log::error('Error in mass department assignment', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'Failed to process mass department assignment', 'error' => $e->getMessage()], 500);
@@ -376,10 +381,22 @@ class EquipmentController extends Controller
         return view('admin.edit-equipment', ['equipmentId' => $equipmentId]);
     }
 
+    /**
+     * Delete equipment and its image files from public disk.
+     * Items cascade via FK; image rows cascade via FK but files must be removed manually.
+     */
     public function destroy($id): JsonResponse
     {
         try {
-            $equipment = Equipment::findOrFail($id);
+            $equipment = Equipment::with('images')->findOrFail($id);
+
+            foreach ($equipment->images as $image) {
+                $relativePath = str_replace('/storage/', '', $image->image_url);
+                if (!empty($relativePath) && !str_contains($relativePath, 'placeholder-image')) {
+                    Storage::disk('public')->delete($relativePath);
+                }
+            }
+
             $equipment->delete();
             \Log::info('Equipment deleted successfully', ['equipment_id' => $id]);
             return response()->json(['message' => 'Equipment deleted successfully']);
@@ -391,6 +408,150 @@ class EquipmentController extends Controller
         }
     }
 
+    // ----- Images ----- //
+
+    /**
+     * Upload one equipment image (server-side, public disk).
+     * Client fires these in parallel; order is not tracked (no sort_order/image_type columns).
+     */
+
+    public function uploadImage(Request $request, $equipmentId): JsonResponse
+    {
+        $validated = $request->validate([
+            'image'       => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
+            'description' => 'nullable|string|max:80',
+            'image_type'  => 'required|in:Primary,Secondary',
+            'sort_order'  => 'nullable|integer|min:0',
+        ]);
+
+        $equipment = Equipment::findOrFail($equipmentId);
+
+        // If this will be Primary, or the equipment has no images yet, demote any current primary
+        $existingCount = $equipment->images()->count();
+        $isPrimary = $validated['image_type'] === 'Primary' || $existingCount === 0;
+
+        if ($isPrimary) {
+            $equipment->images()->update(['image_type' => 'Secondary']);
+        }
+
+        // Store on public disk
+        $path = $request->file('image')->store("equipment-photos/{$equipment->equipment_id}", 'public');
+        $imageUrl = '/storage/' . $path;
+
+        $image = $equipment->images()->create([
+            'image_url'   => $imageUrl,
+            'image_type'  => $isPrimary ? 'Primary' : 'Secondary',
+            'description' => $validated['description'] ?? 'Equipment photo',
+            'sort_order'  => $validated['sort_order'] ?? $existingCount,
+        ]);
+
+        return response()->json([
+            'message'    => 'Image uploaded successfully',
+            'image_id'   => $image->image_id,
+            'image_url'  => $image->image_url,
+            'image_type' => $image->image_type,
+            'sort_order' => $image->sort_order,
+        ]);
+    }
+
+    public function reorderImages(Request $request, $equipmentId): JsonResponse
+    {
+        $validated = $request->validate([
+            'images' => 'required|array|min:1',
+            'images.*.image_id' => 'required|integer|exists:equipment_images,image_id',
+            'images.*.sort_order' => 'required|integer|min:0',
+            'images.*.image_type' => 'required|in:Primary,Secondary',
+        ]);
+
+        $equipment = Equipment::findOrFail($equipmentId);
+
+        // Ensure exactly one Primary
+        $primaryCount = collect($validated['images'])
+            ->where('image_type', 'Primary')
+            ->count();
+
+        if ($primaryCount === 0) {
+            $validated['images'][0]['image_type'] = 'Primary';
+        } elseif ($primaryCount > 1) {
+            $firstPrimarySeen = false;
+            foreach ($validated['images'] as &$row) {
+                if ($row['image_type'] === 'Primary') {
+                    if ($firstPrimarySeen) {
+                        $row['image_type'] = 'Secondary';
+                    } else {
+                        $firstPrimarySeen = true;
+                    }
+                }
+            }
+            unset($row);
+        }
+
+        \DB::transaction(function () use ($equipment, $validated) {
+            foreach ($validated['images'] as $row) {
+                $equipment->images()
+                    ->where('image_id', $row['image_id'])
+                    ->update([
+                        'sort_order' => $row['sort_order'],
+                        'image_type' => $row['image_type'],
+                    ]);
+            }
+        });
+
+        return response()->json([
+            'message' => 'Images reordered successfully',
+            'images'  => $equipment->images()->orderBy('sort_order')->get(),
+        ]);
+    }
+
+    public function deleteImage($equipmentId, $imageId): JsonResponse
+    {
+        try {
+            $equipment = Equipment::findOrFail($equipmentId);
+            $image = $equipment->images()->findOrFail($imageId);
+
+            // Delete file from storage, unless it's the default placeholder
+            $relativePath = str_replace('/storage/', '', $image->image_url);
+            if (!empty($relativePath) && !str_contains($relativePath, 'placeholder-image')) {
+                Storage::disk('public')->delete($relativePath);
+            }
+
+            $wasPrimary = $image->image_type === 'Primary';
+            $image->delete();
+
+            // If we deleted the primary, promote the next one
+            if ($wasPrimary) {
+                $nextId = $equipment->images()->orderBy('sort_order')->value('image_id');
+                if ($nextId) {
+                    \App\Models\EquipmentImage::where('image_id', $nextId)
+                        ->update(['image_type' => 'Primary']);
+                }
+            }
+
+            $this->reorderImageRecords($equipment);
+
+            return response()->json(['message' => 'Image deleted successfully']);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Image or equipment not found'], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in deleteImage', [
+                'error' => $e->getMessage(),
+                'equipmentId' => $equipmentId,
+                'imageId' => $imageId,
+            ]);
+            return response()->json([
+                'message' => 'Failed to delete image: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function reorderImageRecords(Equipment $equipment): void
+    {
+        $images = $equipment->images()->orderBy('sort_order')->get();
+        foreach ($images as $index => $image) {
+            $image->update(['sort_order' => $index + 1]);
+        }
+    }
     // ----- Formatting ----- //
 
     private function formatEquipment($equipment): array
@@ -398,29 +559,28 @@ class EquipmentController extends Controller
         $equipment->load(['category', 'status', 'departments', 'items', 'images']);
 
         return [
-            'equipment_id' => $equipment->equipment_id,
-            'equipment_name' => $equipment->equipment_name,
-            'description' => $equipment->description,
-            'brand' => $equipment->brand,
+            'equipment_id'     => $equipment->equipment_id,
+            'equipment_name'   => $equipment->equipment_name,
+            'description'      => $equipment->description,
+            'brand'            => $equipment->brand,
             'storage_location' => $equipment->storage_location,
-            'category' => [
-                'category_id' => $equipment->category_id,
+            'category'         => [
+                'category_id'   => $equipment->category_id,
                 'category_name' => $equipment->category->category_name,
             ],
-            'base_fee' => $equipment->base_fee,
+            'base_fee'  => $equipment->base_fee,
             'rate_type' => $equipment->rate_type,
-            'status' => [
-                'status_id' => $equipment->status_id,
+            'status'    => [
+                'status_id'   => $equipment->status_id,
                 'status_name' => $equipment->status->status_name,
-                'color_code' => $equipment->status->color_code,
+                'color_code'  => $equipment->status->color_code,
             ],
             'departments' => $equipment->departments->map(fn($d) => [
-                'department_id' => $d->department_id,
+                'department_id'   => $d->department_id,
                 'department_name' => $d->department_name
             ])->values()->toArray(),
-            'maximum_rental_hour' => $equipment->maximum_rental_hour,
-            'items' => $equipment->items,
-            'images' => $equipment->images,
+            'items'      => $equipment->items,
+            'images'     => $equipment->images,
             'created_at' => $equipment->created_at,
             'updated_at' => $equipment->updated_at,
         ];
@@ -431,32 +591,32 @@ class EquipmentController extends Controller
         $equipment->load(['category', 'status', 'departments', 'items.condition', 'images']);
 
         return [
-            'equipment_id' => $equipment->equipment_id,
-            'equipment_name' => $equipment->equipment_name,
-            'description' => $equipment->description,
-            'brand' => $equipment->brand,
+            'equipment_id'     => $equipment->equipment_id,
+            'equipment_name'   => $equipment->equipment_name,
+            'description'      => $equipment->description,
+            'brand'            => $equipment->brand,
             'storage_location' => $equipment->storage_location,
-            'category' => [
-                'category_id' => $equipment->category_id,
+            'category'         => [
+                'category_id'   => $equipment->category_id,
                 'category_name' => $equipment->category->category_name,
             ],
-            'base_fee' => $equipment->base_fee,
+            'base_fee'  => $equipment->base_fee,
             'rate_type' => $equipment->rate_type,
-            'status' => [
-                'status_id' => $equipment->status_id,
+            'status'    => [
+                'status_id'   => $equipment->status_id,
                 'status_name' => $equipment->status->status_name,
-                'color_code' => $equipment->status->color_code,
+                'color_code'  => $equipment->status->color_code,
             ],
             'departments' => $equipment->departments->map(fn($d) => [
-                'department_id' => $d->department_id,
+                'department_id'   => $d->department_id,
                 'department_name' => $d->department_name
             ])->values()->toArray(),
-            'items' => $equipment->items,
+            'items'  => $equipment->items,
             'images' => $equipment->images,
         ];
     }
 
-    // ---------  EQUIPMENT ITEMS MANAGEMENT ---------- //
+    // ----- EQUIPMENT ITEMS ----- //
 
     public function getItems($equipmentId): JsonResponse
     {
@@ -473,62 +633,104 @@ class EquipmentController extends Controller
         }
     }
 
+    /**
+     * Create an item. Accepts multipart with optional `image` file — stored server-side
+     * and written to image_url in this same request. Barcode is auto-generated when empty.
+     */
     public function storeItem(Request $request, $equipmentId)
     {
         try {
             $admin = auth()->user();
 
             $validatedData = $request->validate([
-                'item_name' => 'required|string|max:50',
-                'condition_id' => 'required|exists:conditions,condition_id',
+                'item_name'      => 'required|string|max:50',
+                'condition_id'   => 'required|exists:conditions,condition_id',
                 'barcode_number' => 'nullable|string|max:20',
-                'item_notes' => 'nullable|string|max:100',
-                'image_url' => 'nullable|url',
+                'item_notes'     => 'nullable|string|max:100',
+                'image'          => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
             ]);
 
+            $imageUrl = '/assets/placeholder-image.png';
+
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store("equipment-items/{$equipmentId}", 'public');
+                $imageUrl = '/storage/' . $path;
+            }
+
             $item = EquipmentItem::create([
-                'equipment_id' => $equipmentId,
-                'item_name' => $validatedData['item_name'],
-                'condition_id' => $validatedData['condition_id'],
-                'barcode_number' => $validatedData['barcode_number'] ?? null,
-                'item_notes' => $validatedData['item_notes'] ?? 'No notes provided for this asset.',
-                'image_url' => $validatedData['image_url'] ?? '/assets/placeholder-image.png', // Removed Cloudinary
-                'status_id' => 1,
-                'created_by' => $admin->admin_id
+                'equipment_id'   => $equipmentId,
+                'item_name'      => $validatedData['item_name'],
+                'condition_id'   => $validatedData['condition_id'],
+                                'barcode_number' => $validatedData['barcode_number'] ?? null, 
+                'item_notes'     => $validatedData['item_notes'] ?? 'No notes provided for this asset.',
+                'image_url'      => $imageUrl,
+                'status_id'      => 1,
+                'created_by'     => $admin->admin_id,
             ]);
 
             return response()->json(['message' => 'Item added successfully', 'item' => $item->load('condition')]);
 
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), 'barcode_number')) {
+                return response()->json([
+                    'message' => 'Barcode already exists. Please try saving again to generate a new one.',
+                ], 422);
+            }
+            throw $e;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             \Log::error('Failed to create equipment item', ['equipment_id' => $equipmentId, 'error' => $e->getMessage()]);
-            return response()->json(['error' => 'Failed to add item', 'details' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to add item', 'error' => $e->getMessage()], 500);
         }
     }
 
+    /**
+     * Update an item. If a new `image` file is uploaded, it replaces the stored image_url
+     * and deletes the prior file (except the placeholder).
+     */
     public function updateItem(Request $request, $equipmentId, $itemId): JsonResponse
     {
         try {
             $validated = $request->validate([
-                'item_name' => 'required|string|max:50',
-                'condition_id' => 'required|exists:conditions,condition_id',
+                'item_name'      => 'required|string|max:50',
+                'condition_id'   => 'required|exists:conditions,condition_id',
                 'barcode_number' => 'nullable|string|max:20',
-                'item_notes' => 'nullable|string|max:100',
-                'image_url' => 'nullable|url',
+                'item_notes'     => 'nullable|string|max:100',
+                'image'          => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
             ]);
 
             $item = EquipmentItem::where('equipment_id', $equipmentId)->where('item_id', $itemId)->firstOrFail();
 
+            $imageUrl = $item->image_url;
+
+            if ($request->hasFile('image')) {
+                // Delete prior file if it was a server-stored upload
+                $oldRelative = str_replace('/storage/', '', (string) $item->image_url);
+                if (!empty($oldRelative) && !str_contains($oldRelative, 'placeholder-image')) {
+                    Storage::disk('public')->delete($oldRelative);
+                }
+
+                $path = $request->file('image')->store("equipment-items/{$equipmentId}", 'public');
+                $imageUrl = '/storage/' . $path;
+            }
+
             $item->update([
-                'item_name' => $validated['item_name'],
-                'condition_id' => $validated['condition_id'],
-                'barcode_number' => $validated['barcode_number'] ?? null,
-                'item_notes' => $validated['item_notes'] ?? $item->item_notes,
-                'image_url' => $validated['image_url'] ?? $item->image_url,
-                'updated_by' => auth()->id()
+                'item_name'      => $validated['item_name'],
+                'condition_id'   => $validated['condition_id'],
+                'barcode_number' => $validated['barcode_number'] ?? $item->barcode_number,
+                'item_notes'     => $validated['item_notes'] ?? $item->item_notes,
+                'image_url'      => $imageUrl,
+                'updated_by'     => auth()->user()->admin_id,
             ]);
 
             return response()->json(['message' => 'Item updated successfully', 'data' => $item->fresh()->load('condition')]);
 
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), 'barcode_number')) {
+                return response()->json(['message' => 'Barcode already exists.'], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             \Log::error('Error updating equipment item', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'Failed to update item', 'error' => $e->getMessage()], 500);
@@ -539,6 +741,13 @@ class EquipmentController extends Controller
     {
         try {
             $item = EquipmentItem::where('equipment_id', $equipmentId)->where('item_id', $itemId)->firstOrFail();
+
+            // Remove stored file (skip placeholder)
+            $relativePath = str_replace('/storage/', '', (string) $item->image_url);
+            if (!empty($relativePath) && !str_contains($relativePath, 'placeholder-image')) {
+                Storage::disk('public')->delete($relativePath);
+            }
+
             $item->delete();
             \Log::info('Equipment item deleted successfully', ['item_id' => $itemId, 'equipment_id' => $equipmentId]);
             return response()->json(['message' => 'Item deleted successfully']);
@@ -549,5 +758,18 @@ class EquipmentController extends Controller
             \Log::error('Failed to delete equipment item', ['item_id' => $itemId, 'error' => $e->getMessage()]);
             return response()->json(['error' => 'Failed to delete item', 'details' => $e->getMessage()], 500);
         }
+    }
+
+    // ----- Helpers ----- //
+
+    /**
+     * Generate an EQ-XXXXXXXX style barcode (10 chars, fits the varchar(20) unique column).
+     * Uniqueness is ultimately enforced by the DB; callers catch QueryException.
+     */
+    private function generateBarcode(): string
+    {
+        // 10 chars: randomized uppercase alphanumeric
+        $randomPart = substr(str_shuffle(str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 2)), 0, 10);
+        return 'EQ-' . $randomPart;
     }
 }

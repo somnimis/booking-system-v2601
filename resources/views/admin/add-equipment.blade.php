@@ -3,1821 +3,999 @@
 @section('title', 'Add Equipment')
 
 @section('content')
-    <style>
-        .card-body.position-relative {
-            min-height: 200px;
-        }
+    <link rel="stylesheet" href="{{ asset('css/admin/resource-form.css') }}">
 
-        #itemsLoading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10;
-            width: 100%;
-        }
-
-        #itemsEmptyState {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10;
-            width: 100%;
-        }
-
-
-        .spinner-border {
-            width: 2rem;
-            height: 2rem;
-        }
-
-        label.required::after {
-            content: " *";
-            color: red;
-        }
-
-        #barcode[readonly] {
-            background-color: #e9ecef;
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .barcode-container {
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .barcode-preview {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #ddd;
-            padding: 5px;
-            background: white;
-        }
-
-        #itemsContainer {
-            min-height: 100px;
-            max-height: 450px;
-            /* Adjust this value as needed */
-            overflow-y: auto;
-            padding: 10px;
-            border: none;
-        }
-
-        /* Toast notification styles */
-        .toast {
-            z-index: 1100;
-            bottom: 0;
-            left: 0;
-            margin: 1rem;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: transform 0.4s ease, opacity 0.4s ease;
-            min-width: 250px;
-            border-radius: 0.3rem;
-        }
-
-        .toast .loading-bar {
-            height: 3px;
-            background: rgba(255, 255, 255, 0.7);
-            width: 100%;
-            transition: width 3000ms linear;
-        }
-
-        input[readonly],
-        textarea[readonly] {
-            pointer-events: none;
-            /* disables clicking/selection */
-            user-select: none;
-            /* prevents highlighting */
-            background-color: #fff;
-            /* optional: removes gray "disabled" look */
-            cursor: default;
-            /* arrow cursor instead of I-beam */
-        }
-
-        /* Add this to your existing styles */
-        #photosPreview {
-            min-height: 110px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .photo-preview {
-            position: relative;
-            width: 100px;
-            height: 100px;
-        }
-
-        /* Layout fixes */
-        .dropzone {
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #photosPreview {
-            min-height: 110px;
-        }
-
-        .form-control,
-        .form-select {
-            padding: 0.5rem 0.75rem;
-        }
-
-        textarea.form-control {
-            min-height: 100px;
-        }
-
-        .row.mb-4 {
-            margin-bottom: 1.5rem !important;
-        }
-
-        #itemsContainer {
-            min-height: 100px;
-        }
-
-        .amenity-item,
-        .equipment-item {
-            margin-bottom: 0.75rem;
-        }
-
-        .modal-body .dropzone {
-            min-height: 150px;
-        }
-
-        .photo-container {
-            position: relative;
-        }
-
-        .photo-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
-        }
-
-        .change-photo-btn {
-            z-index: 1;
-        }
-
-        .equipment-item img {
-            max-width: 100px;
-            /* Restrict photo width */
-            max-height: 100px;
-            /* Restrict photo height */
-            object-fit: cover;
-            /* Ensure photo fits within bounds */
-        }
-
-        .equipment-item .card-body {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            /* Add spacing between elements */
-        }
-
-        .equipment-item .flex-grow-1 {
-            flex: 1;
-            /* Allow details section to take remaining space */
-        }
-    </style>
     <main id="main">
-        <div class="container-fluid px-4">
-            <div class="card-body">
-                <form id="addEquipmentForm">
-                    <!-- Equipment Photos and Inventory Items Section -->
-                    <div class="row mb-4">
-                        <!-- Equipment Photos Card -->
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-header d-flex justify-content-between align-items-center"
-                                    style="height: 56px;">
-                                    <h5 class="fw-bold mb-0">Equipment Photos</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="photo-section">
+        <div class="container main-content mb-5" style="max-width: 1100px; margin-left: auto; margin-right: auto;"
+            x-data="equipmentForm()" x-cloak>
+
+            <div class="bg-white border rounded-3 admin-livewire-form" style="border-color: #dee2e6;">
+
+                <style>
+                    .admin-livewire-form .form-page-title {
+                        font-family: "Fraunces", Georgia, serif;
+                        font-weight: 900;
+                        font-size: 1.25rem;
+                        margin: 0;
+                        color: #fff;
+                    }
+
+                    [x-cloak] {
+                        display: none !important;
+                    }
+
+                    .dropzone {
+                        min-height: 220px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                    }
+
+                    label.required::after {
+                        content: " *";
+                        color: red;
+                    }
+
+                    #barcode {
+                        background-color: #e9ecef;
+                        cursor: not-allowed;
+                        pointer-events: none;
+                    }
+                </style>
+
+                {{-- Page header --}}
+                <div class="d-flex justify-content-between align-items-center p-3"
+                    style="background: #045191; border-top-left-radius: 0.375rem; border-top-right-radius: 0.375rem;">
+                    <h4 class="form-page-title">Add New Equipment</h4>
+                    <a href="{{ url('/admin/manage-equipment') }}" class="btn btn-sm btn-light">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Equipment
+                    </a>
+                </div>
+
+                <div class="p-4">
+                    <form id="addEquipmentForm">
+
+                        {{-- ============ PHOTOS | INVENTORY ============ --}}
+                        <div class="row mb-3 d-flex align-items-stretch">
+                            <div class="col-md-6 mb-3 mb-md-0 d-flex">
+                                <div class="card w-100">
+                                    <div class="card-header"><strong>Equipment Photos</strong></div>
+                                    <div class="card-body">
                                         <div class="dropzone border p-4 text-center" id="equipmentPhotosDropzone"
                                             style="cursor: pointer;">
                                             <i class="bi bi-images fs-1 text-muted"></i>
-                                            <p class="mt-2">Drag & drop equipment photos here or click to browse</p>
+                                            <p class="mt-2 mb-0">Drag &amp; drop equipment photos here or click to
+                                                browse</p>
                                             <input type="file" id="equipmentPhotos" class="d-none" multiple
                                                 accept="image/*">
                                         </div>
-                                        <small class="text-muted mt-2 d-block">Upload at least one photo of the
-                                            equipment (max 5
-                                            photos)</small>
+                                        <small class="text-muted mt-2 d-block">
+                                            Max 5 photos. Uploads run in parallel after saving.
+                                        </small>
                                         <div id="photosPreview" class="d-flex flex-wrap gap-2 mt-3"></div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- Image Deletion Confirmation Modal -->
-                        <div class="modal fade" id="deleteImageModal" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Confirm Image Deletion</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
+
+                            <div class="col-md-6 d-flex">
+                                <div class="card w-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <strong>Inventory Items</strong>
+                                        <button type="button" class="btn btn-sm btn-primary" id="addItemBtn">
+                                            <i class="bi bi-plus-lg me-1"></i> Add Item
+                                        </button>
                                     </div>
-                                    <div class="modal-body">
-                                        Are you sure you want to delete this photo? This action cannot be undone.
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Cancel</button>
-                                        <button type="button" class="btn btn-danger" id="confirmDeleteImageBtn">Delete
-                                            Photo</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Inventory Items Card -->
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-header d-flex justify-content-between align-items-center"
-                                    style="height: 56px;">
-                                    <h5 class="fw-bold mb-0">Inventory Items</h5>
-                                    <button type="button" class="btn btn-sm btn-secondary" id="addItemBtn">
-                                        <i class="bi bi-plus me-1"></i>Add Item
-                                    </button>
-                                </div>
-                                <div class="card-body">
-                                    <div id="itemsContainer">
-                                        <p class="text-muted">No items added yet. Click "Add Item" to track
-                                            individual equipment pieces.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Equipment Details Section -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="fw-bold mb-0">Equipment Details</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="details-section">
-                                        <!-- Basic Information Section -->
-                                        <div class="row mb-4">
-                                            <div class="col-md-6">
-                                                <label for="equipmentName" class="form-label fw-bold">
-                                                    Equipment Name
-                                                </label>
-                                                <input type="text" class="form-control" id="equipmentName"
-                                                    placeholder="Equipment Name" required>
-                                            </div>
-
-                                            <div class="col-md-6">
-                                                <label for="brand" class="form-label fw-bold">
-                                                    Brand
-                                                </label>
-                                                <input type="text" class="form-control" id="brand" placeholder="Brand">
-                                            </div>
-                                        </div>
-
-                                        <div class="row mb-4">
-                                            <div class="col-12 position-relative">
-                                                <label for="description" class="form-label fw-bold">
-                                                    Description
-                                                </label>
-                                                <textarea class="form-control" id="description" rows="3"
-                                                    placeholder="Write a short description..."></textarea>
-                                                <small class="text-muted position-absolute bottom-0 end-0 me-4 mb-1"
-                                                    id="descriptionWordCount">0/255 characters</small>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mb-4">
-                                            <div class="col-md-3">
-                                                <label for="storageLocation" class="form-label fw-bold">Storage
-                                                    Location</label>
-                                                <input type="text" class="form-control" id="storageLocation"
-                                                    placeholder="Storage Location" required>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <label for="category" class="form-label fw-bold">Category</label>
-                                                <select class="form-select" id="category" required>
-                                                    <option value="">Select Category</option>
-                                                    <!-- Categories will be populated dynamically -->
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <label for="companyFee" class="form-label fw-bold">Rental Fee
-                                                    (₱)</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">₱</span>
-                                                    <input type="number" class="form-control" id="companyFee" min="0"
-                                                        step="0.01" required placeholder="0.00">
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <label for="availabilityStatus" class="form-label fw-bold">Availability
-                                                    Status</label>
-                                                <select class="form-select" id="availabilityStatus" required>
-                                                    <!-- Statuses will be populated dynamically -->
-                                                </select>
-                                            </div>
-                                        </div>
-
-
-                                        <div class="row mb-4">
-                                            <div class="col-md-4">
-                                                <label for="rateType" class="form-label fw-bold">Rate Type</label>
-                                                <select class="form-select" id="rateType" required>
-                                                    <option value="">Select Rate Type</option>
-                                                    <option value="Per Hour">Per Hour</option>
-                                                    <option value="Per Event">Per Event</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <label for="department" class="form-label fw-bold">Owning Department</label>
-                                                <select class="form-select" id="department" required>
-                                                    <option value="">Select Department</option>
-                                                    <!-- Departments will be populated dynamically -->
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <label for="minRentalHours" class="form-label fw-bold">Min. Rental
-                                                    Duration (hours)</label>
-                                                <input type="number" class="form-control" id="minRentalHours" min="1"
-                                                    value="1" required>
-                                            </div>
+                                    <div class="card-body">
+                                        <div id="itemsContainer" style="max-height: 320px; overflow-y: auto;">
+                                            <p class="text-muted mb-0">No items added yet. Click "Add Item" to track
+                                                individual equipment pieces.</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Form Actions -->
-                    <div class="d-flex justify-content-center gap-2 mt-4">
-                        <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Add Equipment</button>
-                    </div>
+                        {{-- ============ EQUIPMENT DETAILS ============ --}}
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header"><strong>Equipment Details</strong></div>
+                                    <div class="card-body row g-3">
 
-                </form>
-            </div>
+                                        <div class="col-md-6">
+                                            <label for="equipmentName" class="form-label required">Equipment Name</label>
+                                            <input type="text" class="form-control" id="equipmentName" required
+                                                maxlength="100" placeholder="e.g. Portable Speaker">
+                                        </div>
 
-    </main>
-    <!-- Event Modal -->
-    <div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Event Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <strong>Title:</strong> <span id="eventTitle"></span>
-                        </li>
-                        <li class="list-group-item">
-                            <strong>Date:</strong> <span id="eventDate"></span>
-                        </li>
-                        <li class="list-group-item">
-                            <strong>Time:</strong> <span id="eventTime">10:00 AM - 12:00 PM</span>
-                        </li>
-                        <li class="list-group-item">
-                            <strong>Description:</strong> <span id="eventDescription"></span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Reset Confirmation Modal -->
-    <div class="modal fade" id="cancelConfirmationModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Discard Changes</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to cancel? All entered data will be lost.
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmCancelBtn">Confirm</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Inventory Item Modal -->
-    <div class="modal fade" id="inventoryItemModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Inventory Item</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="itemForm">
-                        <!-- Item Photo -->
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <label class="form-label fw-bold">Item Photo</label>
-                                <button class="btn btn-sm btn-danger d-none" id="removePhotoBtn">
-                                    <i class="bi bi-trash"></i> Remove
-                                </button>
-                            </div>
-                            <div class="dropzone border p-4 text-center" id="itemPhotoDropzone" style="cursor: pointer;">
-                                <i class="bi bi-image fs-1 text-muted"></i>
-                                <p class="mt-2">Click to upload item photo</p>
-                                <input type="file" id="itemPhoto" class="d-none" accept="image/*">
-                            </div>
-                            <div id="itemPhotoPreview" class="mt-3 text-center"></div>
-                        </div>
+                                        <div class="col-md-6">
+                                            <label for="brand" class="form-label">Brand</label>
+                                            <input type="text" class="form-control" id="brand" maxlength="80"
+                                                placeholder="e.g. JBL">
+                                        </div>
 
-                        <!-- Item Name -->
-                        <div class="mb-3">
-                            <label for="itemName" class="form-label fw-bold">Item Name</label>
-                            <input type="text" class="form-control" id="itemName" placeholder="Enter item name" required>
-                        </div>
+                                        <div class="col-12">
+                                            <label for="description" class="form-label">Description</label>
+                                            <textarea class="form-control" id="description" rows="2" maxlength="255"
+                                                placeholder="Short description of the equipment..."></textarea>
+                                            <small class="text-muted d-block text-end mt-1" id="descriptionWordCount">0/255
+                                                characters</small>
+                                        </div>
 
-                        <!-- Condition -->
-                        <div class="mb-3">
-                            <label for="itemCondition" class="form-label fw-bold">Condition</label>
-                            <select class="form-select" id="itemCondition" required>
-                                <option value="">Select Condition</option>
-                                <!-- Conditions will be populated dynamically -->
-                            </select>
-                        </div>
+                                        <div class="col-md-6">
+                                            <label for="category" class="form-label required">Category</label>
+                                            <select class="form-select" id="category" required>
+                                                <option value="">Select Category</option>
+                                            </select>
+                                        </div>
 
-                        <!-- Barcode -->
-                        <div class="mb-3">
-                            <label for="barcode" class="form-label fw-bold">Barcode Number</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="barcode" name="barcode"
-                                    placeholder="Generate barcode" readonly>
-                                <button class="btn btn-primary" type="button" id="generateBarcodeBtn">
-                                    <i class="bi bi-upc-scan"></i> Generate
-                                </button>
-                            </div>
+                                        <div class="col-md-6">
+                                            <label for="storageLocation" class="form-label required">Storage
+                                                Location</label>
+                                            <input type="text" class="form-control" id="storageLocation" required
+                                                maxlength="50" placeholder="e.g. Storage Room A">
+                                        </div>
 
-                            <!-- Barcode Preview -->
-                            <div class="barcode-container d-none mt-3" id="barcodeContainer">
-                                <canvas id="barcodePreview" class="barcode-preview"></canvas>
-                                <div class="mt-2">
-                                    <button type="button" class="btn btn-sm btn-secondary" id="downloadBarcodeBtn">
-                                        <i class="bi bi-download"></i> Download
-                                    </button>
+                                        <div class="col-md-6">
+                                            <label for="companyFee" class="form-label required">Rental Fee (₱)</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">₱</span>
+                                                <input type="number" class="form-control" id="companyFee" min="0"
+                                                    step="0.01" required placeholder="0.00">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="rateType" class="form-label required">Rate Type</label>
+                                            <select class="form-select" id="rateType" required>
+                                                <option value="">Select Rate Type</option>
+                                                <option value="Per Hour">Per Hour</option>
+                                                <option value="Per Event">Per Event</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label required">Availability Status</label>
+                                            <div class="department-checkboxes" id="availabilityStatus">
+                                                <template x-if="statuses.length === 0">
+                                                    <div class="department-checkboxes-loading">
+                                                        <span class="spinner-border spinner-border-sm me-2"></span>
+                                                        Loading statuses…
+                                                    </div>
+                                                </template>
+                                                <template x-for="st in statuses" :key="st.status_id">
+                                                    <label class="status-item"
+                                                        :class="{ 'is-active': statusId == st.status_id }">
+                                                        <input type="radio" class="form-check-input me-2"
+                                                            name="availability_status" :value="st.status_id"
+                                                            x-model="statusId">
+                                                        <span x-text="st.status_name"></span>
+                                                    </label>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label required">Owning Departments</label>
+                                            <div class="department-checkboxes" id="departmentCheckboxes">
+                                                <template x-if="departments.length === 0">
+                                                    <div class="department-checkboxes-loading">
+                                                        <span class="spinner-border spinner-border-sm me-2"></span>
+                                                        Loading departments…
+                                                    </div>
+                                                </template>
+                                                <template x-for="dep in departments" :key="dep.department_id">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            :value="dep.department_id" :id="`dep_${dep.department_id}`"
+                                                            x-model="departmentIds">
+                                                        <label class="form-check-label" :for="`dep_${dep.department_id}`"
+                                                            x-text="dep.department_name"></label>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <small class="text-muted">Select one or more departments.</small>
+                                        </div>
+
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Notes -->
-                        <div class="mb-3 position-relative">
-                            <label for="itemNotes" class="form-label fw-bold">Item Notes</label>
-                            <textarea class="form-control" id="itemNotes" rows="3"
-                                placeholder="Additional notes about this item"></textarea>
-                            <small class="text-muted position-absolute bottom-0 end-0 me-2 mb-1" id="notesWordCount">0/80
-                                words</small>
-                        </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveItemBtn">Save Item</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Delete Item Confirmation Modal -->
-    <div class="modal fade" id="deleteItemModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Item Deletion</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to delete this item? The change will be applied when you click "Update
-                    Equipment".
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteItemBtn">Delete Item</button>
-                </div>
-            </div>
-        </div>
-    </div>
+                {{-- /.p-4 --}}
 
+            </div>
+            {{-- /.admin-livewire-form --}}
+
+            {{-- Action buttons OUTSIDE the form shell --}}
+            <div class="bg-white border rounded-3 p-3 mt-3 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" id="cancelBtn">Discard</button>
+                <button type="submit" form="addEquipmentForm" class="btn btn-primary" id="addEquipmentBtn">
+                    <span class="spinner-border spinner-border-sm d-none me-1" id="addEquipmentSpinner"></span>
+                    <span id="addEquipmentBtnText">Add New Equipment</span>
+                </button>
+            </div>
+
+            {{-- ===================== MODALS ===================== --}}
+
+            {{-- Inventory Item Modal --}}
+            <div class="modal fade" id="inventoryItemModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add Inventory Item</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="itemForm">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="form-label fw-bold">Item Photo</label>
+                                        <button class="btn btn-sm btn-danger d-none" id="removePhotoBtn" type="button">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                    <div class="dropzone border p-4 text-center" id="itemPhotoDropzone"
+                                        style="cursor: pointer; min-height: 140px;">
+                                        <i class="bi bi-image fs-1 text-muted"></i>
+                                        <p class="mt-2 mb-0">Click to upload item photo</p>
+                                        <input type="file" id="itemPhoto" class="d-none" accept="image/*">
+                                    </div>
+                                    <div id="itemPhotoPreview" class="mt-3 text-center"></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="itemName" class="form-label required">Item Name</label>
+                                    <input type="text" class="form-control" id="itemName" maxlength="50"
+                                        placeholder="Enter item name" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="itemCondition" class="form-label required">Condition</label>
+                                    <select class="form-select" id="itemCondition" required>
+                                        <option value="">Select Condition</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="barcode" class="form-label">Barcode Number</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="barcode" readonly disabled>
+                                        <button class="btn btn-outline-secondary" type="button" id="generateBarcodeBtn">
+                                            <i class="bi bi-arrow-repeat"></i> Generate
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Click Generate to create a unique scannable barcode.</small>
+                                </div>
+
+                                <div class="mb-0">
+                                    <label for="itemNotes" class="form-label">Item Notes</label>
+                                    <textarea class="form-control" id="itemNotes" rows="3" maxlength="100"
+                                        placeholder="Additional notes about this item"></textarea>
+                                    <small class="text-muted d-block text-end mt-1" id="notesWordCount">0/100
+                                        characters</small>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="saveItemBtn">Save Item</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Delete Item Modal --}}
+            <div class="modal fade" id="deleteItemModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirm Item Deletion</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to delete this item? The change will apply when you click
+                            "Add New Equipment".
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmDeleteItemBtn">Delete Item</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Reset Confirmation Modal --}}
+            <div class="modal fade" id="cancelConfirmationModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Discard Changes</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to cancel? Unsaved changes will be lost.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmCancelBtn">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        {{-- /.container --}}
+    </main>
 @endsection
 
 @section('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const barcodeInput = document.getElementById('barcode');
-            const generateBarcodeBtn = document.getElementById('generateBarcodeBtn');
-            const barcodeContainer = document.getElementById('barcodeContainer');
-            const barcodePreview = document.getElementById('barcodePreview'); // This is the canvas
-            const downloadBarcodeBtn = document.getElementById('downloadBarcodeBtn');
-            // 1. Global variables first
-            window.equipmentItems = [];
-            window.currentEditingItemId = null;
-            window.pendingImageUploads = []; // Track images to be uploaded
-            window.pendingImageDeletions = []; // Track images to be deleted
-            window.pendingItemPhotoChanges = new Map(); // Track item photo changes (itemId -> {action, file, publicId})
-            window.newEquipmentId = null; // Will store the ID after equipment is created
+        function equipmentForm() {
+            return {
+                departments: [],
+                departmentIds: [],
+                statuses: [],
+                statusId: '',
 
-            // 2. Authentication check
+                async init() {
+                    await this.loadDepartments();
+                    await this.loadStatuses();
+                },
+
+                async loadStatuses() {
+                    try {
+                        const res = await fetch('/api/availability-statuses', {
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (!res.ok) return;
+                        const data = await res.json();
+                        this.statuses = Array.isArray(data) ? data : (data.data || []);
+                    } catch (e) {
+                        console.error('loadStatuses', e);
+                    }
+                },
+
+                async loadDepartments() {
+                    try {
+                        const res = await fetch('/api/departments', {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (!res.ok) return;
+                        const data = await res.json();
+                        this.departments = Array.isArray(data) ? data : (data.data || []);
+                    } catch (e) {
+                        console.error('loadDepartments', e);
+                    }
+                }
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // ---- Auth gate ----
             const token = localStorage.getItem('adminToken');
             if (!token) {
                 window.location.href = '/admin/login';
                 return;
             }
 
-            // 3. Delete item function (needs to be defined before event handlers)
-            window.deleteItem = async function (itemId, cloudinaryPublicId, event) {
-                if (event) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
+            // ============================================================
+            // STATE
+            // ============================================================
+            // Equipment photos staged for parallel upload after create.
+            // Each: { tempId, file, objectUrl }
+            window.pendingEquipmentPhotos = [];
 
-                if (!confirm('Are you sure you want to delete this item? The change will be applied when you click "Add Equipment".')) {
+            // Items staged before equipment is created.
+            // Each: { tempId, item_name, condition_id, item_notes, file|null, objectUrl|null, condition_name }
+            window.pendingItems = [];
+
+            // Tracks editing: null = creating; otherwise index in pendingItems
+            window.editingItemIndex = null;
+
+            // Barcode is intentionally omitted from the UI — server generates it.
+
+            // ============================================================
+            // DROPDOWN LOADERS
+            // ============================================================
+            async function populateDropdown(elementId, url, idKey, nameKey, headers = {
+                'Accept': 'application/json'
+            }) {
+                try {
+                    const res = await fetch(url, {
+                        headers
+                    });
+                    if (!res.ok) {
+                        console.error(`Failed to fetch ${elementId}`, res.status);
+                        return;
+                    }
+                    const data = await res.json();
+                    const list = Array.isArray(data) ? data : (data.data || []);
+                    const select = document.getElementById(elementId);
+                    if (!select) return;
+                    while (select.options.length > 1) select.remove(1);
+                    list.forEach(row => {
+                        const opt = document.createElement('option');
+                        opt.value = row[idKey];
+                        opt.textContent = row[nameKey];
+                        select.appendChild(opt);
+                    });
+                } catch (e) {
+                    console.error(`populateDropdown ${elementId}`, e);
+                }
+            }
+
+            (async function initDropdowns() {
+                const authHeaders = {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                };
+                await populateDropdown('category', '/api/equipment-categories', 'category_id',
+                    'category_name');
+                await populateDropdown('itemCondition', '/api/conditions', 'condition_id', 'condition_name',
+                    authHeaders);
+            })();
+
+            // ============================================================
+            // EQUIPMENT PHOTOS
+            // ============================================================
+            const dropzone = document.getElementById('equipmentPhotosDropzone');
+            const fileInput = document.getElementById('equipmentPhotos');
+            const photosPreview = document.getElementById('photosPreview');
+            const MAX_PHOTOS = 5;
+
+            function renderPhotos() {
+                photosPreview.innerHTML = '';
+                window.pendingEquipmentPhotos.forEach((entry) => {
+                    const tile = document.createElement('div');
+                    tile.className = 'photo-preview';
+
+                    const img = document.createElement('img');
+                    img.src = entry.objectUrl;
+                    tile.appendChild(img);
+
+                    // Primary Star (z-index ensures it stays on top)
+                    const star = document.createElement('button');
+                    star.type = 'button';
+                    star.className = 'primary-star' + (entry.image_type === 'Primary' ? ' is-primary' : '');
+                    star.innerHTML = '<i class="bi bi-star-fill"></i>';
+                    star.title = 'Set as primary photo';
+                    star.style.zIndex = '2'; // Force it above the image
+                    star.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (entry.image_type === 'Primary') return;
+                        window.pendingEquipmentPhotos.forEach(p => p.image_type = 'Secondary');
+                        entry.image_type = 'Primary';
+                        renderPhotos();
+                    });
+                    tile.appendChild(star);
+
+                    // Action Buttons (Up, Delete, Down)
+                    const actions = document.createElement('div');
+                    actions.className = 'photo-actions';
+                    actions.style.zIndex = '2'; // Force above image
+
+                    [
+                        ['bi-arrow-up', () => movePhoto(entry.tempId, -1)],
+                        ['bi-x', () => {
+                            URL.revokeObjectURL(entry.objectUrl);
+                            window.pendingEquipmentPhotos = window.pendingEquipmentPhotos.filter(p => p
+                                .tempId !== entry.tempId);
+
+                            // If we deleted the primary, promote the first remaining image
+                            if (entry.image_type === 'Primary' && window.pendingEquipmentPhotos.length >
+                                0) {
+                                window.pendingEquipmentPhotos[0].image_type = 'Primary';
+                            }
+
+                            // Recalculate sort order
+                            window.pendingEquipmentPhotos.forEach((p, i) => p.sort_order = i);
+                            renderPhotos();
+                        }],
+                        ['bi-arrow-down', () => movePhoto(entry.tempId, 1)]
+                    ].forEach(([icon, handler]) => {
+                        const b = document.createElement('button');
+                        b.type = 'button';
+                        b.innerHTML = `<i class="bi ${icon}"></i>`;
+                        b.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            handler();
+                        });
+                        actions.appendChild(b);
+                    });
+
+                    tile.appendChild(actions);
+                    photosPreview.appendChild(tile);
+                });
+            }
+
+            function movePhoto(tempId, delta) {
+                const idx = window.pendingEquipmentPhotos.findIndex(e => e.tempId === tempId);
+                if (idx === -1) return;
+                const newIdx = idx + delta;
+                if (newIdx < 0 || newIdx >= window.pendingEquipmentPhotos.length) return;
+                const [item] = window.pendingEquipmentPhotos.splice(idx, 1);
+                window.pendingEquipmentPhotos.splice(newIdx, 0, item);
+                window.pendingEquipmentPhotos.forEach((e, i) => e.sort_order = i);
+                renderPhotos();
+            }
+
+            function handleFiles(files) {
+                for (const file of files) {
+                    if (!file.type.startsWith('image/')) {
+                        window.showToast('Please upload only image files.', 'error');
+                        continue;
+                    }
+                    if (window.pendingEquipmentPhotos.length >= MAX_PHOTOS) {
+                        window.showToast('Maximum of 5 photos allowed.', 'error');
+                        break;
+                    }
+
+                    const isFirst = window.pendingEquipmentPhotos.length === 0;
+
+                    window.pendingEquipmentPhotos.push({
+                        tempId: 'tmp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                        file,
+                        objectUrl: URL.createObjectURL(file),
+                        image_type: isFirst ? 'Primary' : 'Secondary',
+                        sort_order: window.pendingEquipmentPhotos.length
+                    });
+                }
+                renderPhotos();
+            }
+
+            if (dropzone && fileInput) {
+                dropzone.addEventListener('click', () => fileInput.click());
+                fileInput.addEventListener('change', function() {
+                    handleFiles(this.files);
+                    this.value = '';
+                });
+                dropzone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('border-primary');
+                });
+                dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-primary'));
+                dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('border-primary');
+                    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+                });
+            }
+
+            // ============================================================
+            // DESCRIPTION COUNTER
+            // ============================================================
+            const description = document.getElementById('description');
+            const descriptionWordCount = document.getElementById('descriptionWordCount');
+            if (description && descriptionWordCount) {
+                description.addEventListener('input', function() {
+                    if (this.value.length > 255) this.value = this.value.substring(0, 255);
+                    descriptionWordCount.textContent = `${this.value.length}/255 characters`;
+                });
+            }
+
+            const itemNotes = document.getElementById('itemNotes');
+            const notesWordCount = document.getElementById('notesWordCount');
+            if (itemNotes && notesWordCount) {
+                itemNotes.addEventListener('input', function() {
+                    if (this.value.length > 100) this.value = this.value.substring(0, 100);
+                    notesWordCount.textContent = `${this.value.length}/100 characters`;
+                });
+            }
+
+            // ============================================================
+            // ITEM MODAL
+            // ============================================================
+            const inventoryItemModal = new bootstrap.Modal('#inventoryItemModal');
+            const deleteItemModal = new bootstrap.Modal('#deleteItemModal');
+
+            const itemNameInput = document.getElementById('itemName');
+            const itemConditionSelect = document.getElementById('itemCondition');
+            const itemPhotoInput = document.getElementById('itemPhoto');
+            const itemPhotoDropzone = document.getElementById('itemPhotoDropzone');
+            const itemPhotoPreview = document.getElementById('itemPhotoPreview');
+            const removePhotoBtn = document.getElementById('removePhotoBtn');
+            const saveItemBtn = document.getElementById('saveItemBtn');
+            const itemsContainer = document.getElementById('itemsContainer');
+
+            let stagedItemFile = null;
+            let stagedItemObjectUrl = null;
+            let pendingDeleteIndex = null;
+            let currentItemBarcode = '';
+
+            function resetItemModal() {
+                itemNameInput.value = '';
+                itemConditionSelect.value = '';
+                itemNotes.value = '';
+                notesWordCount.textContent = '0/100 characters';
+                stagedItemFile = null;
+
+                // Add these two lines to reset the barcode
+                currentItemBarcode = '';
+                document.getElementById('barcode').value = '';
+
+                if (stagedItemObjectUrl) {
+                    URL.revokeObjectURL(stagedItemObjectUrl);
+                    stagedItemObjectUrl = null;
+                }
+                itemPhotoPreview.innerHTML = '';
+                itemPhotoDropzone.style.display = 'block';
+                removePhotoBtn.classList.add('d-none');
+                document.querySelector('#inventoryItemModal .modal-title').textContent = 'Add Inventory Item';
+                saveItemBtn.textContent = 'Save Item';
+                window.editingItemIndex = null;
+            }
+
+            document.getElementById('addItemBtn').addEventListener('click', () => {
+                resetItemModal();
+                inventoryItemModal.show();
+            });
+
+            itemPhotoDropzone.addEventListener('click', () => itemPhotoInput.click());
+
+            itemPhotoInput.addEventListener('change', function() {
+                if (!this.files?.[0]) return;
+                stagedItemFile = this.files[0];
+                if (stagedItemObjectUrl) URL.revokeObjectURL(stagedItemObjectUrl);
+                stagedItemObjectUrl = URL.createObjectURL(stagedItemFile);
+
+                itemPhotoDropzone.style.display = 'none';
+                removePhotoBtn.classList.remove('d-none');
+                itemPhotoPreview.innerHTML =
+                    `<img src="${stagedItemObjectUrl}" class="img-thumbnail" style="max-height: 150px;">`;
+            });
+
+            removePhotoBtn.addEventListener('click', () => {
+                if (stagedItemObjectUrl) URL.revokeObjectURL(stagedItemObjectUrl);
+                stagedItemObjectUrl = null;
+                stagedItemFile = null;
+                itemPhotoInput.value = '';
+                itemPhotoPreview.innerHTML = '';
+                itemPhotoDropzone.style.display = 'block';
+                removePhotoBtn.classList.add('d-none');
+            });
+
+            function renderItems() {
+                itemsContainer.innerHTML = '';
+                if (window.pendingItems.length === 0) {
+                    itemsContainer.innerHTML =
+                        '<p class="text-muted mb-0">No items added yet. Click "Add Item" to track individual equipment pieces.</p>';
                     return;
                 }
 
-                try {
-                    // Mark for deletion (will be processed on form submit)
-                    pendingItemPhotoChanges.set(itemId, {
-                        action: 'delete',
-                        publicId: cloudinaryPublicId
+                window.pendingItems.forEach((item, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'card mb-2';
+                    card.innerHTML = `
+                        <div class="card-body d-flex gap-2 align-items-center">
+                            <div style="width:60px;height:60px;flex-shrink:0;">
+                                <img src="${item.objectUrl || '/assets/placeholder-image.png'}"
+                                     class="img-thumbnail"
+                                     style="width:60px;height:60px;object-fit:cover;">
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${escapeHtml(item.item_name)}</h6>
+                                <span class="badge bg-secondary">${escapeHtml(item.condition_name)}</span>
+                                ${item.item_notes ? `<p class="mb-0 mt-1 small text-muted">${escapeHtml(item.item_notes.substring(0,50))}${item.item_notes.length > 50 ? '…' : ''}</p>` : ''}
+                            </div>
+                            <div class="d-flex">
+                                <button type="button" class="btn btn-sm btn-primary me-1" data-edit="${index}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger" data-delete="${index}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    itemsContainer.appendChild(card);
+                });
+
+                itemsContainer.querySelectorAll('[data-edit]').forEach(btn => {
+                    btn.addEventListener('click', () => openEditItem(parseInt(btn.dataset.edit, 10)));
+                });
+                itemsContainer.querySelectorAll('[data-delete]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        pendingDeleteIndex = parseInt(btn.dataset.delete, 10);
+                        deleteItemModal.show();
                     });
+                });
+            }
 
-                    // Remove from UI immediately
-                    document.querySelector(`.equipment-item[data-item-id="${itemId}"]`)?.remove();
+            function escapeHtml(str) {
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
 
-                } catch (error) {
-                    console.error('Error staging item deletion:', error);
-                    showToast('Failed to stage item deletion: ' + error.message, 'error');
-                }
-            };
-
-            // 4. Open edit item modal function (needs to be defined before event handlers)
-            window.openEditItemModal = function (itemId, event) {
-                if (event) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-
-                const item = window.equipmentItems.find(i => i.item_id === itemId);
+            function openEditItem(index) {
+                const item = window.pendingItems[index];
                 if (!item) return;
 
-                // Fill the form with existing data
-                document.getElementById('itemName').value = item.item_name;
-                document.getElementById('itemCondition').value = item.condition_id;
-                document.getElementById('barcode').value = item.barcode_number || '';
-                document.getElementById('itemNotes').value = item.item_notes || '';
+                itemNameInput.value = item.item_name;
+                itemConditionSelect.value = item.condition_id;
+                itemNotes.value = item.item_notes || '';
+                notesWordCount.textContent = `${(item.item_notes || '').length}/100 characters`;
 
-                // Set the photo preview
-                const itemPhotoPreview = document.getElementById('itemPhotoPreview');
-                const itemPhotoDropzone = document.getElementById('itemPhotoDropzone');
-                const removePhotoBtn = document.getElementById('removePhotoBtn');
+                currentItemBarcode = item.barcode_number || '';
+                document.getElementById('barcode').value = currentItemBarcode;
 
-                if (item.image_url && item.image_url !== 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1750895337/oxvsxogzu9koqhctnf7s.webp') {
-                    itemPhotoPreview.innerHTML = `<img src="${item.image_url}" class="img-thumbnail" style="max-height: 150px;">`;
+                if (item.objectUrl) {
                     itemPhotoDropzone.style.display = 'none';
                     removePhotoBtn.classList.remove('d-none');
+                    itemPhotoPreview.innerHTML =
+                        `<img src="${item.objectUrl}" class="img-thumbnail" style="max-height: 150px;">`;
+                    stagedItemObjectUrl = item.objectUrl;
+                    stagedItemFile = item.file;
                 } else {
                     itemPhotoPreview.innerHTML = '';
                     itemPhotoDropzone.style.display = 'block';
                     removePhotoBtn.classList.add('d-none');
+                    stagedItemObjectUrl = null;
+                    stagedItemFile = null;
                 }
 
-                // Store the current editing item ID
-                window.currentEditingItemId = itemId;
-
-                // Change modal title and button text
+                window.editingItemIndex = index;
                 document.querySelector('#inventoryItemModal .modal-title').textContent = 'Edit Inventory Item';
-                document.getElementById('saveItemBtn').textContent = 'Update Item';
+                saveItemBtn.textContent = 'Update Item';
+                inventoryItemModal.show();
+            }
 
-                // Show the modal
-                bootstrap.Modal.getOrCreateInstance('#inventoryItemModal').show();
-            };
-
-            // 5. Toast notification function
-            window.showToast = function (message, type = 'success', duration = 3000) {
-                const toast = document.createElement('div');
-
-                // Toast base styles
-                toast.className = `toast align-items-center border-0 position-fixed start-0 mb-2`;
-                toast.style.zIndex = '1100';
-                toast.style.bottom = '0';
-                toast.style.left = '0';
-                toast.style.margin = '1rem';
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(20px)';
-                toast.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-                toast.setAttribute('role', 'alert');
-                toast.setAttribute('aria-live', 'assertive');
-                toast.setAttribute('aria-atomic', 'true');
-
-                // Colors
-                const bgColor = type === 'success' ? '#004183ff' : '#dc3545';
-                toast.style.backgroundColor = bgColor;
-                toast.style.color = '#fff';
-                toast.style.minWidth = '250px';
-                toast.style.borderRadius = '0.3rem';
-
-                toast.innerHTML = `
-                                            <div class="d-flex align-items-center px-3 py-1"> 
-                                                <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
-                                                <div class="toast-body flex-grow-1" style="padding: 0.25rem 0;">${message}</div>
-                                                <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                                            </div>
-                                            <div class="loading-bar" style="
-                                                height: 3px;
-                                                background: rgba(255,255,255,0.7);
-                                                width: 100%;
-                                                transition: width ${duration}ms linear;
-                                            "></div>
-                                        `;
-
-                document.body.appendChild(toast);
-
-                // Bootstrap toast instance
-                const bsToast = new bootstrap.Toast(toast, { autohide: false });
-                bsToast.show();
-
-                // Float up appear animation
-                requestAnimationFrame(() => {
-                    toast.style.opacity = '1';
-                    toast.style.transform = 'translateY(0)';
-                });
-
-                // Start loading bar animation
-                const loadingBar = toast.querySelector('.loading-bar');
-                requestAnimationFrame(() => {
-                    loadingBar.style.width = '0%';
-                });
-
-                // Remove after duration
-                setTimeout(() => {
-                    // Float down disappear animation
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateY(20px)';
-
-                    setTimeout(() => {
-                        bsToast.hide();
-                        toast.remove();
-                    }, 400);
-                }, duration);
-            };
-
-            // 6. Delete image modal initialization
-            const deleteImageModal = new bootstrap.Modal('#deleteImageModal', {
-                backdrop: 'static',
-                keyboard: false
+            document.getElementById('generateBarcodeBtn').addEventListener('click', () => {
+                const randomPart = Math.random().toString(36).substring(2, 12).toUpperCase();
+                currentItemBarcode = `EQ-${randomPart}`;
+                document.getElementById('barcode').value = currentItemBarcode;
             });
 
-            // 7. Image deletion variables
-            let currentDeletePhotoId = null;
-            let currentDeletePublicId = null;
-            let currentDeletePreviewElement = null;
+            saveItemBtn.addEventListener('click', () => {
+                const name = (itemNameInput.value || '').trim();
+                const conditionId = itemConditionSelect.value;
+                const notes = (itemNotes.value || '').trim();
 
-            // 8. Image deletion handler
-            async function handleImageDeletion(photoId, publicId, previewElement) {
-                currentDeletePhotoId = photoId;
-                currentDeletePublicId = publicId;
-                currentDeletePreviewElement = previewElement;
-
-                // Show the confirmation modal
-                deleteImageModal.show();
-            }
-
-            // 9. Cloudinary upload functions
-            async function uploadToCloudinary(file, equipmentId) {
-                const CLOUD_NAME = 'dn98ntlkd'; // Your Cloudinary cloud name
-                const UPLOAD_PRESET = 'equipment-photos'; // Your unsigned upload preset
-
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', UPLOAD_PRESET);
-                formData.append('folder', `equipment-photos/${equipmentId}`);
-                formData.append('tags', `equipment_${equipmentId}`);
-
-                try {
-                    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error?.message || 'Upload failed');
-                    }
-
-                    const data = await response.json();
-                    console.log('Cloudinary upload successful:', data);
-                    return data;
-
-                } catch (error) {
-                    console.error('Cloudinary upload error:', error);
-                    showToast('Cloudinary upload failed: ' + error.message, 'error');
-                    throw error;
+                if (!name) {
+                    window.showToast('Item name is required.', 'error');
+                    return;
                 }
-            }
-
-            // 10. Function to save image reference to your database
-            async function saveImageToDatabase(equipmentId, imageUrl, publicId) {
-                try {
-                    const response = await fetch(`/api/admin/equipment/${equipmentId}/images/save`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            image_url: imageUrl,
-                            description: 'Equipment photo'
-                        })
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('Database save failed:', response.status, errorText);
-                        throw new Error(`Failed to save image to database: ${response.status} ${errorText}`);
-                    }
-
-                    const result = await response.json();
-                    console.log('Image saved to database:', result);
-                    return result;
-
-                } catch (error) {
-                    console.error('Error saving image to database:', error);
-                    showToast('Warning: Image uploaded but database save failed', 'warning');
-                    throw error; // Re-throw to handle in the calling function
-                }
-            }
-
-            // 11. Image deletion functions
-            async function deleteImageFromCloudinary(publicId) {
-                try {
-                    const token = localStorage.getItem('adminToken');
-
-                    // Use FormData instead of JSON for Cloudinary deletion
-                    const formData = new FormData();
-
-                    const response = await fetch(`/api/admin/cloudinary/delete`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        },
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('Cloudinary delete failed:', response.status, errorText);
-                        throw new Error(`Failed to delete image from Cloudinary: ${response.status} ${errorText}`);
-                    }
-
-                    const result = await response.json();
-
-                    // Check if the deletion was actually successful based on the actual response format
-                    if (result.result && (result.result.deleted || result.result === 'ok' || result.result === 'success')) {
-                        // Success! The image was deleted from Cloudinary
-                        //  showToast('Image deleted from storage', 'success'); //
-                        return result;
-                    } else {
-                        console.warn('Unexpected Cloudinary response format:', result);
-                        // Still consider it a success since the API call didn't fail
-                        //   showToast('Image cleanup completed', 'success'); //
-                        return result;
-                    }
-
-                } catch (error) {
-                    console.error('Error deleting image from Cloudinary:', error);
-                    showToast('Failed to delete from storage: ' + error.message, 'error');
-                    throw error;
-                }
-            }
-
-            async function deleteImage(equipmentId, imageId, cloudinaryPublicId) {
-                try {
-                    const token = localStorage.getItem('adminToken');
-
-                    // 1. Delete from Cloudinary via your simple backend endpoint
-                    if (cloudinaryPublicId) {
-                        await fetch(`/api/admin/cloudinary/delete`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json',
-                            },
-                        });
-                        //       showToast('Image deleted from storage', 'success'); //
-                    }
-
-                    // 2. Delete from your database
-                    const response = await fetch(`/api/admin/equipment/${equipmentId}/images/${imageId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to delete image from database');
-                    }
-
-                    //     showToast('Image reference deleted', 'success'); //
-
-                } catch (error) {
-                    console.error('Error deleting image:', error);
-                    showToast('Failed to delete image: ' + error.message, 'error');
-                    throw error;
-                }
-            }
-
-            // 12. Equipment file handling function
-            async function handleEquipmentFiles(files) {
-                for (const file of files) {
-                    // Check if file is an image
-                    if (!file.type.startsWith('image/')) {
-                        showToast('Please upload only image files', 'error');
-                        continue;
-                    }
-
-                    // Check if we've reached the maximum of 5 photos
-                    const currentCount = document.querySelectorAll('#photosPreview .photo-preview').length;
-                    if (currentCount + pendingImageUploads.length >= 5) {
-                        showToast('Maximum of 5 photos allowed', 'error');
-                        break;
-                    }
-
-                    try {
-                        const previewId = 'temp-' + Date.now();
-
-                        // Create a preview
-                        const reader = new FileReader();
-                        reader.onload = async (e) => {
-                            const preview = document.createElement('div');
-                            preview.className = 'photo-preview';
-                            preview.dataset.previewId = previewId;
-
-                            const img = document.createElement('img');
-                            img.src = e.target.result;
-                            img.className = 'img-thumbnail h-100 w-100 object-fit-cover';
-
-                            const removeBtn = document.createElement('button');
-                            removeBtn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0';
-                            removeBtn.innerHTML = '<i class="bi bi-x"></i>';
-                            removeBtn.onclick = function () {
-                                // Remove from pending uploads
-                                const index = pendingImageUploads.findIndex(photo => photo.previewId === previewId);
-                                if (index !== -1) {
-                                    pendingImageUploads.splice(index, 1);
-                                }
-                                preview.remove();
-                            };
-
-                            preview.appendChild(img);
-                            preview.appendChild(removeBtn);
-                            photosPreview.appendChild(preview);
-
-                            // Add to pending uploads (will be processed on form submit)
-                            pendingImageUploads.push({
-                                file: file,
-                                previewId: previewId,
-                                previewElement: preview
-                            });
-                        };
-                        reader.readAsDataURL(file);
-
-                    } catch (error) {
-                        console.error('Error processing file:', error);
-                        showToast('Failed to process file: ' + error.message, 'error');
-                    }
-                }
-            }
-
-            // 13. Cancel confirmation modal
-            const cancelConfirmationModal = new bootstrap.Modal('#cancelConfirmationModal', {
-                backdrop: 'static',
-                keyboard: false
-            });
-
-            // 14. Cancel button handlers
-            document.getElementById('cancelBtn').addEventListener('click', function (e) {
-                e.preventDefault();
-                cancelConfirmationModal.show();
-            });
-
-            document.getElementById('confirmCancelBtn').addEventListener('click', function () {
-                // Hide the modal first
-                cancelConfirmationModal.hide();
-
-                // Reset all changes
-                resetAllChanges();
-                showToast('Changes discarded', 'info');
-            });
-
-            // Add this function to handle cancel operations
-            function resetAllChanges() {
-                // Clear all pending changes
-                pendingImageUploads = [];
-                pendingImageDeletions = [];
-                pendingItemPhotoChanges.clear();
-
-                // Clear form fields
-                document.getElementById('equipmentName').value = '';
-                document.getElementById('description').value = '';
-                document.getElementById('brand').value = '';
-                document.getElementById('storageLocation').value = '';
-                document.getElementById('rentalFee').value = '';
-                document.getElementById('companyFee').value = '';
-                document.getElementById('minRentalHours').value = 1;
-                document.getElementById('category').selectedIndex = 0;
-                document.getElementById('rateType').selectedIndex = 0;
-                document.getElementById('department').selectedIndex = 0;
-                document.getElementById('availabilityStatus').selectedIndex = 0;
-
-                // Clear any temporary UI elements
-                const photosPreview = document.getElementById('photosPreview');
-                if (photosPreview) {
-                    photosPreview.innerHTML = '';
-                }
-
-                // Clear items
-                const itemsContainer = document.getElementById('itemsContainer');
-                if (itemsContainer) {
-                    itemsContainer.innerHTML = '<p class="text-muted">No items added yet. Click "Add Item" to track individual equipment pieces.</p>';
-                }
-
-                equipmentItems = [];
-            }
-
-            // 15. Equipment Photos Section
-            const equipmentDropzone = document.getElementById('equipmentPhotosDropzone');
-            const equipmentFileInput = document.getElementById('equipmentPhotos');
-            const photosPreview = document.getElementById('photosPreview');
-            let uploadedPhotos = [];
-
-            if (equipmentDropzone && equipmentFileInput) {
-                equipmentDropzone.addEventListener('click', function () {
-                    equipmentFileInput.click();
-                });
-
-                equipmentFileInput.addEventListener('change', function () {
-                    handleEquipmentFiles(this.files);
-                    this.value = '';
-                });
-
-                equipmentDropzone.addEventListener('dragover', function (e) {
-                    e.preventDefault();
-                    this.classList.add('border-primary');
-                });
-
-                equipmentDropzone.addEventListener('dragleave', function () {
-                    this.classList.remove('border-primary');
-                });
-
-                equipmentDropzone.addEventListener('drop', function (e) {
-                    e.preventDefault();
-                    this.classList.remove('border-primary');
-                    if (e.dataTransfer.files.length) {
-                        handleEquipmentFiles(e.dataTransfer.files);
-                    }
-                });
-            }
-
-            // 16. Word count limiter for Description textbox
-            const description = document.getElementById('description');
-            const descriptionWordCount = document.getElementById('descriptionWordCount');
-            const descriptionMaxChars = 255;
-
-            if (description && descriptionWordCount) {
-                description.addEventListener('input', function () {
-                    if (this.value.length > descriptionMaxChars) {
-                        this.value = this.value.substring(0, descriptionMaxChars);
-                    }
-
-                    const charCount = this.value.length;
-                    descriptionWordCount.textContent = `${charCount}/${descriptionMaxChars} characters`;
-                    descriptionWordCount.classList.toggle('text-danger', charCount >= descriptionMaxChars);
-                });
-
-                description.addEventListener('paste', function (e) {
-                    e.preventDefault();
-                    const pasteText = (e.clipboardData || window.clipboardData).getData('text');
-                    const newText = this.value.substring(0, this.selectionStart) +
-                        pasteText +
-                        this.value.substring(this.selectionEnd);
-
-                    const remainingChars = descriptionMaxChars - this.value.length + (this.selectionEnd - this.selectionStart);
-                    if (remainingChars > 0) {
-                        const pasteToInsert = pasteText.substring(0, remainingChars);
-                        document.execCommand('insertText', false, pasteToInsert);
-                    }
-                });
-            }
-
-            // 18. Initialize Inventory Item Modal
-            const addItemBtn = document.getElementById('addItemBtn');
-            if (addItemBtn) {
-                const inventoryItemModal = new bootstrap.Modal('#inventoryItemModal');
-                const itemPhotoInput = document.getElementById('itemPhoto');
-                const itemPhotoPreview = document.getElementById('itemPhotoPreview');
-                const itemNotes = document.getElementById('itemNotes');
-                const notesWordCount = document.getElementById('notesWordCount');
-                const saveItemBtn = document.getElementById('saveItemBtn');
-                const itemsContainer = document.getElementById('itemsContainer');
-                const removePhotoBtn = document.getElementById('removePhotoBtn');
-                const itemPhotoDropzone = document.getElementById('itemPhotoDropzone');
-                const generateBarcodeBtn = document.getElementById('generateBarcodeBtn');
-                const barcodeContainer = document.getElementById('barcodeContainer');
-                const barcodePreview = document.getElementById('barcodePreview');
-                const downloadBarcodeBtn = document.getElementById('downloadBarcodeBtn');
-                const barcodeInput = document.getElementById('barcode');
-
-                let itemPhotoFile = null;
-                let itemCloudinaryPublicId = null;
-
-                addItemBtn.addEventListener('click', () => {
-                    document.getElementById('itemForm').reset();
-                    itemPhotoPreview.innerHTML = '';
-                    itemPhotoFile = null;
-                    itemCloudinaryPublicId = null;
-                    if (itemPhotoDropzone) itemPhotoDropzone.style.display = 'block';
-                    if (removePhotoBtn) removePhotoBtn.classList.add('d-none');
-                    inventoryItemModal.show();
-                });
-
-                // Handle item photo upload
-                if (itemPhotoInput) {
-                    itemPhotoInput.addEventListener('change', function () {
-                        if (this.files?.[0]) {
-                            itemPhotoFile = this.files[0];
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                                if (itemPhotoDropzone) itemPhotoDropzone.style.display = 'none';
-                                if (removePhotoBtn) removePhotoBtn.classList.remove('d-none');
-                                if (itemPhotoPreview) {
-                                    itemPhotoPreview.innerHTML = `
-                                                <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px;">
-                                            `;
-                                }
-
-                                // Store the file for later processing
-                                itemPhotoFile = this.files[0];
-                            };
-                            reader.readAsDataURL(itemPhotoFile);
-                        }
-                    });
-                }
-
-                // Handle photo removal
-                if (removePhotoBtn) {
-                    removePhotoBtn.addEventListener('click', function () {
-                        if (itemPhotoPreview) itemPhotoPreview.innerHTML = '';
-                        if (itemPhotoDropzone) itemPhotoDropzone.style.display = 'block';
-                        if (itemPhotoInput) itemPhotoInput.value = '';
-                        this.classList.add('d-none');
-                        itemPhotoFile = null;
-
-                        // If editing an existing item, mark the current photo for deletion
-                        if (currentEditingItemId) {
-                            const existingItem = equipmentItems.find(i => i.item_id === currentEditingItemId);
-                        }
-                    });
-                }
-
-                // Handle dropzone click
-                if (itemPhotoDropzone) {
-                    itemPhotoDropzone.addEventListener('click', function () {
-                        if (itemPhotoInput) itemPhotoInput.click();
-                    });
-                }
-
-                if (itemNotes && notesWordCount) {
-                    itemNotes.addEventListener('input', function () {
-                        const words = this.value.trim() ? this.value.trim().split(/\s+/) : [];
-                        const wordCount = words.length;
-
-                        notesWordCount.textContent = `${wordCount}/80 words`;
-                        notesWordCount.classList.toggle('text-danger', wordCount >= 80);
-
-                        if (wordCount > 80) {
-                            const allowedWords = words.slice(0, 80).join(' ');
-                            const cursorPos = this.selectionStart;
-                            this.value = allowedWords;
-
-                            if (cursorPos <= allowedWords.length) {
-                                this.setSelectionRange(cursorPos, cursorPos);
-                            }
-                        }
-                    });
-
-                    itemNotes.addEventListener('keydown', function (e) {
-                        const words = this.value.trim() ? this.value.trim().split(/\s+/) : [];
-                        const allowedKeys = [8, 46, 37, 38, 39, 40, 16, 17, 91, 9];
-
-                        if (words.length >= 80 && !allowedKeys.includes(e.keyCode)) {
-                            if (e.key.length === 1 || e.keyCode === 32) {
-                                e.preventDefault();
-                            }
-                        }
-                    });
-
-                    itemNotes.addEventListener('paste', function (e) {
-                        e.preventDefault();
-                        const pasteText = (e.clipboardData || window.clipboardData).getData('text');
-                        const currentText = this.value;
-                        const selectionStart = this.selectionStart;
-                        const selectionEnd = this.selectionEnd;
-
-                        const newText = currentText.substring(0, selectionStart) +
-                            pasteText +
-                            currentText.substring(selectionEnd);
-
-                        const currentWords = currentText.trim() ? currentText.trim().split(/\s+/) : [];
-                        const pasteWords = pasteText.trim() ? pasteText.trim().split(/\s+/) : [];
-                        const selectedWords = currentText.substring(selectionStart, selectionEnd).trim() ?
-                            currentText.substring(selectionStart, selectionEnd).trim().split(/\s+/) : [];
-
-                        const newWordCount = currentWords.length - selectedWords.length + pasteWords.length;
-
-                        if (newWordCount <= 80) {
-                            document.execCommand('insertText', false, pasteText);
-                        } else {
-                            const remainingWords = 80 - (currentWords.length - selectedWords.length);
-                            if (remainingWords > 0) {
-                                const wordsToPaste = pasteWords.slice(0, remainingWords).join(' ');
-                                document.execCommand('insertText', false, wordsToPaste);
-                            }
-                        }
-                    });
-                }
-
-                // Improved barcode generation for optimal Quagga scanning
-                if (generateBarcodeBtn && barcodeInput) {
-                    generateBarcodeBtn.addEventListener('click', async function () {
-                        const generateBarcodeBtn = this;
-                        const originalText = generateBarcodeBtn.innerHTML;
-
-                        try {
-                            generateBarcodeBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
-                            generateBarcodeBtn.disabled = true;
-
-                            // Generate optimal barcode format for scanning
-                            const randomPart = Math.random().toString(36).substring(2, 9).toUpperCase(); // 7 chars
-                            const barcodeValue = `EQ-${randomPart}`;
-
-                            barcodeInput.value = barcodeValue;
-
-                            // Generate barcode with optimal settings for scanning
-                            JsBarcode("#barcodePreview", barcodeValue, {
-                                format: "CODE128",
-                                width: 3, // Optimal width for scanning
-                                height: 120, // Good height for reliability
-                                displayValue: true,
-                                fontSize: 16,
-                                margin: 15, // Good margin
-                                background: "#ffffff",
-                                lineColor: "#000000", // Pure black for best contrast
-                                valid: function (valid) {
-                                    if (valid) {
-                                        console.log('Barcode generated successfully:', barcodeValue);
-                                    } else {
-                                        console.warn('Barcode validation failed');
-                                    }
-                                }
-                            });
-
-                            const barcodeNumberDisplay = document.getElementById('barcodeNumberDisplay');
-                            if (barcodeNumberDisplay) {
-                                barcodeNumberDisplay.textContent = barcodeValue;
-                                barcodeNumberDisplay.style.fontFamily = 'monospace'; // Better readability
-                            }
-
-                            barcodeContainer.classList.remove('d-none');
-                            barcodeInput.setAttribute('readonly', true);
-
-                            showToast('Barcode generated! Format: ' + barcodeValue, 'success');
-
-                            // Test barcode scannability
-                            setTimeout(() => {
-                                testBarcodeScannability(barcodeValue);
-                            }, 1000);
-
-                        } catch (error) {
-                            console.error('Barcode generation error:', error);
-                            showToast('Failed to generate barcode', 'error');
-                        } finally {
-                            generateBarcodeBtn.innerHTML = originalText;
-                            generateBarcodeBtn.disabled = false;
-                        }
-                    });
-                }
-
-                // Test barcode format for scannability
-                function testBarcodeScannability(barcodeValue) {
-                    const tests = [
-                        { test: () => barcodeValue.length >= 8, message: 'Barcode should be at least 8 characters' },
-                        { test: () => barcodeValue.startsWith('EQ-'), message: 'Barcode should start with EQ-' },
-                        { test: () => /^EQ-[A-Z0-9]+$/.test(barcodeValue), message: 'Barcode should contain only letters and numbers after EQ-' },
-                        { test: () => barcodeValue.length <= 20, message: 'Barcode should not be too long' }
-                    ];
-
-                    const failedTests = tests.filter(test => !test.test());
-
-                    if (failedTests.length > 0) {
-                        console.warn('Barcode scannability issues:', failedTests.map(t => t.message));
-                        return false;
-                    }
-
-                    console.log('Barcode format is scannable:', barcodeValue);
-                    return true;
-                }
-
-
-
-                // Handle barcode download with better quality
-                if (downloadBarcodeBtn) {
-                    downloadBarcodeBtn.addEventListener('click', function () {
-                        const barcodeValue = barcodeInput.value.trim();
-                        if (!barcodeValue) {
-                            showToast('Please generate a barcode first', 'error');
-                            return;
-                        }
-
-                        try {
-                            // Get the canvas element
-                            const canvas = document.getElementById('barcodePreview');
-                            if (!canvas) {
-                                showToast('Barcode preview not found', 'error');
-                                return;
-                            }
-
-                            // Create a higher quality canvas for download
-                            const downloadCanvas = document.createElement('canvas');
-                            const downloadCtx = downloadCanvas.getContext('2d');
-
-                            // Double the resolution for better print quality
-                            downloadCanvas.width = canvas.width * 2;
-                            downloadCanvas.height = canvas.height * 2;
-                            downloadCtx.scale(2, 2);
-
-                            // Draw the original barcode
-                            downloadCtx.drawImage(canvas, 0, 0);
-
-                            // Create download link
-                            const link = document.createElement('a');
-                            link.download = `barcode-${barcodeValue}.png`;
-                            link.href = downloadCanvas.toDataURL('image/png');
-                            link.click();
-
-                            showToast('Barcode downloaded! Save as PNG for best scanning results.', 'success');
-
-                        } catch (error) {
-                            console.error('Barcode download error:', error);
-                            showToast('Failed to download barcode', 'error');
-                        }
-                    });
-                }
-
-                // Save item functionality
-                if (saveItemBtn) {
-                    saveItemBtn.addEventListener('click', async function () {
-                        const itemName = document.getElementById('itemName')?.value;
-                        const itemCondition = document.getElementById('itemCondition')?.value;
-                        const barcode = document.getElementById('barcode')?.value || '';
-                        const notes = document.getElementById('itemNotes')?.value || '';
-
-                        if (!itemName || !itemCondition) {
-                            showToast('Please fill in all required fields', 'error');
-                            return;
-                        }
-
-                        try {
-                            let imageUrl = 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1750895337/oxvsxogzu9koqhctnf7s.webp';
-                            let publicId = 'oxvsxogzu9koqhctnf7s';
-
-                            // Create a temporary item object
-                            const tempItem = {
-                                item_id: currentEditingItemId || 'temp-' + Date.now(),
-                                item_name: itemName,
-                                condition_id: itemCondition,
-                                condition: { condition_name: document.getElementById('itemCondition').options[document.getElementById('itemCondition').selectedIndex].text },
-                                barcode_number: barcode,
-                                item_notes: notes,
-                                image_url: imageUrl,
-                            };
-
-                            // Handle photo changes
-                            if (itemPhotoFile) {
-                                // Store file for processing on form submit
-                                const reader = new FileReader();
-                                reader.onload = (e) => {
-                                    tempItem.image_url = e.target.result;
-
-                                    // Update UI with temporary image
-                                    if (currentEditingItemId) {
-                                        updateItemInUI(tempItem);
-                                    } else {
-                                        addItemToUI(tempItem);
-                                    }
-                                };
-                                reader.readAsDataURL(itemPhotoFile);
-
-                                // Store for processing on form submit
-                                pendingItemPhotoChanges.set(tempItem.item_id, {
-                                    action: currentEditingItemId ? 'update' : 'create',
-                                    itemData: {
-                                        item_name: itemName,
-                                        condition_id: itemCondition,
-                                        barcode_number: barcode,
-                                        item_notes: notes
-                                    },
-                                    file: itemPhotoFile
-                                });
-                            } else if (currentEditingItemId) {
-                                // Keep existing photo if not changed
-                                const existingItem = equipmentItems.find(i => i.item_id === currentEditingItemId);
-                                if (existingItem) {
-                                    tempItem.image_url = existingItem.image_url;
-                                }
-
-                                // Mark for update (no photo change)
-                                pendingItemPhotoChanges.set(currentEditingItemId, {
-                                    action: 'update',
-                                    itemData: {
-                                        item_name: itemName,
-                                        condition_id: itemCondition,
-                                        barcode_number: barcode,
-                                        item_notes: notes
-                                    }
-                                });
-
-                                updateItemInUI(tempItem);
-                            } else {
-                                // New item without photo
-                                addItemToUI(tempItem);
-                                pendingItemPhotoChanges.set(tempItem.item_id, {
-                                    action: 'create',
-                                    itemData: {
-                                        item_name: itemName,
-                                        condition_id: itemCondition,
-                                        barcode_number: barcode,
-                                        item_notes: notes
-                                    }
-                                });
-                            }
-
-                            //  showToast(currentEditingItemId ? 'Item changes staged!' : 'Item staged for creation!', 'success');//
-                            inventoryItemModal.hide();
-                            currentEditingItemId = null;
-
-                        } catch (error) {
-                            console.error('Error saving item:', error);
-                            showToast('Failed to save item: ' + error.message, 'error');
-                        }
-                    });
-                }
-                // Handle confirm delete button click
-                document.getElementById('confirmDeleteImageBtn').addEventListener('click', async function () {
-                    try {
-                        // Delete from Cloudinary first if public ID exists
-                        if (currentDeletePublicId) {
-                            await deleteImageFromCloudinary(currentDeletePublicId);
-                        }
-
-                        // Then delete from database if it's a saved image (has photoId)
-                        if (currentDeletePhotoId && typeof currentDeletePhotoId === 'number') {
-                            // For new equipment, we don't have equipment ID yet, so just remove from UI
-                        }
-
-                        // Remove the preview element
-                        if (currentDeletePreviewElement) {
-                            currentDeletePreviewElement.remove();
-                        }
-
-                        // Update the uploadedPhotos array
-                        uploadedPhotos = uploadedPhotos.filter(photo => photo.id !== currentDeletePhotoId);
-
-                        // Hide the modal
-                        deleteImageModal.hide();
-
-                    } catch (error) {
-                        console.error('Error deleting image:', error);
-                        showToast('Failed to delete image: ' + error.message, 'error');
-                    }
-                });
-            }
-
-            // 18. UI update functions
-            function updateItemInUI(updatedItem) {
-                const itemElement = document.querySelector(`.equipment-item[data-item-id="${updatedItem.item_id}"]`);
-                if (!itemElement) return;
-
-                const conditionColors = {
-                    "New": "bg-success text-white",
-                    "Good": "bg-primary text-white",
-                    "Fair": "bg-warning text-dark",
-                    "Needs Maintenance": "bg-danger text-white",
-                    "Damaged": "bg-dark text-white"
-                };
-
-                itemElement.innerHTML = `
-                                            <div class="card-body">
-                                                <div class="photo-container">
-                                                    <img src="${updatedItem.image_url}" class="img-thumbnail">
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <h6 class="card-title">${updatedItem.item_name}</h6>
-                                                    <div class="d-flex flex-wrap gap-3">
-                                                        <span class="badge ${conditionColors[updatedItem.condition.condition_name] || 'bg-secondary'}">${updatedItem.condition.condition_name}</span>
-                                                    </div>
-                                                    ${updatedItem.barcode_number ? `<div class="mt-2"><strong>Barcode:</strong> ${updatedItem.barcode_number}</div>` : ''}
-                                                    ${updatedItem.item_notes ? `<p class="mt-2 mb-0"><strong>Notes:</strong> ${updatedItem.item_notes.substring(0, 50)}${updatedItem.item_notes.length > 50 ? '...' : ''}</p>` : ''}
-                                                </div>
-                                                <div class="d-flex align-self-start">
-                                                    <button type="button" class="btn btn-sm btn-primary me-1" onclick="openEditItemModal('${updatedItem.item_id}', event)">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem('${updatedItem.item_id}', '${updatedItem.cloudinary_public_id}', event)">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        `;
-            }
-
-            function addItemToUI(item) {
-                const conditionColors = {
-                    "New": "bg-success text-white",
-                    "Good": "bg-primary text-white",
-                    "Fair": "bg-warning text-dark",
-                    "Needs Maintenance": "bg-danger text-white",
-                    "Damaged": "bg-dark text-white"
-                };
-
-                const itemCard = document.createElement('div');
-                itemCard.className = 'card equipment-item';
-                itemCard.dataset.itemId = item.item_id;
-                itemCard.innerHTML = `
-                                            <div class="card-body">
-                                                <div class="photo-container">
-                                                    <img src="${item.image_url}" class="img-thumbnail">
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <h6 class="card-title">${item.item_name}</h6>
-                                                    <div class="d-flex flex-wrap gap-3">
-                                                        <span class="badge ${conditionColors[item.condition.condition_name] || 'bg-secondary'}">${item.condition.condition_name}</span>
-                                                    </div>
-                                                    ${item.barcode_number ? `<div class="mt-2"><strong>Barcode:</strong> ${item.barcode_number}</div>` : ''}
-                                                    ${item.item_notes ? `<p class="mt-2 mb-0"><strong>Notes:</strong> ${item.item_notes.substring(0, 50)}${item.item_notes.length > 50 ? '...' : ''}</p>` : ''}
-                                                </div>
-                                                <div class="d-flex align-self-start">
-                                                    <button type="button" class="btn btn-sm btn-primary me-1" onclick="openEditItemModal('${item.item_id}', event)">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem('${item.item_id}', '${item.cloudinary_public_id}', event)">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        `;
-
-                if (itemsContainer) {
-                    if (itemsContainer.querySelector('p.text-muted')) {
-                        itemsContainer.innerHTML = '';
-                    }
-                    itemsContainer.appendChild(itemCard);
-                }
-            }
-
-            // 19. Function to upload item photo to Cloudinary
-            async function uploadItemToCloudinary(file, equipmentId) {
-                const CLOUD_NAME = 'dn98ntlkd';
-                const UPLOAD_PRESET = 'equipment-photos';
-
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', UPLOAD_PRESET);
-                formData.append('folder', `equipment-items/${equipmentId}`);
-                formData.append('tags', `equipment_item_${equipmentId}`);
-
-                try {
-                    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error?.message || 'Upload failed');
-                    }
-
-                    return await response.json();
-
-                } catch (error) {
-                    console.error('Cloudinary upload error:', error);
-                    throw new Error('Failed to upload image: ' + error.message);
-                }
-            }
-
-            // 20. Initialize new equipment form
-            async function initializeNewEquipmentForm() {
-                try {
-                    // Clear form fields
-                    document.getElementById('equipmentName').value = '';
-                    document.getElementById('description').value = '';
-                    document.getElementById('brand').value = '';
-                    document.getElementById('storageLocation').value = '';
-                    document.getElementById('companyFee').value = '';
-                    document.getElementById('minRentalHours').value = 1;
-
-                    // Clear images and items
-                    document.getElementById('photosPreview').innerHTML = '';
-                    document.getElementById('itemsContainer').innerHTML = '<p class="text-muted">No items added yet. Click "Add Item" to track individual equipment pieces.</p>';
-
-                    // Fetch dropdown data with null values
-                    await fetchDropdownData(null);
-
-                    // Reset pending changes
-                    pendingImageUploads = [];
-                    pendingImageDeletions = [];
-                    pendingItemPhotoChanges.clear();
-                    equipmentItems = [];
-
-                } catch (error) {
-                    console.error('Error initializing new equipment form:', error);
-                    showToast('Failed to initialize form: ' + error.message, 'error');
-                }
-            }
-
-            // 21. Add 'required' class to labels with required fields
-            document.querySelectorAll('label[for]').forEach(label => {
-                const input = document.getElementById(label.getAttribute('for'));
-                if (input && input.hasAttribute('required')) {
-                    label.classList.add('required');
-                }
-            });
-
-            // 22. Initialize new equipment form
-            initializeNewEquipmentForm();
-
-            // 23. Fetch dropdown data function
-            async function fetchDropdownData(equipment) {
-                try {
-                    const token = localStorage.getItem('adminToken');
-
-                    // Fetch categories
-                    const categoriesResponse = await fetch('/api/equipment-categories', {
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (categoriesResponse.ok) {
-                        const categoriesData = await categoriesResponse.json();
-                        if (Array.isArray(categoriesData)) {
-                            populateDropdown('category', categoriesData, equipment ? equipment.category_id : null, 'category_id', 'category_name');
-                        }
-                    } else {
-                        console.error('Failed to fetch categories:', categoriesResponse.status);
-                    }
-
-                    // Fetch statuses
-                    const statusesResponse = await fetch('/api/availability-statuses', {
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (statusesResponse.ok) {
-                        const statusesData = await statusesResponse.json();
-                        if (Array.isArray(statusesData)) {
-                            populateDropdown('availabilityStatus', statusesData, equipment ? equipment.status_id : 1, 'status_id', 'status_name');
-                        }
-                    } else {
-                        console.error('Failed to fetch statuses:', statusesResponse.status);
-                    }
-
-                    // Fetch departments
-                    const departmentsResponse = await fetch('/api/departments', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (departmentsResponse.ok) {
-                        const departmentsData = await departmentsResponse.json();
-                        if (Array.isArray(departmentsData)) {
-                            populateDropdown('department', departmentsData, equipment ? equipment.department_id : null, 'department_id', 'department_name');
-                        }
-                    } else {
-                        console.error('Failed to fetch departments:', departmentsResponse.status);
-                    }
-
-                    // Fetch conditions for inventory items
-                    const conditionsResponse = await fetch('/api/conditions', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (conditionsResponse.ok) {
-                        const conditionsData = await conditionsResponse.json();
-                        if (Array.isArray(conditionsData)) {
-                            populateDropdown('itemCondition', conditionsData, null, 'condition_id', 'condition_name');
-                        }
-                    } else {
-                        console.error('Failed to fetch conditions:', conditionsResponse.status);
-                    }
-
-                } catch (error) {
-                    console.error('Error fetching dropdown data:', error);
-                    // Log error without exposing sensitive data
-                    console.log('Dropdown fetch error details:', {
-                        message: error.message,
-                        stack: error.stack
-                    });
-                }
-            }
-
-            // 24. Populate dropdown function
-            function populateDropdown(elementId, data, selectedValue = null, idKey, nameKey) {
-                const dropdown = document.getElementById(elementId);
-                if (!dropdown) {
-                    console.error('Dropdown element not found:', elementId);
+                if (!conditionId) {
+                    window.showToast('Condition is required.', 'error');
                     return;
                 }
 
-                // Clear existing options except the first one
-                while (dropdown.options.length > 1) {
-                    dropdown.remove(1);
+                const conditionName = itemConditionSelect.options[itemConditionSelect.selectedIndex]
+                    ?.text || '';
+
+                const payload = {
+                    item_name: name,
+                    condition_id: conditionId,
+                    item_notes: notes || null,
+                    file: stagedItemFile,
+                    objectUrl: stagedItemObjectUrl,
+                    condition_name: conditionName,
+                    barcode_number: currentItemBarcode
+                };
+
+                if (window.editingItemIndex !== null) {
+                    // Preserve tempId + objectUrl if same file untouched
+                    const prev = window.pendingItems[window.editingItemIndex];
+                    payload.tempId = prev.tempId;
+                    if (!stagedItemFile) {
+                        payload.objectUrl = prev.objectUrl;
+                        payload.file = prev.file;
+                    }
+                    window.pendingItems[window.editingItemIndex] = payload;
+                } else {
+                    payload.tempId = 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,
+                        7);
+                    window.pendingItems.push(payload);
                 }
 
-                // Add new options
-                data.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item[idKey];
-                    option.textContent = item[nameKey];
+                renderItems();
+                inventoryItemModal.hide();
+                resetItemModal();
+            });
 
-                    // Convert both values to string for comparison to handle number vs string mismatches
-                    if (selectedValue !== null && option.value.toString() === selectedValue.toString()) {
-                        option.selected = true;
-                    }
+            document.getElementById('confirmDeleteItemBtn').addEventListener('click', () => {
+                if (pendingDeleteIndex === null) return;
+                const item = window.pendingItems[pendingDeleteIndex];
+                if (item?.objectUrl) URL.revokeObjectURL(item.objectUrl);
+                window.pendingItems.splice(pendingDeleteIndex, 1);
+                pendingDeleteIndex = null;
+                deleteItemModal.hide();
+                renderItems();
+            });
 
-                    dropdown.appendChild(option);
-                });
+            // ============================================================
+            // CANCEL
+            // ============================================================
+            const cancelModal = new bootstrap.Modal('#cancelConfirmationModal');
+            document.getElementById(
+                'cancelBtn').addEventListener('click', () => cancelModal.show());
+            document.getElementById(
+                'confirmCancelBtn').addEventListener('click', () => {
+                cancelModal.hide();
+                window.location.href = '/admin/manage-equipment';
+            });
+
+            // ============================================================
+            // SUBMIT
+            // ============================================================
+            const form = document.getElementById('addEquipmentForm');
+            const submitBtn = document.getElementById('addEquipmentBtn');
+            const spinner = document.getElementById('addEquipmentSpinner');
+            const btnText = document.getElementById('addEquipmentBtnText');
+
+            function setSubmitting(isSubmitting) {
+                submitBtn.disabled = isSubmitting;
+                spinner.classList.toggle('d-none', !isSubmitting);
+                btnText.textContent = isSubmitting ? 'Processing…' : 'Add New Equipment';
             }
 
-            // 25. Form submission handler - FIXED VERSION
-            document.getElementById('addEquipmentForm').addEventListener('submit', async function (e) {
+            function extractError(err, fallback) {
+                if (!err) return fallback;
+                if (err.errors) {
+                    const firstKey = Object.keys(err.errors)[0];
+                    if (firstKey && err.errors[firstKey].length) return err.errors[firstKey][0];
+                }
+                return err.message || fallback;
+            }
+
+            form.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
-                const token = localStorage.getItem('adminToken');
+                const alpineEl = document.querySelector('[x-data]');
+                const alpine = window.Alpine ? window.Alpine.$data(alpineEl) : null;
+                const departmentIds = alpine?.departmentIds || [];
+
+                const name = document.getElementById('equipmentName').value.trim();
+                const storageLocation = document.getElementById('storageLocation').value.trim();
+                const categoryId = document.getElementById('category').value;
+                const companyFee = document.getElementById('companyFee').value;
+                const rateType = document.getElementById('rateType').value;
+                const statusId = alpine?.statusId || '';
+
+                if (!name) return window.showToast('Equipment name is required.', 'error');
+                if (!storageLocation) return window.showToast('Storage location is required.',
+                    'error');
+                if (!categoryId) return window.showToast('Category is required.', 'error');
+                if (companyFee === '' || isNaN(parseFloat(companyFee))) return window.showToast(
+                    'Rental fee is required.', 'error');
+                if (!rateType) return window.showToast('Rate type is required.', 'error');
+                if (!statusId) return window.showToast('Availability status is required.', 'error');
+                if (departmentIds.length === 0) return window.showToast(
+                    'Select at least one department.', 'error');
+
+                setSubmitting(true);
 
                 try {
-                    showToast('Creating equipment...', 'info');
-
-                    // 1. First create the equipment record
-                    const formData = {
-                        equipment_name: document.getElementById('equipmentName').value,
-                        description: document.getElementById('description').value,
-                        brand: document.getElementById('brand').value,
-                        storage_location: document.getElementById('storageLocation').value,
-                        category_id: document.getElementById('category').value,
-                        base_fee: document.getElementById('companyFee').value,
-                        rate_type: document.getElementById('rateType').value,
-                        status_id: document.getElementById('availabilityStatus').value,
-                        managed_by: document.getElementById('department').value, // Changed from department_id
-                        maximum_rental_hour: document.getElementById('minRentalHours').value,
+                    // ---- 1. Create equipment ----
+                    const payload = {
+                        equipment_name: name,
+                        description: document.getElementById('description').value.trim() ||
+                            null,
+                        brand: document.getElementById('brand').value.trim() || null,
+                        storage_location: storageLocation,
+                        category_id: categoryId,
+                        base_fee: parseFloat(companyFee),
+                        rate_type: rateType,
+                        status_id: statusId,
+                        departments: departmentIds.map(Number),
+                        // items are created via /items after equipment exists (multipart with image)
                     };
 
-                    const equipmentResponse = await fetch(`/api/admin/equipment`, {
+                    const createRes = await fetch('/api/admin/equipment', {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json',
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify(formData)
+                        body: JSON.stringify(payload)
                     });
 
-                    if (!equipmentResponse.ok) {
-                        const errorData = await equipmentResponse.json();
-                        throw new Error(errorData.message || 'Failed to create equipment');
+                    if (!createRes.ok) {
+                        const err = await createRes.json().catch(() => ({}));
+                        throw new Error(extractError(err,
+                            `Failed to create equipment (${createRes.status}).`));
                     }
 
-                    const equipmentResult = await equipmentResponse.json();
-                    window.newEquipmentId = equipmentResult.data.equipment_id;
-                    showToast('Equipment created successfully! Processing images and items...', 'success');
+                    const createJson = await createRes.json();
+                    const equipmentId = createJson?.data?.equipment_id;
+                    if (!equipmentId) throw new Error('Equipment created, but no ID was returned.');
 
-                    // 2. Process equipment image uploads with the new equipment ID - FIXED
-                    const uploadPromises = pendingImageUploads.map(async (upload) => {
-                        try {
-                            const cloudinaryData = await uploadToCloudinary(upload.file, window.newEquipmentId);
-                            await saveImageToDatabase(window.newEquipmentId, cloudinaryData.secure_url, cloudinaryData.public_id);
+                    // ---- 2. Upload equipment photos in parallel ----
+                    if (window.pendingEquipmentPhotos.length > 0) {
+                        const uploads = window.pendingEquipmentPhotos.map(entry => {
+                            const fd = new FormData();
+                            fd.append('image', entry.file);
+                            fd.append('description', 'Equipment photo');
+                            fd.append('image_type', entry.image_type);
+                            fd.append('sort_order', entry.sort_order);
 
-                            console.log('Equipment photo uploaded successfully:', cloudinaryData.secure_url);
-                            return { success: true, upload };
-                        } catch (error) {
-                            console.error('Error uploading equipment image:', error);
-                            return { success: false, error, upload };
-                        }
-                    });
-
-                    // Wait for all equipment photo uploads to complete
-                    const uploadResults = await Promise.allSettled(uploadPromises);
-
-                    // Check for failed uploads
-                    const failedUploads = uploadResults.filter(result =>
-                        result.status === 'fulfilled' && !result.value.success
-                    );
-
-                    if (failedUploads.length > 0) {
-                        showToast(`Warning: ${failedUploads.length} equipment photo(s) failed to upload`, 'warning');
-                    } else if (pendingImageUploads.length > 0) {
-                        showToast('All equipment photos uploaded successfully!', 'success');
-                    }
-
-                    // 3. Process item changes with the new equipment ID
-                    for (const [itemId, change] of pendingItemPhotoChanges.entries()) {
-                        try {
-                            if (change.action === 'delete') {
-                                // Skip deletion for new equipment (items shouldn't exist yet)
-                                continue;
-                            } else if (change.action === 'create') {
-                                // Create new item
-                                let imageUrl = 'https://res.cloudinary.com/dn98ntlkd/image/upload/v1750895337/oxvsxogzu9koqhctnf7s.webp';
-                                let publicId = 'oxvsxogzu9koqhctnf7s';
-
-                                if (change.file) {
-                                    const cloudinaryData = await uploadItemToCloudinary(change.file, window.newEquipmentId);
-                                    imageUrl = cloudinaryData.secure_url;
-                                    publicId = cloudinaryData.public_id;
-                                }
-
-                                const response = await fetch(`/api/admin/equipment/${window.newEquipmentId}/items`, {
+                            return fetch(`/api/admin/equipment/${equipmentId}/images`, {
                                     method: 'POST',
                                     headers: {
                                         'Authorization': `Bearer ${token}`,
-                                        'Content-Type': 'application/json',
                                         'Accept': 'application/json'
                                     },
-                                    body: JSON.stringify({
-                                        ...change.itemData,
-                                        image_url: imageUrl,
-                                        cloudinary_public_id: publicId
-                                    })
+                                    body: fd
+                                }).then(async r => {
+                                    if (!r.ok) {
+                                        const text = await r.text().catch(() => '');
+                                        throw new Error(`HTTP ${r.status}: ${text}`);
+                                    }
+                                    return r;
+                                }).then(r => r.json().catch(() => ({
+                                    success: true
+                                })))
+                                .catch(err => {
+                                    // Dump the raw error to the browser console so you can inspect it
+                                    console.error('Image Upload Raw Error:', err);
+                                    throw err;
                                 });
+                        });
 
-                                if (!response.ok) throw new Error('Failed to create item');
-                            }
-                        } catch (error) {
-                            console.error('Error processing item change:', error);
-                            showToast('Warning: Failed to process some item changes', 'warning');
+                        const results = await Promise.allSettled(uploads);
+                        const failed = results.filter(r => r.status === 'rejected');
+
+                        // BLOCK REDIRECT: If any image fails, throw an error to stop the flow
+                        if (failed.length > 0) {
+                            console.error('All upload results:', results);
+                            throw new Error(
+                                `Failed to upload ${failed.length} image(s). Check the console for details.`
+                            );
                         }
                     }
 
-                    // Clear pending changes
-                    pendingImageUploads = [];
-                    pendingImageDeletions = [];
-                    pendingItemPhotoChanges.clear();
+                    // ---- 3. Create staged items sequentially (multipart per item) ----
+                    for (const item of window.pendingItems) {
+                        const fd = new FormData();
+                        fd.append('item_name', item.item_name);
+                        fd.append('condition_id', item.condition_id);
+                        if (item.item_notes) fd.append('item_notes', item.item_notes);
+                        if (item.file) fd.append('image', item.file);
+                        if (item.barcode_number) fd.append('barcode_number', item.barcode_number);
 
-                    showToast('Equipment created successfully with all photos and items!', 'success');
+                        const itemRes = await fetch(`/api/admin/equipment/${equipmentId}/items`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/json'
+                            },
+                            body: fd
+                        });
+
+                        if (!itemRes.ok) {
+                            const err = await itemRes.json().catch(() => ({}));
+                            console.error('Item creation failed:', err);
+                            window.showToast(`Item "${item.item_name}" failed: ` + extractError(err,
+                                'unknown error'), 'error');
+                        }
+                    }
+
+                    window.showToast('Equipment created successfully!', 'success');
                     setTimeout(() => {
                         window.location.href = '/admin/manage-equipment';
-                    }, 1500);
+                    }, 1200);
 
-                } catch (error) {
-                    console.error('Error creating equipment:', error);
-                    showToast('Failed to create equipment: ' + error.message, 'error');
+                } catch (err) {
+                    console.error(err);
+                    window.showToast(err.message || 'Failed to create equipment.', 'error');
+                } finally {
+                    setSubmitting(false);
                 }
             });
         });
