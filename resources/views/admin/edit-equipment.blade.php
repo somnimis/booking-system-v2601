@@ -395,8 +395,11 @@
             // ============================================================
             // STATE
             // ============================================================
-            window.pendingEquipmentPhotos = []; // Newly staged photos
-            window.existingEquipmentPhotos = []; // Photos already in DB
+            // One flat array = exactly what the user sees. Array index IS the sort_order.
+            // Each entry: { image_id (existing only), file (new only), objectUrl (new only),
+            //               image_url (existing only), image_type: 'Primary' | 'Secondary' }
+            window.photos = [];
+            window.deletedImageIds = []; // Existing photos removed in the UI; deleted on save
             window.pendingItems = []; // Items state array
             window.deletedItemIds = []; // Items marked for deletion
             window.editingItemIndex = null;
@@ -480,15 +483,16 @@
 
                     // Populate Existing Equipment Photos
                     if (data.images) {
-                        window.existingEquipmentPhotos = data.images.map(img => ({
-                            image_id: img.image_id,
-                            image_url: img.image_url,
-                            image_type: img.image_type,
-                            sort_order: img.sort_order
-                        }));
+                        window.photos = data.images
+                            .slice()
+                            .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                            .map(img => ({
+                                image_id: img.image_id,
+                                image_url: img.image_url,
+                                image_type: img.image_type === 'Primary' ? 'Primary' : 'Secondary'
+                            }));
                         renderPhotos();
                     }
-
                     // Populate Items
                     if (data.items) {
                         window.pendingItems = data.items.map(item => ({
@@ -521,101 +525,39 @@
             function renderPhotos() {
                 photosPreview.innerHTML = '';
 
-                const allPhotos = [
-                    ...window.existingEquipmentPhotos.map((p, i) => ({
-                        ...p,
-                        is_existing: true,
-                        arrayIndex: i,
-                        type: 'existing'
-                    })),
-                    ...window.pendingEquipmentPhotos.map((p, i) => ({
-                        ...p,
-                        is_existing: false,
-                        arrayIndex: i,
-                        type: 'pending'
-                    }))
-                ];
-
-                allPhotos.forEach((entry) => {
+                window.photos.forEach((photo, index) => {
                     const tile = document.createElement('div');
                     tile.className = 'photo-preview';
 
                     const img = document.createElement('img');
-                    img.src = entry.objectUrl || entry.image_url;
+                    img.src = photo.objectUrl || photo.image_url;
                     tile.appendChild(img);
 
-                    // Primary Star
+                    // Primary star: only one photo can be Primary. Clicking the current Primary un-stars it.
                     const star = document.createElement('button');
                     star.type = 'button';
-                    star.className = 'primary-star' + (entry.image_type === 'Primary' ? ' is-primary' : '');
+                    star.className = 'primary-star' + (photo.image_type === 'Primary' ? ' is-primary' : '');
                     star.innerHTML = '<i class="bi bi-star-fill"></i>';
                     star.title = 'Set as primary photo';
                     star.style.zIndex = '2';
                     star.addEventListener('click', (e) => {
                         e.preventDefault();
-                        if (entry.image_type === 'Primary') return;
-
-                        window.existingEquipmentPhotos.forEach(p => p.image_type = 'Secondary');
-                        window.pendingEquipmentPhotos.forEach(p => p.image_type = 'Secondary');
-
-                        if (entry.is_existing) {
-                            const target = window.existingEquipmentPhotos.find(p => p.image_id ===
-                                entry.image_id);
-                            if (target) target.image_type = 'Primary';
-                        } else {
-                            const target = window.pendingEquipmentPhotos.find(p => p.tempId ===
-                                entry.tempId);
-                            if (target) target.image_type = 'Primary';
-                        }
+                        const wasPrimary = photo.image_type === 'Primary';
+                        window.photos.forEach(p => p.image_type = 'Secondary');
+                        if (!wasPrimary) photo.image_type = 'Primary';
                         renderPhotos();
                     });
                     tile.appendChild(star);
 
-                    // Action Buttons
+                    // Action buttons: move up, remove, move down
                     const actions = document.createElement('div');
                     actions.className = 'photo-actions';
                     actions.style.zIndex = '2';
 
-                    const removeHandler = async () => {
-                        if (entry.is_existing) {
-                            if (!confirm('Delete this image permanently?')) return;
-                            try {
-                                const res = await fetch(
-                                    `/api/admin/equipment/${equipmentId}/images/${entry.image_id}`, {
-                                        method: 'DELETE',
-                                        headers: {
-                                            'Authorization': `Bearer ${token}`,
-                                            'Accept': 'application/json'
-                                        }
-                                    });
-                                if (!res.ok) throw new Error('Failed to delete');
-                                window.existingEquipmentPhotos = window.existingEquipmentPhotos
-                                    .filter(p => p.image_id !== entry.image_id);
-                                window.showToast('Image deleted', 'success');
-                                renderPhotos();
-                            } catch (e) {
-                                window.showToast('Failed to delete image', 'error');
-                            }
-                        } else {
-                            URL.revokeObjectURL(entry.objectUrl);
-                            window.pendingEquipmentPhotos = window.pendingEquipmentPhotos.filter(
-                                p => p.tempId !== entry.tempId);
-                            if (entry.image_type === 'Primary' && window.pendingEquipmentPhotos
-                                .length > 0) {
-                                window.pendingEquipmentPhotos[0].image_type = 'Primary';
-                            } else if (entry.image_type === 'Primary' && window
-                                .pendingEquipmentPhotos.length === 0 && window
-                                .existingEquipmentPhotos.length > 0) {
-                                window.existingEquipmentPhotos[0].image_type = 'Primary';
-                            }
-                            renderPhotos();
-                        }
-                    };
-
                     [
-                        ['bi-arrow-up', () => movePhoto(entry.type, entry.arrayIndex, -1)],
-                        ['bi-x', removeHandler],
-                        ['bi-arrow-down', () => movePhoto(entry.type, entry.arrayIndex, 1)]
+                        ['bi-arrow-up', () => movePhoto(index, -1)],
+                        ['bi-x', () => removePhoto(index)],
+                        ['bi-arrow-down', () => movePhoto(index, 1)]
                     ].forEach(([icon, handler]) => {
                         const b = document.createElement('button');
                         b.type = 'button';
@@ -632,42 +574,39 @@
                 });
             }
 
-            function movePhoto(type, index, delta) {
-                const list = type === 'existing' ? window.existingEquipmentPhotos : window.pendingEquipmentPhotos;
+            function movePhoto(index, delta) {
                 const newIdx = index + delta;
-                if (newIdx < 0 || newIdx >= list.length) return;
+                if (newIdx < 0 || newIdx >= window.photos.length) return;
+                const [photo] = window.photos.splice(index, 1);
+                window.photos.splice(newIdx, 0, photo);
+                renderPhotos();
+            }
 
-                const [item] = list.splice(index, 1);
-                list.splice(newIdx, 0, item);
-
-                // Recalculate sort order across BOTH arrays
-                let sortCounter = 0;
-                window.existingEquipmentPhotos.forEach(p => p.sort_order = sortCounter++);
-                window.pendingEquipmentPhotos.forEach(p => p.sort_order = sortCounter++);
-
+            function removePhoto(index) {
+                const [photo] = window.photos.splice(index, 1);
+                if (!photo) return;
+                if (photo.image_id) {
+                    window.deletedImageIds.push(photo.image_id); // actually deleted on save
+                } else if (photo.objectUrl) {
+                    URL.revokeObjectURL(photo.objectUrl);
+                }
                 renderPhotos();
             }
 
             function handleFiles(files) {
-                const totalPhotos = window.existingEquipmentPhotos.length + window.pendingEquipmentPhotos.length;
                 for (const file of files) {
                     if (!file.type.startsWith('image/')) {
                         window.showToast('Please upload only image files.', 'error');
                         continue;
                     }
-                    if (totalPhotos >= MAX_PHOTOS) {
+                    if (window.photos.length >= MAX_PHOTOS) {
                         window.showToast('Maximum of 5 photos allowed.', 'error');
                         break;
                     }
-
-                    const isFirst = totalPhotos === 0 && window.pendingEquipmentPhotos.length === 0;
-
-                    window.pendingEquipmentPhotos.push({
-                        tempId: 'tmp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                    window.photos.push({
                         file,
                         objectUrl: URL.createObjectURL(file),
-                        image_type: isFirst ? 'Primary' : 'Secondary',
-                        sort_order: totalPhotos + window.pendingEquipmentPhotos.length
+                        image_type: 'Secondary'
                     });
                 }
                 renderPhotos();
@@ -1018,16 +957,35 @@
                             `Failed to update equipment (${updateRes.status}).`));
                     }
 
-                    // ---- 2. Upload new equipment photos ----
-                    if (window.pendingEquipmentPhotos.length > 0) {
-                        const uploads = window.pendingEquipmentPhotos.map(entry => {
-                            const fd = new FormData();
-                            fd.append('image', entry.file);
-                            fd.append('description', 'Equipment photo');
-                            fd.append('image_type', entry.image_type);
-                            fd.append('sort_order', entry.sort_order);
+                    // ---- 2. Delete photos the user removed ----
+                    for (const imageId of window.deletedImageIds) {
+                        const delRes = await fetch(`/api/admin/equipment/${equipmentId}/images/${imageId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (!delRes.ok && delRes.status !== 404) {
+                            throw new Error(`Failed to delete image (${delRes.status}).`);
+                        }
+                    }
+                    window.deletedImageIds = [];
 
-                            return fetch(`/api/admin/equipment/${equipmentId}/images`, {
+                    // ---- 2b. Save the photo layout exactly as arranged ----
+                    // sort_order = array index; image_type = whatever the star says.
+                    const newUploads = [];
+                    const existingLayout = [];
+
+                    window.photos.forEach((photo, index) => {
+                        if (photo.file) {
+                            const fd = new FormData();
+                            fd.append('image', photo.file);
+                            fd.append('description', 'Equipment photo');
+                            fd.append('image_type', photo.image_type);
+                            fd.append('sort_order', index);
+
+                            newUploads.push(fetch(`/api/admin/equipment/${equipmentId}/images`, {
                                 method: 'POST',
                                 headers: {
                                     'Authorization': `Bearer ${token}`,
@@ -1039,38 +997,39 @@
                                     const text = await r.text().catch(() => '');
                                     throw new Error(`HTTP ${r.status}: ${text}`);
                                 }
-                                return r;
-                            }).then(r => r.json().catch(() => ({
-                                success: true
-                            })));
-                        });
+                                return r.json();
+                            }));
+                        } else {
+                            existingLayout.push({
+                                image_id: photo.image_id,
+                                sort_order: index,
+                                image_type: photo.image_type
+                            });
+                        }
+                    });
 
-                        const results = await Promise.allSettled(uploads);
+                    if (newUploads.length > 0) {
+                        const results = await Promise.allSettled(newUploads);
                         const failed = results.filter(r => r.status === 'rejected');
                         if (failed.length > 0) {
                             throw new Error(`Failed to upload ${failed.length} image(s).`);
                         }
                     }
 
-                    // ---- 2b. Reorder Images if existing images were moved ----
-                    if (window.existingEquipmentPhotos.length > 0) {
-                        const reorderPayload = {
-                            images: window.existingEquipmentPhotos.map(img => ({
-                                image_id: img.image_id,
-                                sort_order: img.sort_order,
-                                image_type: img.image_type
-                            }))
-                        };
-
-                        await fetch(`/api/admin/equipment/${equipmentId}/images/reorder`, {
+                    if (existingLayout.length > 0) {
+                        const reorderRes = await fetch(`/api/admin/equipment/${equipmentId}/images/reorder`, {
                             method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${token}`,
                                 'Content-Type': 'application/json',
                                 'Accept': 'application/json'
                             },
-                            body: JSON.stringify(reorderPayload)
-                        }).catch(err => console.error('Failed to reorder existing images:', err));
+                            body: JSON.stringify({ images: existingLayout })
+                        });
+                        if (!reorderRes.ok) {
+                            const err = await reorderRes.json().catch(() => ({}));
+                            throw new Error(extractError(err, 'Failed to save photo order.'));
+                        }
                     }
 
                     // ---- 3. Handle Item Deletions ----

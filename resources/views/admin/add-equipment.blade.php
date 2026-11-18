@@ -475,8 +475,12 @@
                     star.addEventListener('click', (e) => {
                         e.preventDefault();
                         if (entry.image_type === 'Primary') return;
+                        
                         window.pendingEquipmentPhotos.forEach(p => p.image_type = 'Secondary');
-                        entry.image_type = 'Primary';
+                        
+                        const target = window.pendingEquipmentPhotos.find(p => p.tempId === entry.tempId);
+                        if (target) target.image_type = 'Primary';
+                        
                         renderPhotos();
                     });
                     tile.appendChild(star);
@@ -542,6 +546,7 @@
                         break;
                     }
 
+                    // Only primary if it's the very first photo
                     const isFirst = window.pendingEquipmentPhotos.length === 0;
 
                     window.pendingEquipmentPhotos.push({

@@ -197,8 +197,14 @@ class EquipmentController extends Controller
     public function show($id)
     {
         try {
-            // Eager load items and their conditions
-            $equipment = Equipment::with(['category', 'status', 'departments', 'images', 'items.condition'])->findOrFail($id);
+            $equipment = Equipment::with([
+                'category', 
+                'status', 
+                'departments', 
+                'images' => function($q) { $q->orderBy('sort_order'); }, 
+                'items.condition'
+            ])->findOrFail($id);
+            
             return response()->json(['data' => $equipment]);
         } catch (\Exception $e) {
             \Log::error('Error fetching equipment: ' . $e->getMessage());
@@ -412,37 +418,26 @@ class EquipmentController extends Controller
 
     /**
      * Upload one equipment image (server-side, public disk).
-     * Client fires these in parallel; order is not tracked (no sort_order/image_type columns).
+     * The client sends the exact image_type and sort_order (its position in the UI) with each file.
      */
-
     public function uploadImage(Request $request, $equipmentId): JsonResponse
     {
         $validated = $request->validate([
             'image'       => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
             'description' => 'nullable|string|max:80',
             'image_type'  => 'required|in:Primary,Secondary',
-            'sort_order'  => 'nullable|integer|min:0',
+            'sort_order'  => 'required|integer|min:0',
         ]);
 
         $equipment = Equipment::findOrFail($equipmentId);
 
-        // If this will be Primary, or the equipment has no images yet, demote any current primary
-        $existingCount = $equipment->images()->count();
-        $isPrimary = $validated['image_type'] === 'Primary' || $existingCount === 0;
-
-        if ($isPrimary) {
-            $equipment->images()->update(['image_type' => 'Secondary']);
-        }
-
-        // Store on public disk
         $path = $request->file('image')->store("equipment-photos/{$equipment->equipment_id}", 'public');
-        $imageUrl = '/storage/' . $path;
 
         $image = $equipment->images()->create([
-            'image_url'   => $imageUrl,
-            'image_type'  => $isPrimary ? 'Primary' : 'Secondary',
+            'image_url'   => '/storage/' . $path,
+            'image_type'  => $validated['image_type'],
             'description' => $validated['description'] ?? 'Equipment photo',
-            'sort_order'  => $validated['sort_order'] ?? $existingCount,
+            'sort_order'  => $validated['sort_order'],
         ]);
 
         return response()->json([
@@ -454,6 +449,10 @@ class EquipmentController extends Controller
         ]);
     }
 
+    /**
+     * Save the layout the user arranged: writes the sort_order and image_type
+     * sent by the client for each existing image. No auto-sorting or auto-promotion.
+     */
     public function reorderImages(Request $request, $equipmentId): JsonResponse
     {
         $validated = $request->validate([
@@ -464,27 +463,6 @@ class EquipmentController extends Controller
         ]);
 
         $equipment = Equipment::findOrFail($equipmentId);
-
-        // Ensure exactly one Primary
-        $primaryCount = collect($validated['images'])
-            ->where('image_type', 'Primary')
-            ->count();
-
-        if ($primaryCount === 0) {
-            $validated['images'][0]['image_type'] = 'Primary';
-        } elseif ($primaryCount > 1) {
-            $firstPrimarySeen = false;
-            foreach ($validated['images'] as &$row) {
-                if ($row['image_type'] === 'Primary') {
-                    if ($firstPrimarySeen) {
-                        $row['image_type'] = 'Secondary';
-                    } else {
-                        $firstPrimarySeen = true;
-                    }
-                }
-            }
-            unset($row);
-        }
 
         \DB::transaction(function () use ($equipment, $validated) {
             foreach ($validated['images'] as $row) {
@@ -497,12 +475,13 @@ class EquipmentController extends Controller
             }
         });
 
-        return response()->json([
-            'message' => 'Images reordered successfully',
-            'images'  => $equipment->images()->orderBy('sort_order')->get(),
-        ]);
+        return response()->json(['message' => 'Images reordered successfully']);
     }
 
+    /**
+     * Delete one image and its file. Order and primary status are not touched here;
+     * the client sends the final layout via reorderImages on save.
+     */
     public function deleteImage($equipmentId, $imageId): JsonResponse
     {
         try {
@@ -515,19 +494,7 @@ class EquipmentController extends Controller
                 Storage::disk('public')->delete($relativePath);
             }
 
-            $wasPrimary = $image->image_type === 'Primary';
             $image->delete();
-
-            // If we deleted the primary, promote the next one
-            if ($wasPrimary) {
-                $nextId = $equipment->images()->orderBy('sort_order')->value('image_id');
-                if ($nextId) {
-                    \App\Models\EquipmentImage::where('image_id', $nextId)
-                        ->update(['image_type' => 'Primary']);
-                }
-            }
-
-            $this->reorderImageRecords($equipment);
 
             return response()->json(['message' => 'Image deleted successfully']);
 
@@ -545,13 +512,6 @@ class EquipmentController extends Controller
         }
     }
 
-    private function reorderImageRecords(Equipment $equipment): void
-    {
-        $images = $equipment->images()->orderBy('sort_order')->get();
-        foreach ($images as $index => $image) {
-            $image->update(['sort_order' => $index + 1]);
-        }
-    }
     // ----- Formatting ----- //
 
     private function formatEquipment($equipment): array
