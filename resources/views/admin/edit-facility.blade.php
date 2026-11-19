@@ -383,8 +383,15 @@
                             }, 100);
                         }
 
-                        // Set existing images
-                        window.existingImages = data.images || [];
+                        // Populate flat photos array (index = sort_order)
+                        window.photos = (data.images || [])
+                            .slice()
+                            .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                            .map(img => ({
+                                image_id: img.image_id,
+                                image_url: img.image_url,
+                                image_type: img.image_type === 'Primary' ? 'Primary' : 'Secondary'
+                            }));
                         renderPhotos();
 
                         this.refreshTooltips();
@@ -419,104 +426,88 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            window.pendingImageUploads = [];
-            window.existingImages = [];
-            window.pendingImageDeletions = [];
+            // ============================================================
+            // FACILITY PHOTOS — flat array, index = sort_order
+            // Each entry: { image_id?, image_url?, file?, objectUrl?, image_type }
+            // ============================================================
+            window.photos = [];              // exactly what the user sees, in order
+            window.deletedImageIds = [];     // existing images removed in the UI; deleted on save
 
-            const token = localStorage.getItem('adminToken');
-            if (!token) return window.location.href = '/admin/login';
-
-            // ---- Photos Logic ----
+            const MAX_PHOTOS = 5;
             const facilityDropzone = document.getElementById('facilityPhotosDropzone');
             const facilityFileInput = document.getElementById('facilityPhotos');
             const photosPreview = document.getElementById('photosPreview');
 
-            window.renderPhotos = function() {
+            function renderPhotos() {
                 photosPreview.innerHTML = '';
-                
-                // Render existing images
-                window.existingImages.forEach((img) => {
-                    if (window.pendingImageDeletions.includes(img.image_id)) return; // Skip marked for deletion
 
+                window.photos.forEach((photo, index) => {
                     const tile = document.createElement('div');
                     tile.className = 'photo-preview';
-                    
-                    const imageEl = document.createElement('img');
-                    imageEl.src = img.image_url;
-                    tile.appendChild(imageEl);
-
-                    const star = document.createElement('button');
-                    star.type = 'button';
-                    star.className = 'primary-star' + (img.image_type === 'Primary' ? ' is-primary' : '');
-                    star.innerHTML = '<i class="bi bi-star-fill"></i>';
-                    star.addEventListener('click', () => {
-                        if (img.image_type === 'Primary') return;
-                        window.existingImages.forEach(e => e.image_type = 'Secondary');
-                        img.image_type = 'Primary';
-                        window.pendingImageUploads.forEach(e => e.image_type = 'Secondary');
-                        window.renderPhotos();
-                    });
-                    tile.appendChild(star);
-
-                    const actions = document.createElement('div');
-                    actions.className = 'photo-actions';
-
-                    const removeBtn = document.createElement('button');
-                    removeBtn.type = 'button';
-                    removeBtn.innerHTML = '<i class="bi bi-x"></i>';
-                    removeBtn.addEventListener('click', () => {
-                        window.pendingImageDeletions.push(img.image_id);
-                        window.renderPhotos();
-                    });
-                    actions.appendChild(removeBtn);
-
-                    tile.appendChild(actions);
-                    photosPreview.appendChild(tile);
-                });
-
-                // Render new uploads
-                window.pendingImageUploads.forEach((entry) => {
-                    const tile = document.createElement('div');
-                    tile.className = 'photo-preview';
-                    tile.dataset.tempId = entry.temp_id;
 
                     const img = document.createElement('img');
-                    img.src = entry.objectUrl;
+                    img.src = photo.objectUrl || photo.image_url;
                     tile.appendChild(img);
 
+                    // Primary star: only one can be Primary; clicking current Primary un-stars it
                     const star = document.createElement('button');
                     star.type = 'button';
-                    star.className = 'primary-star' + (entry.image_type === 'Primary' ? ' is-primary' : '');
+                    star.className = 'primary-star' + (photo.image_type === 'Primary' ? ' is-primary' : '');
                     star.innerHTML = '<i class="bi bi-star-fill"></i>';
-                    star.addEventListener('click', () => {
-                        if (entry.image_type === 'Primary') return;
-                        window.pendingImageUploads.forEach(e => e.image_type = 'Secondary');
-                        window.existingImages.forEach(e => e.image_type = 'Secondary');
-                        entry.image_type = 'Primary';
-                        window.renderPhotos();
+                    star.title = 'Set as primary photo';
+                    star.style.zIndex = '2';
+                    star.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const wasPrimary = photo.image_type === 'Primary';
+                        window.photos.forEach(p => p.image_type = 'Secondary');
+                        if (!wasPrimary) photo.image_type = 'Primary';
+                        renderPhotos();
                     });
                     tile.appendChild(star);
 
+                    // Action buttons: up, remove, down
                     const actions = document.createElement('div');
                     actions.className = 'photo-actions';
+                    actions.style.zIndex = '2';
 
-                    const removeBtn = document.createElement('button');
-                    removeBtn.type = 'button';
-                    removeBtn.innerHTML = '<i class="bi bi-x"></i>';
-                    removeBtn.addEventListener('click', () => {
-                        const idx = window.pendingImageUploads.findIndex(e => e.temp_id === entry.temp_id);
-                        if (idx > -1) {
-                            URL.revokeObjectURL(window.pendingImageUploads[idx].objectUrl);
-                            window.pendingImageUploads.splice(idx, 1);
-                        }
-                        window.renderPhotos();
+                    [
+                        ['bi-arrow-up', () => movePhoto(index, -1)],
+                        ['bi-x', () => removePhoto(index)],
+                        ['bi-arrow-down', () => movePhoto(index, 1)]
+                    ].forEach(([icon, handler]) => {
+                        const b = document.createElement('button');
+                        b.type = 'button';
+                        b.innerHTML = `<i class="bi ${icon}"></i>`;
+                        b.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            handler();
+                        });
+                        actions.appendChild(b);
                     });
-                    actions.appendChild(removeBtn);
 
                     tile.appendChild(actions);
                     photosPreview.appendChild(tile);
                 });
-            };
+            }
+
+            function movePhoto(index, delta) {
+                const newIdx = index + delta;
+                if (newIdx < 0 || newIdx >= window.photos.length) return;
+                const [photo] = window.photos.splice(index, 1);
+                window.photos.splice(newIdx, 0, photo);
+                renderPhotos();
+            }
+
+            function removePhoto(index) {
+                const [photo] = window.photos.splice(index, 1);
+                if (!photo) return;
+                if (photo.image_id) {
+                    window.deletedImageIds.push(photo.image_id); // actually deleted on save
+                } else if (photo.objectUrl) {
+                    URL.revokeObjectURL(photo.objectUrl);
+                }
+                renderPhotos();
+            }
 
             function handleFacilityFiles(files) {
                 for (const file of files) {
@@ -524,20 +515,17 @@
                         window.showToast('Please upload only image files', 'error');
                         continue;
                     }
-                    if (window.pendingImageUploads.length + window.existingImages.length - window.pendingImageDeletions.length >= 5) {
+                    if (window.photos.length >= MAX_PHOTOS) {
                         window.showToast('Maximum of 5 photos allowed', 'error');
                         break;
                     }
-                    const isFirst = (window.pendingImageUploads.length === 0 && window.existingImages.length === 0);
-                    window.pendingImageUploads.push({
-                        temp_id: 'temp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-                        file: file,
+                    window.photos.push({
+                        file,
                         objectUrl: URL.createObjectURL(file),
-                        image_type: isFirst ? 'Primary' : 'Secondary',
-                        sort_order: window.pendingImageUploads.length + window.existingImages.length,
+                        image_type: 'Secondary'
                     });
                 }
-                window.renderPhotos();
+                renderPhotos();
             }
 
             facilityDropzone.addEventListener('click', () => facilityFileInput.click());
@@ -545,15 +533,20 @@
                 handleFacilityFiles(this.files);
                 this.value = '';
             });
-            
-            // Drag and drop
+
             facilityDropzone.addEventListener('dragover', (e) => { e.preventDefault(); facilityDropzone.classList.add('border-primary'); });
-            facilityDropzone.addEventListener('dragleave', () => { facilityDropzone.classList.remove('border-primary'); });
+            facilityDropzone.addEventListener('dragleave', () => facilityDropzone.classList.remove('border-primary'));
             facilityDropzone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 facilityDropzone.classList.remove('border-primary');
                 if (e.dataTransfer.files.length) handleFacilityFiles(e.dataTransfer.files);
             });
+
+            // Expose renderPhotos so the Alpine component's fetchFacilityData can call it
+            window.renderPhotos = renderPhotos;
+
+            const token = localStorage.getItem('adminToken');
+            if (!token) return window.location.href = '/admin/login';
 
             // ---- Description Counter ----
             const description = document.getElementById('description');
@@ -691,47 +684,73 @@
                         throw new Error(errorMessage);
                     }
 
-                    // 2. Handle Image Deletions
-                    for (const imageId of window.pendingImageDeletions) {
-                        await fetch(`/api/admin/facilities/${id}/images/${imageId}`, {
+                    // 2. Delete photos the user removed
+                    for (const imageId of window.deletedImageIds) {
+                        const delRes = await fetch(`/api/admin/facilities/${id}/images/${imageId}`, {
                             method: 'DELETE',
                             headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}`, 'Accept': 'application/json' }
                         });
+                        if (!delRes.ok && delRes.status !== 404) {
+                            throw new Error(`Failed to delete image (${delRes.status}).`);
+                        }
                     }
+                    window.deletedImageIds.length = 0;
 
-                    // 3. Handle New Image Uploads
-                    for (const entry of window.pendingImageUploads) {
-                        try {
+                    // 2b. Save the photo layout exactly as arranged
+                    // sort_order = array index; image_type = whatever the star says.
+                    const newUploads = [];
+                    const existingLayout = [];
+
+                    window.photos.forEach((photo, index) => {
+                        if (photo.file) {
                             const fd = new FormData();
-                            fd.append('image', entry.file);
-                            fd.append('image_type', entry.image_type);
-                            fd.append('sort_order', entry.sort_order);
+                            fd.append('image', photo.file);
+                            fd.append('description', 'Facility photo');
+                            fd.append('image_type', photo.image_type);
+                            fd.append('sort_order', index);
 
-                            const upRes = await fetch(`/api/admin/facilities/${id}/images`, {
+                            newUploads.push(fetch(`/api/admin/facilities/${id}/images`, {
                                 method: 'POST',
                                 headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}`, 'Accept': 'application/json' },
                                 body: fd
+                            }).then(async r => {
+                                if (!r.ok) {
+                                    const text = await r.text().catch(() => '');
+                                    throw new Error(`HTTP ${r.status}: ${text}`);
+                                }
+                                return r.json();
+                            }));
+                        } else {
+                            existingLayout.push({
+                                image_id: photo.image_id,
+                                sort_order: index,
+                                image_type: photo.image_type
                             });
-                            if (!upRes.ok) window.showToast('Some new images failed to upload.', 'error');
-                        } catch (err) { console.error(err); }
+                        }
+                    });
+
+                    if (newUploads.length > 0) {
+                        const results = await Promise.allSettled(newUploads);
+                        const failed = results.filter(r => r.status === 'rejected');
+                        if (failed.length > 0) {
+                            throw new Error(`Failed to upload ${failed.length} image(s).`);
+                        }
                     }
 
-                    // 4. Handle Image Reordering / Primary Status Changes
-                    if (window.pendingImageDeletions.length === 0 && window.pendingImageUploads.length === 0 && window.existingImages.length > 0) {
-                         const sortPayload = window.existingImages.map((img, index) => ({
-                             image_id: img.image_id,
-                             sort_order: index,
-                             image_type: img.image_type
-                         }));
-                         await fetch(`/api/admin/facilities/${id}/images/reorder`, {
-                             method: 'POST',
-                             headers: {
-                                 'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
-                                 'Content-Type': 'application/json',
-                                 'Accept': 'application/json'
-                             },
-                             body: JSON.stringify({ images: sortPayload })
-                         });
+                    if (existingLayout.length > 0) {
+                        const reorderRes = await fetch(`/api/admin/facilities/${id}/images/reorder`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({ images: existingLayout })
+                        });
+                        if (!reorderRes.ok) {
+                            const err = await reorderRes.json().catch(() => ({}));
+                            throw new Error(err.message || 'Failed to save photo order.');
+                        }
                     }
 
                     window.showToast('Facility updated successfully!', 'success');

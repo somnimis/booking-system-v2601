@@ -955,21 +955,13 @@ class FacilityController extends Controller
 
         $facility = Facility::findOrFail($facilityId);
 
-        // If this will be Primary, or the facility has no images yet, demote any current primary
         $existingCount = $facility->images()->count();
-        $isPrimary = $validated['image_type'] === 'Primary' || $existingCount === 0;
 
-        if ($isPrimary) {
-            $facility->images()->update(['image_type' => 'Secondary']);
-        }
-
-        // Store on public disk
         $path = $request->file('image')->store("facility-photos/{$facility->facility_id}", 'public');
-        $imageUrl = '/storage/' . $path;
 
         $image = $facility->images()->create([
-            'image_url' => $imageUrl,
-            'image_type' => $isPrimary ? 'Primary' : 'Secondary',
+            'image_url' => '/storage/' . $path,
+            'image_type' => $validated['image_type'],
             'description' => $validated['description'] ?? 'Facility photo',
             'sort_order' => $validated['sort_order'] ?? $existingCount,
         ]);
@@ -993,27 +985,6 @@ class FacilityController extends Controller
         ]);
 
         $facility = Facility::findOrFail($facilityId);
-
-        // Ensure exactly one Primary
-        $primaryCount = collect($validated['images'])
-            ->where('image_type', 'Primary')
-            ->count();
-
-        if ($primaryCount === 0) {
-            $validated['images'][0]['image_type'] = 'Primary';
-        } elseif ($primaryCount > 1) {
-            $firstPrimarySeen = false;
-            foreach ($validated['images'] as &$row) {
-                if ($row['image_type'] === 'Primary') {
-                    if ($firstPrimarySeen) {
-                        $row['image_type'] = 'Secondary';
-                    } else {
-                        $firstPrimarySeen = true;
-                    }
-                }
-            }
-            unset($row);
-        }
 
         \DB::transaction(function () use ($facility, $validated) {
             foreach ($validated['images'] as $row) {
@@ -1045,19 +1016,7 @@ class FacilityController extends Controller
                 Storage::disk('public')->delete($relativePath);
             }
 
-            $wasPrimary = $image->image_type === 'Primary';
             $image->delete();
-
-            // If we deleted the primary, promote the next one
-            if ($wasPrimary) {
-                $nextId = $facility->images()->orderBy('sort_order')->value('image_id');
-                if ($nextId) {
-                    \App\Models\FacilityImage::where('image_id', $nextId)
-                        ->update(['image_type' => 'Primary']);
-                }
-            }
-
-            $this->reorderImageRecords($facility);
 
             return response()->json(['message' => 'Image deleted successfully']);
 
