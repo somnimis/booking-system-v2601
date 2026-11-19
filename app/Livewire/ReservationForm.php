@@ -336,38 +336,55 @@ class ReservationForm extends Component
         }
     }
 
-    public function checkAvailability(CheckAvailabilityService $checker)
-    {
-        $this->validateSchedule();
+public function checkAvailability(CheckAvailabilityService $checker)
+{
+    $this->validateSchedule();
 
-        $result = $checker->checkAll([
-            'start_date' => $this->startDate,
-            'end_date' => $this->endDate,
-            'start_time' => $this->allDay ? '00:00:00' : $this->startTime,
-            'end_time' => $this->allDay ? '00:00:00' : $this->endTime,
-            'all_day' => $this->allDay,
-            'cleanup_hours' => $this->cleanupHours,
-            'items' => $this->selectedItems,
-        ]);
+    $result = $checker->checkAll([
+        'start_date' => $this->startDate,
+        'end_date' => $this->endDate,
+        'start_time' => $this->allDay ? '00:00:00' : $this->startTime,
+        'end_time' => $this->allDay ? '00:00:00' : $this->endTime,
+        'all_day' => $this->allDay,
+        'cleanup_hours' => $this->cleanupHours,
+        'items' => $this->selectedItems,
+    ]);
 
-        if ($result['available'] && empty($result['soft_conflicts'])) {
-            $this->availabilityResult = 'available';
-            $this->conflictHtml = null;
-            $this->dispatch('toast', message: 'Time slot is available.', type: 'success');
-        } elseif ($result['available'] && !empty($result['soft_conflicts'])) {
-            // Soft conflict only (services) — modal opens, submit still allowed
-            $this->availabilityResult = 'warning';
-            $this->conflictHtml = $checker->formatConflictsToHtml($result['soft_conflicts']);
-            $this->dispatch('open-conflict-modal');
-            $this->dispatch('toast', message: 'Service warning — review before submitting.', type: 'warning');
-        } else {
-            $this->availabilityResult = 'conflict';
-            $allConflicts = array_merge($result['hard_conflicts'], $result['soft_conflicts']);
-            $this->conflictHtml = $checker->formatConflictsToHtml($allConflicts);
-            $this->dispatch('open-conflict-modal');
-            $this->dispatch('toast', message: 'Time slot conflict detected.', type: 'error');
-        }
+    // Validation errors from the service (bad payload, past date, missing times, etc.)
+    // Do NOT open the conflict modal — surface as a toast so the user can correct input.
+    if (!empty($result['errors'])) {
+        $this->availabilityResult = 'invalid';
+        $this->conflictHtml = null;
+        $this->dispatch('toast', message: $result['errors'][0], type: 'error');
+        return;
     }
+
+    $hard = $result['hard_conflicts'] ?? [];
+    $soft = $result['soft_conflicts'] ?? [];
+
+    if ($result['available'] && empty($soft)) {
+        $this->availabilityResult = 'available';
+        $this->conflictHtml = null;
+        $this->dispatch('toast', message: 'Time slot is available.', type: 'success');
+        return;
+    }
+
+    if ($result['available'] && !empty($soft)) {
+        // Soft conflict only (services) — modal opens, submit still allowed
+        $this->availabilityResult = 'warning';
+        $this->conflictHtml = $checker->formatConflictsToHtml($soft);
+        $this->dispatch('open-conflict-modal');
+        $this->dispatch('toast', message: 'Service warning — review before submitting.', type: 'warning');
+        return;
+    }
+
+    // Hard conflict
+    $allConflicts = array_merge($hard, $soft);
+    $this->availabilityResult = 'conflict';
+    $this->conflictHtml = $checker->formatConflictsToHtml($allConflicts);
+    $this->dispatch('open-conflict-modal');
+    $this->dispatch('toast', message: 'Time slot conflict detected.', type: 'error');
+}
 
     public function nextStep()
     {

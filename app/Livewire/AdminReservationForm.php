@@ -163,11 +163,13 @@ class AdminReservationForm extends ReservationForm
             $this->dispatch('admin-submit-success', request_id: $requisitionForm->request_id);
 
         } catch (\App\Exceptions\BookingConflictException $e) {
-            $this->conflictHtml = app(CheckAvailabilityService::class)->formatConflictsToHtml($e->getConflictItems());
+            $items = $e->getConflictItems();
+            if (empty($items)) {
+                $this->dispatch('toast', message: 'Submission failed: booking conflict.', type: 'error');
+                return;
+            }
+            $this->conflictHtml = app(CheckAvailabilityService::class)->formatConflictsToHtml($items);
             $this->dispatch('open-conflict-modal');
-        } catch (\Throwable $e) {
-            \Log::error('Admin submit failed', ['error' => $e->getMessage()]);
-            $this->dispatch('toast', message: 'Submission failed: ' . $e->getMessage(), type: 'error');
         }
     }
 }
